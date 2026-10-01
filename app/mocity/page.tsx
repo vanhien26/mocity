@@ -493,7 +493,7 @@ export default function MoCityPage() {
 
       {/* 2. THANH HUD GAME TRÊN CÙNG */}
       <header
-        className="z-30 flex shrink-0 items-center justify-between gap-2 border-b-2 border-[#8B5E1A] px-2 py-1.5 sm:px-3"
+        className="relative z-50 flex shrink-0 items-center justify-between gap-2 border-b-2 border-[#8B5E1A] px-2 py-1.5 sm:px-3"
         style={{
           background: 'linear-gradient(180deg, #3D1F06 0%, #5C2D0E 50%, #3D1F06 100%)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,200,50,0.15)',
