@@ -738,103 +738,82 @@ export default function ViaHeStreetBoard({
             </div>
           </div>
 
-          {/* LỚP 4: VỈA HÈ (SIDEWALK) - warm sandy, có ngã tư trái + cột điện phải */}
-          <div
-            className="relative z-20 h-[120px] w-full"
-            style={{
-              backgroundColor: '#EDD4A0',
-              backgroundImage: `
-                linear-gradient(to right, rgba(160,110,60,0.12) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(160,110,60,0.12) 1px, transparent 1px)
-              `,
-              backgroundSize: '40px 26px',
-              borderTop: '3px solid #B8956A',
-              borderBottom: '5px solid #9A7040',
-            }}
-          >
-            {/* Vỉa hè ngã tư - dải đường phụ chạy dọc từ trái vào */}
-            <div
-              className="absolute inset-y-0 left-0 w-[132px]"
-              style={{ backgroundColor: '#C8C3B0', opacity: 0.7 }}
-            />
-            {/* Lề ngã tư - viền đứng */}
-            <div className="absolute inset-y-0 left-[132px] w-[3px]" style={{ backgroundColor: '#9A8060' }} />
+          {/*
+           * LOP 4: VIA HE - cut paper, dong bo voi nhan vat.
+           * Khong dung gradient/luoi ke: mat via he la MOT mang phang, cac vien
+           * gach la nhung dai giay phang chong len nhau.
+           * Xe co KHONG chay o lop nay, tat ca nam duoi LOP 5 long duong.
+           */}
+          <div className="relative z-20 h-[120px] w-full" style={{ backgroundColor: '#E8CB95' }}>
+            {/* Mep via he giap nha - dai giay dam */}
+            <div className="absolute inset-x-0 top-0 h-[7px]" style={{ backgroundColor: '#C9A86A' }} />
+            {/* Cac dai gach lat phang, thua va to ban hon luoi ke cu */}
+            <div className="absolute inset-x-0 top-[7px] h-[2px]" style={{ backgroundColor: '#DCBC82' }} />
+            <div className="absolute inset-x-0 bottom-[14px] h-[2px]" style={{ backgroundColor: '#DCBC82' }} />
+            {/* Bo via - hai dai giay chong, dai duoi dam hon lam chan via */}
+            <div className="absolute inset-x-0 bottom-[6px] h-[8px]" style={{ backgroundColor: '#D4B071' }} />
+            <div className="absolute inset-x-0 bottom-0 h-[6px]" style={{ backgroundColor: '#A8834A' }} />
 
-            {/* Đèn giao thông tại góc ngã tư (bottom-left) */}
-            <div className="absolute bottom-0 left-[118px] flex flex-col items-center">
-              {/* Cột đèn */}
-              <div className="w-[4px] bg-[#4A4040]" style={{ height: 72 }} />
-              {/* Hộp đèn */}
-              <div
-                className="absolute bottom-[46px] left-[-9px] w-[22px] rounded-[3px] flex flex-col items-center justify-around py-1 gap-1"
-                style={{ backgroundColor: '#2A2020', height: 44 }}
-              >
-                {/* Đèn đỏ */}
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{
-                    backgroundColor: timeOfDay === 'NIGHT' ? '#FF2222' : '#CC3333',
-                    boxShadow: timeOfDay === 'NIGHT' ? '0 0 6px #FF2222' : 'none',
-                  }}
-                />
-                {/* Đèn vàng */}
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: '#6B6020' }}
-                />
-                {/* Đèn xanh */}
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{
-                    backgroundColor: timeOfDay === 'DAY' || timeOfDay === 'DAWN' ? '#22AA44' : '#1A6030',
-                    boxShadow: (timeOfDay === 'DAY' || timeOfDay === 'DAWN') ? '0 0 5px #22AA44' : 'none',
-                  }}
-                />
+            {/* Nga tu: mang nhua phang cat ngang via he */}
+            <div className="absolute inset-y-0 left-0 w-[132px]" style={{ backgroundColor: '#BFBAAC' }} />
+            <div className="absolute inset-y-0 left-[132px] w-[4px]" style={{ backgroundColor: '#9C8F74' }} />
+
+            {/* Den giao thong o goc nga tu */}
+            <div className="pointer-events-none absolute bottom-[6px] left-[110px]">
+              <svg width="26" height="80" viewBox="0 0 26 80" overflow="visible">
+                <rect x="10" y="30" width="6" height="50" fill="#4A4038" />
+                <rect x="2" y="0" width="22" height="34" rx="3" fill="#2E2822" />
+                <circle cx="13" cy="8" r="5.4" fill={timeOfDay === 'NIGHT' ? '#F4453C' : '#A33832'} />
+                <circle cx="13" cy="17" r="5.4" fill="#6B6020" />
+                <circle cx="13" cy="26" r="5.4" fill={timeOfDay === 'DAY' || timeOfDay === 'DAWN' ? '#2FA855' : '#1C5E34'} />
+              </svg>
+            </div>
+
+            {/* Bien ten duong - hai lop giay thay cho vien */}
+            <div className="pointer-events-none absolute bottom-[86px] left-[140px]">
+              <div className="px-[3px] py-[2px]" style={{ backgroundColor: '#0E2F6E' }}>
+                <div className="px-1.5 py-0.5" style={{ backgroundColor: '#1848A8' }}>
+                  <span className="text-[9px] font-bold leading-tight tracking-wide text-white">Đ. Hoa Sữa</span>
+                </div>
               </div>
             </div>
 
-            {/* Biển tên đường tại góc ngã tư */}
-            <div
-              className="absolute bottom-[78px] left-[136px] flex items-center gap-1 rounded px-1.5 py-0.5"
-              style={{ backgroundColor: '#1848A8' }}
-            >
-              <span className="text-[9px] font-bold text-white leading-tight tracking-wide">Đ. Hoa Sữa</span>
-            </div>
-
-            {/* Cột điện bên phải - SVG với nhiều dây điện tỏa ra */}
-            <div className="pointer-events-none absolute bottom-0 right-[60px] z-10">
+            {/* Cot dien ben phai - mang phang, day dien la dai manh */}
+            <div className="pointer-events-none absolute bottom-[6px] right-[60px] z-10">
               <svg width="28" height="115" viewBox="0 0 28 115" overflow="visible">
-                {/* Thân cột */}
-                <rect x="11" y="0" width="6" height="112" rx="2" fill="#4A3A28" />
-                {/* Tay ngang trên */}
-                <rect x="0" y="18" width="28" height="4" rx="2" fill="#5A4830" />
-                {/* Sứ cách điện */}
+                <path d="M3 20 Q-60 30 -140 45" fill="none" stroke="#4A4038" strokeWidth="1.5" />
+                <path d="M25 20 Q-40 28 -140 38" fill="none" stroke="#4A4038" strokeWidth="1.5" />
+                <path d="M6 41.5 Q-50 50 -140 62" fill="none" stroke="#4A4038" strokeWidth="1.2" />
+                <path d="M22 41.5 Q-30 48 -140 55" fill="none" stroke="#4A4038" strokeWidth="1.2" />
+                <rect x="11" y="0" width="6" height="112" fill="#6B523A" />
+                <rect x="11" y="0" width="2.4" height="112" fill="#8A6B4C" />
+                <rect x="0" y="18" width="28" height="4" fill="#5A4830" />
+                <rect x="4" y="40" width="20" height="3" fill="#5A4830" />
                 <ellipse cx="3" cy="20" rx="3" ry="4" fill="#E8E0D0" />
                 <ellipse cx="25" cy="20" rx="3" ry="4" fill="#E8E0D0" />
-                {/* Tay ngang dưới */}
-                <rect x="4" y="40" width="20" height="3" rx="1.5" fill="#5A4830" />
                 <ellipse cx="6" cy="41.5" rx="2.5" ry="3.5" fill="#E8E0D0" />
                 <ellipse cx="22" cy="41.5" rx="2.5" ry="3.5" fill="#E8E0D0" />
-                {/* Dây điện tỏa sang trái */}
-                <path d="M3 20 Q-60 30 -140 45" fill="none" stroke="#3A3030" strokeWidth="1.5" opacity="0.8" />
-                <path d="M25 20 Q-40 28 -140 38" fill="none" stroke="#3A3030" strokeWidth="1.5" opacity="0.8" />
-                <path d="M6 41.5 Q-50 50 -140 62" fill="none" stroke="#3A3030" strokeWidth="1.2" opacity="0.7" />
-                <path d="M22 41.5 Q-30 48 -140 55" fill="none" stroke="#3A3030" strokeWidth="1.2" opacity="0.7" />
-                {/* Đèn đường (ban đêm/hoàng hôn) */}
                 {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
-                  <>
-                    <circle cx="14" cy="8" r="6" fill="#FEF08A" opacity="0.9" />
-                    <ellipse cx="14" cy="8" rx="20" ry="30" fill="rgba(254,240,138,0.15)" />
-                  </>
+                  <circle cx="14" cy="8" r="6" fill="#FEF08A" />
                 )}
               </svg>
             </div>
 
-            {/* Thùng rác xanh */}
-            <div className="absolute bottom-2.5 left-[340px] h-8 w-6 rounded-t border-2 border-[#3E2A1B] bg-[#2E7D32]" />
-            {/* Trụ cứu hỏa đỏ */}
-            <div className="absolute bottom-3.5 left-[840px] h-8 w-5 rounded-t-full border-2 border-[#3E2A1B] bg-[#DC2626]" />
-            <div className="absolute bottom-2.5 left-[1320px] h-8 w-6 rounded-t border-2 border-[#3E2A1B] bg-[#2E7D32]" />
+            {/* Thung rac - mang phang, nap la dai giay dam */}
+            <div className="pointer-events-none absolute bottom-[14px] left-[340px]">
+              <div className="h-[9px] w-[26px]" style={{ backgroundColor: '#1F5E23' }} />
+              <div className="h-[26px] w-[24px] translate-x-[1px]" style={{ backgroundColor: '#2E7D32' }} />
+            </div>
+            {/* Tru cuu hoa */}
+            <div className="pointer-events-none absolute bottom-[14px] left-[840px]">
+              <div className="mx-auto h-[7px] w-[18px] rounded-t-full" style={{ backgroundColor: '#991B1B' }} />
+              <div className="h-[24px] w-[18px]" style={{ backgroundColor: '#DC2626' }} />
+              <div className="h-[5px] w-[24px] -translate-x-[3px]" style={{ backgroundColor: '#991B1B' }} />
+            </div>
+            <div className="pointer-events-none absolute bottom-[14px] left-[1320px]">
+              <div className="h-[9px] w-[26px]" style={{ backgroundColor: '#1F5E23' }} />
+              <div className="h-[26px] w-[24px] translate-x-[1px]" style={{ backgroundColor: '#2E7D32' }} />
+            </div>
 
             {/* HỆ THỐNG CƯ DÂN ĐI BỘ */}
             <ExpressiveStreetCitizens
@@ -852,10 +831,38 @@ export default function ViaHeStreetBoard({
               }}
             />
 
-            {/* Xe Honda Cub chạy trên vỉa hè */}
+          </div>
+
+          {/*
+           * LOP 5: LONG DUONG - cut paper. Mat duong la mot mang phang, vach ke
+           * la nhung dai giay phang. Moi phuong tien deu chay o lop nay.
+           */}
+          <div className="relative z-10 h-[110px] w-full" style={{ backgroundColor: '#B5B0A4' }}>
+            {/* Dai giay dam sat chan bo via - bong do cua via he xuong duong */}
+            <div className="absolute inset-x-0 top-0 h-[6px]" style={{ backgroundColor: '#97927F' }} />
+
+            {/* Nga tu ben trai */}
+            <div className="absolute inset-y-0 left-0 w-[132px]" style={{ backgroundColor: '#A5A094' }} />
+            <div className="absolute inset-y-0 left-[132px] w-[4px]" style={{ backgroundColor: '#8A8574' }} />
+
+            {/* Vach qua duong tai nga tu */}
+            <div className="absolute top-[10px] bottom-[10px] left-[16px] flex w-[100px] flex-col justify-between">
+              {Array.from({ length: 5 }).map((_, zi) => (
+                <div key={zi} className="h-[9px] w-full" style={{ backgroundColor: '#E8E4DC' }} />
+              ))}
+            </div>
+
+            {/* Tim duong vang - dai giay dut quang */}
+            <div className="absolute top-[52px] left-[150px] right-0 flex h-[4px] gap-[26px] overflow-hidden">
+              {Array.from({ length: 24 }).map((_, di) => (
+                <div key={di} className="h-full w-[48px] shrink-0" style={{ backgroundColor: '#D9B93C' }} />
+              ))}
+            </div>
+
+            {/* Xe Honda Cub - chay DUOI long duong, khong phai tren via he */}
             <div
               style={{ animation: 'viahe-scooter-ride 24s linear infinite' }}
-              className="pointer-events-none absolute bottom-2 left-0 z-30 flex flex-col items-center scale-110"
+              className="pointer-events-none absolute bottom-[18px] left-0 z-30 flex flex-col items-center"
             >
               <svg width="68" height="62" viewBox="0 0 68 62" className="overflow-visible">
                 <ellipse cx="34" cy="58" rx="21" ry="3" fill="rgba(62,42,27,0.18)" />
@@ -880,34 +887,6 @@ export default function ViaHeStreetBoard({
                   <polygon points="54,32 150,12 150,58" fill="rgba(254, 240, 138, 0.45)" />
                 )}
               </svg>
-            </div>
-          </div>
-
-          {/* LỚP 5: LÒNG ĐƯỜNG NHỰA XÁM ẤM */}
-          <div
-            className="relative z-10 h-[110px] w-full flex flex-col justify-between py-3"
-            style={{ backgroundColor: '#B8B3A8' }}
-          >
-            {/* Dải đường ngã tư bên trái */}
-            <div
-              className="absolute inset-y-0 left-0 w-[132px]"
-              style={{ backgroundColor: '#A8A49A' }}
-            />
-            {/* Lề trái ngã tư */}
-            <div className="absolute inset-y-0 left-[132px] w-[3px]" style={{ backgroundColor: '#888070' }} />
-
-            {/* Vạch Zebra tại ngã tư */}
-            <div className="absolute top-2 bottom-2 left-[134px] flex w-[60px] flex-col justify-between">
-              {Array.from({ length: 6 }).map((_, zi) => (
-                <div key={zi} className="h-2 w-full bg-[#E8E4DC]" />
-              ))}
-            </div>
-
-            {/* Vạch vàng center line */}
-            <div className="absolute top-[50px] left-[160px] right-0 h-[3px] flex gap-4 px-4 overflow-hidden">
-              {Array.from({ length: 20 }).map((_, di) => (
-                <div key={di} className="h-full w-14 shrink-0 rounded-full bg-[#E8C848]" />
-              ))}
             </div>
 
             {/* Xe đạp cô gái chạy xuôi ngược đường */}
@@ -939,6 +918,13 @@ export default function ViaHeStreetBoard({
               </svg>
             </div>
           </div>
+
+          {/*
+           * Dai nhua tron duoi cung. Dock hanh dong la overlay `absolute bottom-3`
+           * nen no che mat ~70px day man hinh; neu khong co dai nay thi vach qua
+           * duong, tim duong va ca hai xe deu nam khuat sau dock.
+           */}
+          <div className="h-[76px] w-full shrink-0" style={{ backgroundColor: '#A8A396' }} />
         </div>
       </div>
     </div>

@@ -65,7 +65,7 @@ function shade(hex: string, k: number): string {
 const CITIZEN_DEFS: CitizenDef[] = [
   {
     id: 'cit-mayor-assistant', name: 'Trợ Lý Thị Trưởng', role: 'Cán Bộ Quy Hoạch',
-    startX: 240, laneY: 28, startDir: 1, speed: 0.72, emotion: 'HAPPY',
+    startX: 240, laneY: 28, startDir: 1, speed: 0.4, emotion: 'HAPPY',
     skinColor: '#FDE6D2', hairStyle: 'SHORT', hairColor: '#2B2118',
     shirtColor: '#2B4368', pantsColor: '#1E293B', accentColor: '#DC2626', hasTie: true,
     heldItem: 'BRIEFCASE',
@@ -73,7 +73,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-co-tu', name: 'Cô Tư Đi Chợ', role: 'Bà Nội Trợ Săn Deal',
-    startX: 420, laneY: 16, startDir: -1, speed: 0.55, emotion: 'STAR_EYES',
+    startX: 390, laneY: 16, startDir: -1, speed: 0.3, emotion: 'STAR_EYES',
     skinColor: '#FCD9BD', hairStyle: 'NON_LA', hairColor: '#2B2118',
     shirtColor: '#EC4899', pantsColor: '#334155', accentColor: '#FEF08A',
     heldItem: 'SHOPPING_BAG',
@@ -81,7 +81,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-be-nam', name: 'Bé Nam GenZ', role: 'Sinh Viên Năm 3',
-    startX: 640, laneY: 42, startDir: 1, speed: 0.92, emotion: 'HAPPY',
+    startX: 540, laneY: 42, startDir: 1, speed: 0.5, emotion: 'HAPPY',
     skinColor: '#FDE6D2', hairStyle: 'CAP_YELLOW', hairColor: '#1F2937',
     shirtColor: '#65A30D', pantsColor: '#374151', accentColor: '#FACC15',
     heldItem: 'MILK_TEA',
@@ -89,7 +89,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-chi-thao', name: 'Chị Thảo Văn Phòng', role: 'Thánh Chốt Đơn',
-    startX: 860, laneY: 22, startDir: -1, speed: 0.68, emotion: 'HAPPY',
+    startX: 690, laneY: 22, startDir: -1, speed: 0.38, emotion: 'HAPPY',
     skinColor: '#FFF1E6', hairStyle: 'BUN', hairColor: '#3E2723',
     shirtColor: '#F472B6', pantsColor: '#475569', accentColor: '#D82D8B',
     heldItem: 'PHONE_QR',
@@ -97,7 +97,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-ong-loc', name: 'Ông Lộc Vé Số', role: 'Thần Tài Góc Phố',
-    startX: 1080, laneY: 34, startDir: 1, speed: 0.50, emotion: 'HAPPY',
+    startX: 840, laneY: 34, startDir: 1, speed: 0.28, emotion: 'HAPPY',
     skinColor: '#FCD9BD', hairStyle: 'BALD_GLASSES', hairColor: '#9CA3AF',
     shirtColor: '#D97706', pantsColor: '#3E2A1B', accentColor: '#FEF08A',
     heldItem: 'LOTTERY_FAN',
@@ -105,7 +105,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-anh-hoang', name: 'Anh Hoàng IT', role: 'Kỹ Sư Phần Mềm',
-    startX: 1290, laneY: 18, startDir: -1, speed: 0.76, emotion: 'TIRED',
+    startX: 990, laneY: 18, startDir: -1, speed: 0.42, emotion: 'TIRED',
     skinColor: '#FDE6D2', hairStyle: 'SHORT', hairColor: '#111827',
     shirtColor: '#E2E8F0', pantsColor: '#1E293B', accentColor: '#38BDF8',
     heldItem: 'LAPTOP',
@@ -113,7 +113,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-bao-ngoc', name: 'Bảo Ngọc KOC', role: 'Reviewer Phố Phường',
-    startX: 1520, laneY: 38, startDir: 1, speed: 0.82, emotion: 'STAR_EYES',
+    startX: 1140, laneY: 38, startDir: 1, speed: 0.45, emotion: 'STAR_EYES',
     skinColor: '#FFF1E6', hairStyle: 'BOB', hairColor: '#7C2D12',
     shirtColor: '#38BDF8', pantsColor: '#1E293B', accentColor: '#F43F5E',
     heldItem: 'CAMERA',
@@ -121,11 +121,43 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-chu-bay', name: 'Chú Bảy Hàng Xóm', role: 'Tổ Trưởng Dân Phố',
-    startX: 1740, laneY: 26, startDir: -1, speed: 0.60, emotion: 'SURPRISED',
+    startX: 1290, laneY: 26, startDir: -1, speed: 0.33, emotion: 'SURPRISED',
     skinColor: '#FCD9BD', hairStyle: 'HELMET_BLUE', hairColor: '#1F2937',
     shirtColor: '#4ADE80', pantsColor: '#334155', accentColor: '#22D3EE',
     heldItem: 'NONE',
     quotes: ['Đóng tiền điện tự động rồi, hết lo cúp điện!', 'Phố xá nhộn nhịp mà sạch đẹp ghê chưa!', 'Trả nợ tiền bia cho Cô Tư qua QR rồi nghen!', 'Bà con khu phố ai cũng khen Thị Trưởng mát tay!'],
+  },
+  {
+    id: 'cit-bac-tai', name: 'Bác Tài Xe Ôm', role: 'Tài Xế Công Nghệ',
+    startX: 1440, laneY: 20, startDir: 1, speed: 0.36, emotion: 'HAPPY',
+    skinColor: '#FCD9BD', hairStyle: 'HELMET_BLUE', hairColor: '#1F2937',
+    shirtColor: '#16A34A', pantsColor: '#1E293B', accentColor: '#22C55E',
+    heldItem: 'PHONE_QR',
+    quotes: ['Khách đặt cuốc là app báo liền, khỏi chờ!', 'Chạy xe cả ngày, tối về ví vẫn đầy!', 'Bà con cần đi đâu con chở, trả qua MoMo nghen!'],
+  },
+  {
+    id: 'cit-chi-hang-rong', name: 'Chị Hàng Rong', role: 'Gánh Xôi Đầu Ngõ',
+    startX: 1590, laneY: 36, startDir: -1, speed: 0.29, emotion: 'HAPPY',
+    skinColor: '#FCD9BD', hairStyle: 'NON_LA', hairColor: '#2B2118',
+    shirtColor: '#A16207', pantsColor: '#44403C', accentColor: '#FBBF24',
+    heldItem: 'SHOPPING_BAG',
+    quotes: ['Xôi gấc nóng hổi vừa thổi vừa ăn đây!', 'Dán cái mã QR mà bán chạy hẳn ra!', 'Sáng nào cũng gánh qua đây, quen mặt hết rồi!'],
+  },
+  {
+    id: 'cit-be-an', name: 'Bé An Học Sinh', role: 'Học Sinh Cấp 2',
+    startX: 1740, laneY: 30, startDir: 1, speed: 0.44, emotion: 'STAR_EYES',
+    skinColor: '#FDE6D2', hairStyle: 'SHORT', hairColor: '#111827',
+    shirtColor: '#F1F5F9', pantsColor: '#1E3A8A', accentColor: '#3B82F6',
+    heldItem: 'NONE',
+    quotes: ['Mẹ chuyển tiền ăn sáng qua app rồi nè!', 'Tan học ghé tiệm sách coi truyện mới!', 'Con để dành Heo Đất mua xe đạp đó!'],
+  },
+  {
+    id: 'cit-co-linh', name: 'Cô Linh Dạy Thêm', role: 'Giáo Viên',
+    startX: 1890, laneY: 24, startDir: -1, speed: 0.31, emotion: 'HAPPY',
+    skinColor: '#FFF1E6', hairStyle: 'BOB', hairColor: '#4A2C17',
+    shirtColor: '#0EA5E9', pantsColor: '#334155', accentColor: '#0284C7',
+    heldItem: 'LAPTOP',
+    quotes: ['Phụ huynh đóng học phí online hết rồi!', 'Chấm bài xong ghé làm ly cà phê muối!', 'Lớp tối nay đông, phải soạn thêm đề!'],
   },
 ];
 
@@ -555,7 +587,7 @@ export default function ExpressiveStreetCitizens({
                     height="72"
                     viewBox="0 0 56 72"
                     className="cit-walk-anim overflow-visible walking"
-                    style={{ '--spd': `${(0.8 / def.speed).toFixed(2)}s` } as React.CSSProperties}
+                    style={{ '--spd': `${(0.6 / def.speed).toFixed(2)}s` } as React.CSSProperties}
                   >
                     <CitizenContent def={def} emotion={app.emotion} />
                   </svg>
