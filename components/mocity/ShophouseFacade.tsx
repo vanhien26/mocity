@@ -52,6 +52,13 @@ const PALETTE: Record<ShopType, { wall: string; wall2: string; stripe: string; s
   STATIONERY: { wall: '#ECF1F8', wall2: '#DDE7F2', stripe: '#2C60A0', signBg: '#183C80', roofBg: '#C8D8EC' },
 };
 
+/** Dam/nhat mot mau hex theo he so - tao lop giay phia sau thay cho vien. */
+function shade(hex: string, k: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.min(255, Math.round(v * k));
+  return `#${((1 << 24) | (c((n >> 16) & 255) << 16) | (c((n >> 8) & 255) << 8) | c(n & 255)).toString(16).slice(1)}`;
+}
+
 export default function ShophouseFacade({
   shopType,
   houseNumber,
@@ -90,22 +97,24 @@ export default function ShophouseFacade({
     : pal.wall2;
 
   /* Component cửa sổ tái sử dụng */
+  /**
+   * Cua so cut paper: khong vien nau. Khung la mot mang giay dam hon mau
+   * tuong, kinh la mang phang dat long vao trong.
+   */
+  const frame = shade(pal.wall, 0.52);
   const Win = ({ wide = false, children }: { wide?: boolean; children?: React.ReactNode }) => (
     <div
-      className="relative shrink-0 overflow-hidden"
-      style={{
-        width: wide ? 76 : 58,
-        height: wide ? 58 : 48,
-        backgroundColor: winFill,
-        border: '2.5px solid #3E2A1B',
-        boxShadow: winShadow,
-        borderRadius: 2,
-      }}
+      className="relative shrink-0"
+      style={{ width: wide ? 76 : 58, height: wide ? 58 : 48, backgroundColor: frame }}
     >
-      {/* Khung chữ thập */}
-      <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2" style={{ backgroundColor: '#3E2A1B', opacity: 0.5 }} />
-      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2" style={{ backgroundColor: '#3E2A1B', opacity: 0.5 }} />
-      {children}
+      <div
+        className="absolute overflow-hidden"
+        style={{ inset: 4, backgroundColor: winFill, boxShadow: winShadow }}
+      >
+        <div className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2" style={{ backgroundColor: frame }} />
+        <div className="absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2" style={{ backgroundColor: frame }} />
+        {children}
+      </div>
     </div>
   );
 
@@ -115,7 +124,7 @@ export default function ShophouseFacade({
       {/* ═══ 1. SÂN THƯỢNG / PARAPET ═══════════════════════════════════ */}
       <div
         className="relative w-full flex items-end justify-between px-2 overflow-visible"
-        style={{ height: 44, backgroundColor: pal.roofBg, borderBottom: `2px solid #3E2A1B` }}
+        style={{ height: 44, backgroundColor: pal.roofBg, borderBottom: `3px solid ${shade(pal.roofBg, 0.68)}` }}
       >
         {/* Viền gờ cornice trên cùng */}
         <div className="absolute top-0 inset-x-0 h-2" style={{ backgroundColor: pal.stripe }} />
@@ -124,7 +133,7 @@ export default function ShophouseFacade({
         {shopType === 'CAFE' && (
           <div className="absolute inset-x-2 top-3 flex justify-around items-center">
             {[0,1,2,3,4,5].map(i => (
-              <div key={i} className="h-3 w-3 rounded-full border border-black/25"
+              <div key={i} className="h-3 w-3 "
                 style={{ backgroundColor: isNight ? '#FDE047' : i%2===0 ? '#EC4899' : '#F59E0B',
                   boxShadow: isNight ? '0 0 6px #FDE047' : 'none' }} />
             ))}
@@ -132,7 +141,7 @@ export default function ShophouseFacade({
         )}
         {shopType === 'CINEMA' && (
           <div className="absolute inset-x-4 top-2 flex justify-center">
-            <div className="flex items-center gap-1.5 rounded border border-[#3E2A1B] px-3 py-0.5"
+            <div className="flex items-center gap-1.5 rounded px-3 py-0.5"
               style={{ backgroundColor: isNight ? '#1E1B4B' : '#831843',
                 boxShadow: isNight ? '0 0 12px rgba(236,72,153,0.9)' : 'none' }}>
               <Clapperboard size={10} className="text-pink-300 shrink-0" />
@@ -152,11 +161,11 @@ export default function ShophouseFacade({
           </>
         )}
         {shopType === 'RICE_SHOP' && (
-          <div className="absolute top-2 inset-x-1 h-3 border-t border-[#3E2A1B]"
+          <div className="absolute top-2 inset-x-1 h-3 "
             style={{ backgroundImage: 'repeating-linear-gradient(45deg, #B91C1C 0px, #B91C1C 4px, #DC2626 4px, #DC2626 8px)' }} />
         )}
         {shopType === 'GROCERY' && (
-          <div className="absolute top-2 inset-x-1 h-2.5 border-t border-[#3E2A1B]"
+          <div className="absolute top-2 inset-x-1 h-2.5 "
             style={{ backgroundImage: 'repeating-linear-gradient(90deg, #0D9488 0,#0D9488 4px,#0F766E 4px,#0F766E 8px)' }} />
         )}
         {shopType === 'TIRE_SHOP' && (
@@ -164,20 +173,20 @@ export default function ShophouseFacade({
             style={{ backgroundImage: 'repeating-linear-gradient(90deg,#475569 0,#475569 1px,transparent 1px,transparent 6px)' }} />
         )}
         {shopType === 'STATIONERY' && (
-          <div className="absolute top-2 right-3 rounded border border-black/40 bg-blue-700 px-1 py-0.5 text-[7px] font-black text-white shadow">
+          <div className="absolute top-2 right-3 rounded bg-blue-700 px-1 py-0.5 text-[7px] font-black text-white shadow">
             IN MÀU
           </div>
         )}
 
         {/* Gờ parapet dưới */}
         <div className="absolute bottom-0 inset-x-0 h-3"
-          style={{ backgroundColor: pal.stripe, borderTop: '1.5px solid #3E2A1B' }} />
+          style={{ backgroundColor: pal.stripe }} />
       </div>
 
       {/* ═══ 2. TẦNG 3 — CỬA SỔ ════════════════════════════════════════ */}
       <div
         className="relative flex items-center justify-around px-5 py-3"
-        style={{ backgroundColor: wallColor, borderBottom: `1.5px solid #3E2A1B30` }}
+        style={{ backgroundColor: wallColor, borderBottom: `2px solid ${shade(pal.wall, 0.8)}` }}
       >
         <Win>
           {shopType === 'CAFE' && isNight && (
@@ -194,8 +203,8 @@ export default function ShophouseFacade({
           )}
         </Win>
         {/* Điều hòa cục nóng góc phải */}
-        <div className="absolute right-2 bottom-2 h-4 w-7 rounded-[2px] border border-[#3E2A1B] bg-white/80 flex items-center justify-center shadow-sm">
-          <div className="h-3 w-3 rounded-full border border-[#3E2A1B] bg-slate-100 flex items-center justify-center animate-spin"
+        <div className="absolute right-2 bottom-2 h-4 w-7 rounded-[2px] bg-white flex items-center justify-center shadow-sm">
+          <div className="h-3 w-3 rounded-full bg-slate-200 flex items-center justify-center animate-spin"
             style={{ animationDuration: '4s' }}>
             <div className="h-px w-2 bg-slate-500" />
           </div>
@@ -222,27 +231,27 @@ export default function ShophouseFacade({
         </Win>
         <Win>
           {/* Rèm cửa nhẹ */}
-          <div className="absolute bottom-0 inset-x-0 h-1/3 border-t border-[#3E2A1B]/20"
+          <div className="absolute bottom-0 inset-x-0 h-1/3 "
             style={{ backgroundColor: 'rgba(255,255,255,0.35)' }} />
         </Win>
 
         {/* Chậu hoa ban công */}
-        <div className="absolute left-3 bottom-1 h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#5A8A3C] flex items-center justify-center">
+        <div className="absolute left-3 bottom-1 h-4 w-4 rounded-full bg-[#5A8A3C] flex items-center justify-center">
           <span className="h-1.5 w-1.5 rounded-full bg-[#EC4899]" />
         </div>
-        <div className="absolute right-2 bottom-1 h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#5A8A3C]" />
+        <div className="absolute right-2 bottom-1 h-4 w-4 rounded-full bg-[#5A8A3C]" />
       </div>
 
       {/* Bản lan can ban công — sàn bê tông + thanh ngang */}
       <div style={{ backgroundColor: wall2Color, paddingBottom: 2 }}>
         {/* Sàn slab bê tông */}
-        <div className="w-full" style={{ height: 8, backgroundColor: '#D5C9A8', borderTop: '2px solid #3E2A1B', borderBottom: '1.5px solid #3E2A1B80' }} />
+        <div className="w-full" style={{ height: 10, backgroundColor: '#D5C9A8', borderBottom: '3px solid #A89878' }} />
         {/* Thanh lan can ngang */}
-        <div className="relative mx-1" style={{ height: 22, border: '2px solid #3E2A1B', backgroundColor: 'transparent' }}>
+        <div className="relative mx-1" style={{ height: 22, borderTop: '3px solid #B0A182', borderBottom: '3px solid #B0A182' }}>
           {/* Các thanh dọc */}
           {[...Array(10)].map((_, i) => (
             <div key={i} className="absolute inset-y-0 w-px"
-              style={{ left: `${10 + i * 9}%`, backgroundColor: '#3E2A1B' }} />
+              style={{ left: `${10 + i * 9}%`, width: 2, backgroundColor: '#B0A182' }} />
           ))}
           {/* Dây phơi quần áo */}
           {(shopType === 'RICE_SHOP' || shopType === 'TIRE_SHOP') && (
@@ -256,29 +265,33 @@ export default function ShophouseFacade({
       </div>
 
       {/* ═══ 4. BẢNG HIỆU ════════════════════════════════════════════════ */}
+      {/*
+       * So nha truoc day la `absolute -bottom-4` nen no thong xuong tang tret
+       * va de len badge MENU cua tiem. Gio no la mot flex item nam han trong
+       * bang hieu, khong con cho de cham nhau.
+       */}
       <div
-        className="relative mx-0 flex h-[38px] items-center justify-center px-3 shadow-sm"
+        className="relative mx-0 flex h-[40px] items-center gap-1.5 px-2"
         style={{
           backgroundColor: isBuilt ? pal.signBg : '#5A5048',
-          border: '2px solid #3E2A1B',
+          borderBottom: `3px solid ${shade(isBuilt ? pal.signBg : '#5A5048', 0.6)}`,
           textShadow: isNight ? '0 0 8px rgba(255,255,255,0.8)' : 'none',
         }}
       >
-        {/* Số nhà — huy hiệu xanh dương cổ điển */}
         <span
-          className="absolute -bottom-4 left-2 z-10 rounded-[3px] border border-white px-1.5 py-0.5 text-[9px] font-black text-white shadow"
+          className="shrink-0 px-1.5 py-0.5 text-[9px] font-black leading-none text-white"
           style={{ backgroundColor: '#1D4ED8' }}
         >
-          Số {houseNumber}
+          {houseNumber}
         </span>
 
-        <span className="truncate text-[11px] font-black tracking-widest text-white uppercase">
+        <span className="min-w-0 flex-1 truncate text-center text-[11px] font-black tracking-widest text-white uppercase">
           {isBuilt ? shopTitle : 'MẶT TIỀN TRỐNG'}
         </span>
 
         {isBuilt && (
-          <span className="ml-1.5 shrink-0 flex items-center rounded px-1.5 py-0.5 text-[9px] font-black text-yellow-300"
-            style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+          <span className="shrink-0 flex items-center px-1.5 py-0.5 text-[9px] font-black leading-none text-yellow-300"
+            style={{ backgroundColor: shade(pal.signBg, 0.64) }}>
             C.{level}
             {Array.from({ length: Math.min(starRating, 3) }).map((_, i) => (
               <Star key={i} size={8} className="ml-0.5 fill-yellow-300 text-yellow-300" />
@@ -292,8 +305,9 @@ export default function ShophouseFacade({
         className="relative mx-0 mb-0 overflow-hidden"
         style={{
           height: 120,
-          border: '2px solid #3E2A1B',
-          borderTop: 'none',
+          borderLeft: `3px solid ${shade(pal.wall, 0.62)}`,
+          borderRight: `3px solid ${shade(pal.wall, 0.62)}`,
+          borderBottom: `4px solid ${shade(pal.wall, 0.5)}`,
           backgroundColor: isBuilt
             ? (isNight ? '#2C2218' : '#FAF6EE')
             : (isNight ? '#2A2018' : '#E8E0CC'),
@@ -307,7 +321,7 @@ export default function ShophouseFacade({
                 <div className="flex flex-col gap-1">
                   <div className="flex items-end gap-2">
                     {/* Bình bơm */}
-                    <div className="h-9 w-5 rounded-t border border-black/50 bg-red-600 flex flex-col items-center justify-between py-0.5">
+                    <div className="h-9 w-5 rounded-t bg-red-600 flex flex-col items-center justify-between py-0.5">
                       <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
                       <span className="text-[5px] font-bold text-white">AIR</span>
                     </div>
@@ -325,8 +339,8 @@ export default function ShophouseFacade({
                 </div>
                 {/* Thợ */}
                 <div className="flex flex-col items-center mb-1 mr-1">
-                  <div className="h-5 w-5 rounded-full border-2 border-[#3E2A1B] bg-[#FDE6D2]" />
-                  <div className="h-8 w-6 rounded-t border-2 border-[#3E2A1B] bg-[#4D8B46] flex items-center justify-center">
+                  <div className="h-5 w-5 rounded-full bg-[#FDE6D2]" />
+                  <div className="h-8 w-6 rounded-t bg-[#4D8B46] flex items-center justify-center">
                     <span className="text-[7px] text-white font-bold">HẢI</span>
                   </div>
                 </div>
@@ -347,8 +361,8 @@ export default function ShophouseFacade({
                 </div>
                 <div className="flex items-end justify-between px-1">
                   <div className="flex flex-col items-center">
-                    <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
-                    <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#EC4899]" />
+                    <div className="h-4 w-4 rounded-full bg-[#FDE6D2]" />
+                    <div className="h-6 w-5 rounded-t bg-[#EC4899]" />
                   </div>
                   <div className="flex items-center gap-1 rounded border border-[#D82D8B] bg-[#FDF2F8] px-1.5 py-0.5 text-[8px] font-black text-[#D82D8B]">
                     <span>Loa QR</span>
@@ -379,8 +393,8 @@ export default function ShophouseFacade({
                       </div>
                     </div>
                     <div className="flex flex-col items-center">
-                      <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
-                      <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#78350F]" />
+                      <div className="h-4 w-4 rounded-full bg-[#FDE6D2]" />
+                      <div className="h-6 w-5 rounded-t bg-[#78350F]" />
                     </div>
                   </div>
                   <div className="rounded border border-emerald-500 bg-emerald-100 px-1.5 py-0.5 text-[8px] font-black text-emerald-800">
@@ -452,8 +466,8 @@ export default function ShophouseFacade({
                       <span className="text-[6px] font-black text-amber-900">NẾP</span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
-                      <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#9A3412]" />
+                      <div className="h-4 w-4 rounded-full bg-[#FDE6D2]" />
+                      <div className="h-6 w-5 rounded-t bg-[#9A3412]" />
                     </div>
                   </div>
                   <span className="text-[7px] font-bold text-amber-950">GIAO TẬN NƠI</span>
@@ -475,8 +489,8 @@ export default function ShophouseFacade({
                       <div className="h-2 w-3 bg-white border border-slate-400 ml-auto" />
                     </div>
                     <div className="flex flex-col items-center">
-                      <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
-                      <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#059669]" />
+                      <div className="h-4 w-4 rounded-full bg-[#FDE6D2]" />
+                      <div className="h-6 w-5 rounded-t bg-[#059669]" />
                     </div>
                   </div>
                   <div className="rounded bg-emerald-600 px-1.5 py-0.5 text-[8px] font-black text-white">IN NHANH</div>
