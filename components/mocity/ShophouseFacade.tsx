@@ -41,6 +41,17 @@ export interface ShophouseFacadeProps {
   onOpenBuild?: () => void;
 }
 
+/* Bảng màu nhà ống theo kiểu minh họa phố Việt Nam */
+const PALETTE: Record<ShopType, { wall: string; wall2: string; stripe: string; signBg: string; roofBg: string }> = {
+  TIRE_SHOP:  { wall: '#F2EAD3', wall2: '#EDE0C0', stripe: '#C9A96A', signBg: '#8B6318', roofBg: '#E8D9B8' },
+  GROCERY:    { wall: '#EEC830', wall2: '#E0B818', stripe: '#8B6200', signBg: '#5C3D08', roofBg: '#D4A810' },
+  CAFE:       { wall: '#FAF3E4', wall2: '#F4E8D0', stripe: '#A07840', signBg: '#6B3C18', roofBg: '#EDD9B8' },
+  RICE_SHOP:  { wall: '#FDEBD0', wall2: '#F5D8B4', stripe: '#9A6030', signBg: '#6B3010', roofBg: '#F0C898' },
+  CINEMA:     { wall: '#F5DCF0', wall2: '#ECC8E4', stripe: '#7A2868', signBg: '#5A1048', roofBg: '#E0B0D4' },
+  FINTECH:    { wall: '#D8EAF8', wall2: '#C0D8F0', stripe: '#1848A8', signBg: '#0C2878', roofBg: '#B8CFF0' },
+  STATIONERY: { wall: '#ECF1F8', wall2: '#DDE7F2', stripe: '#2C60A0', signBg: '#183C80', roofBg: '#C8D8EC' },
+};
+
 export default function ShophouseFacade({
   shopType,
   houseNumber,
@@ -51,263 +62,223 @@ export default function ShophouseFacade({
   starRating = 1,
   yieldPerSec = 0,
   timeOfDay = 'DAY',
-  wallBg,
-  wallHatch,
-  signBg,
   onOpenBuild,
 }: ShophouseFacadeProps) {
   const isNight = timeOfDay === 'NIGHT';
   const isSunset = timeOfDay === 'SUNSET';
+  const pal = PALETTE[shopType];
 
-  // Màu cửa sổ phản chiếu theo thời gian
-  const windowGlow = isNight
-    ? 'bg-[#FEF08A] shadow-[inset_0_0_14px_rgba(253,224,71,0.9),0_0_12px_rgba(254,240,138,0.7)]'
+  /* Màu kính cửa sổ theo giờ */
+  const winFill = isNight
+    ? '#FEF08A'
     : isSunset
-      ? 'bg-[#FDBA74] shadow-[inset_0_0_10px_rgba(249,115,22,0.4)]'
-      : 'bg-[#FAF8F5]';
+      ? '#FDBA74'
+      : '#BDD8E8';
 
-  const windowPaneBorder = isNight ? 'border-[#854D0E]/60' : 'border-[#5A4A3F]/50';
+  const winShadow = isNight
+    ? '0 0 10px rgba(254,240,138,0.8), inset 0 0 12px rgba(253,224,71,0.9)'
+    : isSunset
+      ? 'inset 0 0 8px rgba(249,115,22,0.35)'
+      : 'none';
+
+  /* Màu tường ban đêm tối hơn một chút */
+  const wallColor = isNight
+    ? `color-mix(in srgb, ${pal.wall} 60%, #1C1A14)`
+    : pal.wall;
+  const wall2Color = isNight
+    ? `color-mix(in srgb, ${pal.wall2} 55%, #1C1A14)`
+    : pal.wall2;
+
+  /* Component cửa sổ tái sử dụng */
+  const Win = ({ wide = false, children }: { wide?: boolean; children?: React.ReactNode }) => (
+    <div
+      className="relative shrink-0 overflow-hidden"
+      style={{
+        width: wide ? 76 : 58,
+        height: wide ? 58 : 48,
+        background: winFill,
+        border: '2.5px solid #3E2A1B',
+        boxShadow: winShadow,
+        borderRadius: 2,
+      }}
+    >
+      {/* Khung chữ thập */}
+      <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2" style={{ background: '#3E2A1B', opacity: 0.5 }} />
+      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2" style={{ background: '#3E2A1B', opacity: 0.5 }} />
+      {children}
+    </div>
+  );
 
   return (
-    <div className="relative w-full flex flex-col justify-end">
-      {/* ── 1. MÁI NHÀ / SÂN THƯỢNG ĐẶC SẮC (ROOFTOP) ──────────────── */}
-      <div className="relative h-10 w-full flex items-end justify-between px-2 overflow-visible">
-        {/* CAFE: Dây đèn tròn sân thượng + Dàn hoa giấy rủ */}
+    <div className="relative w-full flex flex-col" style={{ background: wallColor }}>
+
+      {/* ═══ 1. SÂN THƯỢNG / PARAPET ═══════════════════════════════════ */}
+      <div
+        className="relative w-full flex items-end justify-between px-2 overflow-visible"
+        style={{ height: 44, background: pal.roofBg, borderBottom: `2px solid #3E2A1B` }}
+      >
+        {/* Viền gờ cornice trên cùng */}
+        <div className="absolute top-0 inset-x-0 h-2" style={{ background: pal.stripe }} />
+
+        {/* Chi tiết sân thượng theo shop type */}
         {shopType === 'CAFE' && (
-          <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pointer-events-none">
-            {/* Dây cờ đuôi nheo & đèn tròn */}
-            <div className="flex w-full justify-around items-center px-1 mb-1">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className={`h-2.5 w-2.5 rounded-full border border-black/30 transition-colors ${
-                    isNight
-                      ? 'bg-amber-300 shadow-[0_0_8px_#FDE047]'
-                      : i % 2 === 0
-                        ? 'bg-pink-400'
-                        : 'bg-amber-400'
-                  }`}
-                />
-              ))}
-            </div>
-            {/* Hoa giấy buông rủ */}
-            <div className="flex w-full justify-between px-2">
-              <div className="h-3 w-8 rounded-b-full bg-pink-500/80 border border-[#4A3B32]" />
-              <div className="h-4 w-10 rounded-b-full bg-purple-500/80 border border-[#4A3B32]" />
-            </div>
+          <div className="absolute inset-x-2 top-3 flex justify-around items-center">
+            {[0,1,2,3,4,5].map(i => (
+              <div key={i} className="h-3 w-3 rounded-full border border-black/25"
+                style={{ background: isNight ? '#FDE047' : i%2===0 ? '#EC4899' : '#F59E0B',
+                  boxShadow: isNight ? '0 0 6px #FDE047' : 'none' }} />
+            ))}
           </div>
         )}
-
-        {/* CINEMA: Mái vòm Art Deco + Chaser Marquee */}
         {shopType === 'CINEMA' && (
-          <div className="absolute -top-3 inset-x-2 flex flex-col items-center">
-            <div
-              className={`rounded-t-xl border-2 border-[#5A4A3F] px-3 py-1 flex items-center gap-1.5 shadow ${
-                isNight
-                  ? 'bg-[#1E1B4B] border-pink-400 shadow-[0_0_14px_rgba(236,72,153,0.8)]'
-                  : 'bg-[#831843]'
-              }`}
-            >
-              <Clapperboard size={12} className="text-pink-300 shrink-0" />
-              <span className="text-[9px] font-black text-white tracking-widest uppercase">
-                CINEMA
-              </span>
+          <div className="absolute inset-x-4 top-2 flex justify-center">
+            <div className="flex items-center gap-1.5 rounded border border-[#3E2A1B] px-3 py-0.5"
+              style={{ background: isNight ? '#1E1B4B' : '#831843',
+                boxShadow: isNight ? '0 0 12px rgba(236,72,153,0.9)' : 'none' }}>
+              <Clapperboard size={10} className="text-pink-300 shrink-0" />
+              <span className="text-[8px] font-black text-white tracking-widest">CINEMA</span>
             </div>
           </div>
         )}
-
-        {/* FINTECH: Cột ăng-ten viễn thông & Bồn nước inox Tân Á */}
         {shopType === 'FINTECH' && (
-          <div className="absolute -top-4 inset-x-2 flex items-end justify-between pointer-events-none">
-            {/* Cột ăng-ten có đèn đỏ đỉnh */}
+          <>
             <div className="flex flex-col items-center ml-2">
               <div className="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping" />
-              <div className="h-6 w-0.5 bg-[#475569]" />
+              <div className="h-5 w-0.5 bg-slate-500" />
             </div>
-            {/* Bồn nước Inox nằm ngang */}
-            <div className="flex flex-col items-center mr-2">
-              <div className="h-4 w-11 rounded-full border border-slate-600 bg-gradient-to-b from-slate-200 via-white to-slate-400 flex items-center justify-center shadow-sm">
-                <span className="text-[6px] font-black text-blue-900 tracking-tighter">TÂN Á</span>
-              </div>
-              <div className="flex gap-4">
-                <div className="h-2 w-0.5 bg-slate-700" />
-                <div className="h-2 w-0.5 bg-slate-700" />
-              </div>
+            <div className="h-4 w-12 rounded-full border border-slate-500 bg-gradient-to-b from-slate-200 to-slate-400 flex items-center justify-center mr-2">
+              <span className="text-[6px] font-black text-blue-900">TÂN Á</span>
             </div>
-          </div>
+          </>
         )}
-
-        {/* RICE_SHOP: Mái ngói đỏ dốc truyền thống + Lồng chim tre */}
         {shopType === 'RICE_SHOP' && (
-          <div className="absolute -top-2 inset-x-0 flex justify-between items-end pointer-events-none">
-            <div
-              className="h-4 w-full border-t-2 border-b border-[#5A4A3F]"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(45deg, #B91C1C 0px, #B91C1C 5px, #DC2626 5px, #DC2626 10px)',
-              }}
-            />
-            {/* Lồng chim treo */}
-            <div className="absolute right-4 top-2 flex flex-col items-center">
-              <div className="h-4 w-3.5 rounded-t-full border border-[#78350F] bg-amber-100/70 flex items-center justify-center">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]" />
-              </div>
-            </div>
-          </div>
+          <div className="absolute top-2 inset-x-1 h-3 border-t border-[#3E2A1B]"
+            style={{ background: 'repeating-linear-gradient(45deg, #B91C1C 0px, #B91C1C 4px, #DC2626 4px, #DC2626 8px)' }} />
         )}
-
-        {/* TIRE_SHOP: Khung sắt chuồng cọp chống trộm + Bồn nước */}
-        {shopType === 'TIRE_SHOP' && (
-          <div className="absolute -top-3 inset-x-2 flex items-end justify-between pointer-events-none">
-            {/* Khung chuồng cọp sắt hộp */}
-            <div
-              className="h-5 w-20 border-2 border-slate-600 bg-transparent"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(90deg, #475569 0px, #475569 1px, transparent 1px, transparent 6px)',
-              }}
-            />
-            <div className="h-4 w-10 rounded-full border border-slate-500 bg-slate-300 flex items-center justify-center">
-              <span className="text-[5px] font-bold text-slate-700">INOX</span>
-            </div>
-          </div>
-        )}
-
-        {/* GROCERY: Mái tôn xanh ngọc lượn sóng + Giàn cây ớt */}
         {shopType === 'GROCERY' && (
-          <div className="absolute -top-2.5 inset-x-1 flex items-end justify-between pointer-events-none">
-            <div
-              className="h-3 w-full border-t-2 border-[#5A4A3F] bg-[#0D9488]"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(90deg, #14B8A6 0px, #14B8A6 4px, #0F766E 4px, #0F766E 8px)',
-              }}
-            />
-          </div>
+          <div className="absolute top-2 inset-x-1 h-2.5 border-t border-[#3E2A1B]"
+            style={{ background: 'repeating-linear-gradient(90deg, #0D9488 0,#0D9488 4px,#0F766E 4px,#0F766E 8px)' }} />
         )}
-
-        {/* STATIONERY: Bảng hiệu nhô dọc "PHOTOCOPY" */}
+        {shopType === 'TIRE_SHOP' && (
+          <div className="absolute top-3 right-2 h-5 w-16 border-2 border-slate-500 bg-transparent"
+            style={{ backgroundImage: 'repeating-linear-gradient(90deg,#475569 0,#475569 1px,transparent 1px,transparent 6px)' }} />
+        )}
         {shopType === 'STATIONERY' && (
-          <div className="absolute -top-4 right-3 flex flex-col items-center pointer-events-none">
-            <div className="rounded border border-black/40 bg-blue-700 px-1 py-0.5 text-[7px] font-black text-white shadow">
-              IN MÀU
-            </div>
+          <div className="absolute top-2 right-3 rounded border border-black/40 bg-blue-700 px-1 py-0.5 text-[7px] font-black text-white shadow">
+            IN MÀU
           </div>
         )}
 
-        {/* Gờ tường sân thượng chung */}
-        <div className="h-2.5 w-full border-b-2 border-[#5A4A3F] bg-[#D5CBB8]" />
+        {/* Gờ parapet dưới */}
+        <div className="absolute bottom-0 inset-x-0 h-3"
+          style={{ background: pal.stripe, borderTop: '1.5px solid #3E2A1B' }} />
       </div>
 
-      {/* ── 2. TẦNG 3: CỬA SỔ & CHI TIẾT ĐẶC TRƯNG ────────────────── */}
-      <div className="relative flex justify-around px-4 pt-3 pb-2.5 border-b border-[#5A4A3F]/30">
-        {/* Cửa sổ 1 */}
-        <div
-          className={`h-[52px] w-[68px] rounded-[2px] border-2 border-[#5A4A3F] grid grid-cols-2 overflow-hidden transition-all duration-300 ${windowGlow}`}
-        >
-          <div className={`border-r ${windowPaneBorder} flex items-center justify-center`}>
-            {isNight && <span className="h-1.5 w-1.5 rounded-full bg-[#FDE68A] opacity-90" />}
-          </div>
-          <div className="flex items-center justify-center">
-            {shopType === 'CAFE' && <Coffee size={10} className="shrink-0 text-[#78350F]/60" />}
-          </div>
-        </div>
-
-        {/* Cửa sổ 2 */}
-        <div
-          className={`h-[52px] w-[68px] rounded-[2px] border-2 border-[#5A4A3F] grid grid-cols-2 overflow-hidden transition-all duration-300 ${windowGlow}`}
-        >
-          <div className={`border-r ${windowPaneBorder}`} />
-          <div className="flex items-center justify-center">
-            {shopType === 'STATIONERY' && <BookOpen size={9} className="text-blue-800/60" />}
-          </div>
-        </div>
-
-        {/* Cục nóng điều hòa (gắn góc phải) */}
-        <div className="absolute right-1.5 bottom-1 h-4 w-6 rounded-[2px] border border-[#5A4A3F] bg-white flex items-center justify-center shadow-sm">
-          <div
-            className="h-3 w-3 rounded-full border border-[#5A4A3F] bg-slate-100 flex items-center justify-center"
-            style={{ animation: 'spin 3s linear infinite' }}
-          >
-            <div className="h-0.5 w-2 bg-slate-600" />
+      {/* ═══ 2. TẦNG 3 — CỬA SỔ ════════════════════════════════════════ */}
+      <div
+        className="relative flex items-center justify-around px-5 py-3"
+        style={{ background: wallColor, borderBottom: `1.5px solid #3E2A1B30` }}
+      >
+        <Win>
+          {shopType === 'CAFE' && isNight && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-60">
+              <Coffee size={10} className="text-amber-900" />
+            </div>
+          )}
+        </Win>
+        <Win>
+          {shopType === 'STATIONERY' && (
+            <div className="absolute inset-0 flex items-center justify-center opacity-50">
+              <BookOpen size={9} className="text-blue-900" />
+            </div>
+          )}
+        </Win>
+        {/* Điều hòa cục nóng góc phải */}
+        <div className="absolute right-2 bottom-2 h-4 w-7 rounded-[2px] border border-[#3E2A1B] bg-white/80 flex items-center justify-center shadow-sm">
+          <div className="h-3 w-3 rounded-full border border-[#3E2A1B] bg-slate-100 flex items-center justify-center animate-spin"
+            style={{ animationDuration: '4s' }}>
+            <div className="h-px w-2 bg-slate-500" />
           </div>
         </div>
       </div>
 
-      {/* ── 3. TẦNG 2: BAN CÔNG & NỘI THẤT VINTAGE ──────────────────── */}
-      <div className="relative flex flex-col justify-end px-3.5 pt-2.5 pb-1">
-        {/* Khung cửa ban công */}
-        <div className="flex justify-around items-end">
-          {/* Cửa sổ vòm hoặc cửa kính ban công */}
-          <div
-            className={`h-14 w-16 border-2 border-[#5A4A3F] rounded-t-sm flex items-center justify-center transition-all ${windowGlow}`}
-          >
-            {shopType === 'CINEMA' ? (
-              <div className="rounded bg-pink-900/80 px-1 py-0.5 text-[7px] font-black text-pink-200">
-                POSTER
-              </div>
-            ) : shopType === 'FINTECH' ? (
-              <Tv size={12} className="text-cyan-800" />
-            ) : null}
-          </div>
+      {/* ═══ 3. TẦNG 2 — BAN CÔNG ═══════════════════════════════════════ */}
+      <div
+        className="relative flex items-end justify-around gap-2 px-4 pt-2"
+        style={{ background: wall2Color }}
+      >
+        {/* Cửa sổ rộng tầng 2 */}
+        <Win wide>
+          {shopType === 'CINEMA' && (
+            <div className="absolute inset-1 flex items-center justify-center rounded bg-pink-900/80">
+              <span className="text-[7px] font-black text-pink-200 rotate-0">POSTER</span>
+            </div>
+          )}
+          {shopType === 'FINTECH' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Tv size={14} className="text-cyan-800" />
+            </div>
+          )}
+        </Win>
+        <Win>
+          {/* Rèm cửa nhẹ */}
+          <div className="absolute bottom-0 inset-x-0 h-1/3 border-t border-[#3E2A1B]/20"
+            style={{ background: 'rgba(255,255,255,0.35)' }} />
+        </Win>
 
-          <div
-            className={`h-16 w-12 border-2 border-[#5A4A3F] rounded-t-sm flex items-end justify-center transition-all ${windowGlow}`}
-          >
-            {/* Rèm vải hoặc cửa chớp */}
-            <div className="h-8 w-full bg-slate-200/50 border-t border-[#5A4A3F]/30" />
-          </div>
+        {/* Chậu hoa ban công */}
+        <div className="absolute left-3 bottom-1 h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#5A8A3C] flex items-center justify-center">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#EC4899]" />
         </div>
+        <div className="absolute right-2 bottom-1 h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#5A8A3C]" />
+      </div>
 
-        {/* Lan can sắt mỹ thuật tầng 2 */}
-        <div
-          className="mt-[-6px] h-6 w-full border-2 border-[#3E352F] relative flex items-center justify-around overflow-hidden"
-          style={{
-            backgroundImage:
-              'repeating-linear-gradient(90deg, #3E352F 0px, #3E352F 2px, transparent 2px, transparent 6px)',
-          }}
-        >
-          {/* Dây phơi quần áo cho tiệm Gạo/Sửa xe */}
+      {/* Bản lan can ban công — sàn bê tông + thanh ngang */}
+      <div style={{ background: wall2Color, paddingBottom: 2 }}>
+        {/* Sàn slab bê tông */}
+        <div className="w-full" style={{ height: 8, background: '#D5C9A8', borderTop: '2px solid #3E2A1B', borderBottom: '1.5px solid #3E2A1B80' }} />
+        {/* Thanh lan can ngang */}
+        <div className="relative mx-1" style={{ height: 22, border: '2px solid #3E2A1B', background: 'transparent' }}>
+          {/* Các thanh dọc */}
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="absolute inset-y-0 w-px"
+              style={{ left: `${10 + i * 9}%`, background: '#3E2A1B' }} />
+          ))}
+          {/* Dây phơi quần áo */}
           {(shopType === 'RICE_SHOP' || shopType === 'TIRE_SHOP') && (
-            <div className="absolute inset-x-2 top-0.5 flex gap-2 pointer-events-none">
-              <div className="h-3 w-2.5 bg-rose-500 rounded-b-sm" />
-              <div className="h-3.5 w-3 bg-blue-500 rounded-b-sm" />
-              <div className="h-2.5 w-2 bg-yellow-400 rounded-b-sm" />
+            <div className="absolute inset-x-2 top-1 flex gap-1.5 pointer-events-none">
+              <div className="h-3 w-2 rounded-b-sm bg-rose-500" />
+              <div className="h-3.5 w-2.5 rounded-b-sm bg-blue-500" />
+              <div className="h-2.5 w-2 rounded-b-sm bg-yellow-400" />
             </div>
           )}
         </div>
-
-        {/* Chậu hoa / cây cảnh ban công */}
-        <div className="absolute bottom-2 left-4 h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#689F4D] flex items-center justify-center">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#EC4899]" />
-        </div>
-        <div className="absolute bottom-2 right-4 h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#689F4D] flex items-center justify-center">
-          <span className="h-2 w-0.5 rounded-full bg-[#15803D]" />
-        </div>
       </div>
 
-      {/* ── 4. BẢNG HIỆU TẦNG TRỆT (SIGNBOARD) ────────────────────── */}
+      {/* ═══ 4. BẢNG HIỆU ════════════════════════════════════════════════ */}
       <div
-        className="relative mx-1.5 mt-1 flex h-10 items-center justify-center border-2 border-[#5A4A3F] px-2.5 shadow-sm transition-all"
+        className="relative mx-0 flex h-[38px] items-center justify-center px-3 shadow-sm"
         style={{
-          background: isBuilt ? signBg : '#78716C',
-          color: '#FFFFFF',
-          textShadow: isNight ? '0 0 10px rgba(255,255,255,0.9), 0 0 20px currentColor' : 'none',
+          background: isBuilt ? pal.signBg : '#5A5048',
+          border: '2px solid #3E2A1B',
+          textShadow: isNight ? '0 0 8px rgba(255,255,255,0.8)' : 'none',
         }}
       >
-        {/* Biển số nhà xanh dương cổ điển ("Số 2", "Số 4"...) */}
-        <span className="absolute -bottom-4 left-1.5 z-10 rounded-[3px] border border-white bg-[#1D4ED8] px-1.5 py-0.5 text-[9px] font-black text-white shadow">
+        {/* Số nhà — huy hiệu xanh dương cổ điển */}
+        <span
+          className="absolute -bottom-4 left-2 z-10 rounded-[3px] border border-white px-1.5 py-0.5 text-[9px] font-black text-white shadow"
+          style={{ background: '#1D4ED8' }}
+        >
           Số {houseNumber}
         </span>
 
-        {/* Tiêu đề tiệm */}
-        <span className="truncate text-xs font-black tracking-wider uppercase">
+        <span className="truncate text-[11px] font-black tracking-widest text-white uppercase">
           {isBuilt ? shopTitle : 'MẶT TIỀN TRỐNG'}
         </span>
 
-        {/* Cấp độ & Sao của tiệm */}
         {isBuilt && (
-          <span className="ml-1.5 flex items-center rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-black text-yellow-300">
+          <span className="ml-1.5 shrink-0 flex items-center rounded px-1.5 py-0.5 text-[9px] font-black text-yellow-300"
+            style={{ background: 'rgba(0,0,0,0.35)' }}>
             C.{level}
             {Array.from({ length: Math.min(starRating, 3) }).map((_, i) => (
               <Star key={i} size={8} className="ml-0.5 fill-yellow-300 text-yellow-300" />
@@ -316,71 +287,64 @@ export default function ShophouseFacade({
         )}
       </div>
 
-      {/* ── 5. MẶT TIỀN TẦNG TRỆT (124PX CAO) ──────────────────────── */}
+      {/* ═══ 5. MẶT TIỀN TẦNG TRỆT (GROUND FLOOR) ══════════════════════ */}
       <div
-        className={`relative mx-1.5 mt-1.5 mb-0 h-[124px] border-2 border-b-0 border-[#5A4A3F] overflow-hidden transition-colors ${
-          isNight ? 'bg-[#3A3026]' : 'bg-[#F7F4EB]'
-        }`}
+        className="relative mx-0 mb-0 overflow-hidden"
+        style={{
+          height: 120,
+          border: '2px solid #3E2A1B',
+          borderTop: 'none',
+          background: isBuilt
+            ? (isNight ? '#2C2218' : '#FAF6EE')
+            : (isNight ? '#2A2018' : '#E8E0CC'),
+        }}
       >
         {isBuilt ? (
           <>
-            {/* 1. TIỆM SỬA XE MÁY & VÁ VỎ */}
+            {/* TIỆM SỬA XE MÁY */}
             {shopType === 'TIRE_SHOP' && (
-              <div className="flex h-full w-full items-end justify-between p-2.5 bg-[#E5E5E0]">
-                {/* Chồng lốp xe Michelin đen & Bình bơm hơi đỏ */}
+              <div className="flex h-full w-full items-end justify-between px-3 pb-2" style={{ background: isNight ? '#222018' : '#EDEBE0' }}>
                 <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    {/* Bình bơm hơi đỏ */}
-                    <div className="h-9 w-5 rounded-t-sm border border-black/50 bg-red-600 flex flex-col items-center justify-between py-0.5">
+                  <div className="flex items-end gap-2">
+                    {/* Bình bơm */}
+                    <div className="h-9 w-5 rounded-t border border-black/50 bg-red-600 flex flex-col items-center justify-between py-0.5">
                       <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
                       <span className="text-[5px] font-bold text-white">AIR</span>
                     </div>
-                    {/* Chồng lốp */}
+                    {/* 3 lốp xe */}
                     <div className="flex flex-col gap-0.5">
-                      <div className="h-4 w-8 rounded-full border-[3px] border-[#27272A] bg-[#52525B]" />
-                      <div className="h-4 w-8 rounded-full border-[3px] border-[#27272A] bg-[#52525B]" />
-                      <div className="h-4 w-8 rounded-full border-[3px] border-[#27272A] bg-[#52525B]" />
+                      {[0,1,2].map(i => (
+                        <div key={i} className="h-4 w-8 rounded-full border-[3px] border-[#1C1C1C] bg-[#3A3A3A]" />
+                      ))}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Wrench size={10} className="text-slate-700" />
-                    <span className="text-[7px] font-bold text-slate-800">VÁ KHÔNG RUỘT</span>
+                    <Wrench size={9} className="text-slate-600" />
+                    <span className="text-[7px] font-bold" style={{ color: isNight ? '#AAA' : '#444' }}>VÁ KHÔNG RUỘT</span>
                   </div>
                 </div>
-
-                {/* Thợ sửa xe & xe máy */}
-                <div className="flex flex-col items-center mr-2">
-                  <div className="h-5 w-5 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
-                  <div className="h-8 w-6 rounded-t border border-[#3E2A1B] bg-[#4D8B46] flex items-center justify-center">
+                {/* Thợ */}
+                <div className="flex flex-col items-center mb-1 mr-1">
+                  <div className="h-5 w-5 rounded-full border-2 border-[#3E2A1B] bg-[#FDE6D2]" />
+                  <div className="h-8 w-6 rounded-t border-2 border-[#3E2A1B] bg-[#4D8B46] flex items-center justify-center">
                     <span className="text-[7px] text-white font-bold">HẢI</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 2. TẠP HÓA CÔ TƯ */}
+            {/* TẠP HÓA CÔ TƯ */}
             {shopType === 'GROCERY' && (
-              <div className="flex h-full w-full flex-col justify-between p-1.5 bg-[#FFFDF9]">
-                {/* Mái hiên sọc đỏ trắng vươn ra */}
-                <div
-                  className="h-3 w-full border-b border-[#78533D]"
-                  style={{
-                    backgroundImage:
-                      'repeating-linear-gradient(90deg, #DC2626 0px, #DC2626 8px, #FFFFFF 8px, #FFFFFF 16px)',
-                  }}
-                />
-
-                {/* Kệ hàng nhiều màu */}
-                <div className="grid grid-cols-6 gap-1 border-b-2 border-[#78533D] pb-1">
-                  <div className="h-3.5 bg-[#EF4444] rounded-[1px]" />
-                  <div className="h-3.5 bg-[#F59E0B] rounded-[1px]" />
-                  <div className="h-3.5 bg-[#10B981] rounded-[1px]" />
-                  <div className="h-3.5 bg-[#3B82F6] rounded-[1px]" />
-                  <div className="h-3.5 bg-[#EC4899] rounded-[1px]" />
-                  <div className="h-3.5 bg-[#8B5CF6] rounded-[1px]" />
+              <div className="flex h-full w-full flex-col justify-between px-2 pb-1 pt-1">
+                {/* Mái hiên sọc đỏ trắng */}
+                <div className="h-3 w-full rounded-b"
+                  style={{ backgroundImage: 'repeating-linear-gradient(90deg,#DC2626 0,#DC2626 8px,#FFF 8px,#FFF 16px)', borderBottom: '1px solid #78533D' }} />
+                {/* Kệ hàng */}
+                <div className="grid grid-cols-6 gap-1 pb-1" style={{ borderBottom: '2px solid #78533D' }}>
+                  {['#EF4444','#F59E0B','#10B981','#3B82F6','#EC4899','#8B5CF6'].map((c, i) => (
+                    <div key={i} className="h-4 rounded-[1px]" style={{ background: c }} />
+                  ))}
                 </div>
-
-                {/* Cô Tư & QR Loa */}
                 <div className="flex items-end justify-between px-1">
                   <div className="flex flex-col items-center">
                     <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
@@ -394,24 +358,19 @@ export default function ShophouseFacade({
               </div>
             )}
 
-            {/* 3. TRÀ SỮA & CÀ PHÊ MOMO */}
+            {/* CÀ PHÊ MOMO */}
             {shopType === 'CAFE' && (
-              <div className="flex h-full w-full flex-col justify-between p-2 bg-[#FEF7EE]">
-                {/* Quầy bar cafe & Menu bảng đen */}
-                <div className="flex items-center justify-between border-b border-amber-900/30 pb-1.5">
-                  <div className="rounded bg-[#1C1917] px-2 py-0.5 text-[7px] font-black text-amber-200">
+              <div className="flex h-full w-full flex-col justify-between p-2" style={{ background: isNight ? '#1E1208' : '#FEF7EE' }}>
+                <div className="flex items-center justify-between pb-1.5" style={{ borderBottom: '1px solid rgba(120,83,61,0.3)' }}>
+                  <div className="rounded px-2 py-0.5 text-[7px] font-black text-amber-200" style={{ background: '#1C1917' }}>
                     MENU · CÀ PHÊ MUỐI
                   </div>
                   <div className="flex items-center gap-1 text-[8px] font-black text-[#D82D8B]">
-                    <Coffee size={12} className="shrink-0" />
-                    <span>MoMo Cafe</span>
+                    <Coffee size={11} /><span>MoMo Cafe</span>
                   </div>
                 </div>
-
-                {/* Barista & Ly trà sữa khổng lồ */}
                 <div className="flex items-end justify-between px-1">
                   <div className="flex items-center gap-2">
-                    {/* Ly trà sữa */}
                     <div className="h-9 w-6 rounded-b-md border-2 border-[#5A4A3F] bg-amber-100 flex flex-col justify-between items-center p-0.5">
                       <div className="h-1 w-full bg-[#D82D8B]" />
                       <div className="flex gap-0.5">
@@ -419,178 +378,142 @@ export default function ShophouseFacade({
                         <span className="h-1 w-1 rounded-full bg-[#1C171A]" />
                       </div>
                     </div>
-                    {/* Barista */}
                     <div className="flex flex-col items-center">
                       <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
                       <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#78350F]" />
                     </div>
                   </div>
-                  {/* Doanh thu Xu */}
-                  <div className="rounded bg-emerald-100 border border-emerald-500 px-1.5 py-0.5 text-[8px] font-black text-emerald-800">
+                  <div className="rounded border border-emerald-500 bg-emerald-100 px-1.5 py-0.5 text-[8px] font-black text-emerald-800">
                     +{formatRate(yieldPerSec)}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 4. RẠP PHIM MOMO CINEMA */}
+            {/* RẠP PHIM CINEMA */}
             {shopType === 'CINEMA' && (
-              <div className="flex h-full w-full flex-col justify-between p-2 bg-[#2D1537] text-white">
-                {/* Đèn trần rạp phim */}
-                <div className="flex justify-around items-center border-b border-pink-500/40 pb-1">
+              <div className="flex h-full w-full flex-col justify-between p-2 text-white" style={{ background: '#2D1537' }}>
+                <div className="flex justify-around items-center pb-1" style={{ borderBottom: '1px solid rgba(236,72,153,0.4)' }}>
                   <span className="text-[8px] font-black text-pink-300">BẮP RANG BƠ VÀNG</span>
-                  <span className="text-[8px] font-black text-yellow-300">PHÒNG CHIẾU VIP</span>
+                  <span className="text-[8px] font-black text-yellow-300">PHÒNG VIP</span>
                 </div>
-
-                {/* Quầy bắp nước & Nhân viên rạp */}
                 <div className="flex items-end justify-between px-1">
                   <div className="flex items-center gap-2">
-                    {/* Hộp bắp rang bơ đỏ trắng */}
-                    <div
-                      className="h-8 w-6 border border-white/60 flex items-center justify-center font-black text-[7px]"
-                      style={{
-                        backgroundImage:
-                          'repeating-linear-gradient(90deg, #DC2626 0px, #DC2626 3px, #FFFFFF 3px, #FFFFFF 6px)',
-                      }}
-                    >
+                    <div className="h-8 w-6 border border-white/60 flex items-center justify-center font-black text-[7px]"
+                      style={{ backgroundImage: 'repeating-linear-gradient(90deg,#DC2626 0,#DC2626 3px,#FFF 3px,#FFF 6px)' }}>
                       <span className="bg-black/60 px-0.5 rounded text-white">CORN</span>
                     </div>
-                    {/* Nhân viên rạp áo vest hồng */}
                     <div className="flex flex-col items-center">
                       <div className="h-4 w-4 rounded-full border border-white bg-[#FDE6D2]" />
                       <div className="h-6 w-5 rounded-t border border-white bg-[#D82D8B]" />
                     </div>
                   </div>
-
-                  <div className="rounded bg-[#EB2F96] px-2 py-1 text-[8px] font-black text-white shadow">
-                    VÉ 2D/3D
-                  </div>
+                  <div className="rounded bg-[#EB2F96] px-2 py-1 text-[8px] font-black text-white shadow">VÉ 2D/3D</div>
                 </div>
               </div>
             )}
 
-            {/* 5. TRẠM TÚI THẦN TÀI & TÀI CHÍNH */}
+            {/* FINTECH / TÚI THẦN TÀI */}
             {shopType === 'FINTECH' && (
-              <div className="flex h-full w-full flex-col justify-between p-2 bg-[#0C4A6E] text-white">
-                {/* Màn hình điện tử LED lãi suất */}
-                <div className="flex items-center justify-between border-b border-sky-400/40 pb-1 bg-sky-950/60 px-1.5 py-0.5 rounded">
+              <div className="flex h-full w-full flex-col justify-between p-2 text-white" style={{ background: '#0C4A6E' }}>
+                <div className="flex items-center justify-between pb-1 px-1 rounded" style={{ borderBottom: '1px solid rgba(56,189,248,0.4)', background: 'rgba(12,26,48,0.6)' }}>
                   <span className="text-[7px] font-black text-yellow-300">LÃI SUẤT 6.1%/NĂM</span>
                   <ShieldCheck size={11} className="text-emerald-400 shrink-0" />
                 </div>
-
-                {/* Cây ATM MoMo & Giao dịch viên */}
                 <div className="flex items-end justify-between px-1">
                   <div className="flex items-center gap-2">
-                    {/* Cây ATM MoMo phát sáng */}
                     <div className="h-9 w-6 rounded border-2 border-sky-300 bg-sky-900 flex flex-col items-center justify-between p-0.5">
-                      <div className="h-2 w-4 bg-[#D82D8B] rounded-[1px] flex items-center justify-center text-[5px] font-black text-white">
-                        MoMo
-                      </div>
+                      <div className="h-2 w-4 rounded-[1px] flex items-center justify-center text-[5px] font-black text-white" style={{ background: '#D82D8B' }}>MoMo</div>
                       <div className="h-1.5 w-4 bg-emerald-400 animate-pulse" />
                     </div>
-                    {/* Chuyên viên tài chính */}
                     <div className="flex flex-col items-center">
                       <div className="h-4 w-4 rounded-full border border-white bg-[#FDE6D2]" />
                       <div className="h-6 w-5 rounded-t border border-white bg-[#1D4ED8]" />
                     </div>
                   </div>
-
-                  <div className="rounded bg-sky-500 px-1.5 py-0.5 text-[8px] font-black text-white">
-                    TÚI THẦN TÀI
-                  </div>
+                  <div className="rounded bg-sky-500 px-1.5 py-0.5 text-[8px] font-black text-white">TÚI THẦN TÀI</div>
                 </div>
               </div>
             )}
 
-            {/* 6. TIỆM GẠO TÁM THƠM */}
+            {/* TIỆM GẠO */}
             {shopType === 'RICE_SHOP' && (
-              <div className="flex h-full w-full flex-col justify-between p-2 bg-[#FEF9EE]">
-                {/* Biển hiệu gạo ST25 */}
-                <div className="flex items-center justify-between border-b border-amber-800/30 pb-1">
+              <div className="flex h-full w-full flex-col justify-between p-2" style={{ background: isNight ? '#1C140A' : '#FEF9EE' }}>
+                <div className="flex items-center justify-between pb-1" style={{ borderBottom: '1px solid rgba(120,83,61,0.3)' }}>
                   <span className="text-[7px] font-black text-amber-900">GẠO SẠCH ST25</span>
                   <span className="text-[7px] font-bold text-emerald-700">ĐÃ KIỂM ĐỊNH</span>
                 </div>
-
-                {/* Các bao tải gạo cắm cờ & Cân đĩa */}
                 <div className="flex items-end justify-between px-1">
                   <div className="flex items-end gap-1.5">
-                    {/* Bao tải gạo 1 */}
-                    <div className="h-7 w-6 rounded-t-sm border border-amber-800 bg-[#D4A373] flex flex-col items-center justify-center">
+                    <div className="h-7 w-6 rounded-t-sm border border-amber-800 bg-[#D4A373] flex items-center justify-center">
                       <span className="text-[6px] font-black text-white">ST25</span>
                     </div>
-                    {/* Bao tải gạo 2 */}
-                    <div className="h-6 w-5 rounded-t-sm border border-amber-800 bg-[#CCD5AE] flex flex-col items-center justify-center">
+                    <div className="h-6 w-5 rounded-t-sm border border-amber-800 bg-[#CCD5AE] flex items-center justify-center">
                       <span className="text-[6px] font-black text-amber-900">NẾP</span>
                     </div>
-                    {/* Bác chủ tiệm */}
                     <div className="flex flex-col items-center">
                       <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
                       <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#9A3412]" />
                     </div>
                   </div>
-
                   <span className="text-[7px] font-bold text-amber-950">GIAO TẬN NƠI</span>
                 </div>
               </div>
             )}
 
-            {/* 7. VĂN PHÒNG PHẨM & PHOTOCOPY */}
+            {/* VĂN PHÒNG PHẨM */}
             {shopType === 'STATIONERY' && (
-              <div className="flex h-full w-full flex-col justify-between p-2 bg-[#F0FDF4]">
-                {/* Bảng in ấn */}
-                <div className="flex items-center justify-between border-b border-emerald-800/30 pb-1">
+              <div className="flex h-full w-full flex-col justify-between p-2" style={{ background: isNight ? '#101820' : '#F0FDF4' }}>
+                <div className="flex items-center justify-between pb-1" style={{ borderBottom: '1px solid rgba(4,120,87,0.3)' }}>
                   <span className="text-[7px] font-black text-emerald-900">PHOTOCOPY · ĐÓNG SÁCH</span>
                   <span className="text-[7px] font-bold text-blue-700">A4/A3</span>
                 </div>
-
-                {/* Máy photocopy & Kệ sách */}
                 <div className="flex items-end justify-between px-1">
                   <div className="flex items-center gap-2">
-                    {/* Máy photocopy xám */}
-                    <div className="h-8 w-7 rounded-sm border-2 border-slate-600 bg-slate-300 flex flex-col justify-between p-0.5">
+                    <div className="h-8 w-7 rounded-sm border-2 border-slate-500 bg-slate-300 flex flex-col justify-between p-0.5">
                       <div className="h-1 w-full bg-slate-500" />
                       <div className="h-2 w-3 bg-white border border-slate-400 ml-auto" />
                     </div>
-                    {/* Nhân viên sinh viên */}
                     <div className="flex flex-col items-center">
                       <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2]" />
                       <div className="h-6 w-5 rounded-t border border-[#3E2A1B] bg-[#059669]" />
                     </div>
                   </div>
-
-                  <div className="rounded bg-emerald-600 px-1.5 py-0.5 text-[8px] font-black text-white">
-                    IN NHANH
-                  </div>
+                  <div className="rounded bg-emerald-600 px-1.5 py-0.5 text-[8px] font-black text-white">IN NHANH</div>
                 </div>
               </div>
             )}
           </>
         ) : (
-          /* CỬA SẮT KÉO XẾP NGANG VIỆT NAM (CHO Ô ĐẤT CHƯA XÂY TIỆM) */
+          /* CỬA SẮT KÉO XẾP — ô đất trống */
           <div
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenBuild?.();
-            }}
-            className="relative flex h-full w-full flex-col items-center justify-center bg-[#3F3A36] cursor-pointer group"
+            onClick={e => { e.stopPropagation(); onOpenBuild?.(); }}
+            className="relative flex h-full w-full flex-col items-center justify-center cursor-pointer group"
             style={{
-              backgroundImage:
-                'repeating-linear-gradient(90deg, #2E2A27 0px, #2E2A27 6px, #4A443F 6px, #4A443F 12px)',
+              background: isNight ? '#28221A' : '#D8CEBC',
+              backgroundImage: 'repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0,rgba(0,0,0,0.08) 12px,transparent 12px,transparent 24px), repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0,rgba(0,0,0,0.05) 1px,transparent 1px,transparent 14px), repeating-linear-gradient(-45deg, rgba(0,0,0,0.05) 0,rgba(0,0,0,0.05) 1px,transparent 1px,transparent 14px)',
             }}
           >
-            {/* Nan xếp chéo chữ X của cửa sắt kéo */}
-            <div
-              className="absolute inset-0 opacity-20 pointer-events-none"
+            {/* Xe máy đỏ lờ mờ sau cửa */}
+            <div className="mb-2 h-3 w-10 rounded-full border border-black/30 bg-red-600/50" />
+            <span
+              className="z-10 rounded-lg border px-3 py-1.5 text-[10px] font-black shadow transition-colors"
               style={{
-                backgroundImage:
-                  'repeating-linear-gradient(45deg, #FFF 0px, #FFF 1px, transparent 1px, transparent 12px), repeating-linear-gradient(-45deg, #FFF 0px, #FFF 1px, transparent 1px, transparent 12px)',
+                background: 'rgba(0,0,0,0.65)',
+                borderColor: '#D4A030',
+                color: '#D4A030',
               }}
-            />
-
-            {/* Chiếc xe máy đỏ dựng thấp thoáng sau lớp cửa sắt xếp */}
-            <div className="mb-1 h-2.5 w-9 rounded-full bg-[#DC2626]/75 border border-black/40" />
-
-            <span className="z-10 rounded-lg border border-amber-300 bg-black/80 px-2.5 py-1 text-[10px] font-black text-amber-300 shadow group-hover:bg-[#D82D8B] group-hover:text-white group-hover:border-white transition-colors">
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLSpanElement).style.background = '#D82D8B';
+                (e.currentTarget as HTMLSpanElement).style.borderColor = '#FFF';
+                (e.currentTarget as HTMLSpanElement).style.color = '#FFF';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLSpanElement).style.background = 'rgba(0,0,0,0.65)';
+                (e.currentTarget as HTMLSpanElement).style.borderColor = '#D4A030';
+                (e.currentTarget as HTMLSpanElement).style.color = '#D4A030';
+              }}
+            >
               {unlocked ? '+ Khai Trương Tiệm' : '○ Đất Chưa Mở'}
             </span>
           </div>
