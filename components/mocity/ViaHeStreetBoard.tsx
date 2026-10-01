@@ -453,7 +453,24 @@ export default function ViaHeStreetBoard({
           style={{
             transform: `scale(${cityScale})`,
             transformOrigin: 'bottom left',
+            /*
+             * `minWidth: 100%` chan khoang trong ben phai. `streetWidth` tinh
+             * theo so cot dat da mo, nen luc moi choi (4 cot ~ 1.364px) no hep
+             * hon man hinh va phan con lai lo ra nen troi, trong nhu loi render.
+             * Via he va long duong deu `w-full` nen chi can noi rong khung la
+             * mat dat keo dai het man hinh.
+             */
             width: streetWidth,
+            minWidth: '100%',
+            /*
+             * Phuong tien trong StreetTraffic chay bang keyframes toi +-2.240px,
+             * vuot ra ngoai `streetWidth` va tu tao them vung cuon rong tenh chi
+             * co nen troi - nhin nhu loi render. `clip` cat ngang tai mep pho
+             * ma van cho bong thoai cua cu dan tran len tren (khac `hidden`,
+             * vi `hidden` se ep truc con lai thanh `auto`).
+             */
+            overflowX: 'clip',
+            overflowY: 'visible',
           }}
         >
           {/* LỚP BẦU TRỜI & KHÍ QUYỂN (MÂY TRỜI BAN NGÀY / TRĂNG SAO BAN ĐÊM) */}
