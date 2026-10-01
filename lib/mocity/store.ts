@@ -890,6 +890,18 @@ export function eventsLeftToday(): number {
 
 /* ── Xay dung & Nang cap IDLE RPG ───────────────────────────────── */
 
+/**
+ * Tru Xu cho cac tuong tac nho le (vi du bieu cu dan tren pho).
+ * Tra ve false va khong doi state neu khong du.
+ */
+export function spendCoins(amount: number): boolean {
+  if (!Number.isFinite(amount) || amount <= 0) return false;
+  const wallet = spend(state, { coins: amount });
+  if (!wallet) return false;
+  setState({ ...state, coins: wallet.coins });
+  return true;
+}
+
 export function buyLand(): boolean {
   const growCol = state.unlockedRows >= state.unlockedCols;
   const cost: Currencies = {

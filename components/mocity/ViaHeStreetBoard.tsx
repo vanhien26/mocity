@@ -512,55 +512,65 @@ export default function ViaHeStreetBoard({
            * shrink-0 va giu dung chieu cao nen margin chi lam day day nha
            * tran khoi dinh khung va tach khoi via he.
            */}
-          <div className="relative z-10 flex items-end pl-6 pr-24">
-            {/* GÓC NGÃ TƯ & CON HẺM "Đ. MOCITY" BÊN TRÁI */}
-            <div className="relative mr-4 flex w-[210px] shrink-0 flex-col items-center justify-end">
-              <div className="flex w-full items-end justify-between">
-                {/* Nha goc hem - mang phang, canh phai la lop giay dam */}
-                <div
-                  className="relative h-[340px] w-[72px] shrink-0 rounded-t p-2 flex flex-col justify-between"
-                  style={{ backgroundColor: '#E8C2BA' }}
-                >
-                  <div className="absolute inset-y-0 right-0 w-[9px]" style={{ backgroundColor: '#CFA29A' }} />
-                  <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
-                  <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
-                  <div className="relative h-8 w-full" style={{ backgroundColor: '#E6B84F' }} />
-                </div>
+          <div className="relative z-10 flex items-end pl-0 pr-24">
+            {/*
+             * NGA TU "D. HOA SUA" BEN TRAI.
+             *
+             * Truoc day khoi nay la "goc nga tu & con hem" - gop hai thu khac
+             * nhau. Hem thi ke duoc giua hai nha, con nga tu phai la KHOANG HO
+             * de duong nhanh chay lui vao. Ket qua la nha dung chan ngang 108/132px
+             * mat cat duong nhanh, trong khi duoi chan van ke vach sang duong va
+             * dung den giao thong kieu nga tu.
+             *
+             * Gio khoang ho rong dung 132px va bat dau tu x=0, trung khit voi
+             * dai duong nhanh o lop via he va long duong. Nha lui sang phai
+             * thanh nha goc dung canh duong nhanh.
+             */}
+            <div className="relative mr-4 flex shrink-0 items-end">
+              {/* Duong nhanh lui dan vao trong - cac khung long nhau */}
+              <div className="relative h-[232px] w-[132px] shrink-0 overflow-hidden" style={{ backgroundColor: '#B9B4A8' }}>
+                <div className="absolute inset-x-[9%] bottom-0 top-[16%]" style={{ backgroundColor: '#A49F93' }} />
+                <div className="absolute inset-x-[20%] bottom-0 top-[30%]" style={{ backgroundColor: '#8D887D' }} />
+                <div className="absolute inset-x-[31%] bottom-0 top-[42%]" style={{ backgroundColor: '#767168' }} />
+                <div className="absolute inset-x-[41%] bottom-0 top-[53%]" style={{ backgroundColor: '#605C54' }} />
 
-                {/*
-                 * Long hem. Chieu sau tao bang cac khung long nhau moi lop mot
-                 * sac dam hon, thay cho mot mang xam phang co vien.
-                 */}
-                <div className="relative h-[200px] flex-1 overflow-hidden" style={{ backgroundColor: '#9A958C' }}>
-                  <div className="absolute inset-y-0 inset-x-[13%]" style={{ backgroundColor: '#837E76' }} />
-                  <div className="absolute inset-y-0 inset-x-[26%]" style={{ backgroundColor: '#6C6760' }} />
-                  <div className="absolute inset-y-0 inset-x-[38%]" style={{ backgroundColor: '#575249' }} />
+                {/* Tuong hoi hai ben duong nhanh */}
+                <div className="absolute left-0 top-0 h-full w-[9%]" style={{ backgroundColor: '#C9B9A6' }} />
+                <div className="absolute right-0 top-0 h-full w-[9%]" style={{ backgroundColor: '#B8A794' }} />
 
-                  {/* O cua sang cuoi hem */}
-                  <div className="absolute left-1/2 top-[26px] h-24 w-9 -translate-x-1/2" style={{ backgroundColor: '#F5DE93' }} />
-                  <div className="absolute left-1/2 top-[26px] h-[9px] w-9 -translate-x-1/2" style={{ backgroundColor: '#D4B661' }} />
+                {/* Tim duong nhanh chay lui */}
+                <div className="absolute bottom-2 left-1/2 h-[46%] w-[3px] -translate-x-1/2" style={{ backgroundColor: '#D9B93C' }} />
 
-                  {/* Ba nguoi deo khau trang dung trong hem */}
-                  <div className="absolute inset-x-0 bottom-3 flex items-end justify-center -space-x-[3px]">
-                    {[
-                      { body: '#64748B', h: 28 },
-                      { body: '#B45309', h: 33 },
-                      { body: '#334155', h: 28 },
-                    ].map((p, i) => (
-                      <div key={i} className="flex flex-col items-center">
-                        <div className="relative h-[15px] w-[15px] rounded-full" style={{ backgroundColor: '#FDE6D2' }}>
-                          <div
-                            className="absolute inset-x-[12%] bottom-[14%] h-[6px] rounded-[2px]"
-                            style={{ backgroundColor: '#7FD4E8' }}
-                          />
-                        </div>
-                        <div className="rounded-t" style={{ height: p.h, width: 15, backgroundColor: p.body }} />
+                {/* Vai nguoi deo khau trang dung dau duong nhanh */}
+                <div className="absolute inset-x-0 bottom-2 flex items-end justify-center -space-x-[3px]">
+                  {[
+                    { body: '#64748B', h: 26 },
+                    { body: '#B45309', h: 31 },
+                    { body: '#334155', h: 26 },
+                  ].map((pr, i) => (
+                    <div key={i} className="flex flex-col items-center">
+                      <div className="relative h-[14px] w-[14px] rounded-full" style={{ backgroundColor: '#FDE6D2' }}>
+                        <div
+                          className="absolute inset-x-[12%] bottom-[14%] h-[6px] rounded-[2px]"
+                          style={{ backgroundColor: '#7FD4E8' }}
+                        />
                       </div>
-                    ))}
-                  </div>
+                      <div className="rounded-t" style={{ height: pr.h, width: 14, backgroundColor: pr.body }} />
+                    </div>
+                  ))}
                 </div>
               </div>
 
+              {/* Nha goc dung sat duong nhanh */}
+              <div
+                className="relative h-[340px] w-[72px] shrink-0 rounded-t p-2 flex flex-col justify-between"
+                style={{ backgroundColor: '#E8C2BA' }}
+              >
+                <div className="absolute inset-y-0 left-0 w-[9px]" style={{ backgroundColor: '#CFA29A' }} />
+                <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
+                <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
+                <div className="relative h-8 w-full" style={{ backgroundColor: '#E6B84F' }} />
+              </div>
             </div>
 
             {/* DÃY NHÀ ỐNG MẶT TIỀN CỠ LỚN (SỐ 2, SỐ 4, SỐ 6, SỐ 8, SỐ 10...) */}

@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { claimTapReward } from '@/lib/mocity/store';
+import { createPortal } from 'react-dom';
+import { spendCoins } from '@/lib/mocity/store';
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
 
@@ -15,7 +16,12 @@ const CITIZEN_TAP_COOLDOWN_MS = 5_000;
  */
 export type FacialEmotion = 'HAPPY' | 'STAR_EYES' | 'SURPRISED' | 'TIRED';
 
-export type CitizenBehavior = 'WALKING' | 'ADMIRING_SHOP' | 'CHATTING' | 'WAVING';
+/**
+ * TALKING la trang thai do NGUOI CHOI kich hoat khi bam vao cu dan: nhan vat
+ * dung han lai cho den khi dong hoi thoai, khac han cac trang thai con lai von
+ * tu het han theo behaviorTimer.
+ */
+export type CitizenBehavior = 'WALKING' | 'ADMIRING_SHOP' | 'CHATTING' | 'WAVING' | 'TALKING';
 
 interface CitizenDef {
   id: string;
@@ -198,6 +204,39 @@ const WALK_CSS = `
 @keyframes citHw  { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
 @keyframes citSw  { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
 `;
+
+const TANG_QUA_XU = 50;
+
+/** Mot luot trao doi: nguoi choi chon, cu dan dap lai. */
+interface TalkOption {
+  id: string;
+  label: string;
+  /** Xu nguoi choi phai tra. 0 la mien phi. */
+  cost: number;
+  reply: (def: CitizenDef) => string;
+}
+
+const TALK_OPTIONS: TalkOption[] = [
+  {
+    id: 'hoi-lam-an',
+    label: 'Dạo này làm ăn sao rồi?',
+    cost: 0,
+    reply: (d) => d.quotes[Math.floor(Math.random() * d.quotes.length)],
+  },
+  {
+    id: 'hoi-khu-pho',
+    label: 'Thấy khu phố mình thế nào?',
+    cost: 0,
+    reply: (d) =>
+      `Phố mình càng ngày càng xôm! ${d.role} như tui sống ở đây thấy dễ thở lắm Thị Trưởng à.`,
+  },
+  {
+    id: 'tang-qua',
+    label: `Biếu bà con ${TANG_QUA_XU} Xu uống nước`,
+    cost: TANG_QUA_XU,
+    reply: () => 'Ui chao, Thị Trưởng chu đáo quá! Để tui kể cho cả xóm nghe mới được!',
+  },
+];
 
 /**
  * Nhan vat kieu CUT PAPER: moi bo phan la MOT mang phang, khong stroke.
@@ -480,8 +519,8 @@ export default function ExpressiveStreetCitizens({
           }
         }
 
-        // Behavior transitions
-        if (sim.behaviorTimer <= 0) {
+        // Behavior transitions - bo qua khi dang doi thoai voi nguoi choi
+        if (sim.behavior !== 'TALKING' && sim.behaviorTimer <= 0) {
           const roll = Math.random();
           let nextEmotion: FacialEmotion | null = null;
           let nextBubble: string | null = null;
@@ -527,30 +566,62 @@ export default function ExpressiveStreetCitizens({
     return () => cancelAnimationFrame(rafId);
   }, []);
 
-  const handleClickCitizen = useCallback(
-    (idx: number) => {
-      const def = CITIZEN_DEFS[idx];
-      const result = claimTapReward('citizen', CITIZEN_TAP_COINS, { cooldownMs: CITIZEN_TAP_COOLDOWN_MS });
+  /** Chi so cu dan dang dung noi chuyen voi nguoi choi, null la khong co ai. */
+  const [talkingIdx, setTalkingIdx] = useState<number | null>(null);
+  const [talkLine, setTalkLine] = useState<string>('');
 
-      if (!result.ok) {
-        setAppearances(prev =>
-          prev.map((a, i) => i === idx ? { ...a, emotion: 'TIRED', bubbleText: 'Ôi tay mỏi quá…' } : a)
-        );
-        return;
+  const handleClickCitizen = useCallback((idx: number) => {
+    const def = CITIZEN_DEFS[idx];
+    const sim = simRef.current[idx];
+
+    // Dung han lai va quay mat ra, khong di tiep cho den khi dong hoi thoai.
+    sim.behavior = 'TALKING';
+    sim.behaviorTimer = Number.POSITIVE_INFINITY;
+    sim.jumpOffset = 14;
+
+    setTalkingIdx(idx);
+    setTalkLine(`Dạ Thị Trưởng! Tui là ${def.name}, ${def.role.toLowerCase()} ở khu này.`);
+    setAppearances((prev) =>
+      prev.map((a, i) => (i === idx ? { emotion: 'STAR_EYES', bubbleText: null } : a)),
+    );
+  }, []);
+
+  const handleTalkOption = useCallback(
+    (opt: TalkOption) => {
+      if (talkingIdx === null) return;
+      const def = CITIZEN_DEFS[talkingIdx];
+
+      if (opt.cost > 0) {
+        const paid = spendCoins(opt.cost);
+        if (!paid) {
+          setTalkLine('Thôi khỏi Thị Trưởng ơi, ngân khố đang eo hẹp mà!');
+          setAppearances((prev) =>
+            prev.map((a, i) => (i === talkingIdx ? { ...a, emotion: 'TIRED' } : a)),
+          );
+          return;
+        }
+        particles.coinShower(simRef.current[talkingIdx].x, 380, 8);
+        onCitizenReward?.(`Đã biếu ${def.name} ${formatCompact(opt.cost)} Xu.`);
       }
 
-      simRef.current[idx].jumpOffset = 20;
-      particles.coinShower(simRef.current[idx].x, 380, 10);
-
-      const quote = def.quotes[Math.floor(Math.random() * def.quotes.length)];
-      const bubble = `${quote} (+${formatCompact(CITIZEN_TAP_COINS)} Xu ♥)`;
-      setAppearances(prev =>
-        prev.map((a, i) => i === idx ? { emotion: 'STAR_EYES', bubbleText: bubble } : a)
+      setTalkLine(opt.reply(def));
+      setAppearances((prev) =>
+        prev.map((a, i) =>
+          i === talkingIdx ? { ...a, emotion: opt.cost > 0 ? 'STAR_EYES' : 'HAPPY' } : a,
+        ),
       );
-      onCitizenReward?.(`${def.name}: "${quote}" (+${formatCompact(CITIZEN_TAP_COINS)} Xu ♥)`);
     },
-    [onCitizenReward],
+    [talkingIdx, onCitizenReward],
   );
+
+  /** Dong hoi thoai va tra cu dan ve lai nhip di bo binh thuong. */
+  const handleEndTalk = useCallback(() => {
+    if (talkingIdx === null) return;
+    const sim = simRef.current[talkingIdx];
+    sim.behavior = 'WALKING';
+    sim.behaviorTimer = 110 + Math.random() * 90;
+    setTalkingIdx(null);
+  }, [talkingIdx]);
 
   return (
     <>
@@ -600,6 +671,72 @@ export default function ExpressiveStreetCitizens({
           );
         })}
       </div>
+
+      {/*
+       * BANG TRAO DOI - hien khi nguoi choi bam vao mot cu dan.
+       *
+       * Phai di qua portal ra body: component nay nam trong vung pho duoc
+       * scale va cuon ngang rong ~2360px, nen `absolute inset-x-0` se can giua
+       * theo CON PHO chu khong phai man hinh, va bang se troi di khi cuon.
+       * `position: fixed` cung khong thoat duoc vi to tien co transform.
+       */}
+      {talkingIdx !== null && typeof document !== 'undefined' && createPortal(
+        <div className="pointer-events-auto fixed inset-x-0 bottom-[88px] z-[60] flex justify-center px-3">
+          <div
+            className="w-full max-w-md rounded-2xl p-3 shadow-[0_14px_34px_rgba(20,12,8,0.4)]"
+            style={{ backgroundColor: '#FFFDF7', border: '2px solid #78533D' }}
+          >
+            <div className="mb-2 flex items-start gap-2">
+              <span
+                className="mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black text-white"
+                style={{ backgroundColor: '#D82D8B' }}
+              >
+                {CITIZEN_DEFS[talkingIdx].role}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-black text-[#3E2A1B]">
+                  {CITIZEN_DEFS[talkingIdx].name}
+                </p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-[#6E4F3A]">{talkLine}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleEndTalk}
+                aria-label="Kết thúc trò chuyện"
+                className="shrink-0 rounded-full px-1.5 text-sm font-black text-[#8B7355] hover:text-[#D82D8B]"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {TALK_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleTalkOption(opt)}
+                  className="rounded-xl px-2.5 py-1.5 text-[10px] font-black transition-transform active:scale-95"
+                  style={
+                    opt.cost > 0
+                      ? { backgroundColor: '#D82D8B', color: '#FFFFFF' }
+                      : { backgroundColor: '#F3E8DC', color: '#6E4F3A' }
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleEndTalk}
+                className="ml-auto rounded-xl px-2.5 py-1.5 text-[10px] font-black text-[#8B7355]"
+              >
+                Chào bà con
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </>
   );
 }
