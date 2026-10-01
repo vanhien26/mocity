@@ -22,6 +22,7 @@ import { particles } from './ParticleEngine';
 import { useAmbientChatter } from './SpeechBubble';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
 import MoMoMascot from './MoMoMascot';
+import StreetTraffic from './StreetTraffic';
 import ShophouseFacade from './ShophouseFacade';
 import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from './StreetAmbiance';
 
@@ -371,16 +372,8 @@ export default function ViaHeStreetBoard({
   // Tự động ẩn bảng hiệu lớn sau khi người chơi bấm vào bất kỳ căn nhà nào
   return (
     <div className="relative h-full w-full overflow-hidden select-none" style={{ backgroundColor: '#EDEAE2' }}>
-      {/* CSS Animation cho Xe Cub, Xe Đạp & Người đi bộ trên phố */}
+      {/* CSS Animation cho banner & bang hieu. Phuong tien tu lo keyframes rieng trong StreetTraffic. */}
       <style>{`
-        @keyframes viahe-scooter-ride {
-          0% { transform: translateX(-180px); }
-          100% { transform: translateX(2100px); }
-        }
-        @keyframes viahe-bike-ride {
-          0% { transform: translateX(2050px) scaleX(-1); }
-          100% { transform: translateX(-220px) scaleX(-1); }
-        }
         @keyframes viahe-float-banner {
           0%, 100% { transform: translate(-50%, 0px) rotate(-1.2deg); }
           50% { transform: translate(-50%, -5px) rotate(-0.6deg); }
@@ -513,7 +506,13 @@ export default function ViaHeStreetBoard({
           </div>
 
           {/* LỚP 2 & 3: CON HẺM "ĐẠI LỘ MOCITY" BÊN TRÁI + DÃY NHÀ ỐNG MẶT TIỀN 3 TẦNG CỠ LỚN */}
-          <div className="relative z-10 flex items-end pl-6 pr-24" style={{ marginBottom: 226 }}>
+          {/*
+           * Khong con marginBottom: 226. Con so do la bu tru thu cong tu hoi
+           * via he va long duong bi flex co lai con 34/31px; gio hai lop da
+           * shrink-0 va giu dung chieu cao nen margin chi lam day day nha
+           * tran khoi dinh khung va tach khoi via he.
+           */}
+          <div className="relative z-10 flex items-end pl-6 pr-24">
             {/* GÓC NGÃ TƯ & CON HẺM "Đ. MOCITY" BÊN TRÁI */}
             <div className="relative mr-4 flex w-[210px] shrink-0 flex-col items-center justify-end">
               <div className="flex w-full items-end justify-between">
@@ -744,15 +743,34 @@ export default function ViaHeStreetBoard({
            * gach la nhung dai giay phang chong len nhau.
            * Xe co KHONG chay o lop nay, tat ca nam duoi LOP 5 long duong.
            */}
-          <div className="relative z-20 h-[120px] w-full" style={{ backgroundColor: '#E8CB95' }}>
-            {/* Mep via he giap nha - dai giay dam */}
-            <div className="absolute inset-x-0 top-0 h-[7px]" style={{ backgroundColor: '#C9A86A' }} />
-            {/* Cac dai gach lat phang, thua va to ban hon luoi ke cu */}
-            <div className="absolute inset-x-0 top-[7px] h-[2px]" style={{ backgroundColor: '#DCBC82' }} />
-            <div className="absolute inset-x-0 bottom-[14px] h-[2px]" style={{ backgroundColor: '#DCBC82' }} />
-            {/* Bo via - hai dai giay chong, dai duoi dam hon lam chan via */}
-            <div className="absolute inset-x-0 bottom-[6px] h-[8px]" style={{ backgroundColor: '#D4B071' }} />
-            <div className="absolute inset-x-0 bottom-0 h-[6px]" style={{ backgroundColor: '#A8834A' }} />
+          <div
+            className="relative z-20 h-[150px] w-full shrink-0"
+            style={{
+              backgroundColor: '#D9BE8C',
+              backgroundImage: `
+                repeating-linear-gradient(90deg, #C6A871 0 2px, transparent 2px 46px),
+                repeating-linear-gradient(0deg, #C6A871 0 2px, transparent 2px 46px)
+              `,
+            }}
+          >
+            {/* Vien giap nha - hai dai giay chong */}
+            <div className="absolute inset-x-0 top-0 h-[9px]" style={{ backgroundColor: '#B2924F' }} />
+            <div className="absolute inset-x-0 top-[9px] h-[3px]" style={{ backgroundColor: '#E6D2A8' }} />
+
+            {/* Dai hoa van retro giua via he - hinh thoi gach bong */}
+            <div className="absolute inset-x-0 top-[22px] h-[18px] overflow-hidden" style={{ backgroundColor: '#CDAE77' }}>
+              <div className="flex h-full items-center gap-[26px] pl-3">
+                {Array.from({ length: 90 }).map((_, i) => (
+                  <span key={i} className="h-[11px] w-[11px] shrink-0 rotate-45" style={{ backgroundColor: i % 2 ? '#A8864A' : '#E6D2A8' }} />
+                ))}
+              </div>
+            </div>
+            <div className="absolute inset-x-0 top-[40px] h-[3px]" style={{ backgroundColor: '#B2924F' }} />
+
+            {/* Bo via - ba lop giay, lop duoi dam nhat lam chan via */}
+            <div className="absolute inset-x-0 bottom-[11px] h-[11px]" style={{ backgroundColor: '#E6D2A8' }} />
+            <div className="absolute inset-x-0 bottom-[6px] h-[6px]" style={{ backgroundColor: '#C09A58' }} />
+            <div className="absolute inset-x-0 bottom-0 h-[6px]" style={{ backgroundColor: '#90703A' }} />
 
             {/* Nga tu: mang nhua phang cat ngang via he */}
             <div className="absolute inset-y-0 left-0 w-[132px]" style={{ backgroundColor: '#BFBAAC' }} />
@@ -837,7 +855,7 @@ export default function ViaHeStreetBoard({
            * LOP 5: LONG DUONG - cut paper. Mat duong la mot mang phang, vach ke
            * la nhung dai giay phang. Moi phuong tien deu chay o lop nay.
            */}
-          <div className="relative z-10 h-[110px] w-full" style={{ backgroundColor: '#B5B0A4' }}>
+          <div className="relative z-10 h-[128px] w-full shrink-0" style={{ backgroundColor: '#B5B0A4' }}>
             {/* Dai giay dam sat chan bo via - bong do cua via he xuong duong */}
             <div className="absolute inset-x-0 top-0 h-[6px]" style={{ backgroundColor: '#97927F' }} />
 
@@ -853,70 +871,13 @@ export default function ViaHeStreetBoard({
             </div>
 
             {/* Tim duong vang - dai giay dut quang */}
-            <div className="absolute top-[52px] left-[150px] right-0 flex h-[4px] gap-[26px] overflow-hidden">
+            <div className="absolute top-[63px] left-[150px] right-0 flex h-[4px] gap-[26px] overflow-hidden">
               {Array.from({ length: 24 }).map((_, di) => (
                 <div key={di} className="h-full w-[48px] shrink-0" style={{ backgroundColor: '#D9B93C' }} />
               ))}
             </div>
 
-            {/* Xe Honda Cub - chay DUOI long duong, khong phai tren via he */}
-            <div
-              style={{ animation: 'viahe-scooter-ride 24s linear infinite' }}
-              className="pointer-events-none absolute bottom-[18px] left-0 z-30 flex flex-col items-center"
-            >
-              <svg width="68" height="62" viewBox="0 0 68 62" className="overflow-visible">
-                <ellipse cx="34" cy="58" rx="21" ry="3" fill="rgba(62,42,27,0.18)" />
-                <circle cx="18" cy="50" r="8" fill="#2A3442" />
-                <circle cx="18" cy="50" r="3.4" fill="#C3CCD8" />
-                <circle cx="50" cy="50" r="8" fill="#2A3442" />
-                <circle cx="50" cy="50" r="3.4" fill="#C3CCD8" />
-                <path d="M13 46.4 L28.6 33.8 L44.6 43.8 L41.8 48.2 L27.8 39.6 Z" fill="#1E4FBF" />
-                <path d="M43 45.6 L50.6 30.4 L54.4 31.8 L46.8 47.4 Z" fill="#2563EB" />
-                <path d="M44.6 29.4 L54 30.2 L53.6 33 L44.3 32.2 Z" fill="#17388A" />
-                <path d="M15.6 33.4 L32.4 34.2 L32 40.2 L15.2 39.4 Z" fill="#1E293B" />
-                <path d="M23.6 20.6 L36.2 21.2 L35.6 36.4 L23 35.8 Z" fill="#4BC6DC" />
-                <path d="M23.6 20.6 L27.4 20.8 L26.8 36 L23 35.8 Z" fill="#35A3B8" />
-                <path d="M33.6 24.2 L46.4 30 L44.8 33 L32.4 27.2 Z" fill="#E8C6A6" />
-                <circle cx="31" cy="13" r="8.4" fill="#FDE6D2" />
-                <circle cx="33.6" cy="12.4" r="1.6" fill="#3E2A1B" />
-                <path d="M31.6 16.2 L37 16.2 Q34.3 19.4 31.6 16.2 Z" fill="#3E2A1B" />
-                <ellipse cx="29" cy="15.6" rx="2.1" ry="1.3" fill="#F0A8BE" />
-                <path d="M22 12.4 C22 2.6 40 2.6 40 12.4 Z" fill="#E0B414" />
-                <path d="M21.4 12.2 L40.6 12.2 L40.2 15 L21.6 15 Z" fill="#A87F0A" />
-                {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
-                  <polygon points="54,32 150,12 150,58" fill="rgba(254, 240, 138, 0.45)" />
-                )}
-              </svg>
-            </div>
-
-            {/* Xe đạp cô gái chạy xuôi ngược đường */}
-            <div
-              style={{ animation: 'viahe-bike-ride 29s linear infinite' }}
-              className="pointer-events-none absolute bottom-3 left-0 flex flex-col items-center"
-            >
-              <svg width="64" height="62" viewBox="0 0 64 62" className="overflow-visible">
-                <ellipse cx="32" cy="58" rx="20" ry="2.8" fill="rgba(62,42,27,0.18)" />
-                <circle cx="16" cy="49" r="8.5" fill="none" stroke="#2A3442" strokeWidth="2.6" />
-                <circle cx="48" cy="49" r="8.5" fill="none" stroke="#2A3442" strokeWidth="2.6" />
-                <path d="M16 49 L27.4 35.4 L30.8 37 L19.4 50.2 Z" fill="#2AA87A" />
-                <path d="M27.4 35.2 L44.2 35.2 L44 38 L28.6 38 Z" fill="#34D399" />
-                <path d="M44.2 35.6 L48 48.6 L45.2 49.4 L41.4 36.4 Z" fill="#2AA87A" />
-                <path d="M30.4 36 L33.6 48.8 L30.8 49.4 L27.6 36.6 Z" fill="#34D399" />
-                <path d="M42.6 32.4 L50.4 33 L50.2 35.4 L42.4 34.8 Z" fill="#1F8A62" />
-                <path d="M22.6 20.6 L34.2 21.2 L33.4 36.4 L23.4 35.8 Z" fill="#EC4899" />
-                <path d="M22.6 20.6 L26.4 20.8 L25.8 36.1 L23.4 35.8 Z" fill="#C0246F" />
-                <path d="M32.8 24 L45 30.4 L43.4 33.2 L31.6 27 Z" fill="#E8C6A6" />
-                <circle cx="22.6" cy="5" r="4.2" fill="#2E1D16" />
-                <circle cx="29" cy="12" r="8" fill="#FDE6D2" />
-                <ellipse cx="25.6" cy="15" rx="2" ry="1.3" fill="#F0A8BE" />
-                <circle cx="32.4" cy="11.4" r="1.6" fill="#3E2A1B" />
-                <path d="M30.6 15 L35.4 15 Q33 18.2 30.6 15 Z" fill="#3E2A1B" />
-                <path d="M21 10.2 C21 2.4 37 2.4 37 10.2 C32.6 5.6 25.4 5.6 21 10.2 Z" fill="#2E1D16" />
-                {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
-                  <polygon points="50,36 130,16 130,58" fill="rgba(254, 240, 138, 0.35)" />
-                )}
-              </svg>
-            </div>
+            <StreetTraffic timeOfDay={timeOfDay} />
           </div>
 
           {/*
@@ -924,7 +885,7 @@ export default function ViaHeStreetBoard({
            * nen no che mat ~70px day man hinh; neu khong co dai nay thi vach qua
            * duong, tim duong va ca hai xe deu nam khuat sau dock.
            */}
-          <div className="h-[76px] w-full shrink-0" style={{ backgroundColor: '#A8A396' }} />
+          <div className="h-[70px] w-full shrink-0" style={{ backgroundColor: '#A8A396' }} />
         </div>
       </div>
     </div>

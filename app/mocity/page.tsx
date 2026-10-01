@@ -97,7 +97,12 @@ const UPGRADE_MESSAGE: Record<UpgradeResult, string> = {
 
 export default function MoCityPage() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [cityScale, setCityScale] = useState(1.14);
+  /**
+   * Mac dinh 1.0 chu khong phai 1.14: toan bo noi dung pho cao ~823px trong
+   * khung ~843px, nhan 1.14 se thanh ~938px va day day nha ong tran khoi
+   * dinh khung (overflow-y bi hidden nen khong cuon lai duoc).
+   */
+  const [cityScale, setCityScale] = useState(1.0);
   const [selected, setSelected] = useState<{ col: number; row: number } | null>(null);
   /** Hang pho dang xem tren board. */
   const [activeRow, setActiveRow] = useState(0);
