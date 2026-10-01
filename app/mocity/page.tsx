@@ -52,6 +52,7 @@ import {
   triggerFeverMode,
   triggerNextEvent,
   upgradeBuilding,
+  getCityState,
   useCity,
   useCityDerived,
   useCityHydrated,
@@ -136,6 +137,7 @@ export default function MoCityPage() {
   const buildAnimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const coins = useCity((s) => s.coins);
+  const totalCoinsEarned = useCity((s) => s.totalCoinsEarned);
   const gems = useCity((s) => s.gems);
   const level = useCity((s) => s.mayorLevel);
   const cityName = useCity((s) => s.cityName);
@@ -239,9 +241,9 @@ export default function MoCityPage() {
 
   const claimableQuestsCount = useMemo(() => {
     return MAYOR_QUESTS.filter(
-      (q) => !claimedQuests.includes(q.id) && isQuestCompleted(q.id, state),
+      (q) => !claimedQuests.includes(q.id) && isQuestCompleted(q.id, getCityState()),
     ).length;
-  }, [claimedQuests, state]);
+  }, [claimedQuests, buildings]);
 
   const selectedBuilding = selected
     ? buildingAt(buildings, selected.col, selected.row)
@@ -971,7 +973,7 @@ export default function MoCityPage() {
         <ShareCityCard
           mayorName={mayorName || 'Thị Trưởng MoMo'}
           cityName={cityName || 'Đô Thị MoCity'}
-          totalCoinsEarned={state.totalCoinsEarned ?? coins}
+          totalCoinsEarned={totalCoinsEarned ?? coins}
           coinsPerSec={derived.rate}
           buildingCount={buildings.length}
           mayorLevel={level}
