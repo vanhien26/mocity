@@ -63,7 +63,12 @@ const EVENT_INTERVAL_MS = 35 * 1000;
  * "Chuyen Pho" de spawn event, chon phuong an hien viet (tra Xu nho, nhan vat
  * pham dat gia tri lon) va lui ve loi thu hieu hon.
  */
-const MAX_EVENTS_PER_DAY = 3;
+/**
+ * Chuyen Pho tu dong hien moi 2-3 phut nen tran 3 luot/ngay se khoa tinh nang
+ * lai sau chua toi 10 phut choi. Event chu yeu TRU Xu doi lay uy tin chu khong
+ * phai nguon thu, nen noi tran khong tao lo hong kinh te.
+ */
+const MAX_EVENTS_PER_DAY = 30;
 
 /**
  * Diem khoi dau. O version <= 3 game cap toi da 1.000.000 Xu / 500 Kim Cuong

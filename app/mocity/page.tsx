@@ -95,6 +95,10 @@ const UPGRADE_MESSAGE: Record<UpgradeResult, string> = {
   funds: 'Chưa đủ Xu để nâng cấp công trình này.',
 };
 
+/** Khoang cach giua hai luot Chuyen Pho tu dong. */
+const AUTO_EVENT_MIN_MS = 120_000;
+const AUTO_EVENT_MAX_MS = 180_000;
+
 export default function MoCityPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   /**
@@ -363,6 +367,30 @@ export default function MoCityPage() {
     }
     showToast('Bà con còn đang bàn luận chuyện vừa rồi. Chuyện mới sẽ tới ngay khi phố rảnh người!');
   }, [activeRequests.length, pendingEvent, showToast]);
+
+  /**
+   * Chuyen Pho tu dong hien sau moi 2-3 phut, khong cho nguoi choi bam nut.
+   *
+   * Doc state qua getCityState() thay vi dua pendingEvent/activeRequests vao
+   * deps: neu them chung vao deps thi moi lan phoi thay doi se huy va dat lai
+   * hen gio, khien no gan nhu khong bao gio chay het 2 phut.
+   */
+  useEffect(() => {
+    if (!isPlaying) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        const s = getCityState();
+        const dangBan = Boolean(s.pendingEvent) || s.activeRequests.length > 0;
+        if (!dangBan && triggerNextEvent() === 'ok') {
+          setDialogueDismissed(false);
+        }
+        schedule();
+      }, AUTO_EVENT_MIN_MS + Math.random() * (AUTO_EVENT_MAX_MS - AUTO_EVENT_MIN_MS));
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [isPlaying]);
 
   const hasPendingEventOrRequest = Boolean(pendingEvent || activeRequests.length > 0);
   const pendingEventScript = pendingEvent ? EVENT_BY_ID[pendingEvent.scriptId] : null;
