@@ -383,7 +383,7 @@ export default function ViaHeStreetBoard({
   }, [selected, isPlaying, onEnterGame]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden select-none" style={{ background: '#EDEAE2' }}>
+    <div className="relative h-full w-full overflow-hidden select-none" style={{ backgroundColor: '#EDEAE2' }}>
       {/* CSS Animation cho Xe Cub, Xe Đạp & Người đi bộ trên phố */}
       <style>{`
         @keyframes viahe-scooter-ride {
@@ -469,7 +469,7 @@ export default function ViaHeStreetBoard({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         className="relative h-full w-full overflow-x-auto overflow-y-hidden cursor-grab active:cursor-grabbing transition-colors duration-700"
-        style={{ background: TIME_OF_DAY_META[timeOfDay].skyBg }}
+        style={{ backgroundImage: TIME_OF_DAY_META[timeOfDay].skyBg }}
       >
         <div
           className="relative h-full flex flex-col justify-end transition-transform duration-300"
@@ -504,7 +504,7 @@ export default function ViaHeStreetBoard({
                   style={{
                     width: b.w,
                     height: b.h,
-                    background: timeOfDay === 'NIGHT' ? '#1E293B' : b.bg,
+                    backgroundColor: timeOfDay === 'NIGHT' ? '#1E293B' : b.bg,
                   }}
                   className="shrink-0 rounded-t-md border border-slate-400/50 p-2.5 grid grid-cols-3 gap-2 content-start transition-colors duration-500"
                 >
@@ -758,24 +758,105 @@ export default function ViaHeStreetBoard({
             </div>
           </div>
 
-          {/* LỚP 4: VỈA HÈ LÁT GẠCH VÀNG ẤM (SIDEWALK) + DÀN NHÂN VẬT BIỂU CẢM TỰ NHIÊN ĐI LẠI */}
+          {/* LỚP 4: VỈA HÈ (SIDEWALK) - warm sandy, có ngã tư trái + cột điện phải */}
           <div
-            className="relative z-20 h-[116px] w-full border-t-[3px] border-b-[6px] border-[#6E5D4F]"
+            className="relative z-20 h-[120px] w-full"
             style={{
-              backgroundColor: '#F3DFC1',
+              backgroundColor: '#EDD4A0',
               backgroundImage: `
-                linear-gradient(to right, rgba(120,83,61,0.14) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(120,83,61,0.14) 1px, transparent 1px)
+                linear-gradient(to right, rgba(160,110,60,0.12) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(160,110,60,0.12) 1px, transparent 1px)
               `,
-              backgroundSize: '42px 28px',
+              backgroundSize: '40px 26px',
+              borderTop: '3px solid #B8956A',
+              borderBottom: '5px solid #9A7040',
             }}
           >
-            {/* Thùng rác xanh & Trụ cứu hỏa đỏ trên vỉa hè */}
+            {/* Vỉa hè ngã tư - dải đường phụ chạy dọc từ trái vào */}
+            <div
+              className="absolute inset-y-0 left-0 w-[132px]"
+              style={{ backgroundColor: '#C8C3B0', opacity: 0.7 }}
+            />
+            {/* Lề ngã tư - viền đứng */}
+            <div className="absolute inset-y-0 left-[132px] w-[3px]" style={{ backgroundColor: '#9A8060' }} />
+
+            {/* Đèn giao thông tại góc ngã tư (bottom-left) */}
+            <div className="absolute bottom-0 left-[118px] flex flex-col items-center">
+              {/* Cột đèn */}
+              <div className="w-[4px] bg-[#4A4040]" style={{ height: 72 }} />
+              {/* Hộp đèn */}
+              <div
+                className="absolute bottom-[46px] left-[-9px] w-[22px] rounded-[3px] flex flex-col items-center justify-around py-1 gap-1"
+                style={{ backgroundColor: '#2A2020', height: 44 }}
+              >
+                {/* Đèn đỏ */}
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{
+                    backgroundColor: timeOfDay === 'NIGHT' ? '#FF2222' : '#CC3333',
+                    boxShadow: timeOfDay === 'NIGHT' ? '0 0 6px #FF2222' : 'none',
+                  }}
+                />
+                {/* Đèn vàng */}
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: '#6B6020' }}
+                />
+                {/* Đèn xanh */}
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{
+                    backgroundColor: timeOfDay === 'DAY' || timeOfDay === 'MORNING' ? '#22AA44' : '#1A6030',
+                    boxShadow: (timeOfDay === 'DAY' || timeOfDay === 'MORNING') ? '0 0 5px #22AA44' : 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Biển tên đường tại góc ngã tư */}
+            <div
+              className="absolute bottom-[78px] left-[136px] flex items-center gap-1 rounded px-1.5 py-0.5"
+              style={{ backgroundColor: '#1848A8' }}
+            >
+              <span className="text-[9px] font-bold text-white leading-tight tracking-wide">Đ. Hoa Sữa</span>
+            </div>
+
+            {/* Cột điện bên phải - SVG với nhiều dây điện tỏa ra */}
+            <div className="pointer-events-none absolute bottom-0 right-[60px] z-10">
+              <svg width="28" height="115" viewBox="0 0 28 115" overflow="visible">
+                {/* Thân cột */}
+                <rect x="11" y="0" width="6" height="112" rx="2" fill="#4A3A28" />
+                {/* Tay ngang trên */}
+                <rect x="0" y="18" width="28" height="4" rx="2" fill="#5A4830" />
+                {/* Sứ cách điện */}
+                <ellipse cx="3" cy="20" rx="3" ry="4" fill="#E8E0D0" />
+                <ellipse cx="25" cy="20" rx="3" ry="4" fill="#E8E0D0" />
+                {/* Tay ngang dưới */}
+                <rect x="4" y="40" width="20" height="3" rx="1.5" fill="#5A4830" />
+                <ellipse cx="6" cy="41.5" rx="2.5" ry="3.5" fill="#E8E0D0" />
+                <ellipse cx="22" cy="41.5" rx="2.5" ry="3.5" fill="#E8E0D0" />
+                {/* Dây điện tỏa sang trái */}
+                <path d="M3 20 Q-60 30 -140 45" fill="none" stroke="#3A3030" strokeWidth="1.5" opacity="0.8" />
+                <path d="M25 20 Q-40 28 -140 38" fill="none" stroke="#3A3030" strokeWidth="1.5" opacity="0.8" />
+                <path d="M6 41.5 Q-50 50 -140 62" fill="none" stroke="#3A3030" strokeWidth="1.2" opacity="0.7" />
+                <path d="M22 41.5 Q-30 48 -140 55" fill="none" stroke="#3A3030" strokeWidth="1.2" opacity="0.7" />
+                {/* Đèn đường (ban đêm/hoàng hôn) */}
+                {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
+                  <>
+                    <circle cx="14" cy="8" r="6" fill="#FEF08A" opacity="0.9" />
+                    <ellipse cx="14" cy="8" rx="20" ry="30" fill="rgba(254,240,138,0.15)" />
+                  </>
+                )}
+              </svg>
+            </div>
+
+            {/* Thùng rác xanh */}
             <div className="absolute bottom-2.5 left-[340px] h-8 w-6 rounded-t border-2 border-[#3E2A1B] bg-[#2E7D32]" />
+            {/* Trụ cứu hỏa đỏ */}
             <div className="absolute bottom-3.5 left-[840px] h-8 w-5 rounded-t-full border-2 border-[#3E2A1B] bg-[#DC2626]" />
             <div className="absolute bottom-2.5 left-[1320px] h-8 w-6 rounded-t border-2 border-[#3E2A1B] bg-[#2E7D32]" />
 
-            {/* HỆ THỐNG CƯ DÂN ĐI BỘ TỰ ĐỘNG VỚI BIỂU CẢM KHUÔN MẶT SỐNG ĐỘNG */}
+            {/* HỆ THỐNG CƯ DÂN ĐI BỘ */}
             <ExpressiveStreetCitizens
               onCitizenReward={(msg) => {
                 setStreetToast(msg);
@@ -783,7 +864,7 @@ export default function ViaHeStreetBoard({
               }}
             />
 
-            {/* MOMO MASCOT - NPC đặc biệt đi vòng vòng show khuyến mãi */}
+            {/* MOMO MASCOT */}
             <MoMoMascot
               onToast={(msg) => {
                 setStreetToast(msg);
@@ -791,27 +872,18 @@ export default function ViaHeStreetBoard({
               }}
             />
 
-            {/* Thanh niên đội mũ bảo hiểm vàng chạy xe Honda Cub xanh dương dọc vỉa hè */}
+            {/* Xe Honda Cub chạy trên vỉa hè */}
             <div
               style={{ animation: 'viahe-scooter-ride 24s linear infinite' }}
               className="pointer-events-none absolute bottom-2 left-0 z-30 flex flex-col items-center scale-110"
             >
               <svg width="68" height="62" viewBox="0 0 68 62" className="overflow-visible">
                 <ellipse cx="34" cy="58" rx="22" ry="3.5" fill="rgba(62,42,27,0.22)" />
-                {/* Bánh sau & Bánh trước */}
                 <circle cx="18" cy="50" r="8" fill="#334155" stroke="#3E2A1B" strokeWidth="2" />
                 <circle cx="18" cy="50" r="4" fill="#F8FAFC" stroke="#3E2A1B" strokeWidth="1.5" />
                 <circle cx="50" cy="50" r="8" fill="#334155" stroke="#3E2A1B" strokeWidth="2" />
                 <circle cx="50" cy="50" r="4" fill="#F8FAFC" stroke="#3E2A1B" strokeWidth="1.5" />
-                {/* Khung xe Honda Cub xanh dương */}
-                <path
-                  d="M 14 48 L 28 36 L 44 46 L 52 32 L 45 32"
-                  fill="none"
-                  stroke="#2563EB"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M 14 48 L 28 36 L 44 46 L 52 32 L 45 32" fill="none" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
                 <rect x="16" y="34" width="16" height="6" rx="3" fill="#1E293B" stroke="#3E2A1B" strokeWidth="1.6" />
                 <rect x="24" y="21" width="12" height="15" rx="4" fill="#67E8F9" stroke="#3E2A1B" strokeWidth="1.8" />
                 <line x1="34" y1="25" x2="46" y2="31" stroke="#FDE6D2" strokeWidth="3.5" strokeLinecap="round" />
@@ -820,37 +892,41 @@ export default function ViaHeStreetBoard({
                 <ellipse cx="35" cy="14.5" rx="1.8" ry="1" fill="#F472B6" opacity="0.65" />
                 <path d="M 32 16 Q 34.5 18 36.5 16" fill="none" stroke="#3E2A1B" strokeWidth="1.5" strokeLinecap="round" />
                 <path d="M 22 12 C 22 3 40 3 40 12 Z" fill="#FACC15" stroke="#3E2A1B" strokeWidth="1.8" />
-                {/* Đèn pha xe máy rọi sáng vỉa hè ban đêm */}
                 {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
-                  <polygon
-                    points="54,32 150,12 150,58"
-                    fill="rgba(254, 240, 138, 0.45)"
-                  />
+                  <polygon points="54,32 150,12 150,58" fill="rgba(254, 240, 138, 0.45)" />
                 )}
               </svg>
             </div>
           </div>
 
-          {/* LỚP 5: LÒNG ĐƯỜNG NHỰA XÁM & VẠCH QUA ĐƯỜNG (ASPHALT STREET) */}
+          {/* LỚP 5: LÒNG ĐƯỜNG NHỰA XÁM ẤM */}
           <div
             className="relative z-10 h-[110px] w-full flex flex-col justify-between py-3"
-            style={{ background: '#7C7974' }}
+            style={{ backgroundColor: '#B8B3A8' }}
           >
-            {/* Vạch kẻ qua đường Zebra Crossing ngay ngã tư Đ. Hoa Sữa */}
-            <div className="absolute top-2 bottom-2 left-[125px] flex w-16 flex-col justify-between">
-              {Array.from({ length: 5 }).map((_, zi) => (
-                <div key={zi} className="h-2.5 w-full bg-[#ECE8DF]" />
+            {/* Dải đường ngã tư bên trái */}
+            <div
+              className="absolute inset-y-0 left-0 w-[132px]"
+              style={{ backgroundColor: '#A8A49A' }}
+            />
+            {/* Lề trái ngã tư */}
+            <div className="absolute inset-y-0 left-[132px] w-[3px]" style={{ backgroundColor: '#888070' }} />
+
+            {/* Vạch Zebra tại ngã tư */}
+            <div className="absolute top-2 bottom-2 left-[134px] flex w-[60px] flex-col justify-between">
+              {Array.from({ length: 6 }).map((_, zi) => (
+                <div key={zi} className="h-2 w-full bg-[#E8E4DC]" />
               ))}
             </div>
 
-            {/* Vạch đứt nét trắng giữa đường */}
-            <div className="mt-auto mb-3 flex w-full justify-around px-12">
-              {Array.from({ length: 16 }).map((_, di) => (
-                <div key={di} className="h-2 w-14 rounded-full bg-[#ECE8DF]" />
+            {/* Vạch vàng center line */}
+            <div className="absolute top-[50px] left-[160px] right-0 h-[3px] flex gap-4 px-4 overflow-hidden">
+              {Array.from({ length: 20 }).map((_, di) => (
+                <div key={di} className="h-full w-14 shrink-0 rounded-full bg-[#E8C848]" />
               ))}
             </div>
 
-            {/* Cô gái buộc tóc búi cao đạp xe đạp dưới lòng đường (Biểu cảm tươi tắn) */}
+            {/* Xe đạp cô gái chạy xuôi ngược đường */}
             <div
               style={{ animation: 'viahe-bike-ride 29s linear infinite' }}
               className="pointer-events-none absolute bottom-3 left-0 flex flex-col items-center"
@@ -861,7 +937,6 @@ export default function ViaHeStreetBoard({
                 <circle cx="48" cy="49" r="8.5" fill="none" stroke="#3E2A1B" strokeWidth="2.2" />
                 <path d="M 16 49 L 28 36 L 44 36 L 32 49 Z" fill="none" stroke="#34D399" strokeWidth="2.4" />
                 <line x1="44" y1="36" x2="48" y2="49" stroke="#34D399" strokeWidth="2.4" />
-                {/* Cô gái áo hồng phấn + búi tóc */}
                 <rect x="23" y="21" width="11" height="15" rx="4" fill="#F472B6" stroke="#3E2A1B" strokeWidth="1.8" />
                 <circle cx="23" cy="5" r="4" fill="#3E2723" stroke="#3E2A1B" strokeWidth="1.6" />
                 <circle cx="29" cy="12" r="8" fill="#FDE6D2" stroke="#3E2A1B" strokeWidth="1.8" />
@@ -869,12 +944,8 @@ export default function ViaHeStreetBoard({
                 <circle cx="32.5" cy="11.5" r="1.4" fill="#3E2A1B" />
                 <ellipse cx="33.5" cy="13.8" rx="1.8" ry="1" fill="#F472B6" opacity="0.65" />
                 <path d="M 30.5 15 Q 32.5 16.8 34.5 15" fill="none" stroke="#3E2A1B" strokeWidth="1.4" strokeLinecap="round" />
-                {/* Đèn xe đạp rọi sáng ban đêm */}
                 {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
-                  <polygon
-                    points="50,36 130,16 130,58"
-                    fill="rgba(254, 240, 138, 0.35)"
-                  />
+                  <polygon points="50,36 130,16 130,58" fill="rgba(254, 240, 138, 0.35)" />
                 )}
               </svg>
             </div>
