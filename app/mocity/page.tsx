@@ -799,17 +799,21 @@ export default function MoCityPage() {
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
             <div
               style={{ backgroundColor: '#FFFDF7' }}
-              className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-2xl border-2 border-[#78533D] bg-[#FFFDF7] px-3.5 py-2.5 shadow-[0_14px_34px_rgba(20,12,8,0.4)]"
+              className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border-2 border-[#78533D] bg-[#FFFDF7] p-1.5 shadow-[0_14px_34px_rgba(20,12,8,0.4)]"
             >
+              {/* Primary CTA */}
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
                 className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#9D174D] bg-[#D82D8B] px-4 text-xs font-black text-white shadow transition-transform hover:bg-[#EB2F96] active:scale-95"
               >
-                <Hammer size={16} className="shrink-0" />
+                <Hammer size={15} className="shrink-0" />
                 <span>Mở Tiệm Mới</span>
               </button>
 
+              <div className="h-9 w-px shrink-0 bg-[#D5CEBF]" />
+
+              {/* Quản Lý Tiệm */}
               <button
                 type="button"
                 onClick={() => {
@@ -823,88 +827,99 @@ export default function MoCityPage() {
                   }
                   setInspectorOpen(true);
                 }}
-                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3.5 text-xs font-black text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                title="Quản Lý Tiệm & Loa QR"
               >
                 <SlidersHorizontal size={15} className="shrink-0 text-[#D82D8B]" />
-                <span>Quản Lý Tiệm & Loa QR</span>
+                <span className="text-[9px] font-black leading-none">Quản Lý</span>
               </button>
 
+              {/* Mở Rộng Phố */}
               <button
                 type="button"
                 disabled={!canExpand}
                 onClick={handleBuyLand}
                 className={cn(
-                  'flex h-11 items-center gap-1.5 rounded-xl border-2 px-3.5 text-xs font-black transition-colors',
+                  'relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-3 transition-colors',
                   canExpand
                     ? 'border-[#C9A227] bg-[#FFFBEB] text-[#3E2A1B] hover:bg-[#FEF3C7]'
                     : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400',
                 )}
+                title={canExpand ? `Mở Rộng Phố - ${formatCompact(derived.landCost)} Xu` : 'Mở Rộng Phố (chưa đủ Xu)'}
               >
-                <Plus size={15} className="shrink-0 text-[#D97706]" />
-                <span>Mở Rộng Phố</span>
+                <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#D97706]' : 'text-gray-400')} />
+                <span className="text-[9px] font-black leading-none">Mở Rộng</span>
                 {canExpand && (
-                  <span className="rounded bg-amber-200/80 px-1.5 py-0.5 text-[10px] font-black text-[#92400E]">
-                    {formatCompact(derived.landCost)} Xu
+                  <span className="absolute -top-1.5 -right-1 rounded bg-amber-400 px-1 text-[8px] font-black text-[#92400E] leading-tight">
+                    {formatCompact(derived.landCost)}
                   </span>
                 )}
               </button>
 
+              {/* Nhiệm Vụ */}
               <button
                 type="button"
                 onClick={() => {
                   setMayorModalTab('QUESTS');
                   setMayorModalOpen(true);
                 }}
-                className="relative flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3.5 text-xs font-black text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                title="Nhiệm Vụ"
               >
                 <Star size={15} className="shrink-0 fill-amber-400 text-amber-600" />
-                <span>Nhiệm Vụ</span>
+                <span className="text-[9px] font-black leading-none">Nhiệm Vụ</span>
                 {claimableQuestsCount > 0 && (
-                  <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#D82D8B] px-1.5 text-[10px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#D82D8B] px-1 text-[8px] font-black text-white">
                     {claimableQuestsCount}
                   </span>
                 )}
               </button>
 
+              {/* Kho Đồ */}
               <button
                 type="button"
                 onClick={() => {
                   setInventoryTab('ITEMS');
                   setInventoryOpen(true);
                 }}
-                className="relative flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3.5 text-xs font-black text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                title="Kho Đồ & Bảo Vật"
               >
                 <Package size={15} className="shrink-0 text-[#D82D8B]" />
-                <span>Kho Đồ & Bảo Vật</span>
+                <span className="text-[9px] font-black leading-none">Kho Đồ</span>
                 {totalInventoryCount > 0 && (
-                  <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#D82D8B] px-1.5 text-[10px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#D82D8B] px-1 text-[8px] font-black text-white">
                     {totalInventoryCount}
                   </span>
                 )}
               </button>
 
+              {/* Nhân Vật */}
               <button
                 type="button"
                 onClick={() => {
                   setInventoryTab('CHARACTERS');
                   setInventoryOpen(true);
                 }}
-                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3.5 text-xs font-black text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                title="Nhân Vật & Thoại"
               >
                 <MessageSquareHeart size={15} className="shrink-0 text-[#059669]" />
-                <span>Nhân Vật & Thoại (8)</span>
+                <span className="text-[9px] font-black leading-none">Nhân Vật</span>
               </button>
 
+              {/* Tòa Thị Chính */}
               <button
                 type="button"
                 onClick={() => {
                   setMayorModalTab('CITIZENS');
                   setMayorModalOpen(true);
                 }}
-                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3.5 text-xs font-black text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                title="Tòa Thị Chính & Cư Dân"
               >
                 <Users size={15} className="shrink-0 text-[#2563EB]" />
-                <span>Tòa Thị Chính & Cư Dân</span>
+                <span className="text-[9px] font-black leading-none">Thị Chính</span>
               </button>
             </div>
           </div>
