@@ -385,7 +385,7 @@ function CitizenSvg({ cit, walkCycle, isWalking, bodyBob, jumpOffset }: {
       width="56"
       height="72"
       viewBox="0 0 56 72"
-      className="overflow-visible drop-shadow-[0_2px_0_rgba(62,42,27,0.22)] transition-transform group-hover:scale-110"
+      className="overflow-visible"
     >
       {/* Shadow */}
       <ellipse cx="28" cy="69" rx="13" ry="3.5" fill="rgba(62,42,27,0.20)" />
@@ -428,8 +428,6 @@ function CitizenSvg({ cit, walkCycle, isWalking, bodyBob, jumpOffset }: {
 
         {/* ── BODY ── */}
         <rect x="18" y="29" width="20" height="20" rx="7" fill={cit.shirtColor} stroke="#3E2A1B" strokeWidth="2" />
-        {/* Shirt highlight */}
-        <ellipse cx="24" cy="33" rx="3" ry="1.5" fill="rgba(255,255,255,0.25)" />
         {/* Tie */}
         {cit.hasTie && (
           <polygon points="28,30 26.5,40 28,43 29.5,40" fill={cit.accentColor} stroke="#3E2A1B" strokeWidth="1" />
@@ -495,9 +493,6 @@ function CitizenSvg({ cit, walkCycle, isWalking, bodyBob, jumpOffset }: {
           {/* Mặt tròn (chibi) */}
           <circle cx="0" cy="0" r="13" fill={cit.skinColor} stroke="#3E2A1B" strokeWidth="2.2" />
 
-          {/* Má hồng ửng */}
-          <ellipse cx="-7" cy="3" rx="3" ry="1.8" fill="#F472B6" opacity="0.45" />
-          <ellipse cx="7" cy="3" rx="3" ry="1.8" fill="#F472B6" opacity="0.45" />
 
           {/* ── LÔNG MÀY ── (biểu cảm rõ nét) */}
           {!cit.isBlinking && cit.emotion === 'SURPRISED' && (
@@ -589,10 +584,6 @@ function CitizenSvg({ cit, walkCycle, isWalking, bodyBob, jumpOffset }: {
             </>
           )}
 
-          {/* Giọt mồ hôi */}
-          {cit.emotion === 'SWEAT_FUNNY' && (
-            <ellipse cx="-11" cy="-4" rx="2" ry="3.2" fill="#38BDF8" stroke="#0284C7" strokeWidth="0.9" />
-          )}
 
           {/* ── MIỆNG ── */}
           {cit.hasMask ? (
@@ -840,6 +831,7 @@ export default function ExpressiveStreetCitizens({
             style={{
               transform: `translate3d(${Math.round(cit.x)}px, ${-Math.round(cit.laneY + bodyBob + cit.jumpOffset)}px, 0)`,
               zIndex: Math.round(60 - cit.laneY),
+              willChange: 'transform',
             }}
             className="group absolute bottom-2 left-0 flex flex-col items-center"
           >
@@ -856,7 +848,7 @@ export default function ExpressiveStreetCitizens({
             {/* Floating emotion icons */}
             <div className="relative flex flex-col items-center">
               {cit.emotion === 'STAR_EYES' && (
-                <span className="absolute -top-3 -right-3 text-[13px] animate-bounce">✦♥</span>
+                <span className="absolute -top-3 -right-3 text-[13px]">✦</span>
               )}
               {cit.emotion === 'WHISTLE_CHILL' && (
                 <span className="absolute -top-3 -right-2 text-[12px]">♪♫</span>
