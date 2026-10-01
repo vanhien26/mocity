@@ -19,6 +19,14 @@ const TRAFFIC_CSS = `
   0%   { transform: translateX(2240px) scaleX(-1); }
   100% { transform: translateX(-240px) scaleX(-1); }
 }
+@keyframes police-siren-red {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 8px rgba(239,68,68,0.95)); }
+  50% { opacity: 0.2; filter: drop-shadow(0 0 1px rgba(239,68,68,0.2)); }
+}
+@keyframes police-siren-blue {
+  0%, 100% { opacity: 0.2; filter: drop-shadow(0 0 1px rgba(59,130,246,0.2)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(59,130,246,0.95)); }
+}
 `;
 
 function Wheel({ cx, cy, r = 7 }: { cx: number; cy: number; r?: number }) {
@@ -194,11 +202,123 @@ function XeDap({ night }: { night: boolean }) {
   );
 }
 
-/** lane 'far' = sat bo via chay sang phai, 'near' = sat mep duoi chay sang trai. */
+function XeCanhSat({ night, onClick }: { night: boolean; onClick?: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className={`group relative ${onClick ? 'cursor-pointer' : ''}`}
+      title="Xe Cảnh Sát Tuần Tra MoCity (Nhấn để chào)"
+    >
+      <svg width="118" height="54" viewBox="0 0 118 54" className="overflow-visible select-none">
+        {/* Bóng xe dưới mặt đường */}
+        <ellipse cx="58" cy="48" rx="46" ry="3" fill="rgba(62,42,27,0.22)" />
+
+        {/* Chân đế còi cảnh sát trên nóc */}
+        <rect x="50" y="5" width="20" height="3" rx="1" fill="#334155" />
+
+        {/* Còi đèn báo động nhấp nháy: Đỏ bên trái, Xanh bên phải */}
+        <g>
+          {/* Đèn đỏ nhấp nháy */}
+          <rect
+            x="51"
+            y="1"
+            width="8"
+            height="5"
+            rx="1.5"
+            fill="#EF4444"
+            style={{ animation: 'police-siren-red 0.55s infinite ease-in-out' }}
+          />
+          <circle
+            cx="55"
+            cy="3.5"
+            r="8"
+            fill="rgba(239,68,68,0.35)"
+            style={{ animation: 'police-siren-red 0.55s infinite ease-in-out' }}
+          />
+
+          {/* Loa còi ở giữa */}
+          <rect x="59.5" y="1" width="3" height="5" rx="0.5" fill="#CBD5E1" />
+
+          {/* Đèn xanh nhấp nháy */}
+          <rect
+            x="63"
+            y="1"
+            width="8"
+            height="5"
+            rx="1.5"
+            fill="#3B82F6"
+            style={{ animation: 'police-siren-blue 0.55s infinite ease-in-out' }}
+          />
+          <circle
+            cx="67"
+            cy="3.5"
+            r="8"
+            fill="rgba(59,130,246,0.35)"
+            style={{ animation: 'police-siren-blue 0.55s infinite ease-in-out' }}
+          />
+        </g>
+
+        {/* Thân xe cảnh sát màu trắng */}
+        <path
+          d="M6 39 L112 39 L110 23 L88 21 L74 8 L36 8 L24 22 L6 24 Z"
+          fill="#FFFFFF"
+        />
+        {/* Vạt bóng xám gầm xe */}
+        <path
+          d="M6 39 L112 39 L111.2 32.5 L6.8 32.5 Z"
+          fill="#CBD5E1"
+        />
+
+        {/* Cửa sổ kính xanh nhạt */}
+        <path d="M38 11 L53 11 L53 22 L27 22 Z" fill="#93C5FD" />
+        <path d="M57 11 L72 11 L83 22 L57 22 Z" fill="#93C5FD" />
+        <line x1="55" y1="9" x2="55" y2="22" stroke="#475569" strokeWidth="2" />
+
+        {/* Sọc decal xanh đậm CẢNH SÁT */}
+        <path d="M7 26 L110 26 L109 33 L7 33 Z" fill="#1E3A8A" />
+        <path d="M7 33 L110 33 L109.5 34.5 L7 34.5 Z" fill="#172554" />
+
+        {/* Phù hiệu sao vàng trên nền đỏ */}
+        <circle cx="28" cy="29.5" r="3.2" fill="#EAB308" />
+        <path
+          d="M28 27 L28.7 28.5 L30.4 28.6 L29.1 29.7 L29.5 31.4 L28 30.4 L26.5 31.4 L26.9 29.7 L25.6 28.6 L27.3 28.5 Z"
+          fill="#DC2626"
+        />
+
+        {/* Chữ CẢNH SÁT màu trắng nổi bật */}
+        <text
+          x="66"
+          y="31.8"
+          fill="#FFFFFF"
+          fontSize="6.2"
+          fontWeight="900"
+          letterSpacing="0.8"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          CẢNH SÁT
+        </text>
+
+        {/* Bánh xe */}
+        <Wheel cx={29} cy={40} r={8.5} />
+        <Wheel cx={88} cy={40} r={8.5} />
+
+        {/* Đèn pha trước */}
+        <path d="M106 25 L111 25 L111 29 L106 29 Z" fill="#FEF08A" />
+        {/* Đèn hậu đỏ */}
+        <path d="M5 25 L8 25 L8 29 L5 29 Z" fill="#DC2626" />
+
+        {/* Tia sáng đèn pha rọi đường vào ban đêm */}
+        <Beam x={111} y={28} on={night} />
+      </svg>
+    </div>
+  );
+}
+
+/** lane 'far' = sat bo via chay sang phai, 'near' = sat mep duoi chay sang trai, 'mid' = chay giua tim duong. */
 interface Rider {
   key: string;
-  El: ({ night }: { night: boolean }) => React.ReactElement;
-  lane: 'far' | 'near';
+  El: ({ night, onClick }: { night: boolean; onClick?: () => void }) => React.ReactElement;
+  lane: 'far' | 'near' | 'mid';
   dur: number;
   delay: number;
 }
@@ -206,30 +326,44 @@ interface Rider {
 const FLEET: Rider[] = [
   { key: 'xichlo', El: XichLo, lane: 'far', dur: 52, delay: 0 },
   { key: 'xemay', El: XeMay, lane: 'far', dur: 30, delay: -12 },
+  { key: 'canhsat', El: XeCanhSat, lane: 'mid', dur: 26, delay: -4 },
   { key: 'oto', El: OTo, lane: 'far', dur: 38, delay: -26 },
   { key: 'xedaydoan', El: XeDayDoAn, lane: 'near', dur: 58, delay: -6 },
   { key: 'vinfast', El: VinFast, lane: 'near', dur: 34, delay: -20 },
   { key: 'xedap', El: XeDap, lane: 'near', dur: 44, delay: -33 },
 ];
 
-export default function StreetTraffic({ timeOfDay }: { timeOfDay: TimeOfDay }) {
+export default function StreetTraffic({
+  timeOfDay,
+  onPoliceClick,
+}: {
+  timeOfDay: TimeOfDay;
+  onPoliceClick?: () => void;
+}) {
   const night = timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET';
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: TRAFFIC_CSS }} />
-      {FLEET.map(({ key, El, lane, dur, delay }) => (
-        <div
-          key={key}
-          className="pointer-events-none absolute left-0 z-20"
-          style={{
-            [lane === 'far' ? 'top' : 'bottom']: lane === 'far' ? 8 : 6,
-            animation: `viahe-drive-${lane === 'far' ? 'r' : 'l'} ${dur}s linear infinite`,
-            animationDelay: `${delay}s`,
-          }}
-        >
-          <El night={night} />
-        </div>
-      ))}
+      {FLEET.map(({ key, El, lane, dur, delay }) => {
+        const isPolice = key === 'canhsat';
+        return (
+          <div
+            key={key}
+            className={`absolute left-0 z-20 ${isPolice && onPoliceClick ? 'pointer-events-auto' : 'pointer-events-none'}`}
+            style={{
+              ...(lane === 'mid'
+                ? { top: 37 }
+                : lane === 'far'
+                  ? { top: 8 }
+                  : { bottom: 6 }),
+              animation: `viahe-drive-${lane === 'near' ? 'l' : 'r'} ${dur}s linear infinite`,
+              animationDelay: `${delay}s`,
+            }}
+          >
+            <El night={night} onClick={isPolice ? onPoliceClick : undefined} />
+          </div>
+        );
+      })}
     </>
   );
 }

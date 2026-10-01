@@ -879,3 +879,133 @@ export const STARTER_INVENTORY: Record<string, number> = {
   'gift-hop-qua-tet': 1,
 };
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * BẬC THÀNH PHỐ
+ * Mở khoá theo DÂN SỐ làm trục chính, kèm SỐ CÔNG TRÌNH để chặn trường hợp
+ * xây toàn nhà ở lấy dân số mà khu phố không có kinh tế.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export interface CityTierDef {
+  id: string;
+  /** Bậc 1..8, dùng để so sánh và hiển thị. */
+  rank: number;
+  name: string;
+  tagline: string;
+  minPopulation: number;
+  minBuildings: number;
+  /** Thưởng một lần khi lần đầu đạt bậc này. */
+  rewardCoins: number;
+  rewardGems: number;
+  rewardXp: number;
+}
+
+export const CITY_TIERS: CityTierDef[] = [
+  {
+    id: 'tier-xom-choi-la', rank: 1, name: 'Xóm Chòi Lá',
+    tagline: 'Mới dựng tạm vài mái che, mưa xuống là cả xóm chạy dột.',
+    minPopulation: 0, minBuildings: 0,
+    rewardCoins: 0, rewardGems: 0, rewardXp: 0,
+  },
+  {
+    id: 'tier-hem-ba-gac', rank: 2, name: 'Hẻm Ba Gác',
+    tagline: 'Hẻm vừa đúng một chiếc ba gác, hai xe gặp nhau là phải lùi.',
+    minPopulation: 120, minBuildings: 3,
+    rewardCoins: 6_000, rewardGems: 4, rewardXp: 900,
+  },
+  {
+    id: 'tier-pho-via-he', rank: 3, name: 'Phố Vỉa Hè',
+    tagline: 'Bắt đầu có hàng quán mặt tiền, tối đến đèn vàng sáng cả dãy.',
+    minPopulation: 320, minBuildings: 6,
+    rewardCoins: 18_000, rewardGems: 8, rewardXp: 2_400,
+  },
+  {
+    id: 'tier-thi-tu-tra-da', rank: 4, name: 'Thị Tứ Trà Đá',
+    tagline: 'Đông người, có chỗ ngồi tám chuyện từ sáng tới chiều.',
+    minPopulation: 700, minBuildings: 10,
+    rewardCoins: 45_000, rewardGems: 14, rewardXp: 5_200,
+  },
+  {
+    id: 'tier-quan-tra-sua', rank: 5, name: 'Quận Trà Sữa',
+    tagline: 'GenZ kéo tới check-in, dòng tiền lên thấy rõ.',
+    minPopulation: 1_400, minBuildings: 16,
+    rewardCoins: 110_000, rewardGems: 22, rewardXp: 9_000,
+  },
+  {
+    id: 'tier-do-thi-quet-ma', rank: 6, name: 'Đô Thị Quét Mã',
+    tagline: 'Hết cảnh thối tiền bằng kẹo cao su, cả phố quét mã.',
+    minPopulation: 2_800, minBuildings: 24,
+    rewardCoins: 280_000, rewardGems: 32, rewardXp: 14_000,
+  },
+  {
+    id: 'tier-dai-do-thi-ting-ting', rank: 7, name: 'Đại Đô Thị Ting Ting',
+    tagline: 'Tiếng báo có tiền vang từ đầu hẻm tới cuối đại lộ.',
+    minPopulation: 5_500, minBuildings: 34,
+    rewardCoins: 700_000, rewardGems: 45, rewardXp: 20_000,
+  },
+  {
+    id: 'tier-sieu-do-thi-khong-tien-mat', rank: 8, name: 'Siêu Đô Thị Không Tiền Mặt',
+    tagline: 'Không còn ai cầm tiền lẻ. Thị Trưởng đã làm được.',
+    minPopulation: 10_000, minBuildings: 46,
+    rewardCoins: 1_800_000, rewardGems: 70, rewardXp: 25_000,
+  },
+];
+
+/** Bậc cao nhất mà dân số + số công trình hiện tại với tới. */
+export function cityTierFor(population: number, buildingCount: number): CityTierDef {
+  let found = CITY_TIERS[0];
+  for (const t of CITY_TIERS) {
+    if (population >= t.minPopulation && buildingCount >= t.minBuildings) found = t;
+  }
+  return found;
+}
+
+export function nextCityTier(rank: number): CityTierDef | null {
+  return CITY_TIERS.find((t) => t.rank === rank + 1) ?? null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NHIỆM VỤ NGÀY
+ * Khác nhiệm vụ Thị Trưởng ở chỗ đếm theo HÀNH ĐỘNG trong ngày và reset lúc
+ * sang ngày mới, nên nguồn XP gắn với việc người chơi thật sự làm gì.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export type DailyCounterKey =
+  | 'built'
+  | 'upgraded'
+  | 'talked'
+  | 'eventsResolved'
+  | 'starEvolved';
+
+export interface DailyQuestDef {
+  id: string;
+  title: string;
+  counter: DailyCounterKey;
+  target: number;
+  rewardCoins: number;
+  rewardGems: number;
+  rewardXp: number;
+}
+
+export const DAILY_QUESTS: DailyQuestDef[] = [
+  {
+    id: 'd-tro-chuyen', title: 'Đi một vòng hỏi thăm 5 bà con',
+    counter: 'talked', target: 5,
+    rewardCoins: 4_000, rewardGems: 2, rewardXp: 1_600,
+  },
+  {
+    id: 'd-nang-cap', title: 'Nâng cấp công trình 3 lượt',
+    counter: 'upgraded', target: 3,
+    rewardCoins: 6_000, rewardGems: 2, rewardXp: 2_200,
+  },
+  {
+    id: 'd-xu-chuyen-pho', title: 'Phân xử 2 Chuyện Phố',
+    counter: 'eventsResolved', target: 2,
+    rewardCoins: 8_000, rewardGems: 3, rewardXp: 2_800,
+  },
+  {
+    id: 'd-mo-tiem', title: 'Mở thêm 1 tiệm mới',
+    counter: 'built', target: 1,
+    rewardCoins: 5_000, rewardGems: 2, rewardXp: 1_800,
+  },
+];

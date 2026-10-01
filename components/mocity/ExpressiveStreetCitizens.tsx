@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { spendCoins } from '@/lib/mocity/store';
+import { recordCitizenTalk, spendCoins } from '@/lib/mocity/store';
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
 
@@ -579,6 +579,7 @@ export default function ExpressiveStreetCitizens({
     sim.behaviorTimer = Number.POSITIVE_INFINITY;
     sim.jumpOffset = 14;
 
+    recordCitizenTalk();
     setTalkingIdx(idx);
     setTalkLine(`Dạ Thị Trưởng! Tui là ${def.name}, ${def.role.toLowerCase()} ở khu này.`);
     setAppearances((prev) =>

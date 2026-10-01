@@ -1,4 +1,6 @@
 import type { ArchetypeId, CityEventScript, RequestScript } from './types';
+import { EXTRA_REQUEST_SCRIPTS } from './dialogue-requests-extra';
+import { EXTRA_CITY_EVENTS } from './dialogue-events-extra';
 
 /**
  * Tầng 1 — Thoại Ambient "Tám Chuyện Vỉa Hè" (Mặn mòi, hài hước đời thường Việt Nam).
@@ -151,7 +153,7 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
  * Tầng 2 — Kịch bản Drama & Yêu cầu Cư dân (Bấm vào nút `Chuyện phố! (!)` trên bản đồ).
  * Mỗi kịch bản có 3 lựa chọn: Chơi Lớn (Đầu tư MoMo), Mưu Trí (Công nghệ), và Lầy Lội (Tấu hài).
  */
-export const REQUEST_SCRIPTS: RequestScript[] = [
+const BASE_REQUEST_SCRIPTS: RequestScript[] = [
   {
     id: 'req-qr-tieu-thuong',
     archetype: 'MERCHANT_CASH',
@@ -632,10 +634,15 @@ export const REQUEST_SCRIPTS: RequestScript[] = [
   },
 ];
 
+export const REQUEST_SCRIPTS: RequestScript[] = [
+  ...BASE_REQUEST_SCRIPTS,
+  ...EXTRA_REQUEST_SCRIPTS,
+];
+
 /**
  * Tầng 3 — Sự kiện Toàn Thành Phố Siêu Bựa (City-Wide Comedy & Moral Dilemmas).
  */
-export const CITY_EVENTS: CityEventScript[] = [
+const BASE_CITY_EVENTS: CityEventScript[] = [
   {
     id: 'ev-lac-heo-vang',
     title: 'Cơn sốt đi bộ nuôi Heo Vàng lúc 2 giờ sáng!',
@@ -1117,6 +1124,11 @@ export const CITY_EVENTS: CityEventScript[] = [
       },
     ],
   },
+];
+
+export const CITY_EVENTS: CityEventScript[] = [
+  ...BASE_CITY_EVENTS,
+  ...EXTRA_CITY_EVENTS,
 ];
 
 export const REQUEST_BY_ID: Record<string, RequestScript> = Object.fromEntries(

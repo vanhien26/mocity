@@ -287,7 +287,10 @@ export const SERVICE_TOOL: Record<ServiceId, { label: string; href: string } | n
     label: 'Tra cứu điểm tín dụng CIC',
     href: '/tai-chinh/tra-cuu-cic',
   },
-  INSURANCE: null,
+  INSURANCE: {
+    label: 'Khám phá Bảo hiểm xe & sức khỏe MoMo',
+    href: '/bao-hiem',
+  },
 };
 
 /**

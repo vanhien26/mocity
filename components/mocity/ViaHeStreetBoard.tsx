@@ -910,7 +910,18 @@ export default function ViaHeStreetBoard({
               ))}
             </div>
 
-            <StreetTraffic timeOfDay={timeOfDay} />
+            <StreetTraffic
+              timeOfDay={timeOfDay}
+              onPoliceClick={() => {
+                const result = claimTapReward('patrol', 100, { cooldownMs: 1500 });
+                if (result.ok) {
+                  setStreetToast('🚓 Xe Cảnh Sát MoCity: “Tình hình trật tự 10/10! Bà con yên tâm quét mã buôn bán!” (+100 Xu)');
+                } else {
+                  setStreetToast('🚓 Xe Cảnh Sát MoCity: “Xe đang tuần tra ngã tư trung tâm, chúc Thị Trưởng một ngày bình an!”');
+                }
+                setTimeout(() => setStreetToast(null), 4000);
+              }}
+            />
           </div>
 
           {/*

@@ -24,20 +24,28 @@ export function ambientLineFor(npc: NpcState, rotation: number): string | null {
   return lines[rotation % lines.length];
 }
 
-/** Script con hop le voi NPC nay va chua duoc xu ly. */
-export function eligibleRequestFor(npc: NpcState): RequestScript | null {
-  for (const script of REQUEST_SCRIPTS) {
-    if (script.archetype !== npc.archetype) continue;
+/** Danh sach cac script hop le voi NPC nay. */
+export function eligibleRequestsFor(npc: NpcState): RequestScript[] {
+  return REQUEST_SCRIPTS.filter((script) => {
+    if (script.archetype !== npc.archetype) return false;
     if (script.requiresDigital !== undefined && npc.acceptsDigital !== script.requiresDigital) {
-      continue;
+      return false;
     }
-    if (script.missingService && npc.services.includes(script.missingService)) continue;
-    return script;
-  }
-  return null;
+    if (script.missingService && npc.services.includes(script.missingService)) return false;
+    return true;
+  });
+}
+
+/** Script con hop le voi NPC nay va chua duoc xu ly. */
+export function eligibleRequestFor(npc: NpcState, seed?: number): RequestScript | null {
+  const matches = eligibleRequestsFor(npc);
+  if (matches.length === 0) return null;
+  const idx = typeof seed === 'number' ? Math.abs(seed) % matches.length : Math.floor(Math.random() * matches.length);
+  return matches[idx];
 }
 
 /** NPC dang co chuyen muon noi voi thi truong. */
 export function npcsNeedingAttention(npcs: NpcState[]): NpcState[] {
   return npcs.filter((npc) => eligibleRequestFor(npc) !== null);
 }
+

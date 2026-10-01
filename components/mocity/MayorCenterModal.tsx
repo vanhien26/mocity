@@ -15,11 +15,15 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { MAYOR_QUESTS } from '@/lib/mocity/mock-city-data';
+import { MAYOR_QUESTS, CITY_TIERS, nextCityTier } from '@/lib/mocity/mock-city-data';
+import { populationFor } from '@/lib/mocity/city-calculator';
 import { ARCHETYPES, CITY_ADVISORS, SERVICE_LABEL } from '@/lib/mocity/npc-data';
 import { EVENT_BY_ID } from '@/lib/mocity/dialogue-data';
 import {
   claimQuestReward,
+  claimDailyQuest,
+  dailyQuestViews,
+  currentCityTier,
   isQuestCompleted,
   renameCityAndMayor,
   RENAME_COST_GEMS,
@@ -81,6 +85,13 @@ export default function MayorCenterModal({
       ? `Đã đổi tên thành phố (tốn ${RENAME_COST_GEMS} Kim Cương)!`
       : `Đã đặt tên thành phố "${cityInput.trim() || state.cityName}"!`
     );
+  };
+
+  const handleClaimDaily = (questId: string, title: string) => {
+    if (claimDailyQuest(questId)) {
+      particles.confetti(window.innerWidth / 2, window.innerHeight * 0.4);
+      onToast(`Xong nhiệm vụ ngày "${title}"!`);
+    }
   };
 
   const handleClaim = (questId: string, title: string) => {
@@ -293,6 +304,74 @@ export default function MayorCenterModal({
 
           {tab === 'QUESTS' && (
             <div className="space-y-3">
+              {/* BẬC THÀNH PHỐ */}
+              {(() => {
+                const tier = currentCityTier(state);
+                const sau = nextCityTier(tier.rank);
+                const dan = populationFor(state.buildings);
+                const nha = state.buildings.length;
+                const pct = sau
+                  ? Math.min(100, Math.round(Math.min(dan / sau.minPopulation, nha / sau.minBuildings) * 100))
+                  : 100;
+                return (
+                  <div className="rounded-2xl border-2 p-3.5 shadow-sm" style={{ background: '#FFFBEB', borderColor: '#C9A227' }}>
+                    <p className="text-[10px] font-black uppercase tracking-wide text-[#8B6318]">
+                      Bậc Thành Phố {tier.rank}/{CITY_TIERS.length}
+                    </p>
+                    <p className="mt-0.5 text-sm font-black text-[#3E2A1B]">{tier.name}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#6E4F3A]">{tier.tagline}</p>
+
+                    {sau ? (
+                      <>
+                        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full" style={{ background: '#E6D9B8' }}>
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#D82D8B' }} />
+                        </div>
+                        <p className="mt-1.5 text-[10px] font-bold text-[#8B6318]">
+                          Lên {sau.name}: cần {sau.minPopulation.toLocaleString('vi-VN')} cư dân (đang {dan.toLocaleString('vi-VN')})
+                          {' · '}{sau.minBuildings} công trình (đang {nha})
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-2 text-[10px] font-black text-[#B45309]">Đã đạt bậc cao nhất.</p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* NHIỆM VỤ NGÀY */}
+              <div className="rounded-2xl border-2 p-3.5 shadow-sm" style={{ background: '#FFFDF7', borderColor: '#2563EB66' }}>
+                <p className="text-[10px] font-black uppercase tracking-wide text-[#1D4ED8]">
+                  Nhiệm Vụ Ngày · làm lại mỗi ngày
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  {dailyQuestViews().map((v) => (
+                    <div key={v.def.id} className="flex items-center gap-2 rounded-xl px-2 py-1.5" style={{ background: '#F4F7FC' }}>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-black text-[#3E2A1B]">{v.def.title}</p>
+                        <p className="text-[10px] font-bold text-[#6E4F3A]">
+                          {v.progress}/{v.def.target} · +{v.def.rewardCoins.toLocaleString('vi-VN')} Xu · +{v.def.rewardXp.toLocaleString('vi-VN')} XP
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={!v.done || v.claimed}
+                        onClick={() => handleClaimDaily(v.def.id, v.def.title)}
+                        className="shrink-0 rounded-lg px-2 py-1 text-[10px] font-black transition-transform active:scale-95 disabled:cursor-not-allowed"
+                        style={
+                          v.claimed
+                            ? { background: '#E2E8F0', color: '#94A3B8' }
+                            : v.done
+                              ? { background: '#2563EB', color: '#FFFFFF' }
+                              : { background: '#E2E8F0', color: '#94A3B8' }
+                        }
+                      >
+                        {v.claimed ? 'Đã nhận' : v.done ? 'Nhận' : 'Chưa xong'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Tình huống Chuyện Phố / Sự Kiện Thị Trưởng */}
               <div
                 className="rounded-2xl border-2 p-3.5 shadow-sm"

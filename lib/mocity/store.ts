@@ -6,6 +6,9 @@ import {
   INVENTORY_BY_ID,
   MANAGER_BY_ID,
   MAYOR_QUESTS,
+  CITY_TIERS,
+  DAILY_QUESTS,
+  cityTierFor,
   MAYOR_XP_PER_LEVEL,
   MODULE_BY_ID,
   STARTER_INVENTORY,
@@ -85,6 +88,21 @@ function todayKey(ts: number): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+/** Tang mot bo dem nhiem vu ngay, tu reset khi sang ngay moi. */
+function bumpDaily(
+  s: CityState,
+  key: import('./mock-city-data').DailyCounterKey,
+  amount = 1,
+  now = Date.now(),
+): import('./types').DailyLog {
+  const log = s.dailyLog?.day === todayKey(now) ? s.dailyLog : emptyDailyLog(now);
+  return { ...log, [key]: log[key] + amount };
+}
+
+function emptyDailyLog(ts: number): import('./types').DailyLog {
+  return { day: todayKey(ts), built: 0, upgraded: 0, talked: 0, eventsResolved: 0, starEvolved: 0, claimed: [] };
+}
+
 function createInitialState(): CityState {
   const now = Date.now();
   return {
@@ -111,6 +129,8 @@ function createInitialState(): CityState {
     lastEventAt: now,
     lastEngagedAt: now,
     eventLog: { day: todayKey(now), resolved: 0 },
+    dailyLog: emptyDailyLog(now),
+    cityTierClaimed: 1,
     happinessBoost: 0,
     tappedAt: {},
     totalVolume: 0,
@@ -162,6 +182,8 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
   3: (s) => ({
     ...s,
     eventLog: { day: todayKey(Date.now()), resolved: 0 },
+    dailyLog: emptyDailyLog(Date.now()),
+    cityTierClaimed: 1,
     happinessBoost: 0,
     lastEngagedAt: s.lastEventAt ?? Date.now(),
     tappedAt: {},
@@ -194,6 +216,21 @@ function setState(next: CityState) {
 
 const MAX_MAYOR_LEVEL = 50;
 
+/**
+ * XP thuong cho HANH DONG. Truoc day hanh dong chi cho 20-120 XP trong khi Xu
+ * nhan roi bom toi 500 XP/giay, nen choi tich cuc hay de may chay deu nhu nhau.
+ */
+const XP_PER_BUILD = 400;
+const XP_PER_UPGRADE = 260;
+const XP_PER_STAR = 900;
+/**
+ * XP tu Xu nhan roi. Tran cu la 500/giay -> dat cap 50 trong 42 phut va thu
+ * nhap vuot 5.000 Xu/s khong con lam len cap nhanh hon. Ha xuong de tien trinh
+ * cap do den tu viec lam, khong phai tu viec cho.
+ */
+const IDLE_XP_DIVISOR = 60;
+const IDLE_XP_CAP = 60;
+
 function addMayorXp(s: CityState, amount: number): Pick<CityState, 'mayorLevel' | 'mayorXp'> {
   const currentLevel = Number.isFinite(s.mayorLevel)
     ? Math.min(MAX_MAYOR_LEVEL, Math.max(1, s.mayorLevel))
@@ -220,7 +257,7 @@ function withCoins(state: CityState, delta: number): CityState {
   const next = { ...state, coins: Math.max(0, (Number.isFinite(state.coins) ? state.coins : 0) + safeDelta) };
   if (gained > 0) {
     next.totalCoinsEarned = (Number.isFinite(next.totalCoinsEarned) ? next.totalCoinsEarned : 0) + gained;
-    Object.assign(next, addMayorXp(next, Math.min(500, gained / 10)));
+    Object.assign(next, addMayorXp(next, Math.min(IDLE_XP_CAP, gained / IDLE_XP_DIVISOR)));
   }
   return next;
 }
@@ -302,6 +339,22 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     migrated.eventLog && typeof migrated.eventLog.day === 'string'
       ? { day: migrated.eventLog.day, resolved: Math.max(0, migrated.eventLog.resolved ?? 0) }
       : { day: todayKey(now), resolved: 0 };
+  /* Save cu khong co dailyLog/cityTierClaimed - lay mac dinh tu `fresh`. */
+  merged.dailyLog =
+    migrated.dailyLog && typeof migrated.dailyLog.day === 'string'
+      ? {
+          day: migrated.dailyLog.day,
+          built: Math.max(0, migrated.dailyLog.built ?? 0),
+          upgraded: Math.max(0, migrated.dailyLog.upgraded ?? 0),
+          talked: Math.max(0, migrated.dailyLog.talked ?? 0),
+          eventsResolved: Math.max(0, migrated.dailyLog.eventsResolved ?? 0),
+          starEvolved: Math.max(0, migrated.dailyLog.starEvolved ?? 0),
+          claimed: Array.isArray(migrated.dailyLog.claimed) ? migrated.dailyLog.claimed : [],
+        }
+      : emptyDailyLog(now);
+  merged.cityTierClaimed = Number.isFinite(migrated.cityTierClaimed)
+    ? Math.max(1, Math.min(CITY_TIERS.length, migrated.cityTierClaimed))
+    : 1;
   merged.tappedAt =
     migrated.tappedAt && typeof migrated.tappedAt === 'object' ? migrated.tappedAt : {};
   merged.happinessBoost = Number.isFinite(merged.happinessBoost)
@@ -845,6 +898,7 @@ export function resolveEvent(choiceId: string): DialogueResult {
   next.pendingEvent = null;
   next.lastEventAt = Date.now();
   next.lastEngagedAt = Date.now();
+  next.dailyLog = bumpDaily(next, 'eventsResolved');
   Object.assign(next, bumpResolvedEvents(next));
   setState(next);
   return 'ok';
@@ -976,7 +1030,8 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
     buildings: [...state.buildings, node],
     npcs,
   };
-  Object.assign(nextState, addMayorXp(nextState, 50));
+  nextState.dailyLog = bumpDaily(state, 'built');
+  Object.assign(nextState, addMayorXp(nextState, XP_PER_BUILD));
   setState(nextState);
   return 'ok';
 }
@@ -1007,7 +1062,8 @@ export function upgradeBuilding(col: number, row: number, count = 1): UpgradeRes
       b.id === node.id ? { ...b, level: b.level + actualCount } : b,
     ),
   };
-  Object.assign(nextState, addMayorXp(nextState, 20 * actualCount));
+  nextState.dailyLog = bumpDaily(state, 'upgraded', actualCount);
+  Object.assign(nextState, addMayorXp(nextState, XP_PER_UPGRADE * actualCount));
   setState(nextState);
   return 'ok';
 }
@@ -1117,7 +1173,8 @@ export function evolveBuildingStar(col: number, row: number): UpgradeResult {
       b.id === node.id ? { ...b, starRating: currentStar + 1 } : b,
     ),
   };
-  Object.assign(nextState, addMayorXp(nextState, 120));
+  nextState.dailyLog = bumpDaily(state, 'starEvolved');
+  Object.assign(nextState, addMayorXp(nextState, XP_PER_STAR));
   setState(nextState);
   return 'ok';
 }
@@ -1353,4 +1410,76 @@ export function useCityDerived(): CityDerived {
     happinessBoost,
     lastSeenAt,
   ]);
+}
+
+/* ───────────────────────── NHIỆM VỤ NGÀY & BẬC THÀNH PHỐ ───────────────── */
+
+export interface DailyQuestView {
+  def: import('./mock-city-data').DailyQuestDef;
+  progress: number;
+  done: boolean;
+  claimed: boolean;
+}
+
+/** Tiến độ nhiệm vụ ngày hôm nay. Sang ngày mới là bộ đếm về 0. */
+export function dailyQuestViews(now = Date.now()): DailyQuestView[] {
+  const log = state.dailyLog?.day === todayKey(now) ? state.dailyLog : emptyDailyLog(now);
+  return DAILY_QUESTS.map((def) => {
+    const progress = Math.min(def.target, log[def.counter]);
+    return {
+      def,
+      progress,
+      done: progress >= def.target,
+      claimed: log.claimed.includes(def.id),
+    };
+  });
+}
+
+export function claimDailyQuest(questId: string, now = Date.now()): boolean {
+  const def = DAILY_QUESTS.find((q) => q.id === questId);
+  if (!def) return false;
+
+  const log = state.dailyLog?.day === todayKey(now) ? state.dailyLog : emptyDailyLog(now);
+  if (log.claimed.includes(questId)) return false;
+  if (log[def.counter] < def.target) return false;
+
+  let next = withCoins(state, def.rewardCoins);
+  next = {
+    ...next,
+    gems: next.gems + def.rewardGems,
+    dailyLog: { ...log, claimed: [...log.claimed, questId] },
+  };
+  Object.assign(next, addMayorXp(next, def.rewardXp));
+  setState(next);
+  return true;
+}
+
+/** Bậc thành phố hiện tại, suy từ dân số và số công trình. */
+export function currentCityTier(s: CityState = state) {
+  return cityTierFor(populationFor(s.buildings), s.buildings.length);
+}
+
+/**
+ * Nhận thưởng cho các bậc vừa đạt. Trả về danh sách bậc đã trao thưởng để UI
+ * báo. Duyệt từng bậc một nên nhảy nhiều bậc cùng lúc vẫn nhận đủ.
+ */
+export function claimCityTierRewards(): import('./mock-city-data').CityTierDef[] {
+  const reached = currentCityTier();
+  const claimedRank = Math.max(1, state.cityTierClaimed ?? 1);
+  if (reached.rank <= claimedRank) return [];
+
+  const moi = CITY_TIERS.filter((t) => t.rank > claimedRank && t.rank <= reached.rank);
+  let next = state;
+  for (const t of moi) {
+    next = withCoins(next, t.rewardCoins);
+    next = { ...next, gems: next.gems + t.rewardGems };
+    Object.assign(next, addMayorXp(next, t.rewardXp));
+  }
+  setState({ ...next, cityTierClaimed: reached.rank });
+  return moi;
+}
+
+/** Ghi nhan mot luot hoi chuyen cu dan tren pho, phuc vu nhiem vu ngay. */
+export function recordCitizenTalk(): void {
+  setState({ ...state, dailyLog: bumpDaily(state, 'talked'), lastEngagedAt: Date.now() });
 }

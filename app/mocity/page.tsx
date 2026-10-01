@@ -51,6 +51,7 @@ import {
   resolveRequest,
   triggerFeverMode,
   triggerNextEvent,
+  claimCityTierRewards,
   upgradeBuilding,
   getCityState,
   useCity,
@@ -391,6 +392,19 @@ export default function MoCityPage() {
     schedule();
     return () => clearTimeout(timer);
   }, [isPlaying]);
+
+  /**
+   * Tu trao thuong khi thanh pho len bac moi. Chay theo `buildings` vi bac chi
+   * phu thuoc dan so va so cong trinh, ma ca hai deu suy tu mang nay.
+   */
+  useEffect(() => {
+    if (!isPlaying) return;
+    const moi = claimCityTierRewards();
+    if (moi.length === 0) return;
+    const cao = moi[moi.length - 1];
+    particles.confetti(window.innerWidth / 2, window.innerHeight * 0.35);
+    showToast(`Thành phố lên bậc ${cao.rank}: ${cao.name}! ${cao.tagline}`);
+  }, [buildings, isPlaying, showToast]);
 
   const hasPendingEventOrRequest = Boolean(pendingEvent || activeRequests.length > 0);
   const pendingEventScript = pendingEvent ? EVENT_BY_ID[pendingEvent.scriptId] : null;

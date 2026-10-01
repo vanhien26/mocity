@@ -211,6 +211,18 @@ export interface EventDayLog {
   resolved: number;
 }
 
+/** Tien do nhiem vu ngay. Reset khi `day` khac ngay hien tai. */
+export interface DailyLog {
+  day: string;
+  built: number;
+  upgraded: number;
+  talked: number;
+  eventsResolved: number;
+  starEvolved: number;
+  /** Id cac nhiem vu ngay da nhan thuong trong ngay nay. */
+  claimed: string[];
+}
+
 export type MayorGender = 'male' | 'female';
 
 export interface CityState extends Currencies {
@@ -247,6 +259,9 @@ export interface CityState extends Currencies {
   lastEngagedAt: number;
   /** Dem han giai quyet su kien trong ngay. Tu reset sang 0 khi sang ngay moi. */
   eventLog: EventDayLog;
+  dailyLog: DailyLog;
+  /** Rank bac thanh pho cao nhat da nhan thuong, de khong tra thuong hai lan. */
+  cityTierClaimed: number;
   /**
    * Diem Hanh Phuc cong don tu dialogue. Hanh phuc suy giam theo thoi gian
    * (xem `happinessFor`), nen day la lien he giữ "co xu lý chuyện phố" và
