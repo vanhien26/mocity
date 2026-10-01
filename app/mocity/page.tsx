@@ -648,8 +648,13 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           </div>
 
           {/* Thanh cấp Thị Trưởng */}
+          {/*
+           * Ba dong deu `whitespace-nowrap`: ban cu rong 112px nen "THỊ TRƯỞNG"
+           * xuong hai dong, dong "% XP nữa" cung xuong dong, the cao len 69px va
+           * day cao ca thanh HUD. Chot 150px la du cho muc XP 6 chu so.
+           */}
           <div
-            className="flex w-[112px] shrink-0 flex-col justify-center rounded-xl border px-2 py-1"
+            className="flex w-[150px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1"
             style={{
               background: 'linear-gradient(135deg, #1A0B2E, #3B1E5F)',
               borderColor: '#A78BFA',
@@ -661,18 +666,22 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 : `${formatNumber(mayorXp)} / ${formatNumber(xpNeeded)} XP để lên cấp ${level + 1}`
             }
           >
-            <div className="flex items-baseline justify-between gap-1">
-              <span className="text-[9px] font-black uppercase text-violet-300">Thị Trưởng</span>
-              <span className="text-xs font-black text-violet-100">Lv.{level}</span>
+            <div className="flex items-baseline justify-between gap-1.5">
+              <span className="whitespace-nowrap text-[9px] font-black uppercase leading-none tracking-wide text-violet-300">
+                Thị Trưởng
+              </span>
+              <span className="whitespace-nowrap text-xs font-black leading-none text-violet-100 tabular-nums">
+                Lv.{level}
+              </span>
             </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#2A1A45' }}>
+            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#2A1A45' }}>
               <div
                 className="h-full rounded-full transition-[width] duration-500"
                 style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#A78BFA,#EB2F96)' }}
               />
             </div>
-            <p className="mt-0.5 text-[9px] font-black leading-none text-violet-300/80">
-              {isMaxLevel ? 'Cấp tối đa' : `${xpPct}% · ${formatCompact(xpNeeded - mayorXp)} XP nữa`}
+            <p className="whitespace-nowrap text-[9px] font-black leading-none text-violet-300/80 tabular-nums">
+              {isMaxLevel ? 'Cấp tối đa' : `${xpPct}% · còn ${formatCompact(xpNeeded - mayorXp)} XP`}
             </p>
           </div>
         </div>
