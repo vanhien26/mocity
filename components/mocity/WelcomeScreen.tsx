@@ -1,8 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { signOut } from 'next-auth/react';
-import { ArrowLeft, ArrowRight, Crown, Gift, LogOut, Store, X } from 'lucide-react';
+import { ArrowRight, Crown, Gift, Store, X } from 'lucide-react';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 
 /** Hàng số thưởng nhậm chức, phải khớp `LOGIN_BONUS_COINS` trong page. */
@@ -114,24 +112,6 @@ export default function WelcomeScreen({
       aria-labelledby="mocity-welcome-title"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto bg-[#140F12]/75 p-4 backdrop-blur-md"
     >
-      <div className="absolute left-4 top-4 flex items-center gap-2">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 rounded-2xl border-2 border-[#C9A227] bg-[#FFFDF7] px-3.5 py-2 text-xs font-black text-[#3E2A1B] shadow-lg transition-transform hover:scale-105"
-        >
-          <ArrowLeft size={15} className="shrink-0 text-[#D82D8B]" />
-          <span>Về trang chủ</span>
-        </Link>
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: '/' })}
-          className="inline-flex items-center gap-1.5 rounded-2xl border-2 border-[#C9A227] bg-[#FFFDF7] px-3.5 py-2 text-xs font-black text-[#3E2A1B] shadow-lg transition-transform hover:scale-105"
-        >
-          <LogOut size={15} className="shrink-0 text-[#D82D8B]" />
-          <span className="hidden sm:inline">Đổi tài khoản</span>
-        </button>
-      </div>
-
       <div className="relative my-10 w-full max-w-[560px]">
         <div className="overflow-hidden rounded-3xl border-[3px] border-[#C9A227] bg-[#FAF6ED] shadow-[0_24px_64px_rgba(0,0,0,0.65)]">
           {/* Đầu màn hình: lời chào theo tài khoản đang đăng nhập */}
