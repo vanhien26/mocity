@@ -516,34 +516,47 @@ export default function ViaHeStreetBoard({
             {/* GÓC NGÃ TƯ & CON HẺM "Đ. MOCITY" BÊN TRÁI */}
             <div className="relative mr-4 flex w-[210px] shrink-0 flex-col items-center justify-end">
               <div className="flex w-full items-end justify-between">
-                <div className="h-[340px] w-[72px] rounded-t border-2 border-[#5A4A3F] bg-[#E8C2BA] p-2 flex flex-col justify-between">
-                  <div className="h-10 w-full border border-[#5A4A3F] bg-white/80" />
-                  <div className="h-10 w-full border border-[#5A4A3F] bg-white/80" />
-                  <div className="h-8 w-full bg-[#E6B84F] border border-[#5A4A3F]" />
+                {/* Nha goc hem - mang phang, canh phai la lop giay dam */}
+                <div
+                  className="relative h-[340px] w-[72px] shrink-0 rounded-t p-2 flex flex-col justify-between"
+                  style={{ backgroundColor: '#E8C2BA' }}
+                >
+                  <div className="absolute inset-y-0 right-0 w-[9px]" style={{ backgroundColor: '#CFA29A' }} />
+                  <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
+                  <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
+                  <div className="relative h-8 w-full" style={{ backgroundColor: '#E6B84F' }} />
                 </div>
 
-                {/* Lòng hẻm sâu hun hút */}
-                <div className="relative h-[200px] flex-1 bg-[#8C8881] border-x-2 border-[#5A4A3F] flex flex-col justify-end items-center pb-3">
-                  <div className="h-24 w-9 bg-[#F5DE93] border border-[#5A4A3F] mb-auto mt-3 opacity-85" />
-                  <div className="flex items-end -space-x-1.5 mb-1 scale-110">
-                    <div className="flex flex-col items-center">
-                      <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2] flex items-end justify-center">
-                        <div className="h-1.5 w-3 bg-[#67E8F9] rounded-sm" />
+                {/*
+                 * Long hem. Chieu sau tao bang cac khung long nhau moi lop mot
+                 * sac dam hon, thay cho mot mang xam phang co vien.
+                 */}
+                <div className="relative h-[200px] flex-1 overflow-hidden" style={{ backgroundColor: '#9A958C' }}>
+                  <div className="absolute inset-y-0 inset-x-[13%]" style={{ backgroundColor: '#837E76' }} />
+                  <div className="absolute inset-y-0 inset-x-[26%]" style={{ backgroundColor: '#6C6760' }} />
+                  <div className="absolute inset-y-0 inset-x-[38%]" style={{ backgroundColor: '#575249' }} />
+
+                  {/* O cua sang cuoi hem */}
+                  <div className="absolute left-1/2 top-[26px] h-24 w-9 -translate-x-1/2" style={{ backgroundColor: '#F5DE93' }} />
+                  <div className="absolute left-1/2 top-[26px] h-[9px] w-9 -translate-x-1/2" style={{ backgroundColor: '#D4B661' }} />
+
+                  {/* Ba nguoi deo khau trang dung trong hem */}
+                  <div className="absolute inset-x-0 bottom-3 flex items-end justify-center -space-x-[3px]">
+                    {[
+                      { body: '#64748B', h: 28 },
+                      { body: '#B45309', h: 33 },
+                      { body: '#334155', h: 28 },
+                    ].map((p, i) => (
+                      <div key={i} className="flex flex-col items-center">
+                        <div className="relative h-[15px] w-[15px] rounded-full" style={{ backgroundColor: '#FDE6D2' }}>
+                          <div
+                            className="absolute inset-x-[12%] bottom-[14%] h-[6px] rounded-[2px]"
+                            style={{ backgroundColor: '#7FD4E8' }}
+                          />
+                        </div>
+                        <div className="rounded-t" style={{ height: p.h, width: 15, backgroundColor: p.body }} />
                       </div>
-                      <div className="h-7 w-4 rounded-t bg-[#64748B] border border-[#3E2A1B]" />
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2] flex items-end justify-center">
-                        <div className="h-1.5 w-3 bg-[#67E8F9] rounded-sm" />
-                      </div>
-                      <div className="h-8 w-4 rounded-t bg-[#B45309] border border-[#3E2A1B]" />
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="h-4 w-4 rounded-full border border-[#3E2A1B] bg-[#FDE6D2] flex items-end justify-center">
-                        <div className="h-1.5 w-3 bg-[#67E8F9] rounded-sm" />
-                      </div>
-                      <div className="h-7 w-4 rounded-t bg-[#334155] border border-[#3E2A1B]" />
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
