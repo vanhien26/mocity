@@ -47,49 +47,111 @@ export const TIME_OF_DAY_META: Record<
 
 /**
  * Cột đèn đường cổ điển vỉa hè Việt Nam
+ * Đèn đường tự động sáng khi hoàng hôn/ban đêm hoặc khi người chơi bật thủ công.
+ * Có quầng sáng ấm áp toả tròn và vệt sáng hình nón rọi rõ xuống mặt vỉa hè & lòng đường.
  */
 export function StreetLamp({
   timeOfDay,
+  lit,
+  onToggle,
   style,
+  className = '',
 }: {
-  timeOfDay: TimeOfDay;
+  timeOfDay?: TimeOfDay;
+  lit?: boolean;
+  onToggle?: () => void;
   style?: React.CSSProperties;
+  className?: string;
 }) {
-  const isLit = timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET';
+  const isLit = lit !== undefined ? lit : (timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET');
 
   return (
     <div
       style={style}
-      className="pointer-events-none absolute z-30 flex flex-col items-center"
+      onClick={onToggle}
+      className={`absolute z-30 flex flex-col items-center select-none transition-transform ${
+        onToggle ? 'cursor-pointer hover:scale-105 active:scale-95' : 'pointer-events-none'
+      } ${className}`}
+      title={
+        onToggle
+          ? isLit
+            ? '💡 Đèn đường đang sáng (Bấm để tắt tiết kiệm điện)'
+            : '💡 Đèn đường đang tắt (Bấm để thắp sáng)'
+          : undefined
+      }
     >
-      {/* Chao đèn & Bóng phát sáng */}
+      {/* Chao đèn & Lồng đèn phát sáng */}
       <div className="relative flex flex-col items-center">
-        {/* Nóc chao đèn sắt cong */}
-        <div className="h-2 w-6 rounded-t-full border border-[#2A231D] bg-[#3E352F]" />
-        {/* Bóng đèn phát sáng */}
+        {/* Chóp nhọn trang trí phong cách Đông Dương */}
+        <div className="h-2 w-1 rounded-t-full bg-[#1A1410]" />
+
+        {/* Nóc chao đèn sắt cong uốn lượn */}
+        <div className="h-2.5 w-7 rounded-t-[8px] border border-[#1A1410] bg-[#2E241E] shadow-sm" />
+
+        {/* Lồng kính đèn lục giác */}
         <div
-          className={`h-4 w-4 rounded-full border border-[#2A231D] transition-all duration-500 ${
-            isLit
-              ? 'bg-[#FEF08A] shadow-[0_0_18px_#FDE047,0_0_35px_#FACC15]'
-              : 'bg-[#E2E8F0]'
-          }`}
-        />
-        {/* Vệt ánh sáng hình nón rọi xuống vỉa hè ban đêm */}
-        {isLit && (
+          className="relative flex h-5 w-6 items-center justify-center overflow-hidden rounded-b-sm border border-[#1A1410] transition-colors duration-500"
+          style={{
+            background: isLit
+              ? 'radial-gradient(ellipse at 50% 40%, #FFFBEB 0%, #FEF08A 45%, #F59E0B 100%)'
+              : '#E2E8F0',
+            boxShadow: isLit
+              ? '0 0 12px #FDE047, 0 0 25px rgba(245,158,11,0.9), inset 0 0 6px #FFF'
+              : 'none',
+          }}
+        >
+          {/* Nan sắt bảo vệ kính */}
+          <div className="absolute inset-y-0 left-2 w-[1px] bg-[#1A1410]/40" />
+          <div className="absolute inset-y-0 right-2 w-[1px] bg-[#1A1410]/40" />
+
+          {/* Tim đèn LED siêu sáng */}
           <div
-            className="absolute top-4 -left-12 h-44 w-28 pointer-events-none opacity-45"
-            style={{
-              background:
-                'radial-gradient(ellipse at 50% 0%, rgba(254,240,138,0.7) 0%, rgba(254,240,138,0.2) 40%, transparent 75%)',
-            }}
+            className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+              isLit
+                ? 'bg-white shadow-[0_0_8px_#FFF,0_0_16px_#FDE047]'
+                : 'bg-[#94A3B8]'
+            }`}
           />
+        </div>
+
+        {/* Vệt ánh sáng hình nón rọi xuống vỉa hè & lòng đường */}
+        {isLit && (
+          <>
+            {/* Luồng sáng nón toả rộng hình phễu */}
+            <div
+              className="pointer-events-none absolute top-7 -left-[57px] h-48 w-36 opacity-75 transition-opacity duration-700"
+              style={{
+                background:
+                  'radial-gradient(ellipse 65% 100% at 50% 0%, rgba(254, 240, 138, 0.65) 0%, rgba(253, 224, 71, 0.32) 35%, rgba(245, 158, 11, 0.12) 65%, transparent 85%)',
+                clipPath: 'polygon(35% 0%, 65% 0%, 100% 100%, 0% 100%)',
+              }}
+            />
+
+            {/* Vệt sáng loang ấm áp trên mặt đất tại chân cột */}
+            <div
+              className="pointer-events-none absolute top-[110px] -left-[45px] h-8 w-28 rounded-full opacity-60 blur-[3px]"
+              style={{
+                background:
+                  'radial-gradient(ellipse at 50% 50%, rgba(254,240,138,0.7) 0%, rgba(245,158,11,0.3) 50%, transparent 80%)',
+              }}
+            />
+          </>
         )}
       </div>
 
-      {/* Cột sắt đen uốn cong */}
-      <div className="h-[88px] w-2 border-x border-[#2A231D] bg-[#3E352F]" />
-      {/* Đế cột đèn hình thang */}
-      <div className="h-4 w-5 rounded-t-sm border border-[#2A231D] bg-[#2A231D]" />
+      {/* Tay đỡ sắt uốn lượn mỹ thuật */}
+      <div className="h-1.5 w-4 rounded-b-sm border-x border-b border-[#1A1410] bg-[#2E241E]" />
+
+      {/* Cột sắt đúc đen gân nổi */}
+      <div className="relative flex h-[82px] w-2.5 justify-center border-x border-[#1A1410] bg-[#352B24]">
+        {/* Vạch gờ nổi trang trí thân cột */}
+        <div className="absolute top-4 h-1 w-3 rounded-full bg-[#1A1410]" />
+        <div className="absolute top-12 h-1 w-3 rounded-full bg-[#1A1410]" />
+      </div>
+
+      {/* Chân đế cột đèn đúc gang 2 tầng */}
+      <div className="h-2 w-4 border-x border-t border-[#1A1410] bg-[#241D18]" />
+      <div className="h-3 w-6 rounded-t-sm border border-[#1A1410] bg-[#1A1410] shadow" />
     </div>
   );
 }

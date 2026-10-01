@@ -25,6 +25,9 @@ import MoMoMascot from './MoMoMascot';
 import StreetTraffic from './StreetTraffic';
 import ShophouseFacade from './ShophouseFacade';
 import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from './StreetAmbiance';
+import { useTrafficController } from './useTrafficController';
+import TrafficLightPole from './TrafficLightPole';
+import StreetPets from './StreetPets';
 
 /**
  * Do rong mot lot dat tren pho. Moi lot rong 236px. Dung chung giua tinh be
@@ -144,6 +147,7 @@ export default function ViaHeStreetBoard({
   const activeRequests = useCity((s) => s.activeRequests);
   const pendingEvent = useCity((s) => s.pendingEvent);
   const timeOfDay = useCity((s) => s.timeOfDay ?? 'DAY');
+  const traffic = useTrafficController(timeOfDay);
 
   const chatter = useAmbientChatter(npcs);
 
@@ -760,6 +764,7 @@ export default function ViaHeStreetBoard({
                       {idx % 2 === 0 && (
                         <StreetLamp
                           timeOfDay={timeOfDay}
+                          lit={traffic.streetLightsLit}
                           style={{ right: -8, bottom: -12 }}
                         />
                       )}
@@ -809,16 +814,17 @@ export default function ViaHeStreetBoard({
             <div className="absolute inset-y-0 left-0 w-[132px]" style={{ backgroundColor: '#BFBAAC' }} />
             <div className="absolute inset-y-0 left-[132px] w-[4px]" style={{ backgroundColor: '#9C8F74' }} />
 
-            {/* Den giao thong o goc nga tu */}
-            <div className="pointer-events-none absolute bottom-[6px] left-[110px]">
-              <svg width="26" height="80" viewBox="0 0 26 80" overflow="visible">
-                <rect x="10" y="30" width="6" height="50" fill="#4A4038" />
-                <rect x="2" y="0" width="22" height="34" rx="3" fill="#2E2822" />
-                <circle cx="13" cy="8" r="5.4" fill={timeOfDay === 'NIGHT' ? '#F4453C' : '#A33832'} />
-                <circle cx="13" cy="17" r="5.4" fill="#6B6020" />
-                <circle cx="13" cy="26" r="5.4" fill={timeOfDay === 'DAY' || timeOfDay === 'DAWN' ? '#2FA855' : '#1C5E34'} />
-              </svg>
-            </div>
+            {/* Cột đèn giao thông ngã tư tương tác: đếm ngược LED, 3 mắt đèn rực rỡ, tín hiệu người đi bộ */}
+            <TrafficLightPole
+              phase={traffic.phase}
+              countdown={traffic.countdown}
+              onClick={() => {
+                traffic.switchPhase();
+                setStreetToast('🚦 Thị Trưởng đã đổi tín hiệu đèn ngã tư!');
+                setTimeout(() => setStreetToast(null), 3000);
+              }}
+              style={{ left: 104, bottom: 6 }}
+            />
 
             {/* Bien ten duong - hai lop giay thay cho vien */}
             <div className="pointer-events-none absolute bottom-[86px] left-[140px]">
@@ -866,6 +872,37 @@ export default function ViaHeStreetBoard({
               <div className="h-[26px] w-[24px] translate-x-[1px]" style={{ backgroundColor: '#2E7D32' }} />
             </div>
 
+            {/* HỆ THỐNG CỘT ĐÈN ĐƯỜNG CỔ ĐIỂN DỌC VỈA HÈ (Chiếu sáng ấm áp xuống vỉa hè & mặt đường) */}
+            {[260, 680, 1100, 1520, 1940, 2360]
+              .filter((x) => x < streetWidth - 60)
+              .map((lampX, li) => (
+                <StreetLamp
+                  key={`curb-lamp-${li}`}
+                  timeOfDay={timeOfDay}
+                  lit={traffic.streetLightsLit}
+                  onToggle={() => {
+                    const next = traffic.toggleStreetLights();
+                    setStreetToast(
+                      next
+                        ? '💡 Đã bật đèn đường vàng ấm áp cho toàn khu phố!'
+                        : '🌙 Đã tắt đèn đường để tiết kiệm điện!',
+                    );
+                    setTimeout(() => setStreetToast(null), 3000);
+                  }}
+                  style={{ left: lampX, bottom: 8 }}
+                />
+              ))}
+
+            {/* HỆ THỐNG THÚ CƯNG VỈA HÈ (PETS OF MOCITY) */}
+            <StreetPets
+              timeOfDay={timeOfDay}
+              streetWidth={streetWidth}
+              onPetReward={(msg) => {
+                setStreetToast(msg);
+                setTimeout(() => setStreetToast(null), 4000);
+              }}
+            />
+
             {/* HỆ THỐNG CƯ DÂN ĐI BỘ */}
             <ExpressiveStreetCitizens
               onCitizenReward={(msg) => {
@@ -912,6 +949,9 @@ export default function ViaHeStreetBoard({
 
             <StreetTraffic
               timeOfDay={timeOfDay}
+              trafficPhase={traffic.phase}
+              streetLightsLit={traffic.streetLightsLit}
+              roadWidth={streetWidth}
               onPoliceClick={() => {
                 const result = claimTapReward('patrol', 100, { cooldownMs: 1500 });
                 if (result.ok) {

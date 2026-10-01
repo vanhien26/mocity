@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { recordCitizenTalk, spendCoins } from '@/lib/mocity/store';
+import { claimTapReward, recordCitizenTalk, spendCoins } from '@/lib/mocity/store';
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
+import { CITIZEN_SCRIPTS, type CitizenDialogueOption } from '@/lib/mocity/citizen-scenarios';
 
 const CITIZEN_TAP_COINS = 25;
 const CITIZEN_TAP_COOLDOWN_MS = 5_000;
@@ -205,38 +206,13 @@ const WALK_CSS = `
 @keyframes citSw  { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
 `;
 
-const TANG_QUA_XU = 50;
+const EMOTION_EMOJIS: Record<FacialEmotion, string> = {
+  HAPPY: '😊',
+  STAR_EYES: '🤩',
+  SURPRISED: '😮',
+  TIRED: '😅',
+};
 
-/** Mot luot trao doi: nguoi choi chon, cu dan dap lai. */
-interface TalkOption {
-  id: string;
-  label: string;
-  /** Xu nguoi choi phai tra. 0 la mien phi. */
-  cost: number;
-  reply: (def: CitizenDef) => string;
-}
-
-const TALK_OPTIONS: TalkOption[] = [
-  {
-    id: 'hoi-lam-an',
-    label: 'Dạo này làm ăn sao rồi?',
-    cost: 0,
-    reply: (d) => d.quotes[Math.floor(Math.random() * d.quotes.length)],
-  },
-  {
-    id: 'hoi-khu-pho',
-    label: 'Thấy khu phố mình thế nào?',
-    cost: 0,
-    reply: (d) =>
-      `Phố mình càng ngày càng xôm! ${d.role} như tui sống ở đây thấy dễ thở lắm Thị Trưởng à.`,
-  },
-  {
-    id: 'tang-qua',
-    label: `Biếu bà con ${TANG_QUA_XU} Xu uống nước`,
-    cost: TANG_QUA_XU,
-    reply: () => 'Ui chao, Thị Trưởng chu đáo quá! Để tui kể cho cả xóm nghe mới được!',
-  },
-];
 
 /**
  * Nhan vat kieu CUT PAPER: moi bo phan la MOT mang phang, khong stroke.
@@ -569,6 +545,8 @@ export default function ExpressiveStreetCitizens({
   /** Chi so cu dan dang dung noi chuyen voi nguoi choi, null la khong co ai. */
   const [talkingIdx, setTalkingIdx] = useState<number | null>(null);
   const [talkLine, setTalkLine] = useState<string>('');
+  const [currentEmotion, setCurrentEmotion] = useState<FacialEmotion>('HAPPY');
+  const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
 
   const handleClickCitizen = useCallback((idx: number) => {
     const def = CITIZEN_DEFS[idx];
@@ -581,35 +559,101 @@ export default function ExpressiveStreetCitizens({
 
     recordCitizenTalk();
     setTalkingIdx(idx);
-    setTalkLine(`Dạ Thị Trưởng! Tui là ${def.name}, ${def.role.toLowerCase()} ở khu này.`);
+    setSelectedOptId(null);
+
+    const script = CITIZEN_SCRIPTS[def.id];
+    let greeting = `Dạ Thị Trưởng! Tui là ${def.name}, ${def.role.toLowerCase()} ở khu này.`;
+    let initEmotion: FacialEmotion = 'HAPPY';
+
+    if (script && script.greetings.length > 0) {
+      const g = script.greetings[Math.floor(Math.random() * script.greetings.length)];
+      greeting = g.text;
+      initEmotion = g.emotion;
+    }
+
+    setTalkLine(greeting);
+    setCurrentEmotion(initEmotion);
     setAppearances((prev) =>
-      prev.map((a, i) => (i === idx ? { emotion: 'STAR_EYES', bubbleText: null } : a)),
+      prev.map((a, i) => (i === idx ? { emotion: initEmotion, bubbleText: null } : a)),
     );
   }, []);
 
+  // Đổi ngẫu nhiên sang một lời chào hoặc mẩu chuyện khác của cùng NPC
+  const handleRerollGreeting = useCallback(() => {
+    if (talkingIdx === null) return;
+    const def = CITIZEN_DEFS[talkingIdx];
+    const script = CITIZEN_SCRIPTS[def.id];
+    if (!script || script.greetings.length === 0) return;
+    const g = script.greetings[Math.floor(Math.random() * script.greetings.length)];
+    setTalkLine(g.text);
+    setCurrentEmotion(g.emotion);
+    setSelectedOptId(null);
+    setAppearances((prev) =>
+      prev.map((a, i) => (i === talkingIdx ? { emotion: g.emotion, bubbleText: null } : a)),
+    );
+  }, [talkingIdx]);
+
+  // Danh sách kịch bản lựa chọn cho cư dân hiện tại
+  const activeOptions: CitizenDialogueOption[] = useMemo(() => {
+    if (talkingIdx === null) return [];
+    const def = CITIZEN_DEFS[talkingIdx];
+    const script = CITIZEN_SCRIPTS[def.id];
+    if (script && script.options.length > 0) {
+      return script.options;
+    }
+    return [
+      {
+        id: 'hoi-lam-an',
+        label: 'Dạo này làm ăn sao rồi?',
+        reply: def.quotes[Math.floor(Math.random() * def.quotes.length)],
+        emotionOnSelect: 'HAPPY',
+      },
+      {
+        id: 'hoi-khu-pho',
+        label: 'Thấy khu phố mình thế nào?',
+        reply: `Phố mình càng ngày càng xôm! ${def.role} như tui sống ở đây thấy dễ thở lắm Thị Trưởng à.`,
+        emotionOnSelect: 'HAPPY',
+      },
+    ];
+  }, [talkingIdx]);
+
   const handleTalkOption = useCallback(
-    (opt: TalkOption) => {
+    (opt: CitizenDialogueOption) => {
       if (talkingIdx === null) return;
       const def = CITIZEN_DEFS[talkingIdx];
+      const citizenX = simRef.current[talkingIdx]?.x ?? 400;
 
-      if (opt.cost > 0) {
+      if (opt.cost && opt.cost > 0) {
         const paid = spendCoins(opt.cost);
         if (!paid) {
           setTalkLine('Thôi khỏi Thị Trưởng ơi, ngân khố đang eo hẹp mà!');
+          setCurrentEmotion('TIRED');
           setAppearances((prev) =>
             prev.map((a, i) => (i === talkingIdx ? { ...a, emotion: 'TIRED' } : a)),
           );
           return;
         }
-        particles.coinShower(simRef.current[talkingIdx].x, 380, 8);
+        particles.coinShower(citizenX, 380, 10);
         onCitizenReward?.(`Đã biếu ${def.name} ${formatCompact(opt.cost)} Xu.`);
       }
 
-      setTalkLine(opt.reply(def));
+      if (opt.particles === 'coin') {
+        particles.coinShower(citizenX, 380, 8);
+      } else if (opt.particles === 'stars') {
+        particles.levelUpRing(citizenX, 380);
+      }
+
+      if (opt.rewardBonus) {
+        claimTapReward('citizen', opt.rewardBonus.coins, { cooldownMs: 1500 });
+        onCitizenReward?.(`🎁 ${def.name}: ${opt.rewardBonus.reason} (+${opt.rewardBonus.coins} Xu)!`);
+      }
+
+      const nextEmotion = opt.emotionOnSelect ?? (opt.cost && opt.cost > 0 ? 'STAR_EYES' : 'HAPPY');
+      setSelectedOptId(opt.id);
+      setTalkLine(opt.reply);
+      setCurrentEmotion(nextEmotion);
       setAppearances((prev) =>
-        prev.map((a, i) =>
-          i === talkingIdx ? { ...a, emotion: opt.cost > 0 ? 'STAR_EYES' : 'HAPPY' } : a,
-        ),
+        prev.map((a, i) => (i === talkingIdx ? { ...a, emotion: nextEmotion } : a)),
       );
     },
     [talkingIdx, onCitizenReward],
@@ -622,6 +666,7 @@ export default function ExpressiveStreetCitizens({
     sim.behavior = 'WALKING';
     sim.behaviorTimer = 110 + Math.random() * 90;
     setTalkingIdx(null);
+    setSelectedOptId(null);
   }, [talkingIdx]);
 
   return (
@@ -712,54 +757,94 @@ export default function ExpressiveStreetCitizens({
       {talkingIdx !== null && typeof document !== 'undefined' && createPortal(
         <div className="pointer-events-auto fixed inset-x-0 bottom-[88px] z-[60] flex justify-center px-3">
           <div
-            className="w-full max-w-md rounded-2xl p-3 shadow-[0_14px_34px_rgba(20,12,8,0.4)]"
+            className="w-full max-w-lg rounded-2xl p-3.5 shadow-[0_14px_34px_rgba(20,12,8,0.4)] transition-all"
             style={{ backgroundColor: '#FFFDF7', border: '2px solid #78533D' }}
           >
-            <div className="mb-2 flex items-start gap-2">
+            {/* Header: Role badge, Citizen Name & Emotion emoji, Close button */}
+            <div className="mb-2.5 flex items-start gap-2">
               <span
-                className="mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black text-white"
+                className="mt-0.5 shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black text-white shadow-xs"
                 style={{ backgroundColor: '#D82D8B' }}
               >
                 {CITIZEN_DEFS[talkingIdx].role}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-black text-[#3E2A1B]">
-                  {CITIZEN_DEFS[talkingIdx].name}
-                </p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-[#6E4F3A]">{talkLine}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-xs font-black text-[#3E2A1B]">
+                    {CITIZEN_DEFS[talkingIdx].name}
+                  </p>
+                  <span className="text-xs" title={`Tâm trạng: ${currentEmotion}`}>
+                    {EMOTION_EMOJIS[currentEmotion]}
+                  </span>
+                </div>
+                <div className="mt-1 rounded-xl bg-[#FAF6EE] p-2 border border-[#E8DEC8]">
+                  <p className="text-[12px] font-medium leading-relaxed text-[#5A3E2B]">
+                    {talkLine}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={handleEndTalk}
                 aria-label="Kết thúc trò chuyện"
-                className="shrink-0 rounded-full px-1.5 text-sm font-black text-[#8B7355] hover:text-[#D82D8B]"
+                className="shrink-0 rounded-full px-2 py-0.5 text-base font-black text-[#8B7355] transition-colors hover:text-[#D82D8B]"
               >
                 ×
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {TALK_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => handleTalkOption(opt)}
-                  className="rounded-xl px-2.5 py-1.5 text-[10px] font-black transition-transform active:scale-95"
-                  style={
-                    opt.cost > 0
-                      ? { backgroundColor: '#D82D8B', color: '#FFFFFF' }
-                      : { backgroundColor: '#F3E8DC', color: '#6E4F3A' }
-                  }
-                >
-                  {opt.label}
-                </button>
-              ))}
+            {/* Danh sách kịch bản lựa chọn */}
+            <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-[#F0E6D8]">
+              {activeOptions.map((opt) => {
+                const isSelected = selectedOptId === opt.id;
+                const isPaid = opt.cost && opt.cost > 0;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => handleTalkOption(opt)}
+                    className="group relative rounded-xl px-2.5 py-1.5 text-[10px] font-black transition-all active:scale-95 text-left cursor-pointer"
+                    style={
+                      isPaid
+                        ? {
+                            backgroundColor: isSelected ? '#BE185D' : '#D82D8B',
+                            color: '#FFFFFF',
+                            boxShadow: isSelected ? '0 0 0 2px #FBCFE8' : undefined,
+                          }
+                        : {
+                            backgroundColor: isSelected ? '#EAD6C0' : '#F3E8DC',
+                            color: '#5A3E2B',
+                            boxShadow: isSelected ? '0 0 0 2px #D82D8B' : undefined,
+                          }
+                    }
+                  >
+                    <span>{opt.label}</span>
+                    {isPaid && (
+                      <span className="ml-1 rounded bg-black/20 px-1 py-0.2 text-[9px] font-bold">
+                        -{opt.cost} Xu
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Nút nghe câu chuyện khác của cùng NPC */}
+              <button
+                type="button"
+                onClick={handleRerollGreeting}
+                className="rounded-xl border border-[#D5C2AF] bg-[#FAF6EE] px-2 py-1.5 text-[10px] font-bold text-[#8B7355] hover:bg-[#F3E8DC] transition-colors cursor-pointer"
+                title="Nghe câu chuyện hoặc lời chào khác từ cư dân này"
+              >
+                🔄 Chuyện khác...
+              </button>
+
+              {/* Nút đóng / tạm biệt */}
               <button
                 type="button"
                 onClick={handleEndTalk}
-                className="ml-auto rounded-xl px-2.5 py-1.5 text-[10px] font-black text-[#8B7355]"
+                className="ml-auto rounded-xl px-2.5 py-1.5 text-[10px] font-black text-[#8B7355] hover:text-[#3E2A1B] transition-colors cursor-pointer"
               >
-                Chào bà con
+                Chào bà con 👋
               </button>
             </div>
           </div>
