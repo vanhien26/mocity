@@ -207,7 +207,7 @@ export default function WelcomeScreen({
                 Đặt tên cho thành phố
               </h2>
               <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
-                Tên Thị Trưởng lấy từ tài khoản của bạn. Đổi tên được miễn phí trước khi vào chơi.
+                Để trống ô tên để dùng tên tài khoản. Đổi tên miễn phí trước khi vào chơi.
               </p>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -224,7 +224,7 @@ export default function WelcomeScreen({
                     maxLength={28}
                     value={mayorInput}
                     onChange={(e) => onMayorInputChange(e.target.value)}
-                    placeholder="Thị Trưởng MoMo"
+                    placeholder={displayName?.trim() || 'Thị Trưởng MoMo'}
                     className="w-full rounded-xl border-2 border-[#D5CEBF] bg-white px-3.5 py-2.5 text-xs font-extrabold text-[#3E2A1B] focus:border-[#D82D8B] focus:outline-none sm:text-sm"
                   />
                 </div>

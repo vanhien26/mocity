@@ -121,8 +121,6 @@ export default function ViaHeStreetBoard({
   onOpenEvent,
   onOpenBuildDrawer,
   onOpenInspector,
-  isPlaying = false,
-  onEnterGame,
   cityScale = 1.12,
   onChangeScale,
   onActiveRowChange,
@@ -133,8 +131,6 @@ export default function ViaHeStreetBoard({
   onOpenEvent?: () => void;
   onOpenBuildDrawer?: () => void;
   onOpenInspector?: () => void;
-  isPlaying?: boolean;
-  onEnterGame?: () => void;
   cityScale?: number;
   onChangeScale?: (next: number) => void;
   /** Hang pho dang xem, de parent uu tien dung o dat trong hang do. */
@@ -165,9 +161,6 @@ export default function ViaHeStreetBoard({
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const scrollStartLeftRef = useRef(0);
-
-  // Man nham chuc da chuyen sang WelcomeScreen, board chi con phong game.
-  const showSplashBanner = !isPlaying;
 
   /**
    * So o cua mot hang pho (toi da 10) va do rong that cua noi dung.
@@ -376,12 +369,6 @@ export default function ViaHeStreetBoard({
   }, []);
 
   // Tự động ẩn bảng hiệu lớn sau khi người chơi bấm vào bất kỳ căn nhà nào
-  useEffect(() => {
-    if (selected && isPlaying === false) {
-      onEnterGame?.();
-    }
-  }, [selected, isPlaying, onEnterGame]);
-
   return (
     <div className="relative h-full w-full overflow-hidden select-none" style={{ backgroundColor: '#EDEAE2' }}>
       {/* CSS Animation cho Xe Cub, Xe Đạp & Người đi bộ trên phố */}
@@ -452,14 +439,7 @@ export default function ViaHeStreetBoard({
 
       {/* Nav bar đã xóa */}
 
-      {/*
-       * Da bo man nhac chuc trung lap.
-       *
-       * Ton tai mot man nham chuc thu hai o day, hien cung luc voi
-       * `WelcomeScreen` o `app/mocity/page.tsx` vi ca hai cung gate bang `!isPlaying`.
-       * Man cu con ghi sai 'Dang Nhap' va '+1.000.000 XU Von' sau khi doi kinh te.
-       * Cong vien chung: `WelcomeScreen` la cua duy nhat.
-       */}
+      {/* Man nham chuc: WelcomeScreen trong page.tsx la cua duy nhat, board nay chi la phong game. */}
 
       {/* TOÀN CẢNH DÃY PHỐ NHÀ ỐNG MOCITY (ĐÃ PHÓNG TO RÕ RÀNG, CHIẾM TRỌN MÀN HÌNH) */}
       <div
@@ -806,8 +786,8 @@ export default function ViaHeStreetBoard({
                 <div
                   className="w-4 h-4 rounded-full"
                   style={{
-                    backgroundColor: timeOfDay === 'DAY' || timeOfDay === 'MORNING' ? '#22AA44' : '#1A6030',
-                    boxShadow: (timeOfDay === 'DAY' || timeOfDay === 'MORNING') ? '0 0 5px #22AA44' : 'none',
+                    backgroundColor: timeOfDay === 'DAY' || timeOfDay === 'DAWN' ? '#22AA44' : '#1A6030',
+                    boxShadow: (timeOfDay === 'DAY' || timeOfDay === 'DAWN') ? '0 0 5px #22AA44' : 'none',
                   }}
                 />
               </div>

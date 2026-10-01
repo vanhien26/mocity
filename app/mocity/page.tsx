@@ -472,7 +472,9 @@ export default function MoCityPage() {
       )}
 
       {/* 1. MÀN HÌNH CHÀO MỪNG - cổng vào trước khi chơi (!isPlaying) */}
+      {/* z-[55] > header z-50, < loading gate z-[60] — tránh header click xuyên modal */}
       {sessionStatus !== 'loading' && cityHydrated && !isPlaying && (
+        <div className="fixed inset-0 z-[55]">
         <WelcomeScreen
           displayName={session?.user?.name ?? null}
           hasNamedCity={hasNamedCity}
@@ -483,12 +485,13 @@ export default function MoCityPage() {
           npcCount={npcs.length}
           mayorLevel={level}
           offlineBonus={offlineBonus}
-          mayorInput={effectiveMayorName}
+          mayorInput={mayorInput}
           cityInput={cityInput}
           onMayorInputChange={setMayorInput}
           onCityInputChange={setCityInput}
           onStart={handleCompleteLogin}
         />
+        </div>
       )}
 
       {/* 2. THANH HUD GAME TRÊN CÙNG */}
@@ -665,11 +668,6 @@ export default function MoCityPage() {
           onOpenEvent={handleOpenDialogue}
           onOpenBuildDrawer={() => setDrawerOpen(true)}
           onOpenInspector={() => setInspectorOpen(true)}
-          isPlaying={isPlaying}
-          onEnterGame={() => {
-            setIsPlaying(true);
-            setDialogueDismissed(false);
-          }}
           cityScale={cityScale}
           onChangeScale={setCityScale}
           onActiveRowChange={setActiveRow}
