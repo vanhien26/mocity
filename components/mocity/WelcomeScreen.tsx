@@ -135,15 +135,17 @@ export default function WelcomeScreen({
                   : 'Dựng phố phường Việt Nam, cho thuê mặt bằng, quyết định thuê người hay tiền mặt. Game hoá bài học quản lý tài chính mà bạn vẫn chơi như chơi.'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onStart}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D5CEBF] bg-white text-[#6E4F3A] transition-colors hover:border-[#D82D8B] hover:text-[#D82D8B]"
-              aria-label={hasNamedCity ? 'Vào thẳng đô thị' : 'Bỏ qua và vào chơi'}
-              title={hasNamedCity ? 'Vào thẳng đô thị' : 'Vào chơi ngay'}
-            >
-              <X size={15} className="shrink-0" />
-            </button>
+            {hasNamedCity && (
+              <button
+                type="button"
+                onClick={onStart}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D5CEBF] bg-white text-[#6E4F3A] transition-colors hover:border-[#D82D8B] hover:text-[#D82D8B]"
+                aria-label="Vào thẳng đô thị"
+                title="Vào thẳng đô thị"
+              >
+                <X size={15} className="shrink-0" />
+              </button>
+            )}
           </div>
 
           {/* Thông tin thành phố hiện có (người chơi cũ) */}
