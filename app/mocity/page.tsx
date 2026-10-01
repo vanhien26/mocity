@@ -180,10 +180,10 @@ export default function MoCityPage() {
   useIdleTick(isPlaying);
 
   useEffect(() => {
-    // Cho `useSession` phan giai truoc. `middleware` chan nguoi chua dang nhap
-    // roi, nneu session van `loading` thi gan id tam de tranh tien do o
-    // nhanh `/momo_city_v4` (khong gan tai khoan) roi doi save giay sau.
-    if (sessionStatus === 'authenticated') {
+    // Hydrate khi session da resolve (ca authenticated lan unauthenticated).
+    // sessionStatus === 'loading' nghia la dang cho fetch /api/auth/session,
+    // khong muon hydrate truoc do vi playerId co the thay doi sau khi resolve.
+    if (sessionStatus !== 'loading') {
       hydrateCity(playerId);
     }
   }, [sessionStatus, playerId]);
