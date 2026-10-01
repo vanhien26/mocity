@@ -211,6 +211,11 @@ export default function ParticleEngine() {
     };
 
     const render = () => {
+      if (activeParticles.length === 0) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
       ctx.clearRect(0, 0, width, height);
 
       for (let i = activeParticles.length - 1; i >= 0; i--) {

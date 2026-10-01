@@ -711,7 +711,7 @@ export default function ExpressiveStreetCitizens({
   useEffect(() => {
     const timer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
-      const dt = 4.8;
+      const dt = 10;
       setCitizens((prev) =>
         prev.map((c) => {
           let nextX = c.x;
@@ -778,7 +778,7 @@ export default function ExpressiveStreetCitizens({
           };
         }),
       );
-    }, 480);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 

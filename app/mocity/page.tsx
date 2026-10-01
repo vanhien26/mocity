@@ -135,18 +135,21 @@ export default function MoCityPage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const buildAnimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const state = useCity((s) => s);
-  const coins = state.coins;
-  const gems = state.gems;
-  const level = state.mayorLevel;
-  const cityName = state.cityName;
-  const mayorName = state.mayorName;
-  const hasNamedCity = state.hasNamedCity;
-  const buildings = state.buildings;
-  const offline = state.pendingOffline;
-  const npcs = state.npcs;
-  const activeRequests = state.activeRequests;
-  const pendingEvent = state.pendingEvent;
+  const coins = useCity((s) => s.coins);
+  const gems = useCity((s) => s.gems);
+  const level = useCity((s) => s.mayorLevel);
+  const cityName = useCity((s) => s.cityName);
+  const mayorName = useCity((s) => s.mayorName);
+  const hasNamedCity = useCity((s) => s.hasNamedCity);
+  const buildings = useCity((s) => s.buildings);
+  const offline = useCity((s) => s.pendingOffline);
+  const npcs = useCity((s) => s.npcs);
+  const activeRequests = useCity((s) => s.activeRequests);
+  const pendingEvent = useCity((s) => s.pendingEvent);
+  const claimedQuests = useCity((s) => s.claimedQuests ?? []);
+  const unlockedCols = useCity((s) => s.unlockedCols);
+  const unlockedRows = useCity((s) => s.unlockedRows);
+  const inventory = useCity((s) => s.inventory);
 
   /**
    * So Xu nguoi choi SE nhan duoc khi bam "Nhan Qua & Vao Pho".
@@ -159,12 +162,9 @@ export default function MoCityPage() {
   const offlineBonus = offline?.coins ?? 0;
   const loginBonus = firstTimeBonus + offlineBonus;
   const treasuryAfterLogin = coins + loginBonus;
-  const claimedQuests = state.claimedQuests ?? [];
-  const unlockedCols = state.unlockedCols;
-  const unlockedRows = state.unlockedRows;
   const totalInventoryCount = useMemo(
-    () => Object.values(state.inventory ?? {}).reduce((acc, qty) => acc + (qty || 0), 0),
-    [state.inventory],
+    () => Object.values(inventory ?? {}).reduce((acc, qty) => acc + (qty || 0), 0),
+    [inventory],
   );
   const derived = useCityDerived();
 
