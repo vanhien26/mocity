@@ -1,0 +1,80 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { ambientLineFor } from '@/lib/mocity/dialogue-engine';
+import type { NpcState } from '@/lib/mocity/types';
+
+/** Toi da 2 bong bong cung luc - nhieu hon thanh nhieu loan, khong ai doc. */
+const MAX_VISIBLE = 2;
+const CYCLE_MS = 5200;
+
+export interface ChatterLine {
+  npcId: string;
+  text: string;
+}
+
+/**
+ * Xoay vong thoai ambient giua cac NPC. State ephemeral, khong persist:
+ * thoai la hieu ung khong khi, khong phai du lieu game.
+ */
+export function useAmbientChatter(npcs: NpcState[]): ChatterLine[] {
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (npcs.length === 0) return;
+    const timer = setInterval(() => setTick((t) => t + 1), CYCLE_MS);
+    return () => clearInterval(timer);
+  }, [npcs.length]);
+
+  if (npcs.length === 0) return [];
+
+  const lines: ChatterLine[] = [];
+  const count = Math.min(MAX_VISIBLE, npcs.length);
+  for (let i = 0; i < count; i += 1) {
+    // Cua so truot doc danh sach NPC, moi vong lai sang nhom khac
+    const npc = npcs[(tick * MAX_VISIBLE + i) % npcs.length];
+    /**
+     * `rotation` phai tang MỖI nhịp, không phải mỗi vòng duyệt hết NPC.
+     *
+     * Truoc day la `Math.floor(tick / npcs.length) + i`: voi 13 NPC thi
+     * `tick` phai tang 13 lan moi `rotation` moi tang 1 - tuc la 13 x 5.2s
+     * = 67 giay, mot NPC noi lai mot cau nguyen ban nhau suot 67 giay.
+     * Voi chi 1-2 cau moi pool thi thay khe lai thay do.
+     */
+    const text = ambientLineFor(npc, tick + i);
+    if (text) lines.push({ npcId: npc.id, text });
+  }
+  return lines;
+}
+
+export default function SpeechBubble({ text, hue }: { text: string; hue: string }) {
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 z-30 w-[132px] -translate-x-1/2 rounded-xl border-2 px-2 py-1.5"
+      style={{
+        bottom: '100%',
+        marginBottom: 8,
+        background: '#FBF3DE',
+        borderColor: hue,
+        boxShadow: '0 4px 10px rgba(62,42,27,0.28)',
+        animation: 'mc2d-bubble-in 0.3s cubic-bezier(0.34,1.56,0.64,1) both',
+      }}
+    >
+      <p className="text-[10px] font-bold leading-snug" style={{ color: '#3E2A1B' }}>
+        {text}
+      </p>
+      <span
+        aria-hidden
+        className="absolute left-1/2 -translate-x-1/2"
+        style={{
+          top: '100%',
+          width: 0,
+          height: 0,
+          borderLeft: '5px solid transparent',
+          borderRight: '5px solid transparent',
+          borderTop: `6px solid ${hue}`,
+        }}
+      />
+    </div>
+  );
+}
