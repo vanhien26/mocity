@@ -658,8 +658,18 @@ export default function ViaHeStreetBoard({
                       />
                     </div>
 
-                    {/* VẬT PHẨM VỈA HÈ NGAY TRƯỚC CỬA NHÀ (TỦ VÉ SỐ CƯỜNG, BIỂN PHỐ CHƯA MỞ, CÂY XANH) */}
-                    <div className="relative h-12 w-full flex items-end justify-center">
+                    {/*
+                     * VAT PHAM VIA HE NGAY TRUOC CUA NHA.
+                     * Dai nay truoc day trong suot nen dan cao oc parallax o xa
+                     * lot qua, nhin nhu co nha chot giua chan tiem va via he.
+                     * No thuc chat la phan via he sat cua tiem nen phai to cung
+                     * mau mat via he, cong mot dai dam lam bac them.
+                     */}
+                    <div
+                      className="relative h-12 w-full flex items-end justify-center"
+                      style={{ backgroundColor: '#D9BE8C' }}
+                    >
+                      <div className="absolute inset-x-0 top-0 h-[5px]" style={{ backgroundColor: '#B2924F' }} />
                       {/* Trước tiệm Số 2: Quầy "TRẠM LỘC MOMO" & Thị Trưởng vẫy tay */}
                       {idx === 0 && (
                         <button
