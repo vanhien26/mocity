@@ -31,6 +31,7 @@ import {
   evolveBuildingStar,
   installStoreModule,
   upgradeBuilding,
+  MAX_UPGRADE_PER_ACTION,
   useCity,
 } from '@/lib/mocity/store';
 import { formatCompact, formatRate } from '@/lib/mocity/format';
@@ -69,18 +70,25 @@ export default function StoreInspectorModal({
   const starCost = starUpgradeCost(def, currentStar);
 
   const cost1 = upgradeCostCoins(def, node.level);
-  const countToMilestone = Math.max(1, nextMilestone - node.level);
+  const headroom = Math.max(0, def.maxLevel - node.level);
+  const countToMilestone = Math.min(MAX_UPGRADE_PER_ACTION, Math.max(1, nextMilestone - node.level), headroom);
   let costMilestone = 0;
   for (let i = 0; i < countToMilestone; i++) {
     costMilestone += upgradeCostCoins(def, node.level + i);
   }
+  /**
+   * Con cap sau dot pha nay. `MAX_UPGRADE_PER_ACTION` chan mot click nhay qua
+   * cap, nen can bao nguoi choi khi con duoc cap o lan bam sau.
+   */
+  const levelsLeftAfterMilestone = Math.max(0, headroom - countToMilestone);
 
   const assignedManager = node.managerId ? MANAGER_BY_ID[node.managerId] : undefined;
 
   const handleLevelUpgrade = (count: number) => {
-    const res = upgradeBuilding(node.col, node.row, count);
+    const applied = Math.min(count, MAX_UPGRADE_PER_ACTION, headroom);
+    const res = upgradeBuilding(node.col, node.row, applied);
     if (res === 'ok') {
-      onToast(`Đã nâng cấp ${def.name} (+${count} cấp)! Sản lượng Xu tăng vọt.`);
+      onToast(`Đã nâng cấp ${def.name} (+${applied} cấp)! Sản lượng Xu tăng vọt.`);
     } else if (res === 'funds') {
       onToast('Chưa đủ Xu để nâng cấp.');
     } else if (res === 'max') {
@@ -336,12 +344,24 @@ export default function StoreInspectorModal({
                           : { background: 'rgba(0,0,0,0.06)', borderColor: '#C9A22733', color: '#9C8767', cursor: 'not-allowed' }
                       }
                     >
-                      <span className="text-xs font-black uppercase">Đột Phá Cấp {nextMilestone} (+{countToMilestone})</span>
+                      <span className="text-xs font-black uppercase">
+                        Đột Phá Cấp {node.level + countToMilestone} (+{countToMilestone})
+                      </span>
                       <span className="mt-0.5 flex items-center gap-1 text-[11px] font-bold">
                         <CircleDollarSign size={12} className="shrink-0" />
                         {formatCompact(costMilestone)} Xu
                       </span>
                     </button>
+                    {/*
+                     * Nut "Đột Phá" chi nhay toi da MAX_UPGRADE_PER_ACTION cap
+                     * moi thao tac. Neu con cap, noi ro con bao nhieu de tranh
+                     * viec nguoi choi click lien tiep khong bi cam.
+                     */}
+                    {levelsLeftAfterMilestone > 0 && (
+                      <p className="text-center text-[10px] font-bold" style={{ color: '#9C8767' }}>
+                        Còn {levelsLeftAfterMilestone} cấp nữa tới mốc ×{nextMilestone}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="mt-3 text-center text-xs font-black" style={{ color: '#16A34A' }}>

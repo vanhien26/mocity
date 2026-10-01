@@ -563,7 +563,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     yieldMultiplier: 0.7,
     happinessBonus: 10,
     costCoins: 900,
-    costGems: 3,
+    costGems: 2,
     hue: '#06B6D4',
   },
   {
@@ -577,7 +577,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     yieldMultiplier: 1.2,
     happinessBonus: 12,
     costCoins: 1_800,
-    costGems: 5,
+    costGems: 3,
     hue: '#2563EB',
   },
   {
@@ -591,7 +591,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     yieldMultiplier: 1.35,
     happinessBonus: 15,
     costCoins: 2_500,
-    costGems: 8,
+    costGems: 4,
     hue: '#8B5CF6',
   },
 ];
@@ -718,8 +718,20 @@ export function nextMilestoneLevel(level: number): number {
  * nhat quan.
  */
 const UPGRADE_YIELD_FACTOR = 600;
-/** Do nhanh tien tang theo cap. Doanh thu cung nhanh voi bien nay. */
-const UPGRADE_GROWTH = 1.25;
+/**
+ * Do nhanh tien tang theo cap.
+ *
+ * 1.25 la "cam ung phong no" kinh dien cua idle game, nhung o do doanh thu o
+ * day la TUYEN TINH theo cap (`LEVEL_SCALE`) va chi nhay o moc 5/10/25/50. Hai
+ * ben khong cung he, nen chi phi vuot xa doanh thu: cap 40 -> 41 cat 4.333.340
+ * Xu de lay them 7,5 Xu/giay, tien hoa von 2,7 ngay. San luong cap 49 -> 50
+ * nhay 780 Xu/giay (do moc x3 cua `milestoneMultiplierFor`) nen tro lai co lai
+ * 690 phut - khong co nhip nang cap deu.
+ *
+ * 1.15 lam hoa von cap 40 -> 41 ve 152 phut, cap 49 -> 50 ve 5 phut, va giu
+ * duong chi phi cung nhip voi moi cong trinh.
+ */
+const UPGRADE_GROWTH = 1.15;
 
 /** Chi phi len cap moi. Lam tron ve 5 don vi de so dep. */
 export function upgradeCostCoins(def: BuildingDef, currentLevel: number): number {
@@ -735,13 +747,24 @@ export function starUpgradeCost(def: BuildingDef, currentStar: number): { coins:
   };
 }
 
-/** XP can de len cap tiep theo. Tang dan 15%/cap de tao cam giac progression ro. */
+/**
+ * XP can de len cap tiep theo. TUYEN TINH, khong phai nhan 1.15 moi cap.
+ *
+ * Duong cong luy thua `200 * 1.15^(cap-1)` nghe hay nhung la tuong: lv49 can
+ * 163.880 XP, gap 823 lan lv2. Tong lv1 -> 50 la 1.255.079 XP - nhip nang cap
+ * cong trinh chua duoc 50 cap thi game chua bao gio tra loi, nen hien duong
+ * cong nay chinh la "tuong" chu khong phai "cong bang".
+ *
+ * Hien tai: `500 + 300 * (cap - 1)`. Tong lv1 -> 50 la 368.700 XP, lv49 can
+ * 14.700. Nguyen tac: XP hang dau phai cham hon doanh thu AFK, va phai tro
+ * khop voi `IDLE_XP_CAP` o `store.ts` de AFK khong bao gio lo lao cap do.
+ */
 export function xpForLevel(level: number): number {
-  return Math.round(200 * Math.pow(1.15, Math.max(0, level - 1)));
+  return 500 + 300 * Math.max(0, level - 1);
 }
 
 /** Backward-compat: dung cho cac component chi can 1 con so tuong doi. */
-export const MAYOR_XP_PER_LEVEL = 200;
+export const MAYOR_XP_PER_LEVEL = 500;
 
 export const INVENTORY_ITEMS: InventoryItemDef[] = [
   {
@@ -786,7 +809,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     effectSummary: 'Tăng ngay +1 Cấp miễn phí cho mọi cửa hàng trên phố',
     hue: '#2563EB',
     costCoins: 80_000,
-    costGems: 5,
+    costGems: 2,
   },
   {
     id: 'relic-heo-vang',
@@ -797,7 +820,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     effectSummary: 'Trang bị: +25% Doanh Thu Xu/giây toàn thành phố',
     hue: '#F59E0B',
     costCoins: 120_000,
-    costGems: 10,
+    costGems: 3,
     passiveYieldBonus: 0.25,
     passiveHappinessBonus: 5,
   },
@@ -810,7 +833,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     effectSummary: 'Trang bị: +15% Doanh Thu Xu/giây & +12 Điểm Hạnh Phúc',
     hue: '#16A34A',
     costCoins: 75_000,
-    costGems: 5,
+    costGems: 2,
     passiveYieldBonus: 0.15,
     passiveHappinessBonus: 12,
   },
@@ -823,7 +846,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     effectSummary: 'Trang bị: +30% Doanh Thu Xu/giây & +8 Điểm Hạnh Phúc',
     hue: '#D82D8B',
     costCoins: 150_000,
-    costGems: 15,
+    costGems: 4,
     passiveYieldBonus: 0.30,
     passiveHappinessBonus: 8,
   },
@@ -836,7 +859,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     effectSummary: 'Trang bị: +35% Doanh Thu Xu/giây & +10 Điểm Hạnh Phúc',
     hue: '#7C3AED',
     costCoins: 180_000,
-    costGems: 20,
+    costGems: 5,
     passiveYieldBonus: 0.35,
     passiveHappinessBonus: 10,
   },
@@ -1007,5 +1030,15 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
     id: 'd-mo-tiem', title: 'Mở thêm 1 tiệm mới',
     counter: 'built', target: 1,
     rewardCoins: 5_000, rewardGems: 2, rewardXp: 1_800,
+  },
+  {
+    /**
+     * Dung het counter `starEvolved`: `evolveBuildingStar` da dem san nhung khong
+     * quest nao doc, nen nhanh tien hoa 1 sao khong co do dua gi. Day la vong
+     * lap tach bi bo sot khi them cac bo dem moi.
+     */
+    id: 'd-tien-hoa', title: 'Dát vàng 1 tiệm lên ★★',
+    counter: 'starEvolved', target: 1,
+    rewardCoins: 12_000, rewardGems: 3, rewardXp: 4_500,
   },
 ];

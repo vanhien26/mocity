@@ -15,7 +15,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { MAYOR_QUESTS, CITY_TIERS, nextCityTier } from '@/lib/mocity/mock-city-data';
+import { MAYOR_QUESTS, CITY_TIERS, nextCityTier, xpForLevel } from '@/lib/mocity/mock-city-data';
 import { populationFor } from '@/lib/mocity/city-calculator';
 import { ARCHETYPES, CITY_ADVISORS, SERVICE_LABEL } from '@/lib/mocity/npc-data';
 import { EVENT_BY_ID } from '@/lib/mocity/dialogue-data';
@@ -33,6 +33,7 @@ import {
   importCitySave,
   triggerNextEvent,
   useCity,
+  MAX_MAYOR_LEVEL,
 } from '@/lib/mocity/store';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
@@ -349,7 +350,9 @@ export default function MayorCenterModal({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-black text-[#3E2A1B]">{v.def.title}</p>
                         <p className="text-[10px] font-bold text-[#6E4F3A]">
-                          {v.progress}/{v.def.target} · +{v.def.rewardCoins.toLocaleString('vi-VN')} Xu · +{v.def.rewardXp.toLocaleString('vi-VN')} XP
+                          {v.progress}/{v.def.target} · +{v.def.rewardCoins.toLocaleString('vi-VN')} Xu ·{' '}
+                          <span style={{ color: '#0284C7' }}>+{v.def.rewardGems} Kim Cương</span> ·{' '}
+                          <span style={{ color: '#7C3AED' }}>+{v.def.rewardXp.toLocaleString('vi-VN')} XP</span>
                         </p>
                       </div>
                       <button
@@ -580,7 +583,12 @@ export default function MayorCenterModal({
                     ['Kim Cương', `${state.gems}`],
                     ['Tiệm đã mở', `${state.buildings.length} / ${state.unlockedCols * state.unlockedRows}`],
                     ['Dân cư & chủ tiệm', `${state.npcs.length}`],
-                    ['Cấp Thị Trưởng', `${state.mayorLevel}`],
+                    [
+                      'Cấp Thị Trưởng',
+                      state.mayorLevel >= MAX_MAYOR_LEVEL
+                        ? `Lv.${state.mayorLevel} (tối đa)`
+                        : `Lv.${state.mayorLevel} · ${formatNumber(state.mayorXp)}/${formatNumber(xpForLevel(state.mayorLevel))} XP`,
+                    ],
                     ['Bảo Vật đang trang bị', `${(state.equippedRelics ?? []).length} / 3`],
                   ].map(([label, value]) => (
                     <div

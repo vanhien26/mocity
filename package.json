@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test lib/mocity/*.test.ts lib/mocity/*.test.mts"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
 }

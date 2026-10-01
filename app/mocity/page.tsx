@@ -57,6 +57,8 @@ import {
   useCity,
   useCityDerived,
   useCityHydrated,
+  MAX_MAYOR_LEVEL,
+  FEVER_COST_GEMS,
   type PlaceResult,
   type UpgradeResult,
 } from '@/lib/mocity/store';
@@ -67,6 +69,7 @@ import {
   MANAGER_BY_ID,
   ZONES,
   upgradeCostCoins,
+  xpForLevel,
 } from '@/lib/mocity/mock-city-data';
 import { BUILDING_ICON } from '@/components/mocity/building-icons';
 import { buildingAt, nodeYieldBreakdown } from '@/lib/mocity/city-calculator';
@@ -150,6 +153,7 @@ export default function MoCityPage() {
   const totalCoinsEarned = useCity((s) => s.totalCoinsEarned);
   const gems = useCity((s) => s.gems);
   const level = useCity((s) => s.mayorLevel);
+  const mayorXp = useCity((s) => s.mayorXp);
   const cityName = useCity((s) => s.cityName);
   const mayorName = useCity((s) => s.mayorName);
   const hasNamedCity = useCity((s) => s.hasNamedCity);
@@ -170,7 +174,19 @@ export default function MoCityPage() {
    * in cung `+50K XU` va `Vốn sẵn có 1.000.000 Xu` cho ca nguoi choi quay
    * lai - con số ma thuc te la 0.
    */
-  const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
+  /**
+ * Thanh tien do cap Thị Truong.
+ *
+ * TRUOC day toan bo he XP vô hình: grep toan repo khong co UI nao doc
+ * `mayorXp`, nen nguoi choi thay "Cấp 7" ma khong biet can bao nhieu de len
+ * 8. Con so `xpForLevel` bay gio la nguon su that cho HUD, nen phai dung
+ * chung ham tinh mau cot.
+ */
+const isMaxLevel = level >= MAX_MAYOR_LEVEL;
+const xpNeeded = xpForLevel(level);
+const xpPct = isMaxLevel ? 100 : Math.min(100, Math.round((mayorXp / xpNeeded) * 100));
+
+const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   const offlineBonus = offline?.coins ?? 0;
   const loginBonus = firstTimeBonus + offlineBonus;
   const treasuryAfterLogin = coins + loginBonus;
@@ -626,6 +642,35 @@ export default function MoCityPage() {
           >
             <Star size={13} className="shrink-0 fill-sky-400 text-sky-400" />
             <span className="text-xs font-black text-sky-200">{gems}</span>
+          </div>
+
+          {/* Thanh cấp Thị Trưởng */}
+          <div
+            className="flex w-[112px] shrink-0 flex-col justify-center rounded-xl border px-2 py-1"
+            style={{
+              background: 'linear-gradient(135deg, #1A0B2E, #3B1E5F)',
+              borderColor: '#A78BFA',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+            }}
+            title={
+              isMaxLevel
+                ? 'Đã đạt cấp Thị Trưởng tối đa'
+                : `${formatNumber(mayorXp)} / ${formatNumber(xpNeeded)} XP để lên cấp ${level + 1}`
+            }
+          >
+            <div className="flex items-baseline justify-between gap-1">
+              <span className="text-[9px] font-black uppercase text-violet-300">Thị Trưởng</span>
+              <span className="text-xs font-black text-violet-100">Lv.{level}</span>
+            </div>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#2A1A45' }}>
+              <div
+                className="h-full rounded-full transition-[width] duration-500"
+                style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#A78BFA,#EB2F96)' }}
+              />
+            </div>
+            <p className="mt-0.5 text-[9px] font-black leading-none text-violet-300/80">
+              {isMaxLevel ? 'Cấp tối đa' : `${xpPct}% · ${formatCompact(xpNeeded - mayorXp)} XP nữa`}
+            </p>
           </div>
         </div>
 

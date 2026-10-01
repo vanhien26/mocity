@@ -39,7 +39,7 @@ describe('gan save theo tai khoan', () => {
     mocity.placeBuilding(0, 0, 'quan-ca-phe');
     await flush();
 
-    const savedA = ls.get('momo_city_v4_alice@momo.vn');
+    const savedA = ls.get('momo_city_v5_alice@momo.vn');
     assert.ok(savedA, 'save cua tai khoan A phai ton tai');
     assert.equal(JSON.parse(savedA).buildings.length, 1);
 
@@ -72,11 +72,11 @@ describe('gan save theo tai khoan', () => {
     await flush();
 
     assert.ok(
-      !ls.has('momo_city_v4_dave@momo.vn') || JSON.parse(ls.get('momo_city_v4_dave@momo.vn')!).buildings.length === 0,
+      !ls.has('momo_city_v5_dave@momo.vn') || JSON.parse(ls.get('momo_city_v5_dave@momo.vn')!).buildings.length === 0,
       'save cua tai khoan dang xoa phai sach',
     );
     assert.equal(
-      JSON.parse(ls.get('momo_city_v4_carol@momo.vn')!).buildings.length,
+      JSON.parse(ls.get('momo_city_v5_carol@momo.vn')!).buildings.length,
       1,
       'save cua tai khoan khac khong bi dong vao',
     );
@@ -98,7 +98,7 @@ describe('sao luu / khoi phuc', () => {
     ls.clear();
     hydrateCity('frank@momo.vn');
     const parsed = JSON.parse(exportCitySave());
-    assert.equal(parsed.version, 4);
+    assert.equal(parsed.version, 5);
     assert.equal(parsed.pendingOffline, null, 'thue nghi khong duoc ghi ra file sao luu');
   });
 
@@ -167,8 +167,9 @@ describe('sao luu / khoi phuc', () => {
     });
 
     assert.equal(importCitySave(legacy), 'ok');
-    assert.equal(getCityState().version, 4);
+    assert.equal(getCityState().version, 5);
     assert.equal(getCityState().buildings.length, 1, 'giu nguyen tiem da xay');
     assert.equal(getCityState().coins, 9_999);
+    assert.equal(getCityState().feverEverUsed, false, 'save v3 chua co field nay nen mac dinh false');
   });
 });

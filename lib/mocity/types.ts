@@ -245,10 +245,25 @@ export interface CityState extends Currencies {
   /** Danh sach Bau Vat (Relics) dang trang bi (toi da 3) */
   equippedRelics: string[];
   feverUntil: number;
+  /**
+   * Da BAO GIO kich hoat Giờ Vàng chua, ghi lai vĩnh viễn.
+   *
+   * `feverUntil` chi true trong 60 giay nen quest `q-fever-mode` kiem tra
+   * bang `feverUntil > 0` se khong bao gio hoan thanh duoc sau khi thi
+   * trang het - thuong 18.000 Xu + 8 Kim Cuong bay bien vo hinh. Cờ nay ghi
+   * nhan "da tung mo" mot lan duy nhat.
+   */
+  feverEverUsed: boolean;
   activeRequests: ActiveRequest[];
   pendingEvent: PendingEvent | null;
   lastRequestAt: number;
   lastEventAt: number;
+  /**
+   * Lan gan nhat dem `talked` cho nhiem vu ngay. Chan spam click cu dan: khong
+   * co han nay thi `recordCitizenTalk` chay vo han va `d-tro-chuyen` (target 5)
+   * hoan thanh trong 5 giay.
+   */
+  lastTalkAt: number;
   /**
    * Lan gan nhat Thi Truong THAT SỰ quan tâm den pho (giai quyet su kien hoac
    * yeu cau cua nguoi dan). Tach rieng `lastEventAt` - cai do chi dem han 35

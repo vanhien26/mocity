@@ -9,7 +9,6 @@ import {
   CITY_TIERS,
   DAILY_QUESTS,
   cityTierFor,
-  MAYOR_XP_PER_LEVEL,
   MODULE_BY_ID,
   STARTER_INVENTORY,
   starUpgradeCost,
@@ -50,8 +49,8 @@ import type {
  * save duoc gan theo tai khoan: khong thi hai nguoi dung lao tai khoan tren
  * cung mot may se ke thua toan bo thanh pho cua nhau (cung Xu, cung ten Tho).
  */
-const STORAGE_KEY_PREFIX = 'momo_city_v4';
-const STATE_VERSION = 4;
+const STORAGE_KEY_PREFIX = 'momo_city_v5';
+const STATE_VERSION = 5;
 export const OFFLINE_CAP_MS = 8 * 60 * 60 * 1000;
 const OFFLINE_MIN_MS = 60 * 1000;
 const PERSIST_DEBOUNCE_MS = 250;
@@ -59,6 +58,10 @@ const PERSIST_DEBOUNCE_MS = 250;
 const MAX_ACTIVE_REQUESTS = 3;
 const REQUEST_INTERVAL_MS = 25 * 1000;
 const EVENT_INTERVAL_MS = 35 * 1000;
+
+/** Giá + thoi luong Giờ Vàng x2 doanh thu. */
+export const FEVER_COST_GEMS = 2;
+export const FEVER_DURATION_MS = 60 * 1000;
 
 /**
  * Toi da so su kien toan pho Thieu Truong duoc giai quyet trong mot ngay.
@@ -123,10 +126,12 @@ function createInitialState(): CityState {
     inventory: { ...STARTER_INVENTORY },
     equippedRelics: ['relic-heo-vang'],
     feverUntil: 0,
+    feverEverUsed: false,
     activeRequests: [],
     pendingEvent: null,
     lastRequestAt: now,
     lastEventAt: now,
+    lastTalkAt: 0,
     lastEngagedAt: now,
     eventLog: { day: todayKey(now), resolved: 0 },
     dailyLog: emptyDailyLog(now),
@@ -188,6 +193,16 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
     lastEngagedAt: s.lastEventAt ?? Date.now(),
     tappedAt: {},
   }),
+  /**
+   * V4 -> V5: them `feverEverUsed` va noi `lastTalkAt` cho cooldown noi pho.
+   * `feverEverUsed` giu nguyen gia tri cua save dang chay Fever de khong phat
+   * nguoi choi dang giua chung.
+   */
+  4: (s) => ({
+    ...s,
+    feverEverUsed: (s.feverUntil ?? 0) > 0,
+    lastTalkAt: s.lastTalkAt ?? 0,
+  }),
 };
 
 const listeners = new Set<() => void>();
@@ -214,7 +229,8 @@ function setState(next: CityState) {
   schedulePersist();
 }
 
-const MAX_MAYOR_LEVEL = 50;
+/** Tran cap do Thị Truong. HUD doc hang so nay de hien "Cap toi da". */
+export const MAX_MAYOR_LEVEL = 50;
 
 /**
  * XP thuong cho HANH DONG. Truoc day hanh dong chi cho 20-120 XP trong khi Xu
@@ -224,31 +240,42 @@ const XP_PER_BUILD = 400;
 const XP_PER_UPGRADE = 260;
 const XP_PER_STAR = 900;
 /**
- * XP tu Xu nhan roi. Tran cu la 500/giay -> dat cap 50 trong 42 phut va thu
- * nhap vuot 5.000 Xu/s khong con lam len cap nhanh hon. Ha xuong de tien trinh
- * cap do den tu viec lam, khong phai tu viec cho.
+ * XP tu Xu nhan roi, cong o moi tick AFK.
+ *
+ * Tran cu la 60/tick = 5.184.000 XP/ngay, gap 4,1 lan TOAN BO duong cong cap 1
+ * -> 50 cua thoi gian. Nghia la chi can de may, lv50 trong chua mot gio. Dinh
+ * muc nay de len cap phai den tu hanh dong, nhung van thuong cho nguoi choi
+ * offline chay duoc mot phan nho.
  */
 const IDLE_XP_DIVISOR = 60;
-const IDLE_XP_CAP = 60;
+export const IDLE_XP_CAP = 4;
 
+/**
+ * Tang cap do Thị Truong.
+ *
+ * Vong lap thay vi chia mot lan: `xpForLevel` tra ve YEU TANG theo cap, nen mot
+ * `needed` co dinh se cap thieu cap. Ban <= 3 chia `totalXp / needed` bang
+ * nghia den cap 17 tu 5.000 XP (gia thuc lv10 -> 17 ton 7.786 XP).
+ */
 function addMayorXp(s: CityState, amount: number): Pick<CityState, 'mayorLevel' | 'mayorXp'> {
-  const currentLevel = Number.isFinite(s.mayorLevel)
+  let level = Number.isFinite(s.mayorLevel)
     ? Math.min(MAX_MAYOR_LEVEL, Math.max(1, s.mayorLevel))
     : 1;
-  const currentXp = Number.isFinite(s.mayorXp) ? Math.max(0, s.mayorXp) : 0;
+  let pool = Number.isFinite(s.mayorXp) ? Math.max(0, s.mayorXp) : 0;
   const gain = Number.isFinite(amount) ? Math.min(25_000, Math.max(0, amount)) : 0;
 
-  if (currentLevel >= MAX_MAYOR_LEVEL) {
+  if (level >= MAX_MAYOR_LEVEL) {
     return { mayorLevel: MAX_MAYOR_LEVEL, mayorXp: 0 };
   }
 
-  const needed = Math.max(200, xpForLevel(currentLevel));
-  const totalXp = currentXp + gain;
-  const gainedLevels = Math.floor(totalXp / needed);
-  const nextLevel = Math.min(MAX_MAYOR_LEVEL, currentLevel + gainedLevels);
-  const nextXp = nextLevel >= MAX_MAYOR_LEVEL ? 0 : totalXp % needed;
+  pool += gain;
+  // `gain` co tran 25.000 nen toi da 50 vong, du cho cap 50 an toan.
+  while (level < MAX_MAYOR_LEVEL && pool >= xpForLevel(level)) {
+    pool -= xpForLevel(level);
+    level += 1;
+  }
 
-  return { mayorLevel: nextLevel, mayorXp: nextXp };
+  return { mayorLevel: level, mayorXp: level >= MAX_MAYOR_LEVEL ? 0 : pool };
 }
 
 function withCoins(state: CityState, delta: number): CityState {
@@ -332,8 +359,15 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.mayorLevel = Number.isFinite(merged.mayorLevel)
     ? Math.min(MAX_MAYOR_LEVEL, Math.max(1, merged.mayorLevel))
     : 1;
+  /**
+   * Tran `mayorXp` theo `xpForLevel` CUA CAP HIEN TAI, khong phai theo hang so
+   * phang quang danh. Ban <= 4 clamp vao `MAYOR_XP_PER_LEVEL - 1` = 199 trong
+   * khi `xpForLevel(10)` = 3.400: người choi cap 10 tro ve cap 1 mat sach 401
+   * XP MO LAN REFRESH. Dung `xpForLevel(mayorLevel) - 1` de giu nguyen du
+   * so XP con duoc phep mang.
+   */
   merged.mayorXp = Number.isFinite(merged.mayorXp)
-    ? Math.min(MAYOR_XP_PER_LEVEL - 1, Math.max(0, merged.mayorXp))
+    ? Math.min(xpForLevel(merged.mayorLevel) - 1, Math.max(0, merged.mayorXp))
     : 0;
   merged.eventLog =
     migrated.eventLog && typeof migrated.eventLog.day === 'string'
@@ -361,6 +395,8 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     ? Math.min(HAPPINESS_BOOST_CAP, Math.max(0, merged.happinessBoost))
     : 0;
   merged.lastEngagedAt = Number.isFinite(merged.lastEngagedAt) ? merged.lastEngagedAt : merged.lastEventAt;
+  merged.feverEverUsed = merged.feverEverUsed === true || merged.feverUntil > 0;
+  merged.lastTalkAt = Number.isFinite(merged.lastTalkAt) ? Math.max(0, merged.lastTalkAt) : 0;
 
   const elapsed = now - (Number.isFinite(merged.lastSeenAt) ? merged.lastSeenAt : now);
   if (elapsed >= OFFLINE_MIN_MS) {
@@ -505,11 +541,14 @@ export function completeMayorLogin(mayorName: string, cityName: string, bonusCoi
 export function triggerFeverMode(): boolean {
   const now = Date.now();
   if (state.feverUntil > now) return false;
-  if (state.gems < 2) return false;
+  if (state.gems < FEVER_COST_GEMS) return false;
   setState({
     ...state,
-    gems: state.gems - 2,
-    feverUntil: now + 60_000,
+    gems: state.gems - FEVER_COST_GEMS,
+    feverUntil: now + FEVER_DURATION_MS,
+    // Ghi nhan vĩnh viễn: quest `q-fever-mode` phai hoan thanh duoc ke ca
+    // sau khi 60 giay Fever da het.
+    feverEverUsed: true,
   });
   return true;
 }
@@ -534,6 +573,9 @@ export function tickIdle(): void {
     ...state,
     lastSeenAt: now,
     totalVolume: state.totalVolume + flow.volume * seconds,
+    // Fever dang chay thi chot `feverEverUsed` ngay, de save ghi ra giua
+    // chung khong bo mat quest `q-fever-mode`.
+    feverEverUsed: state.feverEverUsed || isFever,
   };
   if (flow.revenue > 0) next = withCoins(next, flow.revenue * seconds);
 
@@ -581,7 +623,7 @@ function maybeSpawnEvent(current: CityState, now: number): CityState {
 
 /* ── Tap reward: rate-limit o store, khong de component tu ghi tien ── */
 
-export type TapSource = 'bubble' | 'citizen' | 'advisor' | 'patrol';
+export type TapSource = 'bubble' | 'citizen' | 'advisor' | 'patrol' | 'pet';
 
 export interface TapRewardOptions {
   /** Han giay cho phep bam lai. Mac dinh 800ms. */
@@ -767,7 +809,8 @@ export function useInventoryItem(itemId: string): UseItemResult {
   }
 
   if (itemId === 'item-lenh-bai-gio-vang') {
-    nextState.feverUntil = Date.now() + 60_000;
+    nextState.feverUntil = Date.now() + FEVER_DURATION_MS;
+    nextState.feverEverUsed = true;
     setState(nextState);
     return {
       ok: true,
@@ -1038,6 +1081,16 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
 
 export type UpgradeResult = 'ok' | 'missing' | 'max' | 'funds';
 
+/**
+ * So cap toi da nang cap duoc trong MOT LAN bam.
+ *
+ * `count` den tu UI ("Đột Phá Cấp" tinh san `countToMilestone`, xem
+ * `StoreInspectorModal.tsx:72`) nen khong cap thi mot click nhay 5 cap. Hai
+ * hau qua: quest `d-nang-cap` (target 3) xong trong 1 click, va `+260 XP`
+ * moi cap bi tra thanh mot luot chu khong phai theo thao tac.
+ */
+export const MAX_UPGRADE_PER_ACTION = 5;
+
 export function upgradeBuilding(col: number, row: number, count = 1): UpgradeResult {
   const node = buildingAt(state.buildings, col, row);
   if (!node) return 'missing';
@@ -1046,7 +1099,7 @@ export function upgradeBuilding(col: number, row: number, count = 1): UpgradeRes
   if (!def) return 'missing';
   if (node.level >= def.maxLevel) return 'max';
 
-  const actualCount = Math.min(count, def.maxLevel - node.level);
+  const actualCount = Math.min(count, MAX_UPGRADE_PER_ACTION, def.maxLevel - node.level);
   let totalCost = 0;
   for (let i = 0; i < actualCount; i++) {
     totalCost += upgradeCostCoins(def, node.level + i);
@@ -1200,7 +1253,12 @@ export function isQuestCompleted(questId: string, s: CityState): boolean {
     case 'q-star-evolve':
       return s.buildings.some((b) => (b.starRating || 1) >= 2);
     case 'q-fever-mode':
-      return (s.feverUntil ?? 0) > 0;
+      /**
+       * Dung `feverEverUsed`, KHONG dung `feverUntil > 0`. Cua so 60 giay la
+       * qua nho so voi thoi gian nguoi choi phai tim nut "Nhan thuong" - het
+       * la 18.000 Xu + 8 Kim Cuong bay hoan toan.
+       */
+      return s.feverEverUsed === true || (s.feverUntil ?? 0) > 0;
     case 'q-expand-city':
       return s.buildings.length >= 6 && populationFor(s.buildings) >= 200;
     default:
@@ -1479,7 +1537,32 @@ export function claimCityTierRewards(): import('./mock-city-data').CityTierDef[]
   return moi;
 }
 
-/** Ghi nhan mot luot hoi chuyen cu dan tren pho, phuc vu nhiem vu ngay. */
-export function recordCitizenTalk(): void {
-  setState({ ...state, dailyLog: bumpDaily(state, 'talked'), lastEngagedAt: Date.now() });
+/**
+ * Han giay giua hai luot hoi chuyen cu dan.
+ *
+ * Khong co han nay thi nguoi choi spam click: `d-tro-chuyen` (target 5) xong
+ * trong 5 giay, va - nghiem trong hon - moi click lai reset `lastEngagedAt`,
+ * la moc dem cua `HAPPINESS_DECAY_GRACE_MS`. Click lien tuc = giu hanh phuc
+ * 100% va thue toi da 1.6x ma khong ton mot Xu nao.
+ */
+export const TALK_COOLDOWN_MS = 60 * 1000;
+
+/**
+ * Ghi nhan mot luot hoi chuyen cu dan tren pho, phuc vu nhiem vu ngay.
+ *
+ * KHONG reset `lastEngagedAt`: xu ly chuyen PHO (`resolveRequest` /
+ * `resolveEvent`) moi la thu nghiem huong hanh phuc. Chat vui tren pho phai
+ * ton cong, nhung khong duoc tinh tien cho nguoi choi.
+ *
+ * @return `true` neu dem duoc, `false` neu con trong han.
+ */
+export function recordCitizenTalk(): boolean {
+  const now = Date.now();
+  if (now - (state.lastTalkAt ?? 0) < TALK_COOLDOWN_MS) return false;
+  setState({
+    ...state,
+    dailyLog: bumpDaily(state, 'talked', 1, now),
+    lastTalkAt: now,
+  });
+  return true;
 }
