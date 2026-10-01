@@ -640,7 +640,7 @@ export default function ViaHeStreetBoard({
                           <span>Chuyện phố!</span>
                         </button>
                       ) : plot.chatterText ? (
-                        <div className="max-w-[220px] truncate rounded-2xl border-2 border-[#5A4A3F] bg-white px-3 py-1 text-[11px] font-bold text-[#3E2A1B] shadow">
+                        <div className="w-max max-w-[250px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#5A4A3F] bg-white px-3 py-1 text-[11px] font-bold text-[#3E2A1B] shadow">
                           “{plot.chatterText}”
                         </div>
                       ) : null}

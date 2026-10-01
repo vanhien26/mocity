@@ -637,7 +637,15 @@ export default function ExpressiveStreetCitizens({
               className="group absolute bottom-2 left-0 flex flex-col items-center"
             >
               {app.bubbleText && (
-                <div className="mb-1 max-w-[185px] truncate rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-2.5 py-0.5 text-[10px] font-extrabold text-[#3E2A1B] shadow-md">
+                /*
+                 * Cu dan cach nhau ~150px ma bong bong rong toi 230px nen hai
+                 * nguoi di gan nhau se de bong bong len nhau. Day le theo chi so
+                 * de hang xom khong nam cung mot do cao.
+                 */
+                <div
+                  style={{ marginBottom: 4 + (i % 3) * 32, zIndex: 30 - (i % 3) }}
+                  className="relative w-max max-w-[230px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-2.5 py-1 text-[10px] font-extrabold text-[#3E2A1B] shadow-md"
+                >
                   {app.bubbleText}
                 </div>
               )}

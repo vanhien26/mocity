@@ -302,7 +302,7 @@ export default function MoMoMascot({ onToast }: { onToast?: (msg: string) => voi
         >
           {bubbleText && (
             <div
-              className="mb-1 max-w-[200px] truncate rounded-2xl border-2 px-2.5 py-1 text-[10px] font-black shadow-md"
+              className="mb-1 w-max max-w-[240px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 px-2.5 py-1 text-[10px] font-black shadow-md"
               style={{ borderColor: '#EB2F96', background: '#FFF0F7', color: '#C0226E' }}
             >
               {bubbleText}
