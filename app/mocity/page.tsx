@@ -99,9 +99,12 @@ const UPGRADE_MESSAGE: Record<UpgradeResult, string> = {
   funds: 'Chưa đủ Xu để nâng cấp công trình này.',
 };
 
-/** Khoang cach giua hai luot Chuyen Pho tu dong. */
-const AUTO_EVENT_MIN_MS = 120_000;
-const AUTO_EVENT_MAX_MS = 180_000;
+/**
+ * Khoang cach giua hai luot Chuyen Pho tu dong: 5-8 phut.
+ * Moc cu 2-3 phut qua day, nguoi choi vua dong hop thoai xong da co hop khac.
+ */
+const AUTO_EVENT_MIN_MS = 300_000;
+const AUTO_EVENT_MAX_MS = 480_000;
 
 export default function MoCityPage() {
   const [isPlaying, setIsPlaying] = useState(false);

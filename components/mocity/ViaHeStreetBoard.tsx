@@ -905,6 +905,7 @@ export default function ViaHeStreetBoard({
 
             {/* HỆ THỐNG CƯ DÂN ĐI BỘ */}
             <ExpressiveStreetCitizens
+              streetWidth={streetWidth}
               onCitizenReward={(msg) => {
                 setStreetToast(msg);
                 setTimeout(() => setStreetToast(null), 4000);
@@ -913,6 +914,7 @@ export default function ViaHeStreetBoard({
 
             {/* MOMO MASCOT */}
             <MoMoMascot
+              streetWidth={streetWidth}
               onToast={(msg) => {
                 setStreetToast(msg);
                 setTimeout(() => setStreetToast(null), 5000);

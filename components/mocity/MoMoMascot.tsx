@@ -209,11 +209,20 @@ function PromoModal({ promo, onClose }: { promo: typeof PROMOS[0]; onClose: () =
   );
 }
 
-export default function MoMoMascot({ onToast }: { onToast?: (msg: string) => void }) {
+export default function MoMoMascot({
+  onToast,
+  streetWidth = 2400,
+}: {
+  onToast?: (msg: string) => void;
+  /** Be rong that cua pho: mascot phai quay dau truoc khi ra khoi via he. */
+  streetWidth?: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const boundRef = useRef(Math.max(420, streetWidth - 180));
+  boundRef.current = Math.max(420, streetWidth - 180);
   // Animation state in refs - không trigger re-render
   const simRef = useRef({
-    x: 900,
+    x: Math.min(900, Math.max(420, streetWidth - 180)),
     dir: 1 as 1 | -1,
     behavior: 'WALKING' as 'WALKING' | 'POSING',
     behaviorTimer: 0,
@@ -266,7 +275,7 @@ export default function MoMoMascot({ onToast }: { onToast?: (msg: string) => voi
       // Position
       if (sim.behavior === 'WALKING') {
         sim.x += sim.dir * SPEED * (dt / 16.67);
-        if (sim.x > 1860) { sim.x = 1860; if (sim.dir === 1) { sim.dir = -1; setDir(-1); } }
+        if (sim.x > boundRef.current) { sim.x = boundRef.current; if (sim.dir === 1) { sim.dir = -1; setDir(-1); } }
         if (sim.x < 220)  { sim.x = 220;  if (sim.dir === -1) { sim.dir = 1; setDir(1); } }
       }
 

@@ -412,9 +412,20 @@ function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmot
 
 export default function ExpressiveStreetCitizens({
   onCitizenReward,
+  streetWidth = 2400,
 }: {
   onCitizenReward?: (msg: string) => void;
+  /**
+   * Be rong that cua day pho. Cu dan phai quay dau trong pham vi nay, neu khong
+   * ho se di tiep ra ngoai via he va lo lung giua nen troi khi nguoi choi moi
+   * mo it cot dat.
+   */
+  streetWidth?: number;
 }) {
+  /** Bien di lai, doc trong vong RAF nen giu o ref de khong resubscribe. */
+  const walkBoundRef = useRef(Math.max(360, streetWidth - 140));
+  walkBoundRef.current = Math.max(360, streetWidth - 140);
+
   // Appearance state: chỉ re-render khi emotion/bubble thay đổi (~mỗi 10-15s)
   const [appearances, setAppearances] = useState<CitAppearance[]>(() =>
     CITIZEN_DEFS.map((c, i) => ({
@@ -426,7 +437,9 @@ export default function ExpressiveStreetCitizens({
   // Mutable sim state: cập nhật bằng RAF, không trigger re-render
   const simRef = useRef<SimState[]>(
     CITIZEN_DEFS.map((c, i) => ({
-      x: c.startX,
+      // Trai deu cu dan tren be rong that: `startX` cu rai toi 1890px nen khi
+      // moi mo 4 cot dat ho se dung ngoai via he.
+      x: Math.min(c.startX, Math.max(360, streetWidth - 140)),
       dir: c.startDir,
       walkPhase: i * 1.4,
       behavior: (i % 3 === 0 ? 'ADMIRING_SHOP' : 'WALKING') as CitizenBehavior,
@@ -466,7 +479,8 @@ export default function ExpressiveStreetCitizens({
         const wasWalking = sim.behavior === 'WALKING';
         if (wasWalking) {
           sim.x += sim.dir * def.speed * dt * 10;
-          if (sim.x > 1960) { sim.x = 1960; sim.dir = -1; }
+          const maxX = walkBoundRef.current;
+          if (sim.x > maxX) { sim.x = maxX; sim.dir = -1; }
           else if (sim.x < 180) { sim.x = 180; sim.dir = 1; }
           sim.walkPhase += 0.22 * dt * 10;
         } else {
