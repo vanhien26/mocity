@@ -858,20 +858,24 @@ export default function ViaHeStreetBoard({
               className="pointer-events-none absolute bottom-2 left-0 z-30 flex flex-col items-center scale-110"
             >
               <svg width="68" height="62" viewBox="0 0 68 62" className="overflow-visible">
-                <ellipse cx="34" cy="58" rx="22" ry="3.5" fill="rgba(62,42,27,0.22)" />
-                <circle cx="18" cy="50" r="8" fill="#334155" stroke="#3E2A1B" strokeWidth="2" />
-                <circle cx="18" cy="50" r="4" fill="#F8FAFC" stroke="#3E2A1B" strokeWidth="1.5" />
-                <circle cx="50" cy="50" r="8" fill="#334155" stroke="#3E2A1B" strokeWidth="2" />
-                <circle cx="50" cy="50" r="4" fill="#F8FAFC" stroke="#3E2A1B" strokeWidth="1.5" />
-                <path d="M 14 48 L 28 36 L 44 46 L 52 32 L 45 32" fill="none" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-                <rect x="16" y="34" width="16" height="6" rx="3" fill="#1E293B" stroke="#3E2A1B" strokeWidth="1.6" />
-                <rect x="24" y="21" width="12" height="15" rx="4" fill="#67E8F9" stroke="#3E2A1B" strokeWidth="1.8" />
-                <line x1="34" y1="25" x2="46" y2="31" stroke="#FDE6D2" strokeWidth="3.5" strokeLinecap="round" />
-                <circle cx="31" cy="13" r="8.5" fill="#FDE6D2" stroke="#3E2A1B" strokeWidth="1.8" />
-                <path d="M 32 12 Q 34 9.5 36 12" fill="none" stroke="#3E2A1B" strokeWidth="1.6" strokeLinecap="round" />
-                <ellipse cx="35" cy="14.5" rx="1.8" ry="1" fill="#F472B6" opacity="0.65" />
-                <path d="M 32 16 Q 34.5 18 36.5 16" fill="none" stroke="#3E2A1B" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M 22 12 C 22 3 40 3 40 12 Z" fill="#FACC15" stroke="#3E2A1B" strokeWidth="1.8" />
+                <ellipse cx="34" cy="58" rx="21" ry="3" fill="rgba(62,42,27,0.18)" />
+                <circle cx="18" cy="50" r="8" fill="#2A3442" />
+                <circle cx="18" cy="50" r="3.4" fill="#C3CCD8" />
+                <circle cx="50" cy="50" r="8" fill="#2A3442" />
+                <circle cx="50" cy="50" r="3.4" fill="#C3CCD8" />
+                <path d="M13 46.4 L28.6 33.8 L44.6 43.8 L41.8 48.2 L27.8 39.6 Z" fill="#1E4FBF" />
+                <path d="M43 45.6 L50.6 30.4 L54.4 31.8 L46.8 47.4 Z" fill="#2563EB" />
+                <path d="M44.6 29.4 L54 30.2 L53.6 33 L44.3 32.2 Z" fill="#17388A" />
+                <path d="M15.6 33.4 L32.4 34.2 L32 40.2 L15.2 39.4 Z" fill="#1E293B" />
+                <path d="M23.6 20.6 L36.2 21.2 L35.6 36.4 L23 35.8 Z" fill="#4BC6DC" />
+                <path d="M23.6 20.6 L27.4 20.8 L26.8 36 L23 35.8 Z" fill="#35A3B8" />
+                <path d="M33.6 24.2 L46.4 30 L44.8 33 L32.4 27.2 Z" fill="#E8C6A6" />
+                <circle cx="31" cy="13" r="8.4" fill="#FDE6D2" />
+                <circle cx="33.6" cy="12.4" r="1.6" fill="#3E2A1B" />
+                <path d="M31.6 16.2 L37 16.2 Q34.3 19.4 31.6 16.2 Z" fill="#3E2A1B" />
+                <ellipse cx="29" cy="15.6" rx="2.1" ry="1.3" fill="#F0A8BE" />
+                <path d="M22 12.4 C22 2.6 40 2.6 40 12.4 Z" fill="#E0B414" />
+                <path d="M21.4 12.2 L40.6 12.2 L40.2 15 L21.6 15 Z" fill="#A87F0A" />
                 {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
                   <polygon points="54,32 150,12 150,58" fill="rgba(254, 240, 138, 0.45)" />
                 )}
@@ -912,18 +916,23 @@ export default function ViaHeStreetBoard({
               className="pointer-events-none absolute bottom-3 left-0 flex flex-col items-center"
             >
               <svg width="64" height="62" viewBox="0 0 64 62" className="overflow-visible">
-                <ellipse cx="32" cy="58" rx="20" ry="3" fill="rgba(0,0,0,0.22)" />
-                <circle cx="16" cy="49" r="8.5" fill="none" stroke="#3E2A1B" strokeWidth="2.2" />
-                <circle cx="48" cy="49" r="8.5" fill="none" stroke="#3E2A1B" strokeWidth="2.2" />
-                <path d="M 16 49 L 28 36 L 44 36 L 32 49 Z" fill="none" stroke="#34D399" strokeWidth="2.4" />
-                <line x1="44" y1="36" x2="48" y2="49" stroke="#34D399" strokeWidth="2.4" />
-                <rect x="23" y="21" width="11" height="15" rx="4" fill="#F472B6" stroke="#3E2A1B" strokeWidth="1.8" />
-                <circle cx="23" cy="5" r="4" fill="#3E2723" stroke="#3E2A1B" strokeWidth="1.6" />
-                <circle cx="29" cy="12" r="8" fill="#FDE6D2" stroke="#3E2A1B" strokeWidth="1.8" />
-                <path d="M 21 10 C 21 3 37 3 37 10 Z" fill="#3E2723" stroke="#3E2A1B" strokeWidth="1.6" />
-                <circle cx="32.5" cy="11.5" r="1.4" fill="#3E2A1B" />
-                <ellipse cx="33.5" cy="13.8" rx="1.8" ry="1" fill="#F472B6" opacity="0.65" />
-                <path d="M 30.5 15 Q 32.5 16.8 34.5 15" fill="none" stroke="#3E2A1B" strokeWidth="1.4" strokeLinecap="round" />
+                <ellipse cx="32" cy="58" rx="20" ry="2.8" fill="rgba(62,42,27,0.18)" />
+                <circle cx="16" cy="49" r="8.5" fill="none" stroke="#2A3442" strokeWidth="2.6" />
+                <circle cx="48" cy="49" r="8.5" fill="none" stroke="#2A3442" strokeWidth="2.6" />
+                <path d="M16 49 L27.4 35.4 L30.8 37 L19.4 50.2 Z" fill="#2AA87A" />
+                <path d="M27.4 35.2 L44.2 35.2 L44 38 L28.6 38 Z" fill="#34D399" />
+                <path d="M44.2 35.6 L48 48.6 L45.2 49.4 L41.4 36.4 Z" fill="#2AA87A" />
+                <path d="M30.4 36 L33.6 48.8 L30.8 49.4 L27.6 36.6 Z" fill="#34D399" />
+                <path d="M42.6 32.4 L50.4 33 L50.2 35.4 L42.4 34.8 Z" fill="#1F8A62" />
+                <path d="M22.6 20.6 L34.2 21.2 L33.4 36.4 L23.4 35.8 Z" fill="#EC4899" />
+                <path d="M22.6 20.6 L26.4 20.8 L25.8 36.1 L23.4 35.8 Z" fill="#C0246F" />
+                <path d="M32.8 24 L45 30.4 L43.4 33.2 L31.6 27 Z" fill="#E8C6A6" />
+                <circle cx="22.6" cy="5" r="4.2" fill="#2E1D16" />
+                <circle cx="29" cy="12" r="8" fill="#FDE6D2" />
+                <ellipse cx="25.6" cy="15" rx="2" ry="1.3" fill="#F0A8BE" />
+                <circle cx="32.4" cy="11.4" r="1.6" fill="#3E2A1B" />
+                <path d="M30.6 15 L35.4 15 Q33 18.2 30.6 15 Z" fill="#3E2A1B" />
+                <path d="M21 10.2 C21 2.4 37 2.4 37 10.2 C32.6 5.6 25.4 5.6 21 10.2 Z" fill="#2E1D16" />
                 {(timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET') && (
                   <polygon points="50,36 130,16 130,58" fill="rgba(254, 240, 138, 0.35)" />
                 )}

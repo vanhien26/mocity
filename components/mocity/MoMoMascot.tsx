@@ -70,20 +70,20 @@ function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign
           {isWalking ? (
             <>
               <g className="momo-leg-l">
-                <rect x="17" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-                <ellipse cx="21" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+                <rect x="17" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
+                <ellipse cx="21" cy="72" rx="6" ry="3" fill="#B81F68" />
               </g>
               <g className="momo-leg-r">
-                <rect x="31" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-                <ellipse cx="35" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+                <rect x="31" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
+                <ellipse cx="35" cy="72" rx="6" ry="3" fill="#B81F68" />
               </g>
             </>
           ) : (
             <>
-              <rect x="17" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-              <ellipse cx="21" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
-              <rect x="31" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-              <ellipse cx="35" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+              <rect x="17" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
+              <ellipse cx="21" cy="72" rx="6" ry="3" fill="#B81F68" />
+              <rect x="31" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
+              <ellipse cx="35" cy="72" rx="6" ry="3" fill="#B81F68" />
             </>
           )}
 
@@ -91,31 +91,33 @@ function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign
           {/* Tay trái */}
           {holdingSign ? (
             <g style={{ transformOrigin: '15px 42px', transform: 'rotate(-35deg)' }}>
-              <rect x="8" y="36" width="7" height="16" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-              <rect x="-14" y="18" width="30" height="18" rx="4" fill="#FFFDF7" stroke="#EB2F96" strokeWidth="1.5" />
+              <rect x="8" y="36" width="7" height="16" rx="3.5" fill="#F2C2DB" />
+              <rect x="-15" y="17" width="32" height="20" rx="5" fill="#EB2F96" />
+              <rect x="-13" y="19" width="28" height="16" rx="3" fill="#FFFDF7" />
               <text x="1" y="26" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">KHUYẾN</text>
               <text x="1" y="33" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">MÃI HOT</text>
             </g>
           ) : (
             <g className={isWalking ? 'momo-arm-l' : ''}>
-              <rect x="8" y="40" width="7" height="14" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+              <rect x="8" y="40" width="7" height="14" rx="3.5" fill="#F2C2DB" />
             </g>
           )}
 
           {/* Body */}
-          <rect x="15" y="38" width="26" height="22" rx="9" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.4" />
+          <rect x="15" y="38" width="26" height="22" rx="9" fill="#FDE8F3" />
+          <path d="M15.4 52.5 Q28 57.5 40.6 52.5 L40.2 55.4 Q28 60 15.8 55.4 Z" fill="#EDC0D8" />
           {/* Lô gô m */}
           <circle cx="28" cy="49" r="6" fill="#EB2F96" opacity="0.15" />
           <text x="28" y="52.5" textAnchor="middle" fontSize="9" fontWeight="900" fill="#C0226E" fontFamily="sans-serif">m</text>
 
           {/* Tay phải - vẫy */}
           <g className={isWalking ? 'momo-arm-r' : ''}>
-            <rect x="41" y="34" width="7" height="14" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-            <ellipse cx="44.5" cy="32" rx="5" ry="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+            <rect x="41" y="34" width="7" height="14" rx="3.5" fill="#F2C2DB" />
+            <ellipse cx="44.5" cy="32" rx="5" ry="4" fill="#F2C2DB" />
             {/* Ngón tay */}
-            <ellipse cx="42" cy="29" rx="2" ry="1.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1" />
-            <ellipse cx="45.5" cy="28.5" rx="2" ry="1.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1" />
-            <ellipse cx="49" cy="30" rx="2" ry="1.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1" />
+            <ellipse cx="42" cy="29" rx="2" ry="1.5" fill="#F2C2DB" />
+            <ellipse cx="45.5" cy="28.5" rx="2" ry="1.5" fill="#F2C2DB" />
+            <ellipse cx="49" cy="30" rx="2" ry="1.5" fill="#F2C2DB" />
           </g>
 
           {/* === ĐẦU === */}
@@ -123,21 +125,21 @@ function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign
           <ellipse cx="10" cy="22" rx="5.5" ry="10" fill="#EB2F96" />
           <ellipse cx="46" cy="22" rx="5.5" ry="10" fill="#EB2F96" />
           {/* Tai trong */}
-          <ellipse cx="10" cy="22" rx="2.5" ry="6" fill="#F472B6" opacity="0.6" />
-          <ellipse cx="46" cy="22" rx="2.5" ry="6" fill="#F472B6" opacity="0.6" />
+          <ellipse cx="10" cy="22" rx="2.5" ry="6" fill="#F472B6" />
+          <ellipse cx="46" cy="22" rx="2.5" ry="6" fill="#F472B6" />
           {/* Sừng */}
-          <ellipse cx="18" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" style={{ transform: 'rotate(-15deg)', transformOrigin: '18px 3.5px' }} />
-          <ellipse cx="38" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" style={{ transform: 'rotate(15deg)', transformOrigin: '38px 3.5px' }} />
+          <ellipse cx="18" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" style={{ transform: 'rotate(-15deg)', transformOrigin: '18px 3.5px' }} />
+          <ellipse cx="38" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" style={{ transform: 'rotate(15deg)', transformOrigin: '38px 3.5px' }} />
           {/* Đầu chính */}
           <ellipse cx="28" cy="17" rx="18" ry="17" fill="#EB2F96" />
           {/* Highlight đầu */}
-          <ellipse cx="22" cy="10" rx="6" ry="4" fill="rgba(255,255,255,0.2)" />
+          <path d="M14.6 12.4 Q20 4.6 29.4 3.4 L29.8 6.2 Q21.6 7.6 17.4 13.8 Z" fill="#F265AC" />
           {/* Mặt */}
           <ellipse cx="28" cy="22" rx="13.5" ry="14" fill="#FFF0F5" />
 
           {/* Lông mày */}
-          <path d="M18.5 14.5 Q21.5 12.5 24.5 14.5" stroke="#C0226E" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-          <path d="M31.5 14.5 Q34.5 12.5 37.5 14.5" stroke="#C0226E" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+          <path d="M18.2 15.1 Q21.5 12.1 24.8 15.1 L24.1 16.4 Q21.5 13.8 18.9 16.4 Z" fill="#C0226E" />
+          <path d="M31.2 15.1 Q34.5 12.1 37.8 15.1 L37.1 16.4 Q34.5 13.8 31.9 16.4 Z" fill="#C0226E" />
 
           {/* Mắt */}
           <circle cx="21.5" cy="21" r="5" fill="white" />
@@ -149,8 +151,8 @@ function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign
           <circle cx="35.5" cy="21" r="1.2" fill="white" />
 
           {/* Má hồng */}
-          <ellipse cx="14" cy="26.5" rx="4" ry="2.5" fill="#FFB7D5" opacity="0.75" />
-          <ellipse cx="42" cy="26.5" rx="4" ry="2.5" fill="#FFB7D5" opacity="0.75" />
+          <ellipse cx="14" cy="26.5" rx="4" ry="2.5" fill="#FFA8CC" />
+          <ellipse cx="42" cy="26.5" rx="4" ry="2.5" fill="#FFA8CC" />
 
           {/* Miệng cười */}
           <path d="M21 29 Q28 35.5 35 29" fill="#EB2F96" />
