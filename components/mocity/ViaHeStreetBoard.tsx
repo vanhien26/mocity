@@ -569,25 +569,6 @@ export default function ViaHeStreetBoard({
                 </div>
               </div>
 
-              {/* Biển tên đường "Đ. MoCity" & Cột Đèn Giao Thông Xanh Đỏ */}
-              <div className="absolute -bottom-16 left-2 z-20 flex items-end gap-7">
-                <div className="flex flex-col items-center">
-                  <div className="rounded-md border-2 border-white bg-[#2563EB] px-2.5 py-1 text-xs font-black text-white shadow">
-                    Đ. MoCity
-                  </div>
-                  <div className="h-14 w-1.5 bg-[#64748B]" />
-                </div>
-
-                {/* Cột đèn giao thông */}
-                <div className="flex flex-col items-center">
-                  <div className="flex flex-col gap-1 rounded-full border-2 border-[#3E2A1B] bg-[#334155] p-1.5 shadow">
-                    <span className="h-3 w-3 rounded-full bg-[#EF4444]" />
-                    <span className="h-3 w-3 rounded-full bg-[#F59E0B]/40" />
-                    <span className="h-3 w-3 rounded-full bg-[#10B981]" />
-                  </div>
-                  <div className="h-14 w-1.5 bg-[#475569]" />
-                </div>
-              </div>
             </div>
 
             {/* DÃY NHÀ ỐNG MẶT TIỀN CỠ LỚN (SỐ 2, SỐ 4, SỐ 6, SỐ 8, SỐ 10...) */}
