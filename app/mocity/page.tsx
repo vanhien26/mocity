@@ -491,15 +491,22 @@ export default function MoCityPage() {
         />
       )}
 
-      {/* 2. THANH QUẢN LÝ TRÊN CÙNG (HEADER HUD) */}
-      <header className="z-30 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b-2 border-[#78533D] bg-[#FFFDF7] px-3 py-2 shadow-sm sm:px-5">
-        <div className="flex items-center gap-2.5 min-w-0">
+      {/* 2. THANH HUD GAME TRÊN CÙNG */}
+      <header
+        className="z-30 flex shrink-0 items-center justify-between gap-2 border-b-2 border-[#8B5E1A] px-2 py-1.5 sm:px-3"
+        style={{
+          background: 'linear-gradient(180deg, #3D1F06 0%, #5C2D0E 50%, #3D1F06 100%)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,200,50,0.15)',
+        }}
+      >
+        {/* LEFT: nav + city badge */}
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             href="/"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[#D5CEBF] bg-[#FAF6ED] text-[#5C4332] transition-colors hover:border-[#D82D8B] hover:text-[#D82D8B]"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#8B5E1A] bg-[#2A1305] text-[#C9A227] transition-colors hover:border-[#C9A227] hover:text-amber-300"
             title="Về Trang chủ"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={15} />
           </Link>
 
           <button
@@ -508,147 +515,143 @@ export default function MoCityPage() {
               setMayorModalTab('PROFILE');
               setMayorModalOpen(true);
             }}
-            className="flex items-center gap-2.5 rounded-2xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 py-1.5 text-left transition-colors hover:border-[#D82D8B]"
+            className="flex items-center gap-2 rounded-xl border border-[#8B5E1A] bg-[#2A1305]/60 px-2.5 py-1 text-left transition-colors hover:border-[#C9A227]"
             title="Bấm để mở Tòa Thị Chính & Đổi tên Khu Phố"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#D82D8B] text-xs font-black text-white shadow-sm">
+            {/* Level badge */}
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white shadow-inner"
+              style={{ background: 'linear-gradient(135deg, #D82D8B, #9D174D)' }}
+            >
               C.{level}
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 hidden sm:block">
               <div className="flex items-center gap-1.5">
-                <span className="truncate text-xs sm:text-sm font-black uppercase text-[#3E2A1B]">
+                <span className="truncate text-xs font-black uppercase text-amber-200">
                   {cityName || 'Đô Thị MoCity'}
                 </span>
-                <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-800">
-                  {buildings.length}/{derived.capacity} tiệm
+                <span className="rounded bg-emerald-800/80 px-1 py-0.5 text-[9px] font-black text-emerald-300">
+                  {buildings.length}/{derived.capacity}
                 </span>
               </div>
-              <p className="truncate text-[11px] font-bold text-[#6E4F3A]">
-                {mayorName || 'Thị Trưởng MoMo'} · Hài lòng {Math.round(derived.happiness)}%
+              <p className="truncate text-[10px] font-bold text-amber-400/80">
+                {mayorName || 'Thị Trưởng'} · {Math.round(derived.happiness)}%
                 {derived.happiness < HAPPINESS_WARNING_AT && (
-                  <span className="text-[#C2410C]">
-                    {' '}
-                    · Bà con đang xíu, vào phân xử chuyện phố để vực lại nào
-                  </span>
+                  <span className="text-red-400"> ⚠</span>
                 )}
               </p>
-              {derived.supplyFactor < 0.85 && (
-                <p className="truncate text-[11px] font-bold text-[#C2410C]">
-                  Dân chưa đủ để phục vụ · mở thêm cửa hàng để hết bị cắt doanh thu
-                </p>
-              )}
             </div>
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {/* Nút Chuyện Phố & Nhiệm Vụ Hài Hước */}
+        {/* CENTER: resource chips */}
+        <div className="flex items-center gap-1.5">
+          {/* Xu */}
+          <div
+            className="flex items-center gap-1.5 rounded-xl border px-2.5 py-1 shadow-inner"
+            style={{
+              background: 'linear-gradient(135deg, #1C0D00, #3B1E00)',
+              borderColor: '#C9A227',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+            }}
+          >
+            <CircleDollarSign size={16} className="shrink-0 text-amber-400" />
+            <div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-sm font-black text-amber-200">{formatNumber(coins)}</span>
+                <span className="text-[9px] font-black text-amber-500">XU</span>
+              </div>
+              <p className="text-[9px] font-black text-emerald-400 leading-none">+{formatRate(derived.rate)}</p>
+            </div>
+          </div>
+
+          {/* KC Gems */}
+          <div
+            className="flex items-center gap-1 rounded-xl border px-2 py-1.5"
+            style={{
+              background: 'linear-gradient(135deg, #0C1A2E, #1E3A5F)',
+              borderColor: '#38BDF8',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+            }}
+          >
+            <Star size={13} className="shrink-0 fill-sky-400 text-sky-400" />
+            <span className="text-xs font-black text-sky-200">{gems}</span>
+          </div>
+        </div>
+
+        {/* RIGHT: action buttons */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Chuyện Phố */}
           <button
             type="button"
             onClick={handleOpenDialogue}
             className={cn(
-              'relative flex h-10 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black transition-all',
+              'relative flex h-9 items-center gap-1 rounded-lg border px-2.5 text-xs font-black transition-all',
               hasPendingEventOrRequest
-                ? 'border-[#D82D8B] bg-gradient-to-r from-[#FFF0F5] to-[#FCE7F3] text-[#D82D8B] shadow-md hover:scale-105 animate-pulse'
-                : 'border-[#78533D] bg-[#FAF6ED] text-[#3E2A1B] hover:border-[#D82D8B] hover:bg-white',
+                ? 'border-pink-500 bg-pink-900/60 text-pink-300 animate-pulse'
+                : 'border-[#6B4423] bg-[#2A1305]/60 text-amber-300/70 hover:border-amber-500 hover:text-amber-200',
             )}
-            title="Chuyện Phố & Nhiệm Vụ Hài Hước (Thị Trưởng phân xử)"
+            title="Chuyện Phố"
           >
-            <MessageSquareWarning size={16} className="shrink-0 text-[#D82D8B]" />
-            <span className="hidden sm:inline">Chuyện Phố</span>
+            <MessageSquareWarning size={14} className="shrink-0" />
+            <span className="hidden md:inline text-[10px]">Chuyện Phố</span>
             {hasPendingEventOrRequest && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#D82D8B] px-1 text-[10px] font-black text-white shadow-sm">
-                !
-              </span>
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#D82D8B] text-[8px] font-black text-white">!</span>
             )}
           </button>
 
-          {/* Nút Mở Kho Đồ Thị Trưởng */}
+          {/* Kho Đồ */}
           <button
             type="button"
-            onClick={() => {
-              setInventoryTab('ITEMS');
-              setInventoryOpen(true);
-            }}
-            className="relative flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-xs font-black text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
-            title="Kho Đồ Thị Trưởng & Bảo Vật"
+            onClick={() => { setInventoryTab('ITEMS'); setInventoryOpen(true); }}
+            className="relative flex h-9 items-center gap-1 rounded-lg border border-[#6B4423] bg-[#2A1305]/60 px-2.5 text-amber-300/70 transition-colors hover:border-amber-500 hover:text-amber-200"
+            title="Kho Đồ"
           >
-            <Package size={16} className="shrink-0 text-[#D82D8B]" />
-            <span className="hidden sm:inline">Kho Đồ</span>
+            <Package size={14} className="shrink-0" />
             {totalInventoryCount > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#D82D8B] px-1 text-[10px] font-black text-white">
-                {totalInventoryCount}
-              </span>
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#D82D8B] px-0.5 text-[8px] font-black text-white">{totalInventoryCount}</span>
             )}
           </button>
 
-          {/* Nút Share Phố */}
+          {/* Share */}
           <button
             type="button"
             onClick={() => setShareOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#D82D8B] bg-[#FDF2F8] text-[#D82D8B] transition-colors hover:bg-[#D82D8B] hover:text-white"
-            title="Chia sẻ phố của tôi"
-            aria-label="Chia sẻ phố của tôi"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#6B4423] bg-[#2A1305]/60 text-amber-300/70 transition-colors hover:border-amber-500 hover:text-amber-200"
+            title="Chia sẻ phố"
           >
-            <Share2 size={16} />
+            <Share2 size={14} />
           </button>
 
-          {/* Nút chuyển đổi Thời Gian Ngày / Đêm */}
+          {/* Time of Day */}
           <TimeOfDaySwitcher />
 
-          {/* Ngân Khố Xu & Tốc độ thu */}
-          <div className="flex items-center gap-2 rounded-2xl border-2 border-[#C9A227] bg-[#FFFBEB] px-3.5 py-1.5 shadow-sm">
-            <CircleDollarSign size={18} className="shrink-0 text-[#D97706]" />
-            <div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-sm sm:text-base font-black text-[#3E2A1B]">
-                  {formatNumber(coins)}
-                </span>
-                <span className="text-[10px] font-black uppercase text-[#92400E]">XU</span>
-              </div>
-              <p className="text-[10px] font-black text-emerald-700">
-                +{formatRate(derived.rate)}
-              </p>
-            </div>
-          </div>
-
-          {/* Kim Cương */}
-          <div className="hidden sm:flex items-center gap-1.5 rounded-2xl border-2 border-sky-300 bg-sky-50 px-3 py-2">
-            <Star size={15} className="shrink-0 fill-sky-500 text-sky-600" />
-            <span className="text-xs font-black text-sky-950">{gems}</span>
-            <span className="text-[10px] font-bold text-sky-700">KC</span>
-          </div>
-
-          {/* Nút Giờ Vàng x2 Doanh Thu */}
+          {/* Fever x2 */}
           <button
             type="button"
             onClick={handleTriggerFever}
             className={cn(
-              'flex items-center gap-1.5 rounded-2xl border-2 px-3 py-2 text-xs font-black transition-transform active:scale-95',
+              'flex h-9 items-center gap-1 rounded-lg border px-2 text-[10px] font-black transition-transform active:scale-95',
               derived.isFever
-                ? 'border-amber-500 bg-amber-400 text-[#3E2A1B] animate-pulse'
-                : 'border-[#D82D8B] bg-[#FDF2F8] text-[#D82D8B] hover:bg-[#D82D8B] hover:text-white',
+                ? 'border-amber-500 bg-amber-600/50 text-amber-200 animate-pulse'
+                : 'border-[#D82D8B]/60 bg-[#D82D8B]/10 text-[#D82D8B] hover:bg-[#D82D8B]/30',
             )}
           >
-            <span>{derived.isFever ? 'Đang x2 Xu!' : 'x2 Doanh Thu'}</span>
+            <span>{derived.isFever ? '⚡x2' : 'x2'}</span>
           </button>
 
-          {/* Nút Hồ Sơ Thị Trưởng */}
+          {/* Mayor profile */}
           <button
             type="button"
             onClick={() => {
-              if (hasNamedCity) {
-                setMayorModalTab('PROFILE');
-                setMayorModalOpen(true);
-              } else {
-                setIsPlaying(false);
-              }
+              if (hasNamedCity) { setMayorModalTab('PROFILE'); setMayorModalOpen(true); }
+              else { setIsPlaying(false); }
             }}
-            className="flex items-center gap-1 rounded-2xl border-2 border-[#D5CEBF] bg-[#FAF6ED] px-2.5 py-2 text-[11px] font-black text-[#5C4332] hover:border-[#D82D8B] hover:text-[#D82D8B]"
-            title={hasNamedCity ? 'Hồ Sơ Thị Trưởng' : 'Đăng Nhập & Nhận thưởng'}
+            className="flex h-9 items-center gap-1 rounded-lg border border-[#8B5E1A] bg-[#2A1305]/80 px-2 text-[10px] font-black text-amber-300 hover:border-[#C9A227]"
+            title={hasNamedCity ? 'Hồ Sơ Thị Trưởng' : 'Đăng Nhập'}
           >
-            <Crown size={14} className="shrink-0 text-[#D82D8B]" />
-            <span className="hidden md:inline">{hasNamedCity ? mayorName : 'Đăng Nhập'}</span>
+            <Crown size={13} className="shrink-0 text-[#C9A227]" />
+            <span className="hidden lg:inline">{hasNamedCity ? mayorName : 'Login'}</span>
           </button>
         </div>
       </header>

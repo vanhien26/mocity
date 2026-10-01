@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 
-// --- Danh sách khuyến mãi MoMo luân phiên ---
 const PROMOS = [
   {
     id: 'cashback-qr',
@@ -37,138 +36,138 @@ const PROMOS = [
     cta: 'Gửi ngay',
     color: '#16A34A',
   },
-  {
-    id: 'insurance',
-    badge: 'BẢO HIỂM',
-    title: 'BH xe máy từ 79.000đ/năm',
-    desc: 'Mua bảo hiểm bắt buộc xe máy trực tiếp trên MoMo.',
-    cta: 'Xem gói',
-    color: '#EA580C',
-  },
 ];
 
-// --- SVG Mascot MoMo Chibi ---
-function MascotSvg({
-  walkCycle,
-  isWalking,
-  jumpOffset,
-  holdingSign,
-}: {
-  walkCycle: number;
-  isWalking: boolean;
-  jumpOffset: number;
-  holdingSign: boolean;
-}) {
-  const bodyBob = isWalking ? Math.abs(Math.sin(walkCycle)) * 3 : Math.sin(walkCycle) * 1;
-  const legL = isWalking ? Math.sin(walkCycle) * 10 : 0;
-  const legR = isWalking ? -Math.sin(walkCycle) * 10 : 0;
-  const armSwing = isWalking ? Math.sin(walkCycle) * 12 : 0;
+/* CSS keyframes cho mascot walk - không dùng setInterval */
+const MASCOT_CSS = `
+.momo-walk { animation: momoWalk 0.55s ease-in-out infinite; }
+.momo-leg-l { transform-origin: 21px 58px; animation: momoLegL 0.55s linear infinite; }
+.momo-leg-r { transform-origin: 35px 58px; animation: momoLegR 0.55s linear infinite; }
+.momo-arm-l { transform-origin: 15px 42px; animation: momoArmL 0.55s linear infinite; }
+.momo-arm-r { transform-origin: 41px 40px; animation: momoArmR 0.55s linear infinite; }
+.momo-idle  { animation: momoIdle 2s ease-in-out infinite; }
+@keyframes momoWalk  { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-3px)} }
+@keyframes momoLegL  { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(12deg)} }
+@keyframes momoLegR  { 0%,100%{transform:rotate(12deg)}  50%{transform:rotate(-12deg)} }
+@keyframes momoArmL  { 0%,100%{transform:rotate(10deg)}  50%{transform:rotate(-10deg)} }
+@keyframes momoArmR  { 0%,100%{transform:rotate(-30deg)} 50%{transform:rotate(-50deg)} }
+@keyframes momoIdle  { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
+`;
+
+function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign: boolean }) {
+  const bodyClass = isWalking ? 'momo-walk' : 'momo-idle';
+  const legClass = isWalking ? '' : 'hidden';
 
   return (
-    <svg
-      width="56"
-      height="84"
-      viewBox="0 0 56 84"
-      style={{ transform: `translateY(${-bodyBob - jumpOffset}px)`, overflow: 'visible' }}
-    >
-      {/* Shadow */}
-      <ellipse cx="28" cy="82" rx="13" ry="3" fill="rgba(62,42,27,0.15)" />
+    <>
+      <style dangerouslySetInnerHTML={{ __html: MASCOT_CSS }} />
+      <svg width="60" height="80" viewBox="0 0 56 84" style={{ overflow: 'visible' }}>
+        {/* Shadow */}
+        <ellipse cx="28" cy="82" rx="12" ry="2.5" fill="rgba(62,42,27,0.18)" />
 
-      {/* === CHÂN === */}
-      {/* Chân trái */}
-      <g transform={`rotate(${legL}, 21, 58)`}>
-        <rect x="17" y="58" width="8" height="14" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-        <rect x="15" y="70" width="12" height="6" rx="3" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-      </g>
-      {/* Chân phải */}
-      <g transform={`rotate(${legR}, 35, 58)`}>
-        <rect x="31" y="58" width="8" height="14" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-        <rect x="29" y="70" width="12" height="6" rx="3" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-      </g>
+        <g className={bodyClass}>
+          {/* === CHÂN === */}
+          {isWalking ? (
+            <>
+              <g className="momo-leg-l">
+                <rect x="17" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+                <ellipse cx="21" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+              </g>
+              <g className="momo-leg-r">
+                <rect x="31" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+                <ellipse cx="35" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+              </g>
+            </>
+          ) : (
+            <>
+              <rect x="17" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+              <ellipse cx="21" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+              <rect x="31" y="58" width="8" height="13" rx="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+              <ellipse cx="35" cy="72" rx="6" ry="3" fill="#C0226E" opacity="0.8" />
+            </>
+          )}
 
-      {/* === THÂN === bodysuit trắng hồng nhạt */}
-      <rect x="15" y="38" width="26" height="22" rx="8" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.4" />
-      {/* Logo "m" hình vuông bo góc */}
-      <rect x="21" y="44" width="14" height="10" rx="3" fill="#EB2F96" opacity="0.18" />
-      <text x="28" y="52.5" textAnchor="middle" fontSize="9" fontWeight="900" fill="#C0226E" fontFamily="sans-serif">m</text>
+          {/* === THÂN === */}
+          {/* Tay trái */}
+          {holdingSign ? (
+            <g style={{ transformOrigin: '15px 42px', transform: 'rotate(-35deg)' }}>
+              <rect x="8" y="36" width="7" height="16" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+              <rect x="-14" y="18" width="30" height="18" rx="4" fill="#FFFDF7" stroke="#EB2F96" strokeWidth="1.5" />
+              <text x="1" y="26" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">KHUYẾN</text>
+              <text x="1" y="33" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">MÃI HOT</text>
+            </g>
+          ) : (
+            <g className={isWalking ? 'momo-arm-l' : ''}>
+              <rect x="8" y="40" width="7" height="14" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+            </g>
+          )}
 
-      {/* === TAY TRÁI (giữ biển / swing) === */}
-      {holdingSign ? (
-        <g transform={`rotate(-35, 15, 42)`}>
-          <rect x="8" y="36" width="7" height="16" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-          <rect x="-14" y="18" width="30" height="18" rx="4" fill="#FFFDF7" stroke="#EB2F96" strokeWidth="1.4" />
-          <text x="1" y="26" textAnchor="middle" fontSize="5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">KHUYẾN</text>
-          <text x="1" y="32" textAnchor="middle" fontSize="5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">MÃI HOT</text>
+          {/* Body */}
+          <rect x="15" y="38" width="26" height="22" rx="9" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.4" />
+          {/* Lô gô m */}
+          <circle cx="28" cy="49" r="6" fill="#EB2F96" opacity="0.15" />
+          <text x="28" y="52.5" textAnchor="middle" fontSize="9" fontWeight="900" fill="#C0226E" fontFamily="sans-serif">m</text>
+
+          {/* Tay phải - vẫy */}
+          <g className={isWalking ? 'momo-arm-r' : ''}>
+            <rect x="41" y="34" width="7" height="14" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+            <ellipse cx="44.5" cy="32" rx="5" ry="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
+            {/* Ngón tay */}
+            <ellipse cx="42" cy="29" rx="2" ry="1.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1" />
+            <ellipse cx="45.5" cy="28.5" rx="2" ry="1.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1" />
+            <ellipse cx="49" cy="30" rx="2" ry="1.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1" />
+          </g>
+
+          {/* === ĐẦU === */}
+          {/* Tai bên */}
+          <ellipse cx="10" cy="22" rx="5.5" ry="10" fill="#EB2F96" />
+          <ellipse cx="46" cy="22" rx="5.5" ry="10" fill="#EB2F96" />
+          {/* Tai trong */}
+          <ellipse cx="10" cy="22" rx="2.5" ry="6" fill="#F472B6" opacity="0.6" />
+          <ellipse cx="46" cy="22" rx="2.5" ry="6" fill="#F472B6" opacity="0.6" />
+          {/* Sừng */}
+          <ellipse cx="18" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" style={{ transform: 'rotate(-15deg)', transformOrigin: '18px 3.5px' }} />
+          <ellipse cx="38" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" style={{ transform: 'rotate(15deg)', transformOrigin: '38px 3.5px' }} />
+          {/* Đầu chính */}
+          <ellipse cx="28" cy="17" rx="18" ry="17" fill="#EB2F96" />
+          {/* Highlight đầu */}
+          <ellipse cx="22" cy="10" rx="6" ry="4" fill="rgba(255,255,255,0.2)" />
+          {/* Mặt */}
+          <ellipse cx="28" cy="22" rx="13.5" ry="14" fill="#FFF0F5" />
+
+          {/* Lông mày */}
+          <path d="M18.5 14.5 Q21.5 12.5 24.5 14.5" stroke="#C0226E" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+          <path d="M31.5 14.5 Q34.5 12.5 37.5 14.5" stroke="#C0226E" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+
+          {/* Mắt */}
+          <circle cx="21.5" cy="21" r="5" fill="white" />
+          <circle cx="34.5" cy="21" r="5" fill="white" />
+          <circle cx="21.5" cy="22" r="3.2" fill="#C0226E" />
+          <circle cx="34.5" cy="22" r="3.2" fill="#C0226E" />
+          {/* Pupil nhỏ */}
+          <circle cx="22.5" cy="21" r="1.2" fill="white" />
+          <circle cx="35.5" cy="21" r="1.2" fill="white" />
+
+          {/* Má hồng */}
+          <ellipse cx="14" cy="26.5" rx="4" ry="2.5" fill="#FFB7D5" opacity="0.75" />
+          <ellipse cx="42" cy="26.5" rx="4" ry="2.5" fill="#FFB7D5" opacity="0.75" />
+
+          {/* Miệng cười */}
+          <path d="M21 29 Q28 35.5 35 29" fill="#EB2F96" />
+          <path d="M22 29 Q28 34 34 29" fill="white" />
         </g>
-      ) : (
-        /* Tay trái swing xuống */
-        <rect
-          x="8" y="40" width="7" height="14" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2"
-          transform={`rotate(${-armSwing - 15}, 11, 40)`}
-        />
-      )}
-
-      {/* === TAY PHẢI (vẫy tay) === */}
-      <g transform={`rotate(${armSwing + 35}, 45, 40)`}>
-        <rect x="41" y="34" width="7" height="14" rx="3.5" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-        {/* Bàn tay vẫy */}
-        <ellipse cx="44.5" cy="33" rx="5" ry="4" fill="#FDE8F3" stroke="#C0226E" strokeWidth="1.2" />
-      </g>
-
-      {/* === ĐẦU === */}
-      {/* Mũ/tóc hồng phủ phần trên - đặt trước mặt */}
-      <ellipse cx="28" cy="16" rx="18" ry="17" fill="#EB2F96" />
-      {/* Hai bên mũ rủ xuống che tai */}
-      <ellipse cx="11" cy="22" rx="6" ry="11" fill="#EB2F96" />
-      <ellipse cx="45" cy="22" rx="6" ry="11" fill="#EB2F96" />
-      {/* Sừng nhỏ bên trái */}
-      <ellipse cx="18" cy="3" rx="3.5" ry="5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" transform="rotate(-15, 18, 3)" />
-      {/* Sừng nhỏ bên phải */}
-      <ellipse cx="38" cy="3" rx="3.5" ry="5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" transform="rotate(15, 38, 3)" />
-
-      {/* Mặt trắng ngà */}
-      <ellipse cx="28" cy="22" rx="14" ry="15" fill="#FFF0F5" />
-
-      {/* Lông mày nâu đậm */}
-      <path d="M18 14 Q21 12 24 14" stroke="#C0226E" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-      <path d="M32 14 Q35 12 38 14" stroke="#C0226E" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-
-      {/* Mắt tròn to - tròng ngoài trắng */}
-      <circle cx="21.5" cy="21" r="5" fill="white" />
-      <circle cx="34.5" cy="21" r="5" fill="white" />
-      {/* Tròng mắt hồng đậm */}
-      <circle cx="21.5" cy="22" r="3.2" fill="#C0226E" />
-      <circle cx="34.5" cy="22" r="3.2" fill="#C0226E" />
-      {/* Điểm sáng mắt */}
-      <circle cx="23" cy="20.5" r="1.2" fill="white" />
-      <circle cx="36" cy="20.5" r="1.2" fill="white" />
-
-      {/* Má hồng */}
-      <ellipse cx="14" cy="26" rx="4.5" ry="2.5" fill="#FFB7D5" opacity="0.7" />
-      <ellipse cx="42" cy="26" rx="4.5" ry="2.5" fill="#FFB7D5" opacity="0.7" />
-
-      {/* Miệng cười răng trắng */}
-      <path d="M21 29 Q28 35 35 29" fill="#C0226E" />
-      <path d="M22 29 Q28 33.5 34 29" fill="white" />
-    </svg>
+      </svg>
+    </>
   );
 }
 
-// --- Promotion Modal ---
-function PromoModal({
-  promo,
-  onClose,
-}: {
-  promo: typeof PROMOS[0];
-  onClose: () => void;
-}) {
+function PromoModal({ promo, onClose }: { promo: typeof PROMOS[0]; onClose: () => void }) {
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-xs overflow-hidden rounded-3xl bg-white shadow-2xl">
-        {/* Header gradient */}
         <div
           className="relative px-5 py-5 text-white text-center"
           style={{ background: `linear-gradient(135deg, ${promo.color}, ${promo.color}CC)` }}
@@ -180,29 +179,9 @@ function PromoModal({
           >
             <X size={14} className="shrink-0" />
           </button>
-
-          {/* Mascot nhỏ trong modal */}
-          <div className="mx-auto mb-1 flex h-16 w-16 items-center justify-center">
-            <svg width="48" height="60" viewBox="0 0 56 84">
-              <ellipse cx="28" cy="16" rx="18" ry="17" fill="#EB2F96" />
-              <ellipse cx="11" cy="22" rx="6" ry="11" fill="#EB2F96" />
-              <ellipse cx="45" cy="22" rx="6" ry="11" fill="#EB2F96" />
-              <ellipse cx="18" cy="3" rx="3.5" ry="5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" transform="rotate(-15, 18, 3)" />
-              <ellipse cx="38" cy="3" rx="3.5" ry="5" fill="#EB2F96" stroke="#C0226E" strokeWidth="1" transform="rotate(15, 38, 3)" />
-              <ellipse cx="28" cy="22" rx="14" ry="15" fill="#FFF0F5" />
-              <circle cx="21.5" cy="21" r="5" fill="white" />
-              <circle cx="34.5" cy="21" r="5" fill="white" />
-              <circle cx="21.5" cy="22" r="3.2" fill="#C0226E" />
-              <circle cx="34.5" cy="22" r="3.2" fill="#C0226E" />
-              <circle cx="23" cy="20.5" r="1.2" fill="white" />
-              <circle cx="36" cy="20.5" r="1.2" fill="white" />
-              <ellipse cx="14" cy="26" rx="4.5" ry="2.5" fill="#FFB7D5" opacity="0.7" />
-              <ellipse cx="42" cy="26" rx="4.5" ry="2.5" fill="#FFB7D5" opacity="0.7" />
-              <path d="M21 29 Q28 35 35 29" fill="#C0226E" />
-              <path d="M22 29 Q28 33.5 34 29" fill="white" />
-            </svg>
+          <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center">
+            <MascotSvg isWalking={false} holdingSign={false} />
           </div>
-
           <span
             className="inline-block rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider mb-1"
             style={{ background: 'rgba(255,255,255,0.25)' }}
@@ -211,10 +190,8 @@ function PromoModal({
           </span>
           <p className="text-sm font-black leading-snug">{promo.title}</p>
         </div>
-
         <div className="px-5 py-4 text-center">
           <p className="text-xs text-gray-500 leading-relaxed">{promo.desc}</p>
-
           <button
             type="button"
             onClick={onClose}
@@ -230,105 +207,109 @@ function PromoModal({
   );
 }
 
-// --- Main MoMo Mascot Component ---
-export default function MoMoMascot({
-  onToast,
-}: {
-  onToast?: (msg: string) => void;
-}) {
-  const [x, setX] = useState(900);
-  const [dir, setDir] = useState<1 | -1>(1);
-  const [walkCycle, setWalkCycle] = useState(0);
-  const [behavior, setBehavior] = useState<'WALKING' | 'POSING'>('WALKING');
-  const [behaviorTimer, setBehaviorTimer] = useState(120);
-  const [jumpOffset, setJumpOffset] = useState(0);
+export default function MoMoMascot({ onToast }: { onToast?: (msg: string) => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  // Animation state in refs - không trigger re-render
+  const simRef = useRef({
+    x: 900,
+    dir: 1 as 1 | -1,
+    behavior: 'WALKING' as 'WALKING' | 'POSING',
+    behaviorTimer: 0,
+    jumpOffset: 0,
+    lastTs: 0,
+  });
+  const rafRef = useRef<number>(0);
+  const LANE_Y = 36;
+  const SPEED = 1.4; // px/frame at 60fps
+
+  // React state chỉ cho UI changes (bubble text, promo modal)
   const [promoIdx, setPromoIdx] = useState(0);
   const [showPromo, setShowPromo] = useState(false);
   const [bubbleText, setBubbleText] = useState<string | null>('Chào bà con! Có deal hấp dẫn nè!');
-  const rafRef = useRef<number>(0);
-
-  const SPEED = 0.95;
-  const laneY = 36; // lane cao hơn để nổi bật hơn dân thường
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setWalkCycle((wc) => wc + 0.55);
-      setJumpOffset((j) => Math.max(0, j - 6));
-      setX((px) => {
-        if (behavior !== 'WALKING') return px;
-        const next = px + dir * 18;
-        if (next > 1860) return 1860;
-        if (next < 220) return 220;
-        return next;
-      });
-    }, 120);
-    return () => clearInterval(timer);
-  }, [behavior, dir]);
+  const [isWalking, setIsWalking] = useState(true);
+  const [holdingSign, setHoldingSign] = useState(false);
+  const [dir, setDir] = useState<1 | -1>(1);
 
   useEffect(() => {
-    if (x >= 1860 && dir === 1) setDir(-1);
-    else if (x <= 220 && dir === -1) setDir(1);
-  }, [x, dir]);
+    const sim = simRef.current;
 
-  useEffect(() => {
-    const behaviorInterval = setInterval(() => {
-      setBehavior((prev) => {
-        const next = prev === 'WALKING' ? 'POSING' : 'WALKING';
+    function tick(ts: number) {
+      const dt = Math.min(ts - (sim.lastTs || ts), 50);
+      sim.lastTs = ts;
+
+      // Behavior timer
+      sim.behaviorTimer += dt;
+      if (sim.behaviorTimer > 5500) {
+        sim.behaviorTimer = 0;
+        const next = sim.behavior === 'WALKING' ? 'POSING' : 'WALKING';
+        sim.behavior = next;
         if (next === 'POSING') {
           setPromoIdx((idx) => {
-            const nextIdx = (idx + 1) % PROMOS.length;
-            setBubbleText(`Khuyến mãi: ${PROMOS[nextIdx].title}`);
-            return nextIdx;
+            const ni = (idx + 1) % PROMOS.length;
+            setBubbleText(`Khuyến mãi: ${PROMOS[ni].title}`);
+            setHoldingSign(true);
+            setIsWalking(false);
+            return ni;
           });
         } else {
           setBubbleText('Chào bà con! Tôi là MoMo!');
+          setHoldingSign(false);
+          setIsWalking(true);
         }
-        return next;
-      });
-    }, 5500);
-    return () => clearInterval(behaviorInterval);
+      }
+
+      // Jump decay
+      sim.jumpOffset = Math.max(0, sim.jumpOffset - dt * 0.18);
+
+      // Position
+      if (sim.behavior === 'WALKING') {
+        sim.x += sim.dir * SPEED * (dt / 16.67);
+        if (sim.x > 1860) { sim.x = 1860; if (sim.dir === 1) { sim.dir = -1; setDir(-1); } }
+        if (sim.x < 220)  { sim.x = 220;  if (sim.dir === -1) { sim.dir = 1; setDir(1); } }
+      }
+
+      // DOM update (no React re-render)
+      if (containerRef.current) {
+        const y = LANE_Y + sim.jumpOffset;
+        containerRef.current.style.transform = `translate3d(${Math.round(sim.x)}px,${-Math.round(y)}px,0)`;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
   const handleClick = useCallback(() => {
-    setJumpOffset(22);
-    setBubbleText(PROMOS[promoIdx].title);
+    simRef.current.jumpOffset = 22;
     setShowPromo(true);
-    onToast?.(`MoMo Mascot: "${PROMOS[promoIdx].title}"`);
-  }, [promoIdx, onToast]);
-
-  const isWalking = behavior === 'WALKING';
+    setPromoIdx((idx) => {
+      onToast?.(`MoMo Mascot: "${PROMOS[idx].title}"`);
+      return idx;
+    });
+  }, [onToast]);
 
   return (
     <>
-      {/* Mascot trên vỉa hè */}
-      <div
-        className="pointer-events-none absolute inset-0 z-30 overflow-visible"
-      >
+      <div className="pointer-events-none absolute inset-0 z-30 overflow-visible">
         <div
-          style={{
-            transform: `translate3d(${Math.round(x)}px, ${-Math.round(laneY + (isWalking ? Math.abs(Math.sin(walkCycle)) * 3 : 1))}px, 0)`,
-            zIndex: 55,
-          }}
+          ref={containerRef}
           className="absolute bottom-2 left-0 flex flex-col items-center"
+          style={{ willChange: 'transform' }}
         >
-          {/* Speech bubble đặc biệt - màu hồng MoMo */}
           {bubbleText && (
             <div
               className="mb-1 max-w-[200px] truncate rounded-2xl border-2 px-2.5 py-1 text-[10px] font-black shadow-md"
-              style={{
-                borderColor: '#EB2F96',
-                background: '#FFF0F7',
-                color: '#C0226E',
-              }}
+              style={{ borderColor: '#EB2F96', background: '#FFF0F7', color: '#C0226E' }}
             >
               {bubbleText}
             </div>
           )}
 
-          {/* Hào quang rung - chỉ khi POSING */}
-          {behavior === 'POSING' && (
+          {holdingSign && (
             <div
-              className="absolute -inset-3 -z-10 rounded-full opacity-40 animate-ping"
+              className="absolute -inset-3 -z-10 rounded-full opacity-30 animate-ping"
               style={{ background: 'radial-gradient(circle, #EB2F96 0%, transparent 70%)' }}
             />
           )}
@@ -340,12 +321,7 @@ export default function MoMoMascot({
             className="pointer-events-auto group cursor-pointer focus:outline-none"
             style={{ transform: `scaleX(${dir})` }}
           >
-            <MascotSvg
-              walkCycle={walkCycle}
-              isWalking={isWalking}
-              jumpOffset={jumpOffset}
-              holdingSign={behavior === 'POSING'}
-            />
+            <MascotSvg isWalking={isWalking} holdingSign={holdingSign} />
             <span className="pointer-events-none absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#EB2F96] px-2 py-0.5 text-[8px] font-black text-white opacity-0 transition-opacity group-hover:opacity-100">
               MoMo Mascot ✦
             </span>
@@ -353,12 +329,8 @@ export default function MoMoMascot({
         </div>
       </div>
 
-      {/* Promotion Modal */}
       {showPromo && (
-        <PromoModal
-          promo={PROMOS[promoIdx]}
-          onClose={() => setShowPromo(false)}
-        />
+        <PromoModal promo={PROMOS[promoIdx]} onClose={() => setShowPromo(false)} />
       )}
     </>
   );
