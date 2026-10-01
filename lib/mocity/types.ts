@@ -211,11 +211,14 @@ export interface EventDayLog {
   resolved: number;
 }
 
+export type MayorGender = 'male' | 'female';
+
 export interface CityState extends Currencies {
   version: number;
   mayorName: string;
   cityName: string;
   hasNamedCity: boolean;
+  mayorGender: MayorGender;
   mayorLevel: number;
   mayorXp: number;
   gridSize: number;

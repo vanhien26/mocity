@@ -27,8 +27,8 @@ export interface WelcomeScreenProps {
   onStart: () => void;
 }
 
-/** Chibi Thị Trưởng - illustration, khong phai icon he thong. */
-function MayorAvatar({ size = 64 }: { size?: number }) {
+/** Logo MoCity - toà nhà hình chữ M với ngôi sao vàng. */
+function MoCityLogo({ size = 64 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 64 64"
@@ -38,16 +38,44 @@ function MayorAvatar({ size = 64 }: { size?: number }) {
       aria-hidden="true"
       focusable="false"
     >
-      <path d="M14 62 C14 50, 50 50, 50 62 Z" fill="#2B4368" stroke="#3D2C1E" strokeWidth="2" />
-      <circle cx="32" cy="30" r="16" fill="#FCE4C8" stroke="#3D2C1E" strokeWidth="2" />
-      <ellipse cx="23" cy="34" rx="3" ry="1.8" fill="#F4A28C" opacity="0.75" />
-      <ellipse cx="41" cy="34" rx="3" ry="1.8" fill="#F4A28C" opacity="0.75" />
-      <path d="M15 28 C15 16, 22 13, 32 13 C42 13, 49 16, 49 28 C45 21, 19 21, 15 28 Z" fill="#2C221E" />
-      <path d="M20 13 L24 7 L32 11 L40 7 L44 13 Z" fill="#D82D8B" stroke="#3D2C1E" strokeWidth="1.5" />
-      <path d="M24 30 Q27 27 30 30" fill="none" stroke="#3D2C1E" strokeWidth="2" strokeLinecap="round" />
-      <path d="M34 30 Q37 27 40 30" fill="none" stroke="#3D2C1E" strokeWidth="2" strokeLinecap="round" />
-      <path d="M27 37 Q32 41 37 37" fill="none" stroke="#3D2C1E" strokeWidth="2" strokeLinecap="round" />
-      <path d="M30 50 L32 44 L34 50 L32 56 Z" fill="#D82D8B" />
+      {/* Nền tròn gradient hồng */}
+      <defs>
+        <radialGradient id="bg-grad" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stopColor="#F472B6" />
+          <stop offset="100%" stopColor="#D82D8B" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="30" fill="url(#bg-grad)" />
+
+      {/* Đường phố - nền vàng nhạt */}
+      <rect x="8" y="46" width="48" height="8" rx="2" fill="#C9A227" opacity="0.35" />
+
+      {/* Toà nhà trái - thấp */}
+      <rect x="9" y="30" width="12" height="18" rx="1.5" fill="white" opacity="0.92" />
+      <rect x="11" y="33" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+      <rect x="16" y="33" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+      <rect x="11" y="39" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+      <rect x="16" y="39" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+
+      {/* Toà nhà giữa - cao nhất, hình chữ M */}
+      <rect x="23" y="18" width="18" height="30" rx="2" fill="white" />
+      {/* Cửa sổ hình chữ M (3 tầng x 2 cột) */}
+      <rect x="26" y="22" width="4" height="4" rx="0.5" fill="#D82D8B" opacity="0.75" />
+      <rect x="34" y="22" width="4" height="4" rx="0.5" fill="#D82D8B" opacity="0.75" />
+      <rect x="26" y="29" width="4" height="4" rx="0.5" fill="#D82D8B" opacity="0.75" />
+      <rect x="34" y="29" width="4" height="4" rx="0.5" fill="#D82D8B" opacity="0.75" />
+      {/* Cửa vào */}
+      <rect x="28" y="40" width="8" height="8" rx="1" fill="#D82D8B" opacity="0.6" />
+
+      {/* Toà nhà phải - vừa */}
+      <rect x="43" y="26" width="12" height="22" rx="1.5" fill="white" opacity="0.92" />
+      <rect x="45" y="29" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+      <rect x="50" y="29" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+      <rect x="45" y="35" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+      <rect x="50" y="35" width="3" height="3" rx="0.5" fill="#D82D8B" opacity="0.7" />
+
+      {/* Ngôi sao vàng trên đỉnh toà nhà giữa */}
+      <polygon points="32,8 33.4,12.2 37.8,12.2 34.2,14.7 35.6,18.9 32,16.4 28.4,18.9 29.8,14.7 26.2,12.2 30.6,12.2" fill="#FACC15" stroke="#C9A227" strokeWidth="0.5" />
     </svg>
   );
 }
@@ -109,7 +137,7 @@ export default function WelcomeScreen({
           {/* Đầu màn hình: lời chào theo tài khoản đang đăng nhập */}
           <div className="flex items-start gap-3.5 border-b-2 border-[#C9A22733] bg-gradient-to-br from-[#FFFDF7] to-[#FDF2F8] p-5">
             <span className="flex shrink-0 items-center justify-center rounded-2xl border-2 border-[#D5CEBF] bg-[#FDF2F8]">
-              <MayorAvatar size={64} />
+              <MoCityLogo size={64} />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]">
@@ -199,6 +227,7 @@ export default function WelcomeScreen({
               <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
                 Tên Thị Trưởng lấy từ tài khoản của bạn. Đổi tên được miễn phí trước khi vào chơi.
               </p>
+
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="min-w-0">
                   <label

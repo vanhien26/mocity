@@ -87,6 +87,7 @@ function createInitialState(): CityState {
     mayorName: 'Thị Trưởng MoMo',
     cityName: 'Đô Thị MoCity',
     hasNamedCity: false,
+    mayorGender: 'female',
     mayorLevel: 1,
     mayorXp: 0,
     gridSize: 10,
@@ -385,7 +386,7 @@ export function dismissOffline(): void {
 
 export const RENAME_COST_GEMS = 5;
 
-export function renameCityAndMayor(mayorName: string, cityName: string): 'ok' | 'funds' {
+export function renameCityAndMayor(mayorName: string, cityName: string, mayorGender?: import('./types').MayorGender): 'ok' | 'funds' {
   const cleanMayor = mayorName.trim() || state.mayorName || 'Thị Trưởng MoMo';
   const cleanCity = cityName.trim() || state.cityName || 'Đô Thị MoCity';
   if (state.hasNamedCity && (cleanMayor !== state.mayorName || cleanCity !== state.cityName)) {
@@ -393,7 +394,7 @@ export function renameCityAndMayor(mayorName: string, cityName: string): 'ok' | 
     setState({ ...state, mayorName: cleanMayor, cityName: cleanCity, gems: state.gems - RENAME_COST_GEMS });
     return 'ok';
   }
-  setState({ ...state, mayorName: cleanMayor, cityName: cleanCity, hasNamedCity: true });
+  setState({ ...state, mayorName: cleanMayor, cityName: cleanCity, hasNamedCity: true, ...(mayorGender ? { mayorGender } : {}) });
   return 'ok';
 }
 
@@ -413,7 +414,7 @@ function bumpResolvedEvents(s: CityState, now = Date.now()): Pick<CityState, 'ev
   };
 }
 
-export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 50_000): number {
+export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 50_000, mayorGender?: import('./types').MayorGender): number {
   const cleanMayor = mayorName.trim() || state.mayorName || 'Thị Trưởng MoMo';
   const cleanCity = cityName.trim() || state.cityName || 'Đô Thị MoCity';
   const offlineReward = state.pendingOffline && Number.isFinite(state.pendingOffline.coins)
@@ -431,6 +432,7 @@ export function completeMayorLogin(mayorName: string, cityName: string, bonusCoi
     mayorName: cleanMayor,
     cityName: cleanCity,
     hasNamedCity: true,
+    ...(mayorGender ? { mayorGender } : {}),
     pendingOffline: null,
     lastSeenAt: Date.now(),
     coins: baseCoins + loginBonus,
