@@ -650,8 +650,28 @@ export default function ExpressiveStreetCitizens({
                 </div>
               )}
               <div className="relative flex flex-col items-center">
-                {app.emotion === 'STAR_EYES' && <span className="absolute -top-3 -right-3 text-[13px]">✦</span>}
-                {app.emotion === 'SURPRISED' && <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-sm font-black text-[#DC2626]">!</span>}
+                {/*
+                 * Huy hieu cam xuc. Truoc day la ky tu font ✦ khong co class
+                 * mau nen no thua ke mau chu toi cua trang va hien ra thanh
+                 * mot cuc den thay vi tia sang. Doi sang mang phang cho khop
+                 * voi phan con lai cua nhan vat.
+                 */}
+                {app.emotion === 'STAR_EYES' && (
+                  <span className="pointer-events-none absolute -top-3 -right-3">
+                    <svg width="18" height="18" viewBox="0 0 18 18">
+                      <path d="M11.6 1 L13 5 L17 6.4 L13 7.8 L11.6 11.8 L10.2 7.8 L6.2 6.4 L10.2 5 Z" fill="#F2B91C" />
+                      <path d="M4.8 9.2 L5.7 11.3 L7.8 12.2 L5.7 13.1 L4.8 15.2 L3.9 13.1 L1.8 12.2 L3.9 11.3 Z" fill="#FFDD77" />
+                    </svg>
+                  </span>
+                )}
+                {app.emotion === 'SURPRISED' && (
+                  <span className="pointer-events-none absolute -top-4 left-1/2 -translate-x-1/2">
+                    <svg width="10" height="17" viewBox="0 0 10 17">
+                      <path d="M2.9 0 L7.1 0 L6.4 10.4 L3.6 10.4 Z" fill="#DC2626" />
+                      <circle cx="5" cy="14.2" r="2.1" fill="#DC2626" />
+                    </svg>
+                  </span>
+                )}
 
                 <button
                   type="button"
