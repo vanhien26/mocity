@@ -265,6 +265,8 @@ export interface LedgerEntry {
   cogs: number;
   /** Chi phi vat hanh. */
   opex: number;
+  /** Chi phi du phong no xau tu Vi Tra Sau trong ky. */
+  badDebt: number;
   /** Chi phi lai vay tren du no trong ky. */
   interestExpense: number;
   /** Thue thu nhap doanh nghiep. */
@@ -287,6 +289,7 @@ export function emptyLedger(): LedgerEntry {
     grossRevenue: 0,
     cogs: 0,
     opex: 0,
+    badDebt: 0,
     interestExpense: 0,
     tax: 0,
     netIncome: 0,

@@ -1,7 +1,8 @@
 /**
  * HỆ THỐNG KỊCH BẢN ĐỐI THOẠI CƯ DÂN ĐƯỜNG PHỐ (CITIZEN DIALOGUE SCENARIOS)
- * Cung cấp kịch bản phong phú, câu chuyện nghề nghiệp, tâm lý đời sống và
- * tình huống tương tác thực tế giữa Thị Trưởng và 12 cư dân đường phố MoCity.
+ * Bổ sung toàn diện: DRAMA góc phố, TÌNH HÌNH THỜI TIẾT (nắng nóng, mưa ngập, nồm ẩm, se lạnh)
+ * và THỜI SỰ XÃ HỘI (sinh trắc học, giá vàng, bão giá xăng, vé tàu Tết, phạt nguội camera,
+ * công nghệ 5G, không dùng tiền mặt) cho 12 cư dân đường phố MoCity.
  */
 
 export type FacialEmotion = 'HAPPY' | 'STAR_EYES' | 'SURPRISED' | 'TIRED';
@@ -41,40 +42,50 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Cán Bộ Quy Hoạch',
     greetings: [
       {
-        text: 'Báo cáo Thị Trưởng! Tui vừa đi kiểm tra một vòng quy hoạch từ đầu phố đến cuối ngã tư, mọi thứ đều chỉn chu!',
+        text: 'Báo cáo Thị Trưởng! Dự báo thời tiết chiều nay có mưa to triều cường, tui đã cho kiểm tra toàn bộ cống thoát nước và 6 cột đèn đường rồi!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Kính chào Thị Trưởng! Hồ sơ mở rộng phố đi bộ và nâng cấp đèn chiếu sáng đã được bà con nhất trí 100%!',
+        text: 'Tin nóng thời sự: Thành phố vừa triển khai chuẩn hóa định danh và thanh toán số toàn diện, phố mình đang dẫn đầu bảng xếp hạng!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Thị Trưởng đi thị sát ạ? Hôm nay lưu lượng người đi bộ và xe cộ lưu thông qua ngã tư rất nhịp nhàng!',
+        text: 'Thị Trưởng ơi! Sáng nay có drama hai tiệm đầu phố kê biển quảng cáo lấn vỉa hè tranh khách, tui vừa hòa giải êm đẹp xong!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Dạ Thị Trưởng! Tui đang ghi nhận các ý kiến đóng góp của tiểu thương về việc phủ sóng mã QR toàn phố!',
+        text: 'Thời sự đưa tin giá xăng vừa hạ nhiệt, bà con tài xế công nghệ với shipper khu mình ai nấy đều phấn khởi chạy thêm cuốc!',
         emotion: 'HAPPY',
+      },
+      {
+        text: 'Trời nắng nóng gay gắt 39 độ, tui vừa kiến nghị lắp thêm máy bán nước tự động quét QR có mái che cho người đi bộ nghỉ chân!',
+        emotion: 'TIRED',
       },
     ],
     options: [
       {
+        id: 'asst-drainage',
+        label: '🌦️ Phương án chống ngập phố mùa mưa bão thế nào?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Hệ thống rãnh ngầm đã được nạo vét thông suốt! 6 cột đèn đường chống nước chuẩn IP68, ngập tới đâu sáng tới đó, bà con đi lại an toàn tuyệt đối!',
+      },
+      {
+        id: 'asst-news',
+        label: '📰 Dân tình dạo này bàn tán tin thời sự gì nhiều nhất?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Bà con đang xôn xao vụ tích hợp VNeID với quét sinh trắc học chuyển tiền. Tui hướng dẫn các cụ dùng MoMo xác thực 1 chạm là xong, ai cũng khen tiện!',
+      },
+      {
+        id: 'asst-drama',
+        label: '🔥 Nghe đồn có vụ drama lấn chiếm vỉa hè sáng nay hả?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'À, tiệm trà chanh kê ghế hơi lố ra lối đi bộ, bị Chú Bảy nhắc nhở. Giờ họ tự giác kẻ vạch sơn ngay ngắn rồi, văn minh đô thị là trên hết Thị Trưởng!',
+      },
+      {
         id: 'asst-report',
         label: '📊 Báo cáo nhanh tình hình phố xá hôm nay',
         emotionOnSelect: 'HAPPY',
-        reply: 'Chỉ số an ninh đạt chuẩn, 6 cột đèn đường hoạt động 100%, các tiệm kinh doanh đều báo doanh số tăng đều nhờ khách quét mã MoMo nhanh chóng!',
-      },
-      {
-        id: 'asst-plan',
-        label: '🏙️ Kế hoạch nâng cấp tiếp theo là gì?',
-        emotionOnSelect: 'STAR_EYES',
-        reply: 'Tui đề xuất phủ xanh thêm bồn hoa vỉa hè và mở thêm các quầy thanh toán tự động để khách tham quan tiện trải nghiệm không dùng tiền mặt.',
-      },
-      {
-        id: 'asst-finance',
-        label: '📈 Ngân khố và dòng tiền khu phố thế nào?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Dòng tiền xoay vòng rất lành mạnh! Nhờ bà con dùng Túi Thần Tài và thanh toán số nên không có hiện tượng nợ xấu hay thất thoát.',
+        reply: 'Chỉ số an ninh đạt chuẩn 10/10, giao thông thông thoáng, các tiệm kinh doanh đều báo doanh số tăng đều nhờ khách quét mã MoMo nhanh chóng!',
       },
       {
         id: 'asst-coffee',
@@ -94,34 +105,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Bà Nội Trợ Săn Deal',
     greetings: [
       {
-        text: 'Úi chao Thị Trưởng! Cô vừa đi một vòng gom được cả giỏ đồ tươi ngon giá siêu hời nè!',
+        text: 'Trời đất ơi Thị Trưởng! Nắng gì mà 39 độ cháy da, cô phải trùm kín như ninja ra phố săn deal nước giải khát nè!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Thị Trưởng có hay tin gì chưa? Mấy bữa nay trên mạng rần rần vụ lừa đảo gọi video deepfake giả công an, xém tí nữa cô Tư dính bẫy!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Mưa dầm dề mấy hôm nay rau củ lên giá quá xá, may mà cô có mã hoàn tiền MoMo cứu lại được mớ tiền chợ cả tuần!',
+        emotion: 'HAPPY',
+      },
+      {
+        text: 'Sáng nay ra chợ nghe mấy bà tám kể drama nhà đối diện bắt quả tang người yêu chia tiền lẩu mà trốn trong WC, cười muốn xỉu!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Chào Thị Trưởng nghen! Hôm nay app MoMo tung bão voucher hoàn tiền chợ truyền thống, cô chớp thời cơ liền!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'Thị Trưởng đi dạo mát hả? Để cô coi bữa nay tiệm bách hóa có gì mới để mách cho Thị Trưởng!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'May quá gặp Thị Trưởng! Phố mình vỉa hè sạch sẽ, đẩy xe đi chợ nhẹ tênh, sướng cái chân ghê!',
+        text: 'Thời tiết nồm ẩm nhà cửa trơn trượt ghê chưa, cô phải ra tiệm điện máy sắm cái máy hút ẩm thanh toán trả góp 0% nè!',
         emotion: 'HAPPY',
       },
     ],
     options: [
       {
-        id: 'cotu-deal',
-        label: '🥦 Hôm nay cô săn được deal gì hot nhất?',
-        emotionOnSelect: 'STAR_EYES',
-        reply: 'Trời ơi, voucher giảm 30% rau củ quả với hoàn tiền 10.000đ khi quét MoMo! Tiết kiệm được một mớ tiền chợ cả tuần luôn con!',
+        id: 'cotu-scam',
+        label: '🔥 Kể con nghe vụ cô xém bị lừa đảo qua mạng coi?',
+        emotionOnSelect: 'SURPRISED',
+        reply: 'Trời ơi, nó gọi video mặt mờ mờ kêu cô chuyển tiền nộp phạt nguội! Cô bảo: "Mày ngon quét sinh trắc học MoMo với tao nè con!", nó cúp máy cái rụp, đồ lừa đảo!',
       },
       {
-        id: 'cotu-qr',
-        label: '🛒 Đi chợ không xài tiền mặt có tiện không cô?',
+        id: 'cotu-hot',
+        label: '☀️ Trời nắng gay gắt vầy đi chợ có mệt không cô?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Tiện số một luôn Thị Trưởng! Mấy bà bán cá bán rau giờ dán mã QR hết, khỏi sợ tay ướt móc tiền lẻ dơ hầy lại sợ thối nhầm!',
+        reply: 'Mệt chứ con! Nhưng ghé tiệm tạp hóa mua chai nước quét MoMo giảm 50%, bước vô cửa hàng máy lạnh phà mát rượi là cô khỏe re liền!',
+      },
+      {
+        id: 'cotu-gold',
+        label: '📰 Giá vàng với giá cả thị trường dạo này ra sao cô Tư?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Vàng miếng thì nhảy múa chóng mặt, xếp hàng dài ngoằng. Cô Tư ăn chắc mặc bền, có tiền lẻ cứ đút vô Túi Thần Tài lấy lãi mỗi ngày cho an tâm con ơi!',
       },
       {
         id: 'cotu-dinner',
@@ -152,40 +173,50 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Sinh Viên Năm 3',
     greetings: [
       {
-        text: 'Hế lô Thị Trưởng! Em vừa cày xong đồ án, đang ra phố hóng gió hút ly trà sữa nạp đường nè!',
-        emotion: 'HAPPY',
+        text: 'Thị Trưởng ơi! Hôm nay drama idol tóp tóp 5 triệu follower bị bóc phốt ăn bún đậu quỵt tiền đang nổ tung mạng xã hội kìa!',
+        emotion: 'SURPRISED',
       },
       {
-        text: 'Chào Thị Trưởng ngầu lòi! Cả nhóm sinh viên trường em ai cũng mê tít khu phố MoCity này!',
+        text: 'Trời mưa tầm tã mà tụi em vẫn lội nước đi săn vé concert âm nhạc trên app nè Thị Trưởng, đam mê bất diệt!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Yo Thị Trưởng! Em đang canh flash sale săn vé xem phim MoMo Cinema giá 1 Xu đây!',
+        text: 'Nhiệt độ xuống 18 độ se lạnh rồi Thị Trưởng ơi, ngồi vỉa hè húp tô mì cay 7 cấp độ thì đỉnh chóp luôn!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Thị Trưởng ơi! Phố mình có trạm 5G căng đét, ngồi quán cóc làm bài tập mượt mà không delay miếng nào!',
+        text: 'Thị Trưởng quét sinh trắc học khuôn mặt chưa? Hôm qua em vừa đi nhuộm tóc về app nhận không ra, dí cam sát mặt cười xỉu!',
         emotion: 'STAR_EYES',
+      },
+      {
+        text: 'Hot trend thời sự: Cả trường em đang thi nhau nuôi Heo Đất MoMo đua top, ai thua phải bao cả phòng uống trà sữa!',
+        emotion: 'HAPPY',
       },
     ],
     options: [
+      {
+        id: 'benam-drama',
+        label: '🔥 Drama bóc phốt idol quán bún đậu tới đâu rồi em?',
+        emotionOnSelect: 'SURPRISED',
+        reply: 'Chủ quán tung camera ra bóc mẽ idol xin ăn chực không được nên quay clip dìm hàng! Dân mạng quay xe 180 độ, rủ nhau quét QR MoMo ủng hộ quán đông nghẹt!',
+      },
+      {
+        id: 'benam-rain',
+        label: '🌧️ Mưa bão ngập đường vầy tụi em tụ tập kiểu gì?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Dễ ợt Thị Trưởng! Mưa thì ngồi quán cafe cóc nghe mưa rơi chill chill, xong mở app MoMo chơi Lắc Heo Vàng chia thẻ quà, vui banh nóc!',
+      },
+      {
+        id: 'benam-tech',
+        label: '📱 GenZ dạo này bắt trend thời sự công nghệ nào hot nhất?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Trend quét mã VietQR không tiền mặt với Apple Pay! Đi ăn chè 10k cũng "bíp" một phát, mang ví dày cộm là xưa rồi diễm ơi!',
+      },
       {
         id: 'benam-milktea',
         label: '🧋 Ly trà sữa hôm nay thế nào rồi em?',
         emotionOnSelect: 'HAPPY',
         reply: 'Full topping trân châu phô mai nướng mà săn deal MoMo có 1 Xu, ngon nhức nách luôn Thị Trưởng ơi!',
-      },
-      {
-        id: 'benam-cinema',
-        label: '🎬 Dạo này rạp MoCity có phim gì hay không?',
-        emotionOnSelect: 'STAR_EYES',
-        reply: 'Có bom tấn siêu anh hùng mới ra đó Thị Trưởng! Đặt vé trên app chọn được ghế Sweetbox xịn xò với bắp rang bơ phô mai thơm lừng!',
-      },
-      {
-        id: 'benam-paylater',
-        label: '💰 Sinh viên cuối tháng có bị viêm màng túi không?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Có Ví Trả Sau trợ lực nên em khỏi lo ăn mì gói! Đầu tháng làm thêm nhận lương là thanh toán đúng hạn, điểm tín dụng tăng vèo vèo!',
       },
       {
         id: 'benam-hotpot',
@@ -205,28 +236,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Thánh Chốt Đơn',
     greetings: [
       {
-        text: 'Chào Thị Trưởng! Vừa kết thúc buổi họp căng thẳng, em phải ra phố đi bộ hít thở xả stress liền nè!',
-        emotion: 'HAPPY',
+        text: 'Chào Thị Trưởng! Phòng em hôm nay vừa nổ drama chia tiền trà sữa cuối tháng, đứa thì bảo chuyển rồi đứa thì quên lịch sử giao dịch!',
+        emotion: 'SURPRISED',
       },
       {
-        text: 'A Thị Trưởng! Em vừa nhận được thông báo tiền lời Túi Thần Tài sáng nay, vui cả ngày luôn!',
+        text: 'Trời nồm ẩm sàn nhà ướt nhẹp trơn trượt quá Thị Trưởng ơi, đi giày cao gót ra phố suýt nữa em vồ ếch!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Thị Trưởng ơi, mùa săn vé tàu xe Tết bắt đầu rồi, cả công ty em đang mở 10 tab canh vé máy bay giá rẻ trên MoMo Travel nè!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Dạ chào Thị Trưởng! Em đang tranh thủ giờ nghỉ trưa đi dạo săn deal cơm trưa văn phòng trên phố!',
+        text: 'Nắng nóng đỉnh điểm, hóa đơn tiền điện tháng này của cơ quan tăng vọt, may mà em săn được mã giảm giá hóa đơn 100k trên MoMo!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Thị Trưởng dạo phố ạ? Tụi em làm văn phòng quanh đây ai cũng thích vỉa hè rộng rãi, đi bộ vừa khỏe vừa tích Xu!',
-        emotion: 'HAPPY',
+        text: 'Tin nóng sàn chứng khoán: Thị trường hôm nay xanh tím rực rỡ, tiền lời Chứng Chỉ Quỹ của em nhảy múa vui ghê!',
+        emotion: 'STAR_EYES',
       },
     ],
     options: [
       {
-        id: 'thao-work',
-        label: '💼 Công việc văn phòng đợt này bận không chị?',
+        id: 'thao-drama',
+        label: '🔥 Drama chia tiền trà sữa ở văn phòng giải quyết sao rồi chị?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Chạy KPI dí deadline dữ lắm Thị Trưởng ơi, nhưng trưa được ra phố ăn bát phở, uống ly sinh tố là nạp đầy pin chiến tiếp!',
+        reply: 'Em bật ngay tính năng Chia Tiền Nhóm trên MoMo ra! Ai nợ bao nhiêu app tự chia đều, gửi thông báo đòi nợ lịch sự tinh tế, 5 phút sau ting ting đủ không thiếu 1 xu!',
+      },
+      {
+        id: 'thao-tet',
+        label: '✈️ Tình hình săn vé về quê ăn Tết đợt này căng thẳng không?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Căng như dây đàn luôn Thị Trưởng! Vé máy bay khan hiếm, nhưng em đặt trước qua MoMo có bảo hiểm trễ chuyến bay với hoàn tiền nên yên tâm hẳn!',
+      },
+      {
+        id: 'thao-weather',
+        label: '🌦️ Thời tiết nồm ẩm thất thường này dân văn phòng sống sao?',
+        emotionOnSelect: 'TIRED',
+        reply: 'Bật máy hút ẩm 24/7 với uống trà gừng giải cảm thôi Thị Trưởng. Trưa tranh thủ ra phố hít tí nắng gió cho đỡ mốc meo người!',
       },
       {
         id: 'thao-tuithantai',
@@ -242,12 +289,6 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         particles: 'coin',
         reply: 'Ôi cảm ơn Thị Trưởng nhiều nha! Cà phê chuẩn vị, em về văn phòng gõ máy tính thoăn thoắt chốt hợp đồng liền!',
       },
-      {
-        id: 'thao-wish',
-        label: '💡 Dân văn phòng cần khu phố hỗ trợ thêm gì không?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Thêm vài quầy máy bán nước tự động quét QR với trạm sạc điện thoại ở vỉa hè là 10 điểm không có nhưng luôn Thị Trưởng!',
-      },
     ],
   },
 
@@ -258,26 +299,48 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Thần Tài Góc Phố',
     greetings: [
       {
-        text: 'Kính chào Thị Trưởng! Ông vừa đi một vòng bờ kè, gặp Thị Trưởng là điềm lành may mắn lắm đây!',
+        text: 'Trời ơi Thị Trưởng, chiều qua mưa giông sấm chớp đùng đùng mà bà con vẫn đội mưa đứng mua vé số đài phụ, đông nghẹt!',
         emotion: 'HAPPY',
       },
       {
-        text: 'A Thị Trưởng! Chiều nay đài sổ có cặp số đẹp lắm, ông chừa sẵn cho bà con rồi nè!',
+        text: 'Thời sự đưa tin có người vừa trúng độc đắc 92 tỷ Vietlott qua app, cả xóm đang nhốn nháo bàn tán phong thủy góc phố mình!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Chào Thị Trưởng nghen! Nhờ phố xá yên bình, sáng sủa nên ông già này đi bộ bán vé số thấy khỏe khoắn trong người hẳn!',
+        text: 'Gió mùa đông bắc về se lạnh rồi, người già như ông khớp xương hơi nhức nhưng đi bộ thể dục bán vé vẫn thấy khỏe khoắn!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Thị Trưởng ghé chơi! Người tốt việc tốt như Thị Trưởng thì phúc lộc đầy nhà, phố xá thịnh vượng!',
+        text: 'Sáng nay có drama hai ông bạn cờ tướng cãi nhau suýt lật bàn cờ vì tranh luận giá vàng thế giới tăng hay giảm kìa Thị Trưởng!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Thời sự đưa tin sốt đất nền vùng ven, ông bảo đất phố MoCity mình mặt tiền sạch đẹp có giá trị thực mới là vàng ròng!',
         emotion: 'HAPPY',
       },
     ],
     options: [
       {
+        id: 'ongloc-drama',
+        label: '🔥 Vụ cãi nhau giá vàng ở bàn cờ tướng kết quả sao rồi ông?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Haha, ông can hai lão ấy, bảo cãi nhau làm chi cho tăng xông! Cứ mở mục Tài Chính trên MoMo ra coi biểu đồ giá vàng với lãi Túi Thần Tài thời gian thực là biết ai đúng ai sai liền!',
+      },
+      {
+        id: 'ongloc-vietlott',
+        label: '🎫 Vụ trúng độc đắc Vietlott chấn động phố mình ra sao ông?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Người ta mua vé số online trên app đó Thị Trưởng! Giờ hiện đại ghê, trúng là tiền bắn thẳng vô ví, khỏi sợ rách vé hay làm rơi, già như ông cũng phải học theo!',
+      },
+      {
+        id: 'ongloc-rain',
+        label: '🌦️ Trời mưa gió thất thường vầy ông che chắn vé số thế nào?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Ông bọc 3 lớp nilon chống nước cẩn thận lắm! Nhưng khách giờ chuộng quét mã chuyển khoản hơn, tay ướt khỏi đếm tiền giấy sũng nước, tiện cho ông lão này lắm!',
+      },
+      {
         id: 'ongloc-ticket',
-        label: '🎫 Hôm nay còn vé số đài nào thế ông?',
+        label: '🎫 Lựa cho cháu một tờ vé số đuôi may mắn với',
         emotionOnSelect: 'STAR_EYES',
         rewardBonus: {
           coins: 25,
@@ -287,24 +350,12 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         reply: 'Còn mấy tờ đuôi 68 Lộc Phát với 79 Thần Tài nè Thị Trưởng! Ông tặng Thị Trưởng 1 tờ lấy hên (+25 Xu), chiều nay nổ giải độc đắc nha!',
       },
       {
-        id: 'ongloc-walk',
-        label: '🚶 Đi bộ cả ngày chân cẳng có mỏi không ông?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Nhờ bật tính năng Đi Bộ Cùng MoMo đó Thị Trưởng, vừa vận động gân cốt vừa đổi được thức ăn nuôi Heo Vàng, già rồi mà mê lắm!',
-      },
-      {
         id: 'ongloc-tea',
         label: '🍵 Biếu ông 30 Xu uống ly trà đá nghỉ chân',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
         reply: 'Chà, quý hóa quá! Ông cảm ơn Thị Trưởng! Cầu chúc Thị Trưởng bình an, vạn sự hanh thông, lộc tài như nước!',
-      },
-      {
-        id: 'ongloc-history',
-        label: '📜 Ông sống ở đây lâu, thấy phố mình đổi thay ra sao?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Hồi xưa tối tăm ổ gà ổ voi, giờ đèn đường sáng trưng, tiệm tùng tấp nập, thanh toán quét cái "bíp" là xong, văn minh hiện đại như phố Tây!',
       },
     ],
   },
@@ -316,28 +367,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Kỹ Sư Phần Mềm',
     greetings: [
       {
-        text: 'Hello Thị Trưởng! Vừa deploy bản cập nhật lúc 3h sáng, giờ ra hóng gió cho tan mớ syntax error trong đầu...',
+        text: 'Thị Trưởng ơi! Drama đứt cáp quang biển đêm qua làm cả công ty em thức trắng đêm chuyển hướng lưu lượng sang trạm 5G MoCity!',
         emotion: 'TIRED',
       },
       {
-        text: 'Chào Thị Trưởng! Em đang ngắm hệ thống IoT của khu phố mình, kiến trúc vi dịch vụ ở đây chạy ổn định phết!',
+        text: 'Thời tiết nắng nóng 40 độ máy chủ server kêu như máy cày, em phải mang laptop ra quán cafe vỉa hè ngồi ké máy lạnh nè!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Thời sự bắt buộc xác thực sinh trắc học khuôn mặt chuyển tiền làm team kỹ thuật tụi em OT liên tục 2 tuần liền!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Dạ Thị Trưởng! Em đang debug ứng dụng nhưng bị mùi thơm đồ ăn vỉa hè lôi kéo ra đây nè!',
-        emotion: 'HAPPY',
+        text: 'Drama công nghệ: Trí tuệ nhân tạo AI dạo này code vèo vèo, sếp em đùa bảo sắp sa thải lập trình viên tới nơi rồi Thị Trưởng!',
+        emotion: 'SURPRISED',
       },
       {
-        text: 'Thị Trưởng ghé thăm hạ tầng số ạ? Em vừa kiểm tra độ trễ mạng quét QR toàn phố, ping chỉ có 5ms, cực mượt!',
-        emotion: 'STAR_EYES',
+        text: 'Trời mưa ngập đường mạng cáp quang bị ẩm rớt gói tin, may mà có mạng 5G không dây cứu bồ kịp giờ nộp dự án!',
+        emotion: 'HAPPY',
       },
     ],
     options: [
       {
-        id: 'hoang-bug',
-        label: '💻 Dự án mới đợt này có bug gì hóc búa không em?',
+        id: 'hoang-ai',
+        label: '🤖 Vụ AI cướp việc của dân IT có thật không em?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Toàn bug logic oái oăm thôi Thị Trưởng, nhưng uống ly nước ngọt là não thông ngay! Em vừa tối ưu luồng thanh toán giảm 40% thời gian chờ!',
+        reply: 'Haha, AI code nhanh nhưng fix bug logic với cãi nhau với khách hàng thì vẫn phải cần người thật Thị Trưởng ơi! Em dùng AI tối ưu luồng thanh toán cho phố mình chạy nhanh gấp đôi luôn!',
+      },
+      {
+        id: 'hoang-internet',
+        label: '⚡ Cáp quang biển đứt thì mạng mẽo khu phố mình có sao không?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Phố mình chạy hạ tầng mạng nội địa CDN cực mạnh, máy chủ đặt ngay trung tâm dữ liệu MoMo nên bà con quét mã QR thanh toán chỉ mất 0.1 giây, mượt như nhung!',
+      },
+      {
+        id: 'hoang-weather',
+        label: '🌦️ Nắng nóng đỉnh điểm này thiết bị công nghệ có quá tải không?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Hệ thống đèn đường với camera giao thông ngã tư đều có cảm biến nhiệt tự làm mát. Chỉ có kỹ sư phần mềm là cần nạp trà sữa đá mát lạnh thôi Thị Trưởng!',
       },
       {
         id: 'hoang-coffee',
@@ -346,12 +413,6 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
         reply: 'Trời ơi cứu tinh đời em! Cà phê đậm đặc này tương đương với 200 dòng code sạch không lỗi! Cảm ơn Thị Trưởng nhiều!',
-      },
-      {
-        id: 'hoang-iot',
-        label: '⚡ Hệ thống điện nước tự động của phố hoạt động sao rồi?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Chạy ngon ơ luôn Thị Trưởng! Cài đặt thanh toán tự động qua MoMo, đến kỳ là tự trừ tiền, không bao giờ lo cúp điện giữa lúc đang render code!',
       },
       {
         id: 'hoang-finance',
@@ -369,28 +430,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Reviewer Phố Phường',
     greetings: [
       {
-        text: 'A Thị Trưởng! Em đang quay góc nghiêng thần thánh của khu phố mình, ánh sáng tự nhiên hôm nay lên hình đẹp xỉu!',
+        text: 'Thị Trưởng ơi cứu em! Drama em vừa đăng clip khen tiệm bánh cuốn đầu phố, dân tình tràn vào cãi nhau nảy lửa vụ ăn bánh cuốn chấm nước mắm hay xì dầu!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Trời nắng gắt cháy máy quay luôn Thị Trưởng, em phải dùng quạt mini tản nhiệt cho điện thoại để tiếp tục livestream review phố mình nè!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Hot trend thời sự: Trào lưu "Check-in phố không tiền mặt" đang viral 10 triệu view trên TikTok, phố MoCity mình lọt top 1 điểm đến!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Dạ Thị Trưởng! Em vừa đăng clip "Review món ngon vỉa hè MoCity", mới 15 phút đã lên tab thịnh hành rồi!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'Chào Thị Trưởng ngầu đét! Em đang chuẩn bị livestream giới thiệu các tiệm kinh doanh uy tín trên phố nè!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'Thị Trưởng ơi! Dân mạng đang rần rần đòi em làm tour hướng dẫn săn trọn bộ voucher phố MoCity kìa!',
+        text: 'Mưa ngập nửa bánh xe mà phố mình lên hình lung linh kiểu "Venice phiên bản Sài Gòn", clip review trời mưa đạt 2 triệu view luôn Thị Trưởng!',
         emotion: 'STAR_EYES',
+      },
+      {
+        text: 'Tin thời sự giải trí: Đêm nhạc đại nhạc hội giao thừa sắp tổ chức tại MoCity, vé xem ca nhạc mở bán trên MoMo đã cháy vé sau 3 phút!',
+        emotion: 'HAPPY',
       },
     ],
     options: [
       {
-        id: 'baongoc-food',
-        label: '📸 Em đang quay review quán nào hot nhất phố?',
+        id: 'baongoc-drama',
+        label: '🔥 Vụ drama nước mắm bánh cuốn trên mạng tới đâu rồi em?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Dạ quán bánh mì chảo với tiệm cà phê muối góc ngã tư đó Thị Trưởng! Quét mã MoMo hoàn tiền ầm ầm nên khách xếp hàng kín cả vỉa hè!',
+        reply: 'Trời ơi cãi nhau 50.000 bình luận luôn! Kết quả quán bánh cuốn chiều lòng khách, để sẵn cả 2 loại nước chấm kèm mã giảm giá MoMo 20%, thế là cả 2 phe kéo đến ăn đông nghẹt, chủ tiệm cảm ơn em rối rít!',
+      },
+      {
+        id: 'baongoc-rain',
+        label: '🌊 Mưa ngập phố mà em cũng biến thành video triệu view được hả?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Nghệ thuật là phải biến nguy thành cơ Thị Trưởng! Em quay cảnh bà con vui vẻ chèo thuyền sup ngắm phố đèn lồng, lồng nhạc "Tình ca mùa mưa", dân mạng khen phố mình lạc quan số 1!',
+      },
+      {
+        id: 'baongoc-trend',
+        label: '💡 Mẹo nào cho các tiệm bắt trend thời sự kéo khách GenZ?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Cứ cắm bảng VietQR có in hình mèo meme cute, kèm câu slogan hài hước như "Quét mã đi chờ chi - Không quét ế cả đời" là tụi trẻ chụp hình up story rầm rộ liền!',
       },
       {
         id: 'baongoc-promo',
@@ -404,24 +481,12 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         reply: 'Nhận kèo liền Thị Trưởng ơi! Em sẽ làm series "MoCity đi là mê" giật tít triệu view, tặng Thị Trưởng 20 Xu tiền hoa hồng lan tỏa (+20 Xu)!',
       },
       {
-        id: 'baongoc-trend',
-        label: '💡 Dân mạng dạo này thích điều gì nhất ở phố mình?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Bà con mê nhất là phố xá sạch đẹp, đèn đường lung linh về đêm và thanh toán 100% không chạm, hiện đại văn minh cực kỳ!',
-      },
-      {
         id: 'baongoc-tea',
         label: '🧋 Tặng em 30 Xu mua ly trà sữa bồi dưỡng quay clip',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
         reply: 'U là trời! Thị Trưởng tâm lý đỉnh chóp! Em sẽ tag Thị Trưởng vào story khoe cả nước biết độ xịn sò của phố mình!',
-      },
-      {
-        id: 'baongoc-tips',
-        label: '🎙️ Mẹo gì giúp các tiểu thương mới mở kéo khách?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Dễ lắm Thị Trưởng, chỉ cần đặt cái Loa Thần Tài MoMo trước cửa phát âm thanh "Ting" vui tai, thêm bảng QR nổi bật là khách ghé nườm nượp!',
       },
     ],
   },
@@ -433,34 +498,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Tổ Trưởng Dân Phố',
     greetings: [
       {
-        text: 'Chào Thị Trưởng! Chú đang đi kiểm tra an ninh trật tự và tình hình vệ sinh khu phố buổi này đây!',
+        text: 'Thị Trưởng! Chú vừa đi giải quyết vụ drama loa kéo karaoke nhà số 4 hát "Đắp mộ cuộc tình" lúc 11h đêm, bà con khiếu nại dữ quá!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Thời sự cảnh báo bão số 3 sắp đổ bộ, chú đang đi nhắc từng nhà chằng chống mái tôn với tỉa cành cây vỉa hè nè Thị Trưởng!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Thị Trưởng đi thị sát hả? Khu phố mình dạo này đoàn kết lắm, xóm giềng hòa thuận buôn bán đắt đỏ!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'A Thị Trưởng! Chú vừa nhắc nhở mấy tiệm xếp xe máy gọn gàng trong vạch sơn cho người đi bộ thông thoáng nè!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'Chào đồng chí Thị Trưởng! Nhờ có hệ thống đèn đường mới mà tối đến bà con đi tập thể dục đông vui, an tâm hẳn!',
+        text: 'Bữa nay công an phường triển khai định danh biển số xe máy với xử phạt nguội qua camera ngã tư, đường phố ngay ngắn hẳn ra!',
         emotion: 'STAR_EYES',
+      },
+      {
+        text: 'Trời nắng chang chang mà mấy tiệm trà đá vỉa hè vẫn chật kín, chú nhắc bà con giữ gìn vệ sinh, không vứt tàn thuốc bừa bãi!',
+        emotion: 'HAPPY',
+      },
+      {
+        text: 'Thời sự xôn xao vụ phân loại rác thải tại nguồn, tổ dân phố mình vừa phát túi rác sinh học tái chế cho từng nhà rồi nghen!',
+        emotion: 'HAPPY',
       },
     ],
     options: [
       {
-        id: 'chubay-security',
-        label: '📋 Tình hình an ninh trật tự dạo này thế nào chú?',
+        id: 'chubay-karaoke',
+        label: '🎤 Vụ loa kéo karaoke nửa đêm chú xử lý êm đẹp không?',
         emotionOnSelect: 'HAPPY',
-        reply: 'An ninh đạt điểm 10 luôn Thị Trưởng! Đèn đường sáng trưng, xe cộ dừng đèn đỏ nghiêm túc, trộm cắp chạy mất dép khỏi khu mình!',
+        reply: 'Chú tới vận động tình cảm: "Mấy chú hát hay nhưng để dành giọng mai thi Vietnam Idol, giờ cho bà con ngủ!". Thế là họ tắt loa, chuyển sang mở app MoMo nghe nhạc êm dịu, xóm làng lại yên bình!',
       },
       {
-        id: 'chubay-feedback',
-        label: '📢 Bà con tổ dân phố có kiến nghị gì với Thị Trưởng không?',
+        id: 'chubay-storm',
+        label: '🌪️ Công tác phòng chống mưa bão của tổ dân phố tới đâu rồi chú?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Bà con khen hết lời! Chỉ mong Thị Trưởng duy trì các lễ hội đường phố và khuyến khích mở thêm nhiều dịch vụ tiện ích nữa!',
+        reply: 'Chú kiểm tra 6 cột đèn đường và các biển hiệu rồi, kiên cố 100%! Có đường dây nóng cứu hộ trực 24/7 trên app, gió bão tới đâu tổ dân phố ứng phó tới đó!',
+      },
+      {
+        id: 'chubay-traffic',
+        label: '🚗 Bà con khu mình chấp hành phạt nguội qua camera ra sao chú?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Từ ngày có đèn tín hiệu giao thông đếm số ở ngã tư, không ai dám vượt đèn đỏ nữa! Ai bị phạt là tra cứu nộp phạt trực tuyến trên MoMo luôn, tiện lợi minh bạch!',
       },
       {
         id: 'chubay-fund',
@@ -471,10 +546,10 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         reply: 'Hoan hô tấm lòng Thị Trưởng! Chú ghi sổ vàng truyền thống liền, cuối năm phát thưởng cho các cháu học sinh giỏi trong xóm!',
       },
       {
-        id: 'chubay-unity',
-        label: '💡 Mẹo hay gì giúp bà con trong khu gắn kết hơn chú?',
+        id: 'chubay-security',
+        label: '📋 Tình hình an ninh trật tự chung dạo này thế nào chú?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Cứ mỗi dịp lễ tết mở hội làng, rủ nhau Lắc Heo Vàng MoMo rồi chia sẻ lì xì qua lại là tình làng nghĩa xóm khăng khít ngay!',
+        reply: 'An ninh đạt điểm 10 luôn Thị Trưởng! Đèn đường sáng trưng, xe cộ dừng đèn đỏ nghiêm túc, trộm cắp chạy mất dép khỏi khu mình!',
       },
     ],
   },
@@ -486,28 +561,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Tài Xế Công Nghệ',
     greetings: [
       {
-        text: 'Kính chào Thị Trưởng! Bác vừa trả khách ở đầu hẻm xong, đang tấp vô uống miếng nước trà chờ nổ cuốc mới!',
+        text: 'Trời mưa ngập đường như sông Hương bến Ngự Thị Trưởng ơi, bác vừa cứu hộ đẩy xe chết máy cho một cô bé sinh viên xong nè!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Thời sự đưa tin giá xăng vừa tăng thêm 500 đồng một lít, anh em tài xế xe ôm tụi bác lại đau đầu tính toán lộ trình tiết kiệm xăng!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Sáng nay có vụ khách quỵt tiền cuốc xe 80k định bỏ chạy, may bác chụp được mã QR bảo hiểm chuyến đi nên tổng đài bồi hoàn liền!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Trời nắng đổ lửa 40 độ ngoài đường mà như trong lò bát quái, may có mấy bình trà đá miễn phí trên phố mình cứu mạng anh em tài xế!',
         emotion: 'HAPPY',
       },
       {
-        text: 'A Thị Trưởng! Hôm nay khách qua lại phố mình nườm nượp, bác chạy không kịp nghỉ tay luôn nè!',
-        emotion: 'HAPPY',
-      },
-      {
-        text: 'Chào Thị Trưởng! Nhờ đường sá bằng phẳng, phân luồng giao thông rõ ràng mà anh em tài xế chạy êm ru, ít hao xăng!',
+        text: 'Thời sự đưa tin trạm thu phí cao tốc bỏ barie chuyển sang thu phí tự động không dừng ETC, bác chạy chở khách liên tỉnh mượt mà hẳn!',
         emotion: 'STAR_EYES',
-      },
-      {
-        text: 'Thị Trưởng dạo phố à? Bác vừa chở một cặp du khách ngoại tỉnh tới, họ khen phố mình đẹp như tranh vẽ!',
-        emotion: 'HAPPY',
       },
     ],
     options: [
       {
-        id: 'bactai-trips',
-        label: '🛵 Hôm nay chạy được mấy cuốc rồi bác?',
+        id: 'bactai-rain',
+        label: '🌧️ Đường ngập nước vầy bác tài chạy xe có bí quyết gì không?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Từ sáng tới giờ ngót nghét 15 cuốc rồi Thị Trưởng! Khách giờ toàn trả qua MoMo, tiền vô ví cái "ting" là an tâm chạy tiếp, khỏi lo tiền thối!',
+        reply: 'Bác giữ đều ga số thấp, canh né mấy chỗ ổ gà dưới nước! Khách đi xe của bác được trang bị áo mưa cánh dơi xịn, trả tiền quét mã chống ướt ví, ai cũng tip thêm 10k!',
+      },
+      {
+        id: 'bactai-gasoline',
+        label: '⛽ Giá xăng dầu biến động vầy bác tiết kiệm chi phí kiểu gì?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Bác dùng tính năng đổ xăng thanh toán PVOIL/Petrolimex trên MoMo tích điểm đổi voucher giảm 20.000đ mỗi bình! Tích tiểu thành đại, tháng cũng đỡ được cả triệu bạc đó Thị Trưởng!',
+      },
+      {
+        id: 'bactai-ev',
+        label: '🛵 Anh em tài xế dạo này có xu hướng đổi sang xe máy điện không bác?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Có chứ Thị Trưởng! Nhiều bác tài trẻ chuyển qua thuê xe máy điện chạy êm ru, sạc điện rẻ hơn xăng mà không khói bụi, phố mình thêm sạch đẹp văn minh!',
       },
       {
         id: 'bactai-gas',
@@ -516,12 +607,6 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
         reply: 'Chao ôi, bác cảm ơn Thị Trưởng nhiều lắm! Chúc Thị Trưởng luôn mạnh giỏi, đưa khu phố mình ngày một giàu đẹp nghen!',
-      },
-      {
-        id: 'bactai-tourists',
-        label: '🗺️ Khách đi đường hay khen phố mình điều gì nhất hả bác?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Họ khoái nhất là vỉa hè rộng rãi thoáng mát, quán ăn sạch sẽ và tiệm nào cũng có bảng mã QR thanh toán tích tắc!',
       },
       {
         id: 'bactai-insurance',
@@ -539,28 +624,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Gánh Xôi Đầu Ngõ',
     greetings: [
       {
-        text: 'Dạ em chào Thị Trưởng! Xôi gấc, xôi vò, xôi đậu xanh lá dứa nóng hổi thơm phức đây Thị Trưởng ơi!',
+        text: 'Dạ Thị Trưởng, sáng nay trời mưa phùn se lạnh, khách ghé mua xôi xéo xôi bắp nóng hổi đông nghẹt, em gói không kịp thở!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Thị Trưởng đi ngang tiệm em hả? Sáng sớm tinh mơ mà khách quét mã nổ đơn liên tục, mừng rớt nước mắt!',
+        text: 'Thời sự đưa tin thực phẩm bẩn trôi nổi, gánh xôi của em gạo nếp nương lá dứa có chứng nhận nguồn gốc rõ ràng nên bà con tin tưởng lắm!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Em chào Thị Trưởng! Nhờ vỉa hè phong quang sạch sẽ mà gánh xôi của em bán sạch veo từ sớm!',
+        text: 'Úi chao, sáng nay có drama hai bà khách tranh nhau gói xôi gấc hạt sen cuối cùng, em phải đơm chia đôi mỗi người một nửa mới huề!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Trời nắng gắt này em nấu thêm thúng chè đậu xanh hạt sen ướp lạnh, khách quét mã 15k là có ly chè mát rượi giải nhiệt tức thì!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Dạ Thị Trưởng dùng gói xôi lót dạ chưa? Em đang đơm xôi cho khách quen đây ạ!',
-        emotion: 'HAPPY',
+        text: 'Thời sự đưa tin chuyển đổi số gánh hàng rong, phóng viên đài truyền hình vừa ghé quay phóng sự gánh xôi quét mã QR của em đó Thị Trưởng!',
+        emotion: 'STAR_EYES',
       },
     ],
     options: [
       {
-        id: 'xoi-inventory',
-        label: '🍚 Gánh xôi hôm nay còn nhiều không chị?',
+        id: 'xoi-drama',
+        label: '🔥 Vụ tranh nhau gói xôi gấc cuối cùng kết thúc vui vẻ chứ chị?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Dạ còn vài gói xôi bắp với xôi gấc hạt sen thôi Thị Trưởng, khách đi làm ghé quét mã MoMo "ting ting" một loáng là hết vèo thúng xôi!',
+        reply: 'Dạ vui vẻ lắm! Hai cô ấy chia nhau nửa gói xôi xong ngồi ăn chung, tâm sự hồi kết nghĩa chị em luôn Thị Trưởng ơi, tình làng nghĩa xóm ấm áp ghê!',
+      },
+      {
+        id: 'xoi-foodsafety',
+        label: '🍲 Thời tiết nắng nóng này đồ ăn dễ ôi thiu, chị bảo quản sao?',
+        emotionOnSelect: 'HAPPY',
+        reply: 'Em nấu tới đâu bán hết tới đó, dùng chõ hấp giữ nhiệt than sạch, lá chuối rửa nước muối tiệt trùng! Bán hàng có tâm thì trời thương, khách quét mã ủng hộ dài dài!',
+      },
+      {
+        id: 'xoi-digital',
+        label: '💰 Thời buổi thanh toán số này chị bán gánh rong có tiện hơn không?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Hồi đầu em sợ không biết xài smartphone, mà cháu nó cài app MoMo dán cái mã QR trước quang gánh. Khách quét cái "ting", loa báo to rõ, tiền về tài khoản sinh lãi Túi Thần Tài luôn!',
       },
       {
         id: 'xoi-buy',
@@ -573,12 +674,6 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         },
         particles: 'coin',
         reply: 'Dạ em gói lá chuối nóng hổi, rắc thêm muối mè hành phi giòn rụm cho Thị Trưởng đây! Em gửi lại Thị Trưởng 15 Xu tiền lộc đầu ngày (+15 Xu) chúc may mắn!',
-      },
-      {
-        id: 'xoi-qr',
-        label: '📱 Chị xài bảng QR MoMo thấy buôn bán thế nào?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Tiện dữ lắm Thị Trưởng ơi! Tay em dính nếp dính mè, khách tự quét tự trả tiền, em chỉ việc đơm xôi, khỏi phải thối tiền lẻ dơ dáy!',
       },
       {
         id: 'xoi-dream',
@@ -596,28 +691,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Học Sinh Cấp 2',
     greetings: [
       {
-        text: 'Dạ con chào Chú Thị Trưởng ạ! Con vừa tan học đang đi bộ về nhà nè chú!',
+        text: 'Chú Thị Trưởng ơi! Hôm nay trời mưa to ngập sân trường, tụi con được nghỉ tiết thể dục ngồi trong lớp thi giải đố vui nè chú!',
         emotion: 'HAPPY',
       },
       {
-        text: 'A Chú Thị Trưởng! Hôm nay con được cô giáo chấm điểm 10 bài kiểm tra Toán đó chú ơi!',
+        text: 'Tin nóng ở lớp con: Cả lớp đang sốt trào lưu nuôi Heo Đất MoMo thi xem ai để dành tiền tiêu vặt giỏi nhất đó chú!',
         emotion: 'STAR_EYES',
       },
       {
-        text: 'Con chào Chú Thị Trưởng đẹp trai! Chú đi tuần phố giống mấy chú siêu nhân trong truyện tranh ghê!',
-        emotion: 'HAPPY',
+        text: 'Trời nắng nóng gay gắt mẹ dặn con đi học phải đội mũ bảo hiểm với đeo khẩu trang chống bụi mịn PM2.5 đó chú!',
+        emotion: 'TIRED',
       },
       {
-        text: 'Chú Thị Trưởng ơi! Con với mấy bạn đang thi xem ai nuôi Heo Đất MoMo mập hơn đó chú!',
+        text: 'Drama trường con: Bạn lớp trưởng bắt quả tang bạn bàn bên lén ăn vụng bim bim trong giờ học, bị phạt trực nhật quét lớp 1 tuần hihi!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Thời sự đưa tin sắp có hội thi Sáng Tạo Khoa Học Trẻ, con đang chế mô hình đèn giao thông thông minh cho phố mình nè chú!',
         emotion: 'STAR_EYES',
       },
     ],
     options: [
       {
-        id: 'bean-school',
-        label: '🎒 Hôm nay đi học có chuyện gì vui kể chú nghe nào?',
+        id: 'bean-piggyrace',
+        label: '🐷 Cuộc thi nuôi Heo Đất ở lớp con bạn nào đang dẫn đầu?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Dạ con đang top 2 đó chú! Mỗi ngày con nhịn ăn vặt 5k bỏ vô Heo Đất, cuối tháng được mẹ thưởng nhân đôi, con sắp đủ tiền mua bộ sách bách khoa toàn thư rồi!',
+      },
+      {
+        id: 'bean-schoolrain',
+        label: '☔ Trời mưa ngập đường đi học tan trường có nguy hiểm không con?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Dạ vui lắm chú! Con được cô khen trước lớp vì biết phụ mẹ quét mã QR trả tiền điện nước tự động, cả lớp vỗ tay rần rần!',
+        reply: 'Dạ vỉa hè phố mình cao ráo nên nước rút nhanh lắm! Có chú bảo vệ với chú công an đứng ngã tư dắt tụi con qua vạch kẻ đường an toàn 100% ạ!',
+      },
+      {
+        id: 'bean-gamemocity',
+        label: '🎮 Dạo này các bạn học sinh có mê trò chơi điện tử gì không?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Tui con mê game MoCity này nè chú! Vừa học cách quy hoạch thành phố, vừa biết quản lý tài chính từ nhỏ, cô giáo con cũng khen game bổ ích nữa!',
       },
       {
         id: 'bean-milk',
@@ -638,12 +749,6 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         particles: 'stars',
         reply: 'Dạ con để dành được hơn nửa chiếc xe đạp mới rồi chú! Con tặng chú 10 Xu lộc Heo Đất may mắn (+10 Xu), chúc chú luôn vui vẻ nha!',
       },
-      {
-        id: 'bean-favorite',
-        label: '🏫 Khu phố mình con thích nhất chỗ nào?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Con thích nhất là vỉa hè rộng rãi đi bộ an toàn, với chú bảo vệ ở ngã tư hay dắt tụi con qua đường lúc tan trường ạ!',
-      },
     ],
   },
 
@@ -654,28 +759,44 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
     role: 'Giáo Viên',
     greetings: [
       {
-        text: 'Em chào Thị Trưởng! Em vừa chấm xong xấp bài kiểm tra, ra phố làm ly nước cho nhẹ đầu đây ạ!',
+        text: 'Em chào Thị Trưởng! Thời sự đưa tin kỳ thi tốt nghiệp và tuyển sinh đổi mới chương trình, phụ huynh đang lo lắng hỏi han em quá chừng!',
         emotion: 'HAPPY',
       },
       {
-        text: 'Chào Thị Trưởng! Nhờ khu phố yên tĩnh, an ninh tốt mà các lớp học thêm của em các em học tập rất tập trung!',
+        text: 'Trời nắng nóng oi ả 40 độ các em học sinh đi học dễ mệt mỏi, em phải bật quạt mát và chuẩn bị nước chanh muối cho các em giải nhiệt.',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Dạo này trên mạng có drama lừa đảo "Con đang cấp cứu ở viện chuyển tiền gấp", em phải họp phụ huynh cảnh báo khẩn cấp ngay!',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Mùa mưa bão triều cường tới rồi, em chuyển một số buổi học sang hình thức trực tuyến để các em không phải lội nước nguy hiểm trên đường về.',
         emotion: 'HAPPY',
       },
       {
-        text: 'Thị Trưởng đi thị sát ạ? Em đang ghé hiệu sách mua thêm tài liệu tham khảo cho các em học sinh nghèo hiếu học.',
+        text: 'Tin vui thời sự: Trường học quanh khu phố mình vừa nhận chứng nhận Chuyển Đổi Số Xuất Sắc, 100% học phí không dùng tiền mặt!',
         emotion: 'STAR_EYES',
-      },
-      {
-        text: 'Em chào Thị Trưởng! Không khí phố phường hôm nay mát mẻ, nhìn bà con hăng say lao động thấy phấn khởi quá!',
-        emotion: 'HAPPY',
       },
     ],
     options: [
       {
-        id: 'colinh-class',
-        label: '📚 Lớp học đợt này các em học tập ra sao cô Linh?',
+        id: 'colinh-scamwarn',
+        label: '⚠️ Vụ lừa đảo "con đang cấp cứu" cô xử lý và cảnh báo phụ huynh ra sao?',
+        emotionOnSelect: 'SURPRISED',
+        reply: 'Em gửi thông báo yêu cầu phụ huynh tuyệt đối không chuyển tiền theo số lạ, chỉ liên lạc qua kênh nhà trường và số điện thoại giáo viên chủ nhiệm! Nhờ vậy lớp em không ai bị lừa gạt!',
+      },
+      {
+        id: 'colinh-curriculum',
+        label: '📚 Chương trình giáo dục mới có định hướng gì về tài chính cho học sinh không cô?',
+        emotionOnSelect: 'STAR_EYES',
+        reply: 'Có đó Thị Trưởng! Các em được học môn Giáo dục Kinh tế & Pháp luật từ cấp 2, hiểu về tiết kiệm, lạm phát và thanh toán số. Rất nhiều em áp dụng ngay qua việc quản lý chi tiêu trên app!',
+      },
+      {
+        id: 'colinh-health',
+        label: '🌦️ Thời tiết giao mùa thất thường này cô có lời khuyên gì cho học sinh?',
         emotionOnSelect: 'HAPPY',
-        reply: 'Các em ngoan và tiến bộ nhanh lắm Thị Trưởng! Đặc biệt là phụ huynh giờ chuyển học phí qua MoMo hết rồi, nhanh gọn và lưu lịch sử rõ ràng!',
+        reply: 'Trời chuyển mùa dễ bị cảm cúm sốt xuất huyết, các gia đình nhớ dọn dẹp lăng quăng, ăn chín uống sôi và giữ ấm cổ họng khi ra ngoài đường buổi sáng sớm!',
       },
       {
         id: 'colinh-tea',
@@ -690,12 +811,6 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         label: '🏫 Khu phố mình cần thêm tiện ích gì cho giáo dục không cô?',
         emotionOnSelect: 'STAR_EYES',
         reply: 'Nếu có thể, em mong khu phố mở thêm một "Tủ Sách Cộng Đồng" ở vỉa hè để các em nhỏ có chỗ đọc sách miễn phí mỗi buổi chiều!',
-      },
-      {
-        id: 'colinh-advice',
-        label: '💡 Lời khuyên nào cho các bạn trẻ chuẩn bị bước vào đời?',
-        emotionOnSelect: 'HAPPY',
-        reply: 'Em luôn dặn các em phải rèn luyện tính tự lập và quản lý tài chính từ sớm, biết tiết kiệm và đầu tư tri thức thì tương lai ắt thành công!',
       },
     ],
   },

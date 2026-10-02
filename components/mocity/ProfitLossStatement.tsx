@@ -263,6 +263,15 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             strong
           />
           <Row label="− Chi phí vận hành" value={-derived.opex} tone="minus" indent />
+          {derived.bnplCredit > 0 && (
+            <Row
+              label={`− Dự phòng nợ xấu Ví Trả Sau (${(derived.nplRate * 100).toFixed(1)}%)`}
+              value={-derived.badDebt}
+              tone="minus"
+              indent
+              hint="Một phần hạn mức đã cấp sẽ không đòi được. Cấp tín dụng vượt khả năng trả của cư dân thì tỷ lệ này tăng."
+            />
+          )}
           <Row
             label={`= Lợi nhuận hoạt động${derived.operatingMargin ? ` (biên ${(derived.operatingMargin * 100).toFixed(0)}%)` : ''}`}
             value={derived.operatingIncome}
@@ -288,7 +297,8 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
       {(Object.keys(PERIOD_LABEL) as Period[]).map((period) => {
         const l = ledgers[period];
         const grossProfit = l.grossRevenue - l.cogs;
-        const operating = grossProfit - l.opex;
+        const noXau = l.badDebt ?? 0;
+        const operating = grossProfit - l.opex - noXau;
         const laiVay = l.interestExpense ?? 0;
         // Lai vay tru TRUOC thue, nen loi nhuan rong phai tru ca hai.
         const net = operating - laiVay - l.tax;
@@ -335,6 +345,9 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
                   tone="minus"
                   indent
                 />
+                {noXau > 0 && (
+                  <Row label="− Dự phòng nợ xấu Ví Trả Sau" value={-noXau} tone="minus" indent />
+                )}
                 <Row label={`= Lợi nhuận hoạt động`} value={operating} strong />
                 {laiVay > 0 && (
                   <>
@@ -399,7 +412,18 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             chạy máy.
           </li>
           <li>
-            <b>Thuế 20%</b> tính trên <i>lợi nhuận hoạt động</i>, không phải trên doanh
+            <b>Dự phòng nợ xấu</b> là giá thật của việc cho vay. Ví Trả Sau thu phí
+            thương nhân, nhưng một phần hạn mức đã cấp sẽ không đòi được. Cấp tín dụng
+            vượt khả năng trả của cư dân thì tỷ lệ này tăng — <i>cho vay chưa bao giờ
+            là cho không</i>.
+          </li>
+          <li>
+            <b>Chi phí lãi vay</b> trừ <i>trước</i> thuế, nên vay vốn có lá chắn thuế.
+            Nhưng lãi phải trả dù tháng đó buôn bán ra sao — đó là lý do hạn mức vay
+            tính theo khả năng trả nợ chứ không theo doanh thu.
+          </li>
+          <li>
+            <b>Thuế 20%</b> tính trên <i>lợi nhuận trước thuế</i>, không phải trên doanh
             thu — trả thuế theo thắng, không theo bán được bao nhiêu.
           </li>
           <li>
@@ -413,6 +437,17 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             quá nhiều tiệm bán đồ giống nhau trong khi dân cư không đủ tiền.
           </li>
         </ul>
+
+        {/*
+         * San pham phat hanh cong khai va co mo ta san pham tai chinh, nen phai
+         * noi ro day la mo phong. Khong duoc de nguoi choi hieu cac con so trong
+         * game la dieu kien that cua bat ky san pham nao.
+         */}
+        <p className="mt-3 border-t pt-2 text-[10px] font-semibold leading-relaxed text-[#8A7355]">
+          Các con số lãi suất, hạn mức và tỷ lệ nợ xấu trong game là mô phỏng để minh
+          họa nguyên lý tài chính, không phải điều kiện thật của bất kỳ sản phẩm nào.
+          Game không đưa ra lời khuyên tài chính.
+        </p>
       </div>
     </div>
   );

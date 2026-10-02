@@ -877,6 +877,7 @@ function recordOperatingFlow(s: CityState, flow: FlowBreakdown, seconds: number)
     grossRevenue: flow.grossRevenue * seconds,
     cogs: flow.cogs * seconds,
     opex: flow.opex * seconds,
+    badDebt: flow.badDebt * seconds,
     interestExpense: flow.interestExpense * seconds,
     tax: flow.tax * seconds,
     netIncome: flow.netIncome * seconds,

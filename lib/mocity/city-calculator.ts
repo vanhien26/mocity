@@ -313,6 +313,15 @@ export interface FlowBreakdown {
   grossMargin: number;
   /** Chi phi vat hanh: thue mat bang, luong, dien nuoc, bao tri. */
   opex: number;
+  /**
+   * CHI PHI DU PHONG NO XAU tu Vi Tra Sau. Day la gia that cua viec cho vay:
+   * mot phan tin dung cap ra se khong doi duoc.
+   */
+  badDebt: number;
+  /** Ty le no xau hien tai (0-1). */
+  nplRate: number;
+  /** Tin dung Vi Tra Sau cap ra moi giay. */
+  bnplCredit: number;
   /** LOI NHUAN HOAT DONG (EBIT) = loi nhuan gop - chi phi vat hanh. */
   operatingIncome: number;
   operatingMargin: number;
@@ -448,6 +457,72 @@ export function interestCoverage(operatingIncomePerSec: number, interestPerSec: 
 /** Nguong canh bao he so bao phu lai vay. */
 export const COVERAGE_WARNING_AT = 1.5;
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NO XAU CUA VI TRA SAU (BNPL)
+ *
+ * Ban truoc mo hinh Vi Tra Sau thuan tang doanh thu: gan the "0% Lai", mo ta
+ * "mo rong han muc chi tieu cho cu dan", va co che chi co `baseYieldPerSec`
+ * cong `takeRateBonus` cong synergy +25%. Khong co ky tra, khong co nghia vu
+ * hoan tra, khong ai tra gia vi dung qua tay.
+ *
+ * Day BNPL ma bo ve nghia vu tra no thi khong phai giao duc tai chinh, do la
+ * quang cao. Voi mot san pham gan thuong hieu trong nganh dich vu tai chinh
+ * va phat hanh cong khai, do la rui ro that.
+ *
+ * Mo hinh dung: THANH PHO la ben cho vay. No thu phi thuong nhan, va no chiu
+ * RUI RO TIN DUNG. Cap tin dung vuot kha nang tra cua dan thi ty le no xau
+ * tang, an vao loi nhuan. Bai hoc hai chieu: ben vay phai tra, ben cho vay
+ * khong he cho khong.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Ty le no xau nen, khi cap tin dung trong muc an toan. */
+export const NPL_BASE_RATE = 0.03;
+/** Tran ty le no xau khi cap tin dung qua tay. */
+export const NPL_MAX_RATE = 0.4;
+/**
+ * Han muc tin dung LANH MANH tren moi cu dan, tinh bang Xu/giay.
+ *
+ * Vuot nguong nay la dau hieu tap trung tin dung: cap qua nhieu han muc cho
+ * qua it nguoi, dung co che lam ho so tin dung xau di trong thuc te.
+ */
+export const HEALTHY_CREDIT_PER_CAPITA = 0.02;
+/** Nguong canh bao ty le no xau. */
+export const NPL_WARNING_AT = 0.1;
+
+/** Tin dung Vi Tra Sau cap ra moi giay, suy tu san luong cac diem BNPL. */
+export function bnplCreditPerSecond(buildings: BuildingNode[]): number {
+  let total = 0;
+  for (const node of buildings) {
+    const def = BUILDING_BY_ID[node.defId];
+    if (def?.id !== 'trung-tam-vi-tra-sau') continue;
+    total += def.baseYieldPerSec * (1 + (node.level - 1) * LEVEL_SCALE);
+  }
+  return total;
+}
+
+/**
+ * Ty le no xau theo muc do tap trung tin dung.
+ *
+ * Duoi nguong lanh manh thi giu o muc nen. Vuot nguong thi tang tuyen tinh
+ * toi tran - khong tang dot ngot, de nguoi choi kip thay va sua.
+ */
+export function nplRateFor(creditPerSec: number, population: number): number {
+  if (creditPerSec <= 0) return 0;
+  if (population <= 0) return NPL_MAX_RATE;
+
+  const perCapita = creditPerSec / population;
+  if (perCapita <= HEALTHY_CREDIT_PER_CAPITA) return NPL_BASE_RATE;
+
+  const vuot = perCapita / HEALTHY_CREDIT_PER_CAPITA - 1;
+  return Math.min(NPL_MAX_RATE, NPL_BASE_RATE + vuot * 0.12);
+}
+
+/** Chi phi du phong no xau moi giay. */
+export function badDebtPerSecond(buildings: BuildingNode[], population: number): number {
+  const credit = bnplCreditPerSecond(buildings);
+  return credit * nplRateFor(credit, population);
+}
+
 /** Ty le gia von mac dinh khi `BuildingDef` khong khai bao. */
 const DEFAULT_COGS_RATE = 0.35;
 /** Ty le chi phi vat hanh mac dinh. */
@@ -546,7 +621,18 @@ export function flowFor(
   const grossProfit = grossRevenue - cogs;
 
   const opex = grossRevenue * opexRate;
-  const operatingIncome = grossProfit - opex;
+
+  /*
+   * Du phong no xau: gia that cua viec cap tin dung. Tru o tang CHI PHI HOAT
+   * DONG chu khong phai sau thue, vi voi ben cho vay thi ton that tin dung la
+   * chi phi kinh doanh binh thuong.
+   */
+  const danSo = populationFor(buildings);
+  const bnplCredit = bnplCreditPerSecond(buildings);
+  const nplRate = nplRateFor(bnplCredit, danSo);
+  const badDebt = bnplCredit * nplRate;
+
+  const operatingIncome = grossProfit - opex - badDebt;
 
   /*
    * Lai vay tru TRUOC thue, dung thu tu bao cao that. Day cung la ly do vay
@@ -574,6 +660,9 @@ export function flowFor(
     grossProfit,
     grossMargin: grossRevenue > 0 ? grossProfit / grossRevenue : 0,
     opex,
+    badDebt,
+    nplRate,
+    bnplCredit,
     operatingIncome,
     operatingMargin: grossRevenue > 0 ? operatingIncome / grossRevenue : 0,
     interestExpense,
@@ -581,7 +670,7 @@ export function flowFor(
     tax,
     netIncome,
     netMargin: grossRevenue > 0 ? netIncome / grossRevenue : 0,
-    costPerSec: cogs + opex + interestExpense + tax,
+    costPerSec: cogs + opex + badDebt + interestExpense + tax,
 
     revenue: netIncome,
   };
