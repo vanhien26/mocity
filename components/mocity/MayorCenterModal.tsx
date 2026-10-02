@@ -18,6 +18,7 @@ import {
   TriangleAlert,
   Users,
   X,
+  GraduationCap,
 } from 'lucide-react';
 import { MAYOR_QUESTS, CITY_TIERS, nextCityTier, xpForLevel } from '@/lib/mocity/mock-city-data';
 import { populationFor } from '@/lib/mocity/city-calculator';
@@ -42,6 +43,7 @@ import {
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
 import ProfitLossStatement from './ProfitLossStatement';
+import { markTutorialFlag, restartTutorial } from '@/lib/mocity/store';
 import StreakBoard from './StreakBoard';
 
 type Tab = 'PROFILE' | 'QUESTS' | 'CITIZENS' | 'LEDGER' | 'STREAK' | 'DATA';
@@ -219,7 +221,11 @@ export default function MayorCenterModal({
 
           <button
             type="button"
-            onClick={() => setTab('LEDGER')}
+            onClick={() => {
+              setTab('LEDGER');
+              // Moc huong dan "da mo So Cai" - chi UI moi biet.
+              markTutorialFlag('ledger');
+            }}
             aria-pressed={tab === 'LEDGER'}
             className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
             style={
@@ -307,6 +313,21 @@ export default function MayorCenterModal({
                   )}
                 </button>
               </form>
+
+              {/* Choi lai huong dan */}
+              <button
+                type="button"
+                onClick={() => {
+                  restartTutorial();
+                  onClose();
+                  onToast?.('Đã mở lại hướng dẫn. Thẻ hướng dẫn hiện ở cuối màn hình.');
+                }}
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-2 text-xs font-black transition-colors hover:bg-white"
+                style={{ background: '#FFFDF7', borderColor: '#C9A22788', color: '#5B3D22' }}
+              >
+                <GraduationCap size={14} className="shrink-0" />
+                Xem lại hướng dẫn chơi
+              </button>
 
               {/* Ban Co Van Do Thi */}
               <div className="space-y-2">

@@ -371,6 +371,15 @@ export interface CityState extends Currencies {
   /** Dem han giai quyet su kien trong ngay. Tu reset sang 0 khi sang ngay moi. */
   eventLog: EventDayLog;
   /**
+   * Buoc huong dan hien tai. `-1` nghia la da xong hoac da bo qua.
+   *
+   * Luu vao save chu khong phai `useState`: huong dan keo dai ca mot phien
+   * dau, nguoi choi tat trinh duyet giua chung thi phai quay lai dung cho.
+   */
+  tutorialStep: number;
+  /** Cac moc huong dan chi co the danh dau tu UI (vd: da mo So Cai). */
+  tutorialFlags: string[];
+  /**
    * DU NO hien tai. Sinh lai vay moi giay, tru thang vao P&L.
    *
    * Tach khoi `coins` chu khong tru thang: tien vay VAO ngan khoc ngay, con

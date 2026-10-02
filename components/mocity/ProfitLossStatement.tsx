@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useCity, useCityDerived, takeLoan, repayLoan } from '@/lib/mocity/store';
+import { useCity, useCityDerived, takeLoan, repayLoan, markTutorialFlag } from '@/lib/mocity/store';
 import {
   COVERAGE_WARNING_AT,
   LOAN_ANNUAL_RATE,
@@ -25,6 +25,7 @@ const PERIOD_LABEL: Record<Period, string> = {
  */
 function Row({
   label,
+  sublabel,
   value,
   tone = 'plain',
   indent = false,
@@ -32,6 +33,7 @@ function Row({
   hint,
 }: {
   label: string;
+  sublabel?: string;
   value: number;
   tone?: 'plain' | 'minus' | 'plus' | 'total';
   indent?: boolean;
@@ -56,13 +58,20 @@ function Row({
         paddingLeft: indent ? '1.25rem' : undefined,
       }}
     >
-      <span
-        className="text-[11px] font-semibold"
-        style={{ color: strong ? '#4A3018' : '#6E4F3A' }}
-        title={hint}
-      >
-        {label}
-      </span>
+      <div className="flex flex-col">
+        <span
+          className="text-[11px] font-semibold"
+          style={{ color: strong ? '#4A3018' : '#6E4F3A' }}
+          title={hint}
+        >
+          {label}
+        </span>
+        {sublabel && (
+          <span className="text-[9.5px] font-medium text-[#8C6D58] italic leading-tight">
+            {sublabel}
+          </span>
+        )}
+      </div>
       <span
         className="shrink-0 tabular-nums font-black"
         style={{ color, fontSize: strong ? 13 : 12 }}
@@ -109,6 +118,11 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
   const coins = useCity((s) => s.coins);
   const derived = useCityDerived();
   const [soTien, setSoTien] = useState('');
+
+  // Moc huong dan: nguoi choi da nhin thay han muc vay cua minh.
+  useEffect(() => {
+    markTutorialFlag('loan');
+  }, []);
 
   const duNo = derived.debt;
   const tran = derived.debtCeiling;
@@ -255,17 +269,19 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
           Nhịp hiện tại · mỗi giây
         </p>
         <div className="mt-2 space-y-0.5">
-          <Row label="Doanh thu gộp" value={derived.grossRevenue} indent />
-          <Row label="− Giá vốn hàng bán" value={-derived.cogs} tone="minus" indent />
+          <Row label="Doanh thu gộp" sublabel="Tiền vô đếm sướng tay 💵" value={derived.grossRevenue} indent />
+          <Row label="− Giá vốn hàng bán" sublabel="Tiền mua thịt cá, trà sữa... 🥩" value={-derived.cogs} tone="minus" indent />
           <Row
             label={`= Lợi nhuận gộp${derived.grossMargin ? ` (biên ${(derived.grossMargin * 100).toFixed(0)}%)` : ''}`}
+            sublabel="Tiền dôi ra sau khi trừ tiền hàng 📦"
             value={derived.grossProfit}
             strong
           />
-          <Row label="− Chi phí vận hành" value={-derived.opex} tone="minus" indent />
+          <Row label="− Chi phí vận hành" sublabel="Tiền nuôi quán (mặt bằng, điện nước) 🏢" value={-derived.opex} tone="minus" indent />
           {derived.bnplCredit > 0 && (
             <Row
               label={`− Dự phòng nợ xấu Ví Trả Sau (${(derived.nplRate * 100).toFixed(1)}%)`}
+              sublabel="Trừ hao khách xù nợ, quỵt bill 🙈"
               value={-derived.badDebt}
               tone="minus"
               indent
@@ -274,17 +290,18 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
           )}
           <Row
             label={`= Lợi nhuận hoạt động${derived.operatingMargin ? ` (biên ${(derived.operatingMargin * 100).toFixed(0)}%)` : ''}`}
+            sublabel="Hiệu quả làm ăn thực tế 📊"
             value={derived.operatingIncome}
             strong
           />
           {derived.debt > 0 && (
             <>
-              <Row label="− Chi phí lãi vay" value={-derived.interestExpense} tone="minus" indent />
-              <Row label="= Lợi nhuận trước thuế" value={derived.pretaxIncome} strong />
+              <Row label="− Chi phí lãi vay" sublabel="Tiền lãi ngân hàng réo gọi 💳" value={-derived.interestExpense} tone="minus" indent />
+              <Row label="= Lợi nhuận trước thuế" sublabel="Lãi trước khi đóng góp cho phố" value={derived.pretaxIncome} strong />
             </>
           )}
-          <Row label="− Thuế TNDN 20%" value={-derived.tax} tone="minus" indent />
-          <Row label="= Lợi nhuận ròng" value={derived.netIncome} tone="total" strong />
+          <Row label="− Thuế TNDN 20%" sublabel="Đóng góp xây phố phồn vinh 🏛️" value={-derived.tax} tone="minus" indent />
+          <Row label="= Lợi nhuận ròng" sublabel="Tiền THẬT SỰ nhét túi quần ✨" value={derived.netIncome} tone="total" strong />
         </div>
         <p className="mt-2 border-t pt-2 text-[10px] font-semibold leading-relaxed text-[#5B3D22]">
           HUD đang hiện <b>{formatRate(derived.netIncome)}</b> — đây là <b>lợi nhuận ròng</b>,
@@ -332,32 +349,35 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
               </p>
             ) : (
               <div className="space-y-0.5 p-1.5">
-                <Row label="Doanh thu gộp" value={l.grossRevenue} />
-                <Row label="− Giá vốn hàng bán" value={-l.cogs} tone="minus" indent />
+                <Row label="Doanh thu gộp" sublabel="Tiền vô đếm sướng tay 💵" value={l.grossRevenue} />
+                <Row label="− Giá vốn hàng bán" sublabel="Tiền mua thịt cá, trà sữa... 🥩" value={-l.cogs} tone="minus" indent />
                 <Row
                   label={`= Lợi nhuận gộp`}
+                  sublabel="Tiền dôi ra sau khi trừ tiền hàng 📦"
                   value={grossProfit}
                   strong
                 />
                 <Row
                   label={`− Chi phí vận hành`}
+                  sublabel="Tiền nuôi quán (mặt bằng, điện nước) 🏢"
                   value={-l.opex}
                   tone="minus"
                   indent
                 />
                 {noXau > 0 && (
-                  <Row label="− Dự phòng nợ xấu Ví Trả Sau" value={-noXau} tone="minus" indent />
+                  <Row label="− Dự phòng nợ xấu Ví Trả Sau" sublabel="Trừ hao khách xù nợ, quỵt bill 🙈" value={-noXau} tone="minus" indent />
                 )}
-                <Row label={`= Lợi nhuận hoạt động`} value={operating} strong />
+                <Row label={`= Lợi nhuận hoạt động`} sublabel="Hiệu quả làm ăn thực tế 📊" value={operating} strong />
                 {laiVay > 0 && (
                   <>
-                    <Row label="− Chi phí lãi vay" value={-laiVay} tone="minus" indent />
-                    <Row label="= Lợi nhuận trước thuế" value={operating - laiVay} strong />
+                    <Row label="− Chi phí lãi vay" sublabel="Tiền lãi ngân hàng réo gọi 💳" value={-laiVay} tone="minus" indent />
+                    <Row label="= Lợi nhuận trước thuế" sublabel="Lãi trước khi đóng góp cho phố" value={operating - laiVay} strong />
                   </>
                 )}
-                <Row label={`− Thuế TNDN`} value={-l.tax} tone="minus" indent />
+                <Row label={`− Thuế TNDN`} sublabel="Đóng góp xây phố phồn vinh 🏛️" value={-l.tax} tone="minus" indent />
                 <Row
                   label="= Lợi nhuận ròng"
+                  sublabel="Tiền THẬT SỰ nhét túi quần ✨"
                   value={net}
                   tone="total"
                   strong
@@ -366,13 +386,15 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
                 {/* Vốn không đi qua P&L */}
                 <div className="mt-2 border-t pt-1.5">
                   <Row
-                    label="Chi tiêu vốn (capex)"
+                    label="Chi tiêu vốn (CAPEX)"
+                    sublabel="Mua đồ nghề làm ăn (máy móc, sửa quán) 🛠️"
                     value={l.capex}
                     tone="plain"
                     hint="Xây mới, nâng cấp, mở rộng đất, lên sao, lắp tiện ích, thuê quản lý. Đây là TIỀN VỐN tạo tài sản — không trừ vào lợi nhuận."
                   />
                   <Row
-                    label="Kiểm kê thi trường"
+                    label="Kiểm kê thị trường"
+                    sublabel="Hàng tồn kho & bảo vật 🏺"
                     value={l.inventoryBought}
                     tone="plain"
                     hint="Vật phẩm và Bảo Vật trong Kho Đồ. Tồn kho lâu ngày, không phải chi phí vận hành."
@@ -389,52 +411,35 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
         );
       })}
 
-      {/* Giải thích các dòng */}
+      {/* Giải thích các dòng theo phong cách Phố Phường */}
       <div
         className="rounded-2xl border-2 p-3.5"
         style={{ background: '#FFFBEB', borderColor: '#C9A22766' }}
       >
         <p className="text-[10px] font-black uppercase tracking-wide text-[#8B6318]">
-          Đọc báo cáo này thế nào
+          💡 Khẩu Quyết Bỏ Túi Cho Chủ Quán MoCity
         </p>
-        <ul className="mt-1.5 space-y-1.5 text-[11px] leading-relaxed text-[#5B3D22]">
+        <ul className="mt-2 space-y-2 text-[11px] leading-relaxed text-[#5B3D22]">
           <li>
-            <b>Doanh thu gộp</b> là tiền bán ra chưa trừ gì. Luôn lớn hơn số Xu bạn
-            thật sự kiếm.
+            💵 <b>Doanh thu gộp</b> là <i>tiền vô đếm sướng tay</i>, nhưng chưa trừ tiền thịt cá rau củ hay tiền nhà. Đừng vội mang đi mua sắm kẻo cuối tháng khóc thầm!
           </li>
           <li>
-            <b>Giá vốn</b> là tiền mua hàng bán lại. Quán cà phê tốn nhiều (45%) vì bán
-            đồ uống; sàn chứng khoán tốn ít (8%) vì không có hàng tồn kho.
+            🥩 <b>Giá vốn hàng bán (COGS)</b> là tiền mua nguyên liệu làm ra sản phẩm. Bán ly trà sữa 30k thì mất đứt 14k tiền sữa, trà, trân châu, ly nhựa rồi.
           </li>
           <li>
-            <b>Chi phí vận hành</b> là tiền thuê mặt bằng, trả lương, hóa đơn điện nước.
-            Cửa hàng ăn uống tốn nhiều (35%) vì cần người; trạm tài chính ít (15%) vì
-            chạy máy.
+            🏢 <b>Chi phí vận hành (OPEX)</b> là <i>tiền nuôi quán mỗi tháng</i> (mặt bằng, điện nước, wifi, nhân viên). Quán mở hay đóng cửa thì tiền này vẫn bay đều đều.
           </li>
           <li>
-            <b>Dự phòng nợ xấu</b> là giá thật của việc cho vay. Ví Trả Sau thu phí
-            thương nhân, nhưng một phần hạn mức đã cấp sẽ không đòi được. Cấp tín dụng
-            vượt khả năng trả của cư dân thì tỷ lệ này tăng — <i>cho vay chưa bao giờ
-            là cho không</i>.
+            ✨ <b>Lợi nhuận ròng</b> mới là <i>tiền thật sự nhét túi quần</i> mang về nhà. Phải lấy Doanh thu trừ sạch Giá vốn, Vận hành và Thuế mới ra con số này.
           </li>
           <li>
-            <b>Chi phí lãi vay</b> trừ <i>trước</i> thuế, nên vay vốn có lá chắn thuế.
-            Nhưng lãi phải trả dù tháng đó buôn bán ra sao — đó là lý do hạn mức vay
-            tính theo khả năng trả nợ chứ không theo doanh thu.
+            🙈 <b>Dự phòng nợ xấu</b>: Cho khách quẹt Ví Trả Sau thì phải trừ hao có người trễ hạn hoặc xù nợ. <i>Cho vay chưa bao giờ là cho không!</i>
           </li>
           <li>
-            <b>Thuế 20%</b> tính trên <i>lợi nhuận trước thuế</i>, không phải trên doanh
-            thu — trả thuế theo thắng, không theo bán được bao nhiêu.
+            💳 <b>Tiền vay không phải tiền trên trời rơi xuống</b>: Vay tiền ngân hàng số MoMo vào ví liền tay nhưng là cục nợ phải trả. Dùng vốn để mở rộng quán sinh lời, cấm lấy đi ăn nhậu!
           </li>
           <li>
-            <b>Chi tiêu vốn</b> không đi qua báo cáo lãi/lỗ. Xây tiệm là mua tài sản,
-            không phải chi phí. Game này không có khấu hao nên vốn đã bỏ ra không bao
-            giờ tự quay lại — cùng một điểm yếu của sổ sách thật khi bạn quên dòng
-            khấu hao.
-          </li>
-          <li>
-            Biên gộp <b>thấp</b> nghĩa là bán nhiều mà không thu được gì — dấu hiệu xây
-            quá nhiều tiệm bán đồ giống nhau trong khi dân cư không đủ tiền.
+            🛠️ <b>Chi tiêu vốn (CAPEX)</b>: Mua máy pha cà phê, đóng quầy bar là sắm &quot;cần câu cơm&quot; lâu dài, không trừ hết vào chi phí tháng mà tính vào tài sản của tiệm.
           </li>
         </ul>
 

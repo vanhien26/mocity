@@ -52,6 +52,8 @@ interface SimState {
   behavior: CitizenBehavior;
   behaviorTimer: number;
   jumpOffset: number;
+  bubbleTimer: number;
+  speechCooldown: number;
 }
 
 /** Appearance state - chỉ thay đổi khi behavior change (~mỗi 10-15s) */
@@ -288,6 +290,13 @@ const WALK_CSS = `
 @keyframes citBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
 @keyframes citHw  { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
 @keyframes citSw  { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
+@keyframes citBubblePop {
+  0% { opacity: 0; transform: translateY(6px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.cit-speech-bubble {
+  animation: citBubblePop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 `;
 
 const EMOTION_EMOJIS: Record<FacialEmotion, string> = {
@@ -510,11 +519,11 @@ export default function ExpressiveStreetCitizens({
   const walkBoundRef = useRef(Math.max(360, streetWidth - 140));
   walkBoundRef.current = Math.max(360, streetWidth - 140);
 
-  // Appearance state: chỉ re-render khi emotion/bubble thay đổi (~mỗi 10-15s)
+  // Appearance state: tất cả bắt đầu rỗng, không hiện ồ ạt bóng thoại khi mới vào
   const [appearances, setAppearances] = useState<CitAppearance[]>(() =>
-    CITIZEN_DEFS.map((c, i) => ({
+    CITIZEN_DEFS.map((c) => ({
       emotion: c.emotion,
-      bubbleText: i % 2 === 0 ? c.quotes[0] : null,
+      bubbleText: null,
     }))
   );
 
@@ -527,10 +536,15 @@ export default function ExpressiveStreetCitizens({
       dir: c.startDir,
       walkPhase: i * 1.4,
       behavior: (i % 3 === 0 ? 'ADMIRING_SHOP' : 'WALKING') as CitizenBehavior,
-      behaviorTimer: 60 + i * 25,
+      behaviorTimer: 6 + (i % 4) * 2.5,
       jumpOffset: 0,
+      bubbleTimer: 0,
+      speechCooldown: 2 + i * 4, // Trải đều cooldown ban đầu để tránh cư dân đồng loạt cất lời
     }))
   );
+
+  // Khoảng lặng đường phố trước khi cư dân tiếp theo phát biểu (tránh nói liên tục)
+  const nextStreetSpeechTimerRef = useRef<number>(3.5); // 3.5s sau khi vào game mới có câu thoại đầu tiên
 
   // DOM refs cho direct style updates (không qua React state)
   const containerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -550,6 +564,7 @@ export default function ExpressiveStreetCitizens({
       const elapsed = now - lastTime;
       if (elapsed < 16) return;
       const dt = Math.min(elapsed, 50) / 100;
+      const dtSec = Math.min(elapsed, 50) / 1000;
       lastTime = now;
       flushAccum += elapsed;
 
@@ -557,7 +572,6 @@ export default function ExpressiveStreetCitizens({
 
       simRef.current.forEach((sim, i) => {
         const def = CITIZEN_DEFS[i];
-        sim.behaviorTimer -= dt * 10;
         sim.jumpOffset = Math.max(0, sim.jumpOffset - dt * 25);
 
         const wasWalking = sim.behavior === 'WALKING';
@@ -593,32 +607,74 @@ export default function ExpressiveStreetCitizens({
           }
         }
 
-        // Behavior transitions - bo qua khi dang doi thoai voi nguoi choi
-        if (sim.behavior !== 'TALKING' && sim.behaviorTimer <= 0) {
-          const roll = Math.random();
-          let nextEmotion: FacialEmotion | null = null;
-          let nextBubble: string | null = null;
-
-          if (wasWalking && roll < 0.42) {
-            sim.behavior = roll < 0.25 ? 'ADMIRING_SHOP' : 'CHATTING';
-            sim.behaviorTimer = 75 + Math.random() * 60;
-            nextEmotion = sim.behavior === 'ADMIRING_SHOP'
-              ? 'STAR_EYES'
-              : ALL_EMOTIONS[Math.floor(Math.random() * ALL_EMOTIONS.length)];
-            nextBubble = def.quotes[Math.floor(Math.random() * def.quotes.length)];
-          } else {
-            sim.behavior = 'WALKING';
-            sim.behaviorTimer = 110 + Math.random() * 90;
-            if (Math.random() < 0.3) sim.dir = (sim.dir * -1) as 1 | -1;
-            nextEmotion = Math.random() < 0.5 ? 'HAPPY' : Math.random() < 0.5 ? 'STAR_EYES' : 'TIRED';
-            nextBubble = Math.random() < 0.28 ? def.quotes[Math.floor(Math.random() * def.quotes.length)] : null;
-          }
-
-          if (nextEmotion) {
-            pendingUpdates.current.set(i, { emotion: nextEmotion, bubbleText: nextBubble });
+        // 1. Behavior transitions (Độc lập với bóng thoại - chỉ đổi dáng đi/dừng ngắm)
+        if (sim.behavior !== 'TALKING') {
+          sim.behaviorTimer -= dtSec;
+          if (sim.behaviorTimer <= 0) {
+            const roll = Math.random();
+            if (wasWalking && roll < 0.42) {
+              sim.behavior = roll < 0.22 ? 'ADMIRING_SHOP' : 'CHATTING';
+              sim.behaviorTimer = 4.5 + Math.random() * 4.5; // Dừng ngắm phố 4.5s - 9s
+              const emo = sim.behavior === 'ADMIRING_SHOP' ? 'STAR_EYES' : (Math.random() < 0.5 ? 'HAPPY' : 'STAR_EYES');
+              pendingUpdates.current.set(i, { emotion: emo });
+            } else {
+              sim.behavior = 'WALKING';
+              sim.behaviorTimer = 8 + Math.random() * 10; // Đi bộ 8s - 18s
+              if (Math.random() < 0.3) sim.dir = (sim.dir * -1) as 1 | -1;
+              const emo = Math.random() < 0.6 ? def.emotion : (Math.random() < 0.5 ? 'HAPPY' : 'TIRED');
+              pendingUpdates.current.set(i, { emotion: emo });
+            }
           }
         }
+
+        // 2. Quản lý thời gian sống của bóng thoại cá nhân
+        if (sim.bubbleTimer > 0) {
+          sim.bubbleTimer -= dtSec;
+          if (sim.bubbleTimer <= 0) {
+            sim.bubbleTimer = 0;
+            // Cooldown riêng cho nhân vật này sau khi nói xong: 40s - 70s
+            sim.speechCooldown = 40 + Math.random() * 30;
+            pendingUpdates.current.set(i, { bubbleText: null });
+            // Khoảng lặng cả phố sau khi 1 người dứt lời: 6s - 12s
+            nextStreetSpeechTimerRef.current = 6 + Math.random() * 6;
+          }
+        } else if (sim.speechCooldown > 0) {
+          sim.speechCooldown -= dtSec;
+        }
       });
+
+      // 3. Điều phối thoại đường phố: Chỉ cho phép tối đa 1 người nói tại một thời điểm
+      const activeBubbles = simRef.current.filter(s => s.bubbleTimer > 0).length;
+      if (activeBubbles === 0) {
+        nextStreetSpeechTimerRef.current -= dtSec;
+        if (nextStreetSpeechTimerRef.current <= 0) {
+          // Lọc các cư dân sẵn sàng nói (không bận nói chuyện modal, không trong cooldown)
+          const candidates = simRef.current
+            .map((s, idx) => ({ sim: s, idx }))
+            .filter(({ sim }) => sim.behavior !== 'TALKING' && sim.speechCooldown <= 0);
+
+          if (candidates.length > 0) {
+            const picked = candidates[Math.floor(Math.random() * candidates.length)];
+            const def = CITIZEN_DEFS[picked.idx];
+            const quote = def.quotes[Math.floor(Math.random() * def.quotes.length)];
+
+            // Thời lượng hiển thị: 5.5s đến 7.8s tùy độ dài câu nói (cho người chơi đủ thời gian đọc thoải mái)
+            const durationSec = Math.max(5.5, Math.min(7.8, quote.length * 0.09));
+
+            picked.sim.bubbleTimer = durationSec;
+            picked.sim.speechCooldown = durationSec + 40 + Math.random() * 30;
+            picked.sim.jumpOffset = 6; // Nhảy nhẹ vui vẻ khi cất lời
+
+            const nextEmotion = Math.random() < 0.6 ? def.emotion : (Math.random() < 0.5 ? 'HAPPY' : 'STAR_EYES');
+            pendingUpdates.current.set(picked.idx, {
+              bubbleText: quote,
+              emotion: nextEmotion,
+            });
+          } else {
+            nextStreetSpeechTimerRef.current = 3.5;
+          }
+        }
+      }
 
       // Flush appearance updates mỗi 200ms thay vì mỗi frame
       if (flushAccum >= 200 && pendingUpdates.current.size > 0) {
@@ -653,6 +709,7 @@ export default function ExpressiveStreetCitizens({
     // Dung han lai va quay mat ra, khong di tiep cho den khi dong hoi thoai.
     sim.behavior = 'TALKING';
     sim.behaviorTimer = Number.POSITIVE_INFINITY;
+    sim.bubbleTimer = 0;
     sim.jumpOffset = 14;
 
     recordCitizenTalk();
@@ -762,7 +819,9 @@ export default function ExpressiveStreetCitizens({
     if (talkingIdx === null) return;
     const sim = simRef.current[talkingIdx];
     sim.behavior = 'WALKING';
-    sim.behaviorTimer = 110 + Math.random() * 90;
+    sim.behaviorTimer = 8 + Math.random() * 8;
+    sim.bubbleTimer = 0;
+    sim.speechCooldown = 30 + Math.random() * 20;
     setTalkingIdx(null);
     setSelectedOptId(null);
   }, [talkingIdx]);
@@ -781,16 +840,16 @@ export default function ExpressiveStreetCitizens({
               className="group absolute bottom-2 left-0 flex flex-col items-center"
             >
               {app.bubbleText && (
-                /*
-                 * Cu dan cach nhau ~150px ma bong bong rong toi 230px nen hai
-                 * nguoi di gan nhau se de bong bong len nhau. Day le theo chi so
-                 * de hang xom khong nam cung mot do cao.
-                 */
                 <div
-                  style={{ marginBottom: 4 + (i % 3) * 32, zIndex: 30 - (i % 3) }}
-                  className="relative w-max max-w-[240px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-3 py-1.5 text-xs font-extrabold text-[#3E2A1B] shadow-md"
+                  style={{ marginBottom: 10, zIndex: 45 }}
+                  className="cit-speech-bubble relative w-max max-w-[250px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-3.5 py-2 text-xs font-extrabold text-[#3E2A1B] shadow-[0_4px_14px_rgba(62,42,27,0.18)]"
                 >
-                  {app.bubbleText}
+                  <span>{app.bubbleText}</span>
+                  {/* Mũi tên hướng xuống nhân vật */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 border-b-2 border-r-2 border-[#3E2A1B] bg-[#FFFDF7]"
+                  />
                 </div>
               )}
               <div className="relative flex flex-col items-center">

@@ -35,6 +35,7 @@ import DialogueModal, { type DialogueView } from '@/components/mocity/DialogueMo
 import WelcomeScreen from '@/components/mocity/WelcomeScreen';
 import StoreInspectorModal from '@/components/mocity/StoreInspectorModal';
 import MayorCenterModal from '@/components/mocity/MayorCenterModal';
+import TutorialCoach from '@/components/mocity/TutorialCoach';
 import InventoryModal from '@/components/mocity/InventoryModal';
 import { EVENT_BY_ID, REQUEST_BY_ID } from '@/lib/mocity/dialogue-data';
 import { HAPPINESS_WARNING_AT } from '@/lib/mocity/city-calculator';
@@ -1074,6 +1075,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               {/* Primary CTA */}
               <button
                 type="button"
+                data-tour="build"
                 onClick={() => setDrawerOpen(true)}
                 className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#9D174D] bg-[#D82D8B] px-4 text-xs font-black text-white shadow transition-transform hover:bg-[#EB2F96] active:scale-95"
               >
@@ -1181,6 +1183,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               {/* Tòa Thị Chính */}
               <button
                 type="button"
+                data-tour="cityhall"
                 onClick={() => {
                   setMayorModalTab('CITIZENS');
                   setMayorModalOpen(true);
@@ -1206,6 +1209,10 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           </div>
         )}
       </div>
+
+      {isPlaying && (
+        <TutorialCoach hidden={drawerOpen || inspectorOpen || mayorModalOpen || inventoryOpen || Boolean(dialogueView)} />
+      )}
 
       <BuildDrawer
         open={drawerOpen}

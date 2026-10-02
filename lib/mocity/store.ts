@@ -37,6 +37,7 @@ import {
 } from './city-calculator';
 import { CITY_EVENTS, EVENT_BY_ID, REQUEST_BY_ID } from './dialogue-data';
 import { eligibleRequestFor } from './dialogue-engine';
+import { TUTORIAL_STEPS, currentTutorialStep, type TutorialStep } from './tutorial';
 import { ARCHETYPES, DIGITAL_TRUST_THRESHOLD, archetypeForBuilding, npcNameFor } from './npc-data';
 import {
   emptyLedger,
@@ -154,6 +155,8 @@ function createInitialState(): CityState {
     lastTalkAt: 0,
     lastEngagedAt: now,
     eventLog: { day: todayKey(now), resolved: 0 },
+    tutorialStep: 0,
+    tutorialFlags: [],
     debt: 0,
     totalInterestPaid: 0,
     dailyLog: emptyDailyLog(now),
@@ -217,6 +220,8 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
   3: (s) => ({
     ...s,
     eventLog: { day: todayKey(Date.now()), resolved: 0 },
+    tutorialStep: 0,
+    tutorialFlags: [],
     debt: 0,
     totalInterestPaid: 0,
     dailyLog: emptyDailyLog(Date.now()),
@@ -517,6 +522,17 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
           claimed: Array.isArray(migrated.dailyLog.claimed) ? migrated.dailyLog.claimed : [],
         }
       : emptyDailyLog(now);
+  /*
+   * Save cu khong co huong dan. Nguoi da choi tu truoc thi KHONG bat hoc lai:
+   * co cong trinh roi tuc la da biet choi.
+   */
+  merged.tutorialStep = Number.isFinite(migrated.tutorialStep)
+    ? migrated.tutorialStep
+    : merged.buildings.length > 0
+      ? -1
+      : 0;
+  merged.tutorialFlags = Array.isArray(migrated.tutorialFlags) ? migrated.tutorialFlags : [];
+
   /* Save cu khong co no - mac dinh khong vay. */
   merged.debt = Number.isFinite(migrated.debt) ? Math.max(0, migrated.debt) : 0;
   merged.totalInterestPaid = Number.isFinite(migrated.totalInterestPaid)
@@ -1783,6 +1799,68 @@ export function claimQuestReward(questId: string): boolean {
   Object.assign(next, addMayorXp(next, quest.rewardXp));
   setState(next);
   return true;
+}
+
+/* ───────────────────────────── HƯỚNG DẪN ───────────────────────────────── */
+
+/** Bước hướng dẫn hiện tại, `null` khi đã xong hoặc đã bỏ qua. */
+export function useTutorialStep(): TutorialStep | null {
+  const step = useCity((s) => s.tutorialStep ?? 0);
+  const buildings = useCity((s) => s.buildings);
+  const flags = useCity((s) => s.tutorialFlags);
+  const dailyLog = useCity((s) => s.dailyLog);
+  const eventLog = useCity((s) => s.eventLog);
+  /*
+   * Doc qua selector thay vi goi `currentTutorialStep(state)` mot lan: ham do
+   * doc state o module nen khong kich hoat render lai, the huong dan se dung
+   * yen sau khi nguoi choi lam xong thao tac.
+   */
+  return useMemo(() => {
+    void buildings;
+    void flags;
+    void dailyLog;
+    void eventLog;
+    if (step < 0 || step >= TUTORIAL_STEPS.length) return null;
+    return TUTORIAL_STEPS[step];
+  }, [step, buildings, flags, dailyLog, eventLog]);
+}
+
+/** Bước hiện tại đã hoàn thành chưa. */
+export function isTutorialStepDone(s: CityState = state): boolean {
+  const step = currentTutorialStep(s);
+  return step ? step.done(s) : false;
+}
+
+/** Sang bước kế. Hết bước thì đánh dấu xong. */
+export function advanceTutorial(): void {
+  const i = state.tutorialStep ?? 0;
+  if (i < 0) return;
+  const tiep = i + 1;
+  setState({ ...state, tutorialStep: tiep >= TUTORIAL_STEPS.length ? -1 : tiep });
+}
+
+/** Bỏ qua toàn bộ hướng dẫn. */
+export function skipTutorial(): void {
+  if ((state.tutorialStep ?? 0) < 0) return;
+  setState({ ...state, tutorialStep: -1 });
+}
+
+/** Chơi lại hướng dẫn từ đầu. */
+export function restartTutorial(): void {
+  setState({ ...state, tutorialStep: 0, tutorialFlags: [] });
+}
+
+/**
+ * Đánh dấu một mốc mà chỉ UI mới biết, ví dụ "đã mở Sổ Cái".
+ *
+ * Tách khỏi `advanceTutorial`: đánh dấu mốc KHÔNG tự sang bước. Người chơi
+ * vẫn phải đọc phần giải thích rồi tự bấm Tiếp, nếu không thì bước trôi qua
+ * trước khi họ kịp nhìn.
+ */
+export function markTutorialFlag(flag: string): void {
+  const cu = state.tutorialFlags ?? [];
+  if (cu.includes(flag)) return;
+  setState({ ...state, tutorialFlags: [...cu, flag] });
 }
 
 export function resetCity(): void {
