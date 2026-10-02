@@ -316,7 +316,14 @@ export interface FlowBreakdown {
   /** LOI NHUAN HOAT DONG (EBIT) = loi nhuan gop - chi phi vat hanh. */
   operatingIncome: number;
   operatingMargin: number;
-  /** Thue thu nhap doanh nghiep tren loi nhuan hoat dong. */
+  /**
+   * CHI PHI LAI VAY tren du no. Nam GIUA EBIT va thue, dung thu tu bao cao
+   * that: lai vay duoc tru truoc khi tinh thue, nen vay von co "la chan thue".
+   */
+  interestExpense: number;
+  /** LOI NHUAN TRUOC THUE (EBT) = EBIT - lai vay. */
+  pretaxIncome: number;
+  /** Thue thu nhap doanh nghiep, tinh tren LOI NHUAN TRUOC THUE. */
   tax: number;
   /** LOI NHUAN RONG = loi nhuan hoat dong - thue. Day la tien thuc vao ngan khoc. */
   netIncome: number;
@@ -353,6 +360,8 @@ export interface FlowOptions {
    * de `happinessFor` va boi so hanh phuc khong lech nhau.
    */
   relicHappinessBonus?: number;
+  /** Du no hien tai. Sinh ra chi phi lai vay tru vao P&L moi giay. */
+  debt?: number;
 }
 
 /**
@@ -372,6 +381,72 @@ export interface FlowOptions {
  * chu khong phai cong vao doanh thu (sai so pho bien nhat khi lam P&L).
  */
 export const CORPORATE_TAX_RATE = 0.2;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * VAY VON & DONG TIEN
+ *
+ * Truoc day `coins` vua la loi nhuan vua la tien mat, va khong the am: muon
+ * tieu ma khong du thi nut bi chan, the thoi. Nghia la cach doanh nghiep nho
+ * chet pho bien nhat - LAI TREN GIAY NHUNG CAN TIEN MAT - khong mo hinh hoa
+ * duoc, du do moi la bai hoc dang gia nhat cua ca mang SME.
+ *
+ * Them no vao thi: tien vay la don bay, lai vay la chi phi that tru vao P&L,
+ * va vay qua suc tra thi bi chan vay tiep. Ba thu do la mot bai day hoan
+ * chinh ve don bay tai chinh.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Lai suat vay, tinh theo NAM, quy doi ra moi giay trong `interestPerSecond`. */
+export const LOAN_ANNUAL_RATE = 0.18;
+
+/**
+ * Mot "nam" trong game. Doanh thu tinh theo giay nen lai suat nam phai quy ve
+ * cung thang do, neu khong lai vay se nho toi muc vo nghia.
+ *
+ * 1 gio thuc = 1 nam trong game: du dai de nguoi choi khong thay lai nhay
+ * giat minh, du ngan de trong mot phien choi van cam nhan duoc gia cua no.
+ */
+export const GAME_YEAR_SECONDS = 3_600;
+
+/**
+ * HAN MUC VAY = bao nhieu lan loi nhuan hoat dong mot "nam".
+ *
+ * Day chinh la he so Debt / EBITDA ma ngan hang that dung de tham dinh. Dat
+ * 3.0 vi do la nguong pho bien cho vay doanh nghiep nho - vuot qua thi ho
+ * tu choi, dung nhu trong game.
+ */
+export const MAX_DEBT_TO_EBIT = 3.0;
+
+/** Lai phai tra moi giay tren du no hien tai. */
+export function interestPerSecond(debt: number): number {
+  if (!Number.isFinite(debt) || debt <= 0) return 0;
+  return (debt * LOAN_ANNUAL_RATE) / GAME_YEAR_SECONDS;
+}
+
+/**
+ * Han muc vay toi da dua tren kha nang tra no.
+ *
+ * Dung loi nhuan HOAT DONG (truoc lai vay va thue) chu khong phai doanh thu:
+ * doanh thu cao ma bien mong thi van khong tra duoc no, va do dung la cho
+ * nhieu chu tiem nham.
+ */
+export function debtCeilingFor(operatingIncomePerSec: number): number {
+  if (!Number.isFinite(operatingIncomePerSec) || operatingIncomePerSec <= 0) return 0;
+  return operatingIncomePerSec * GAME_YEAR_SECONDS * MAX_DEBT_TO_EBIT;
+}
+
+/**
+ * He so bao phu lai vay (Interest Coverage Ratio) = EBIT / lai vay.
+ *
+ * Duoi 1.5 la vung nguy hiem that trong tham dinh tin dung: lai an gan het
+ * loi nhuan, chi can mot thang kem la vo no.
+ */
+export function interestCoverage(operatingIncomePerSec: number, interestPerSec: number): number {
+  if (interestPerSec <= 0) return Number.POSITIVE_INFINITY;
+  return operatingIncomePerSec / interestPerSec;
+}
+
+/** Nguong canh bao he so bao phu lai vay. */
+export const COVERAGE_WARNING_AT = 1.5;
 
 /** Ty le gia von mac dinh khi `BuildingDef` khong khai bao. */
 const DEFAULT_COGS_RATE = 0.35;
@@ -472,8 +547,15 @@ export function flowFor(
 
   const opex = grossRevenue * opexRate;
   const operatingIncome = grossProfit - opex;
-  const tax = Math.max(0, operatingIncome) * CORPORATE_TAX_RATE;
-  const netIncome = operatingIncome - tax;
+
+  /*
+   * Lai vay tru TRUOC thue, dung thu tu bao cao that. Day cung la ly do vay
+   * von co "la chan thue": moi dong lai vay lam giam thu nhap chiu thue.
+   */
+  const interestExpense = interestPerSecond(opts.debt ?? 0);
+  const pretaxIncome = operatingIncome - interestExpense;
+  const tax = Math.max(0, pretaxIncome) * CORPORATE_TAX_RATE;
+  const netIncome = pretaxIncome - tax;
 
   return {
     demand,
@@ -494,10 +576,12 @@ export function flowFor(
     opex,
     operatingIncome,
     operatingMargin: grossRevenue > 0 ? operatingIncome / grossRevenue : 0,
+    interestExpense,
+    pretaxIncome,
     tax,
     netIncome,
     netMargin: grossRevenue > 0 ? netIncome / grossRevenue : 0,
-    costPerSec: cogs + opex + tax,
+    costPerSec: cogs + opex + interestExpense + tax,
 
     revenue: netIncome,
   };

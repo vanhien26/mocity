@@ -428,7 +428,7 @@ export default function ViaHeStreetBoard({
       {streetToast && (
         <div
           style={{ backgroundColor: '#FFFDF7' }}
-          className="pointer-events-none absolute top-4 left-1/2 z-40 -translate-x-1/2 rounded-2xl border-2 border-[#4A3B32] bg-[#FFFDF7] px-4 py-2 text-xs font-black text-[#4A3B32] shadow-xl"
+          className="pointer-events-none absolute top-4 left-1/2 z-40 -translate-x-1/2 rounded-2xl border-2 border-[#4A3B32] bg-[#FFFDF7] px-4 py-2 text-sm font-black text-[#4A3B32] shadow-xl"
         >
           {streetToast}
         </div>
@@ -661,7 +661,7 @@ export default function ViaHeStreetBoard({
                           <span>Chuyện phố!</span>
                         </button>
                       ) : plot.chatterText ? (
-                        <div className="w-max max-w-[250px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#5A4A3F] bg-white px-3 py-1 text-[11px] font-bold text-[#3E2A1B] shadow">
+                        <div className="w-max max-w-[260px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#5A4A3F] bg-white px-3.5 py-1.5 text-xs font-bold text-[#3E2A1B] shadow">
                           “{plot.chatterText}”
                         </div>
                       ) : null}

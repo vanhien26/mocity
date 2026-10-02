@@ -1,6 +1,13 @@
 'use client';
 
-import { useCity, useCityDerived } from '@/lib/mocity/store';
+import { useState } from 'react';
+
+import { useCity, useCityDerived, takeLoan, repayLoan } from '@/lib/mocity/store';
+import {
+  COVERAGE_WARNING_AT,
+  LOAN_ANNUAL_RATE,
+  MAX_DEBT_TO_EBIT,
+} from '@/lib/mocity/city-calculator';
 import type { PeriodLedger } from '@/lib/mocity/types';
 import { formatNumber, formatRate } from '@/lib/mocity/format';
 
@@ -91,7 +98,142 @@ function Pct({ value }: { value: number }) {
  * Man hinh nay la noi game day nguoi choi hieu tien doanh thu KHONG phai la
  * tien con lai: phai tru gia von, chi phi van hanh va thue truoc.
  */
-export default function ProfitLossStatement() {
+/* ═══════════════════════════════════════════════════════════════════════════
+ * KHOẢN VAY NGÂN HÀNG SỐ MOMO
+ *
+ * Đặt NGAY TRÊN báo cáo P&L, không phải một tab riêng: người chơi phải thấy
+ * khoản vay và dòng "chi phí lãi vay" nó tạo ra trong cùng một màn hình, nếu
+ * không thì vay tiền vẫn là chuyện không hậu quả.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
+  const coins = useCity((s) => s.coins);
+  const derived = useCityDerived();
+  const [soTien, setSoTien] = useState('');
+
+  const duNo = derived.debt;
+  const tran = derived.debtCeiling;
+  const conVay = derived.loanHeadroom;
+  const heSo = derived.interestCoverage;
+  const cang = Number.isFinite(heSo) && heSo < COVERAGE_WARNING_AT;
+  const pctDung = tran > 0 ? Math.min(100, Math.round((duNo / tran) * 100)) : 0;
+
+  const so = Number(soTien.replace(/\D/g, '')) || 0;
+
+  const vay = () => {
+    const r = takeLoan(so);
+    if (r.ok) {
+      setSoTien('');
+      onToast?.(`Đã giải ngân ${formatNumber(r.amount)} Xu. Dư nợ mới ${formatNumber(duNo + r.amount)} Xu.`);
+      return;
+    }
+    if (r.reason === 'noIncome') onToast?.('Thành phố chưa có lợi nhuận hoạt động nên chưa đủ điều kiện vay.');
+    else if (r.reason === 'ceiling') onToast?.(`Vượt hạn mức. Chỉ còn vay được ${formatNumber(conVay)} Xu.`);
+    else onToast?.('Nhập số tiền muốn vay.');
+  };
+
+  const tra = () => {
+    const r = repayLoan(so || duNo);
+    if (r.ok) {
+      setSoTien('');
+      onToast?.(`Đã trả ${formatNumber(r.amount)} Xu. Dư nợ còn ${formatNumber(r.remaining)} Xu.`);
+      return;
+    }
+    if (r.reason === 'funds') onToast?.('Ngân khố không đủ để trả khoản này.');
+    else if (r.reason === 'noDebt') onToast?.('Thành phố đang không có dư nợ.');
+    else onToast?.('Nhập số tiền muốn trả.');
+  };
+
+  return (
+    <div
+      className="rounded-2xl border-2 p-3.5"
+      style={{
+        background: cang ? '#FEF2F2' : '#FFFBEB',
+        borderColor: cang ? '#DC2626' : '#C9A227',
+      }}
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-[10px] font-black uppercase tracking-wide" style={{ color: cang ? '#B91C1C' : '#8B6318' }}>
+          Khoản vay Ngân Hàng Số MoMo
+        </p>
+        <span className="text-[10px] font-black" style={{ color: '#8B6318' }}>
+          lãi {Math.round(LOAN_ANNUAL_RATE * 100)}%/năm
+        </span>
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
+          <p className="text-[9px] font-black uppercase text-[#8A7355]">Dư nợ</p>
+          <p className="text-sm font-black tabular-nums" style={{ color: duNo > 0 ? '#B91C1C' : '#1C171A' }}>
+            {formatNumber(duNo)} Xu
+          </p>
+        </div>
+        <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
+          <p className="text-[9px] font-black uppercase text-[#8A7355]">Còn vay được</p>
+          <p className="text-sm font-black tabular-nums text-[#1C171A]">{formatNumber(conVay)} Xu</p>
+        </div>
+      </div>
+
+      {/* Han muc da dung */}
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#E6D9B8' }}>
+        <div
+          className="h-full rounded-full transition-[width] duration-500"
+          style={{ width: `${pctDung}%`, background: cang ? '#DC2626' : 'linear-gradient(90deg,#34D399,#FBBF24)' }}
+        />
+      </div>
+      <p className="mt-1 text-[10px] font-bold" style={{ color: '#8B6318' }}>
+        Đã dùng {pctDung}% hạn mức. Hạn mức bằng {MAX_DEBT_TO_EBIT} lần lợi nhuận hoạt động một năm —
+        ngân hàng cho vay theo <b>khả năng trả nợ</b>, không theo doanh thu.
+      </p>
+
+      {duNo > 0 && (
+        <p
+          className="mt-1.5 rounded-lg px-2 py-1.5 text-[10px] font-bold leading-relaxed"
+          style={{ background: cang ? '#FEE2E2' : '#FFFFFF', color: cang ? '#991B1B' : '#5B3D22' }}
+        >
+          Hệ số bao phủ lãi vay <b>{heSo.toFixed(2)}</b> = lợi nhuận hoạt động chia chi phí lãi vay.
+          {cang
+            ? ' Dưới 1,5 là vùng nguy hiểm: lãi đang ăn gần hết lợi nhuận, chỉ cần một tháng kém là vỡ nợ.'
+            : ' Trên 1,5 nghĩa là lợi nhuận vẫn đủ gánh lãi.'}
+        </p>
+      )}
+
+      <div className="mt-2 flex items-center gap-1.5">
+        <input
+          value={soTien}
+          onChange={(e) => setSoTien(e.target.value.replace(/\D/g, ''))}
+          inputMode="numeric"
+          placeholder="Số Xu"
+          className="min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs font-black tabular-nums outline-none"
+          style={{ borderColor: '#C9A22788', background: '#FFFFFF', color: '#1C171A' }}
+        />
+        <button
+          type="button"
+          onClick={vay}
+          disabled={so <= 0 || so > conVay}
+          className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ background: '#2563EB' }}
+        >
+          Vay
+        </button>
+        <button
+          type="button"
+          onClick={tra}
+          disabled={duNo <= 0 || coins <= 0}
+          className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ background: '#16A34A' }}
+        >
+          Trả nợ
+        </button>
+      </div>
+      <p className="mt-1 text-[9px] font-bold text-[#8A7355]">
+        Để trống ô số rồi bấm Trả nợ để trả hết. Tiền vay vào ngân khố ngay nhưng
+        <b> không phải doanh thu</b> — nó là nghĩa vụ phải trả.
+      </p>
+    </div>
+  );
+}
+
+export default function ProfitLossStatement({ onToast }: { onToast?: (msg: string) => void }) {
   const day = useCity((s) => s.ledgerDay);
   const month = useCity((s) => s.ledgerMonth);
   const life = useCity((s) => s.ledgerLifetime);
@@ -102,6 +244,8 @@ export default function ProfitLossStatement() {
 
   return (
     <div className="space-y-3">
+      <LoanPanel onToast={onToast} />
+
       {/* Tốc độ hiện tại - cùng cấu trúc nhưng là /giây */}
       <div
         className="rounded-2xl border-2 p-3.5"
@@ -124,6 +268,12 @@ export default function ProfitLossStatement() {
             value={derived.operatingIncome}
             strong
           />
+          {derived.debt > 0 && (
+            <>
+              <Row label="− Chi phí lãi vay" value={-derived.interestExpense} tone="minus" indent />
+              <Row label="= Lợi nhuận trước thuế" value={derived.pretaxIncome} strong />
+            </>
+          )}
           <Row label="− Thuế TNDN 20%" value={-derived.tax} tone="minus" indent />
           <Row label="= Lợi nhuận ròng" value={derived.netIncome} tone="total" strong />
         </div>
@@ -139,7 +289,9 @@ export default function ProfitLossStatement() {
         const l = ledgers[period];
         const grossProfit = l.grossRevenue - l.cogs;
         const operating = grossProfit - l.opex;
-        const net = operating - l.tax;
+        const laiVay = l.interestExpense ?? 0;
+        // Lai vay tru TRUOC thue, nen loi nhuan rong phai tru ca hai.
+        const net = operating - laiVay - l.tax;
         const empty = l.grossRevenue === 0 && l.capex === 0;
 
         const periodLabel = period === 'day' ? l.day : l.month;
@@ -184,6 +336,12 @@ export default function ProfitLossStatement() {
                   indent
                 />
                 <Row label={`= Lợi nhuận hoạt động`} value={operating} strong />
+                {laiVay > 0 && (
+                  <>
+                    <Row label="− Chi phí lãi vay" value={-laiVay} tone="minus" indent />
+                    <Row label="= Lợi nhuận trước thuế" value={operating - laiVay} strong />
+                  </>
+                )}
                 <Row label={`− Thuế TNDN`} value={-l.tax} tone="minus" indent />
                 <Row
                   label="= Lợi nhuận ròng"

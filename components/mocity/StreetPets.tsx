@@ -587,7 +587,7 @@ export default function StreetPets({
                   transform: `translateX(-50%) scaleX(${simsRef.current[i].dir})`,
                 }}
               >
-                <div className="whitespace-nowrap rounded-xl border border-[#78533D] bg-[#FFFDF7] px-2.5 py-1 text-[10px] font-bold text-[#3E2A1B] shadow-md">
+                <div className="whitespace-nowrap rounded-xl border border-[#78533D] bg-[#FFFDF7] px-3 py-1.5 text-xs font-bold text-[#3E2A1B] shadow-md">
                   {activeSpeech!.text}
                 </div>
                 <div className="h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-[#78533D]" />
@@ -610,7 +610,7 @@ export default function StreetPets({
               className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center"
               style={{ animation: 'petBubblePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
             >
-              <div className="whitespace-nowrap rounded-xl border border-[#78533D] bg-[#FFFDF7] px-2.5 py-1 text-[10px] font-bold text-[#3E2A1B] shadow-md">
+              <div className="whitespace-nowrap rounded-xl border border-[#78533D] bg-[#FFFDF7] px-3 py-1.5 text-xs font-bold text-[#3E2A1B] shadow-md">
                 {activeSpeech.text}
               </div>
               <div className="h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-[#78533D]" />

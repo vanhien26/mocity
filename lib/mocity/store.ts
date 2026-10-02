@@ -21,6 +21,10 @@ import {
   buildingAt,
   coinsPerSecond,
   flowFor,
+  type FlowOptions,
+  debtCeilingFor,
+  interestPerSecond,
+  interestCoverage,
   clampHappiness,
   HAPPINESS_BOOST_CAP,
   happinessFor,
@@ -150,6 +154,8 @@ function createInitialState(): CityState {
     lastTalkAt: 0,
     lastEngagedAt: now,
     eventLog: { day: todayKey(now), resolved: 0 },
+    debt: 0,
+    totalInterestPaid: 0,
     dailyLog: emptyDailyLog(now),
     streak: { days: 0, lastDay: '', best: 0 },
     streakClaimed: 0,
@@ -211,6 +217,8 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
   3: (s) => ({
     ...s,
     eventLog: { day: todayKey(Date.now()), resolved: 0 },
+    debt: 0,
+    totalInterestPaid: 0,
     dailyLog: emptyDailyLog(Date.now()),
     cityTierClaimed: 1,
     happinessBoost: 0,
@@ -509,6 +517,11 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
           claimed: Array.isArray(migrated.dailyLog.claimed) ? migrated.dailyLog.claimed : [],
         }
       : emptyDailyLog(now);
+  /* Save cu khong co no - mac dinh khong vay. */
+  merged.debt = Number.isFinite(migrated.debt) ? Math.max(0, migrated.debt) : 0;
+  merged.totalInterestPaid = Number.isFinite(migrated.totalInterestPaid)
+    ? Math.max(0, migrated.totalInterestPaid)
+    : 0;
   merged.cityTierClaimed = Number.isFinite(migrated.cityTierClaimed)
     ? Math.max(1, Math.min(CITY_TIERS.length, migrated.cityTierClaimed))
     : 1;
@@ -864,6 +877,7 @@ function recordOperatingFlow(s: CityState, flow: FlowBreakdown, seconds: number)
     grossRevenue: flow.grossRevenue * seconds,
     cogs: flow.cogs * seconds,
     opex: flow.opex * seconds,
+    interestExpense: flow.interestExpense * seconds,
     tax: flow.tax * seconds,
     netIncome: flow.netIncome * seconds,
   });
@@ -901,6 +915,7 @@ export function tickIdle(): void {
     happinessBoost: state.happinessBoost,
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
+    debt: state.debt ?? 0,
   });
 
   let next: CityState = {
@@ -920,6 +935,17 @@ export function tickIdle(): void {
    * bang tien nhan se lam bao cao khong bao gio cong bang.
    */
   next = recordOperatingFlow(next, flow, seconds);
+
+  /*
+   * Lai vay da duoc tru trong `flow.netIncome` roi, day chi cong don de bao
+   * cao. Khong tru lan thu hai.
+   */
+  if (flow.interestExpense > 0) {
+    next = {
+      ...next,
+      totalInterestPaid: (next.totalInterestPaid ?? 0) + flow.interestExpense * seconds,
+    };
+  }
 
   next = maybeSpawnRequest(next, now);
   next = maybeSpawnEvent(next, now);
@@ -1356,6 +1382,100 @@ export function spendCoins(amount: number): boolean {
   return true;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * VAY VON NGAN HANG SO MOMO
+ *
+ * Tien vay vao ngan khoc ngay, nghia vu tra o lai duoi dang `debt`. Lai tinh
+ * moi giay va tru thang vao P&L truoc thue.
+ *
+ * Han muc khong phai mot con so co dinh ma suy tu KHA NANG TRA NO (bội số
+ * EBIT), dung cach ngan hang that tham dinh. Nguoi choi lai mong se thay minh
+ * vay duoc it hon nguoi lai day du doanh thu bang nhau - do chinh la bai hoc.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export type LoanResult =
+  | { ok: true; amount: number }
+  | { ok: false; reason: 'ceiling' | 'invalid' | 'noIncome' };
+
+/**
+ * Dung MOT bo tham so cho moi noi tinh dong tien.
+ *
+ * Ban dau `takeLoan` goi `flowFor` chi voi `{ debt }`, bo het hanh phuc, Gio
+ * Vang va Bao Vat. Ket qua la bang Kho an Vay hien "con vay duoc 362.809"
+ * (tinh qua `useCityDerived`, co day du bonus) nhung bam Vay thi bi tu choi
+ * vi store tinh ra EBIT thap hon han. Mot game day ve tai chinh khong duoc
+ * phep hien mot con so roi tu choi chinh con so do.
+ */
+function flowOptsFor(s: CityState): FlowOptions {
+  let relicYieldBonus = 0;
+  let relicHappyBonus = 0;
+  for (const rId of s.equippedRelics ?? []) {
+    const def = INVENTORY_BY_ID[rId];
+    if (!def) continue;
+    relicYieldBonus += def.passiveYieldBonus ?? 0;
+    relicHappyBonus += def.passiveHappinessBonus ?? 0;
+  }
+  return {
+    isFever: (s.feverUntil ?? 0) > Date.now(),
+    idleMs: Date.now() - s.lastEngagedAt,
+    happinessBoost: s.happinessBoost,
+    relicBonus: relicYieldBonus,
+    relicHappinessBonus: relicHappyBonus,
+    debt: s.debt ?? 0,
+  };
+}
+
+/** Han muc vay con lai. 0 nghia la khong du kha nang tra de vay them. */
+export function loanHeadroom(s: CityState = state): number {
+  const flow = flowFor(s.buildings, s.npcs, s.mayorLevel, s.coins, flowOptsFor(s));
+  const tran = debtCeilingFor(flow.operatingIncome);
+  return Math.max(0, tran - (s.debt ?? 0));
+}
+
+export function takeLoan(amount: number): LoanResult {
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: 'invalid' };
+
+  const flow = flowFor(state.buildings, state.npcs, state.mayorLevel, state.coins, flowOptsFor(state));
+  if (flow.operatingIncome <= 0) return { ok: false, reason: 'noIncome' };
+
+  const conLai = Math.max(0, debtCeilingFor(flow.operatingIncome) - (state.debt ?? 0));
+  if (amount > conLai) return { ok: false, reason: 'ceiling' };
+
+  /*
+   * Tien vay KHONG phai doanh thu, cung khong phai tien thuong: no la mot
+   * khoan no. Nen cong thang vao `coins` chu khong qua `withCoins` - neu di
+   * qua do thi no se chui vao `totalCoinsEarned` va bao cao se noi rang vay
+   * tien la mot nguon thu nhap.
+   */
+  setState({
+    ...state,
+    coins: state.coins + amount,
+    debt: (state.debt ?? 0) + amount,
+  });
+  return { ok: true, amount };
+}
+
+export type RepayResult =
+  | { ok: true; amount: number; remaining: number }
+  | { ok: false; reason: 'funds' | 'noDebt' | 'invalid' };
+
+export function repayLoan(amount: number): RepayResult {
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: 'invalid' };
+  const duNo = state.debt ?? 0;
+  if (duNo <= 0) return { ok: false, reason: 'noDebt' };
+
+  const traThuc = Math.min(amount, duNo);
+  if (state.coins < traThuc) return { ok: false, reason: 'funds' };
+
+  // Tra no la giam nghia vu, KHONG phai chi phi - khong ghi vao P&L.
+  setState({
+    ...state,
+    coins: state.coins - traThuc,
+    debt: duNo - traThuc,
+  });
+  return { ok: true, amount: traThuc, remaining: duNo - traThuc };
+}
+
 export function buyLand(): boolean {
   const growCol = state.unlockedRows >= state.unlockedCols;
   const cost: Currencies = {
@@ -1728,6 +1848,17 @@ export interface CityDerived extends FlowBreakdown {
   capacity: number;
   used: number;
   isFever: boolean;
+  /** Du no hien tai. */
+  debt: number;
+  /** Tran vay toi da theo kha nang tra no (boi so EBIT). */
+  debtCeiling: number;
+  /** Con vay them duoc bao nhieu. */
+  loanHeadroom: number;
+  /**
+   * He so bao phu lai vay = EBIT / lai vay. Duoi `COVERAGE_WARNING_AT` la
+   * vung nguy hiem: lai an gan het loi nhuan.
+   */
+  interestCoverage: number;
 }
 
 export function setTimeOfDay(tod: TimeOfDay): void {
@@ -1795,6 +1926,7 @@ export function useCityDerived(): CityDerived {
    * `tickIdle` vua cong tien - nen suy giam hanh phuc buoc theo nhip game.
    */
   const lastSeenAt = useCity((s) => s.lastSeenAt);
+  const debt = useCity((s) => s.debt ?? 0);
 
   return useMemo(() => {
     let relicYieldBonus = 0;
@@ -1828,10 +1960,16 @@ export function useCityDerived(): CityDerived {
       happinessBoost,
       relicBonus: relicYieldBonus,
       relicHappinessBonus: relicHappyBonus,
+      debt,
     });
+    const debtCeiling = debtCeilingFor(flow.operatingIncome);
     return {
       ...flow,
       rate: flow.revenue,
+      debt,
+      debtCeiling,
+      loanHeadroom: Math.max(0, debtCeiling - debt),
+      interestCoverage: interestCoverage(flow.operatingIncome, flow.interestExpense),
       happiness,
       population: populationFor(buildings),
       taxMultiplier: taxMultiplierFromHappiness(happiness),
@@ -1852,6 +1990,7 @@ export function useCityDerived(): CityDerived {
     lastEngagedAt,
     happinessBoost,
     lastSeenAt,
+    debt,
   ]);
 }
 

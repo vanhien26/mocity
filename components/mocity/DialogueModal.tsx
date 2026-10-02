@@ -210,7 +210,7 @@ export default function DialogueModal({
                 {view.title}
               </p>
               <p
-                className="mt-0.5 text-[13px] font-semibold italic"
+                className="mt-0.5 text-sm font-semibold italic"
                 style={{ color: '#7A6855' }}
               >
                 {view.subtitle ?? 'Chuyện này chỉ mình bạn biết...'}
@@ -238,7 +238,7 @@ export default function DialogueModal({
               }}
             >
               <p
-                className="text-[13px] font-semibold leading-snug"
+                className="text-[14.5px] font-semibold leading-relaxed"
                 style={{ color: '#5A4634' }}
               >
                 {reply ?? view.body}
@@ -305,7 +305,7 @@ export default function DialogueModal({
                   >
                     <div className="min-w-0 flex-1">
                       <p
-                        className="text-[14px] font-black leading-snug"
+                        className="text-[15.5px] font-black leading-snug"
                         style={{ color: '#4A3525' }}
                       >
                         {choice.text}

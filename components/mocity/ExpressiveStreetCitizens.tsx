@@ -704,7 +704,7 @@ export default function ExpressiveStreetCitizens({
                  */
                 <div
                   style={{ marginBottom: 4 + (i % 3) * 32, zIndex: 30 - (i % 3) }}
-                  className="relative w-max max-w-[230px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-2.5 py-1 text-[10px] font-extrabold text-[#3E2A1B] shadow-md"
+                  className="relative w-max max-w-[240px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-3 py-1.5 text-xs font-extrabold text-[#3E2A1B] shadow-md"
                 >
                   {app.bubbleText}
                 </div>
@@ -752,7 +752,7 @@ export default function ExpressiveStreetCitizens({
                   </svg>
                 </button>
               </div>
-              <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#3E2A1B]/85 px-1.5 py-0.5 text-[8px] font-bold text-[#FEF08A] opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#3E2A1B]/90 px-2 py-0.5 text-[10px] font-bold text-[#FEF08A] opacity-0 transition-opacity group-hover:opacity-100 shadow">
                 {def.name}
               </span>
             </div>
@@ -775,24 +775,24 @@ export default function ExpressiveStreetCitizens({
             style={{ backgroundColor: '#FFFDF7', border: '2px solid #78533D' }}
           >
             {/* Header: Role badge, Citizen Name & Emotion emoji, Close button */}
-            <div className="mb-2.5 flex items-start gap-2">
+            <div className="mb-2.5 flex items-start gap-2.5">
               <span
-                className="mt-0.5 shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-black text-white shadow-xs"
+                className="mt-0.5 shrink-0 rounded-lg px-2.5 py-1 text-xs font-black text-white shadow-xs"
                 style={{ backgroundColor: '#D82D8B' }}
               >
                 {CITIZEN_DEFS[talkingIdx].role}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <p className="truncate text-xs font-black text-[#3E2A1B]">
+                  <p className="truncate text-sm font-black text-[#3E2A1B]">
                     {CITIZEN_DEFS[talkingIdx].name}
                   </p>
-                  <span className="text-xs" title={`Tâm trạng: ${currentEmotion}`}>
+                  <span className="text-sm" title={`Tâm trạng: ${currentEmotion}`}>
                     {EMOTION_EMOJIS[currentEmotion]}
                   </span>
                 </div>
-                <div className="mt-1 rounded-xl bg-[#FAF6EE] p-2 border border-[#E8DEC8]">
-                  <p className="text-[12px] font-medium leading-relaxed text-[#5A3E2B]">
+                <div className="mt-1.5 rounded-xl bg-[#FAF6EE] p-2.5 border border-[#E8DEC8]">
+                  <p className="text-sm font-semibold leading-relaxed text-[#5A3E2B]">
                     {talkLine}
                   </p>
                 </div>
@@ -801,14 +801,14 @@ export default function ExpressiveStreetCitizens({
                 type="button"
                 onClick={handleEndTalk}
                 aria-label="Kết thúc trò chuyện"
-                className="shrink-0 rounded-full px-2 py-0.5 text-base font-black text-[#8B7355] transition-colors hover:text-[#D82D8B]"
+                className="shrink-0 rounded-full px-2 py-0.5 text-lg font-black text-[#8B7355] transition-colors hover:text-[#D82D8B]"
               >
                 ×
               </button>
             </div>
 
             {/* Danh sách kịch bản lựa chọn */}
-            <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-[#F0E6D8]">
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F0E6D8]">
               {activeOptions.map((opt) => {
                 const isSelected = selectedOptId === opt.id;
                 const isPaid = opt.cost && opt.cost > 0;
@@ -817,7 +817,7 @@ export default function ExpressiveStreetCitizens({
                     key={opt.id}
                     type="button"
                     onClick={() => handleTalkOption(opt)}
-                    className="group relative rounded-xl px-2.5 py-1.5 text-[10px] font-black transition-all active:scale-95 text-left cursor-pointer"
+                    className="group relative rounded-xl px-3 py-2 text-xs font-black transition-all active:scale-95 text-left cursor-pointer"
                     style={
                       isPaid
                         ? {
@@ -834,7 +834,7 @@ export default function ExpressiveStreetCitizens({
                   >
                     <span>{opt.label}</span>
                     {isPaid && (
-                      <span className="ml-1 rounded bg-black/20 px-1 py-0.2 text-[9px] font-bold">
+                      <span className="ml-1.5 rounded bg-black/20 px-1.5 py-0.5 text-[10px] font-bold">
                         -{opt.cost} Xu
                       </span>
                     )}
@@ -846,7 +846,7 @@ export default function ExpressiveStreetCitizens({
               <button
                 type="button"
                 onClick={handleRerollGreeting}
-                className="rounded-xl border border-[#D5C2AF] bg-[#FAF6EE] px-2 py-1.5 text-[10px] font-bold text-[#8B7355] hover:bg-[#F3E8DC] transition-colors cursor-pointer"
+                className="rounded-xl border border-[#D5C2AF] bg-[#FAF6EE] px-3 py-2 text-xs font-bold text-[#8B7355] hover:bg-[#F3E8DC] transition-colors cursor-pointer"
                 title="Nghe câu chuyện hoặc lời chào khác từ cư dân này"
               >
                 🔄 Chuyện khác...
@@ -856,7 +856,7 @@ export default function ExpressiveStreetCitizens({
               <button
                 type="button"
                 onClick={handleEndTalk}
-                className="ml-auto rounded-xl px-2.5 py-1.5 text-[10px] font-black text-[#8B7355] hover:text-[#3E2A1B] transition-colors cursor-pointer"
+                className="ml-auto rounded-xl px-3 py-2 text-xs font-black text-[#8B7355] hover:text-[#3E2A1B] transition-colors cursor-pointer"
               >
                 Chào bà con 👋
               </button>

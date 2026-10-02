@@ -429,7 +429,7 @@ export default function MayorCenterModal({
                     </p>
                   </div>
                   {state.pendingEvent && (
-                    <span className="rounded-full bg-[#D82D8B] px-2 py-0.5 text-[9px] font-black uppercase text-white animate-pulse">
+                    <span className="rounded-full bg-[#D82D8B] px-2.5 py-0.5 text-[10.5px] font-black uppercase text-white animate-pulse">
                       Cần phân xử
                     </span>
                   )}
@@ -437,10 +437,10 @@ export default function MayorCenterModal({
 
                 {state.pendingEvent && EVENT_BY_ID[state.pendingEvent.scriptId] ? (
                   <div className="mt-2.5 space-y-1.5">
-                    <p className="text-xs font-black text-[#1C171A]">
+                    <p className="text-sm font-black text-[#1C171A]">
                       {EVENT_BY_ID[state.pendingEvent.scriptId].title}
                     </p>
-                    <p className="text-[11px] font-medium text-[#5B3D22] line-clamp-2">
+                    <p className="text-xs font-medium text-[#5B3D22] line-clamp-2">
                       “{EVENT_BY_ID[state.pendingEvent.scriptId].body}”
                     </p>
                     <button
@@ -500,11 +500,11 @@ export default function MayorCenterModal({
                 return (
                   <div key={chang} className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2 pt-1">
-                      <p className="text-[10px] font-black uppercase tracking-wide text-[#8A7355]">
+                      <p className="text-xs font-black uppercase tracking-wide text-[#8A7355]">
                         {chang === 1 ? 'Chặng 1 · Dựng Phố' : 'Chặng 2 · Bành Trướng'}
                       </p>
                       <span
-                        className="rounded-full px-2 py-0.5 text-[9px] font-black"
+                        className="rounded-full px-2.5 py-0.5 text-[10.5px] font-black"
                         style={
                           xongNhom === nhom.length
                             ? { background: '#DCFCE7', color: '#15803D' }
@@ -516,7 +516,7 @@ export default function MayorCenterModal({
                     </div>
 
                     {!moKhoa && (
-                      <p className="rounded-xl px-3 py-2 text-[10px] font-bold" style={{ background: '#F3EADA', color: '#8A7355' }}>
+                      <p className="rounded-xl px-3 py-2 text-xs font-bold" style={{ background: '#F3EADA', color: '#8A7355' }}>
                         Xong Chặng 1 để mở khóa phần thưởng lớn của Chặng 2.
                       </p>
                     )}
@@ -649,7 +649,7 @@ export default function MayorCenterModal({
             </div>
           )}
 
-          {tab === 'LEDGER' && <ProfitLossStatement />}
+          {tab === 'LEDGER' && <ProfitLossStatement onToast={onToast} />}
 
           {tab === 'STREAK' && <StreakBoard />}
 

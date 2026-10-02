@@ -757,13 +757,13 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
             }}
           >
-            <CircleDollarSign size={16} className="shrink-0 text-amber-400" />
+            <CircleDollarSign size={17} className="shrink-0 text-amber-400" />
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-sm font-black text-amber-200">{formatNumber(coins)}</span>
-                <span className="text-[9px] font-black text-amber-500">XU</span>
+                <span className="text-[10px] font-black text-amber-500">XU</span>
               </div>
-              <p className="text-[9px] font-black text-emerald-400 leading-none">+{formatRate(derived.rate)}</p>
+              <p className="text-[10.5px] font-black text-emerald-400 leading-none">+{formatRate(derived.rate)}</p>
             </div>
           </div>
 
@@ -776,7 +776,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
             }}
           >
-            <Star size={13} className="shrink-0 fill-sky-400 text-sky-400" />
+            <Star size={14} className="shrink-0 fill-sky-400 text-sky-400" />
             <span className="text-xs font-black text-sky-200">{gems}</span>
           </div>
 
@@ -796,9 +796,9 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               }}
               title={`Chuỗi ${streakDays} ngày liên tiếp · Kỷ lục ${streakBest} ngày`}
             >
-              <Flame size={13} className="shrink-0 fill-orange-400 text-orange-400" />
+              <Flame size={14} className="shrink-0 fill-orange-400 text-orange-400" />
               <span className="text-xs font-black text-orange-100">{streakDays}</span>
-              <span className="hidden text-[9px] font-black uppercase text-orange-300/80 lg:inline">
+              <span className="hidden text-[10px] font-black uppercase text-orange-300/80 lg:inline">
                 ngày
               </span>
             </div>
@@ -811,7 +811,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
            * day cao ca thanh HUD. Chot 150px la du cho muc XP 6 chu so.
            */}
           <div
-            className="flex w-[150px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1"
+            className="flex w-[155px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1"
             style={{
               background: 'linear-gradient(135deg, #1A0B2E, #3B1E5F)',
               borderColor: '#A78BFA',
@@ -828,7 +828,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             }
           >
             <div className="flex items-baseline justify-between gap-1.5">
-              <span className="whitespace-nowrap text-[9px] font-black uppercase leading-none tracking-wide text-violet-300">
+              <span className="whitespace-nowrap text-[10px] font-black uppercase leading-none tracking-wide text-violet-300">
                 Thị Trưởng
               </span>
               <span className="whitespace-nowrap text-xs font-black leading-none text-violet-100 tabular-nums">
@@ -841,7 +841,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#A78BFA,#EB2F96)' }}
               />
             </div>
-            <p className="whitespace-nowrap text-[9px] font-black leading-none text-violet-300/80 tabular-nums">
+            <p className="whitespace-nowrap text-[10px] font-black leading-none text-violet-300/80 tabular-nums">
               {isMaxLevel
                 ? 'Cấp tối đa'
                 : idleXpCapped

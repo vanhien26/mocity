@@ -265,6 +265,8 @@ export interface LedgerEntry {
   cogs: number;
   /** Chi phi vat hanh. */
   opex: number;
+  /** Chi phi lai vay tren du no trong ky. */
+  interestExpense: number;
   /** Thue thu nhap doanh nghiep. */
   tax: number;
   /** Loi nhuan rong = tien thuc vao ngan khoc tu hoat dong. */
@@ -285,6 +287,7 @@ export function emptyLedger(): LedgerEntry {
     grossRevenue: 0,
     cogs: 0,
     opex: 0,
+    interestExpense: 0,
     tax: 0,
     netIncome: 0,
     capex: 0,
@@ -364,6 +367,16 @@ export interface CityState extends Currencies {
   lastEngagedAt: number;
   /** Dem han giai quyet su kien trong ngay. Tu reset sang 0 khi sang ngay moi. */
   eventLog: EventDayLog;
+  /**
+   * DU NO hien tai. Sinh lai vay moi giay, tru thang vao P&L.
+   *
+   * Tach khoi `coins` chu khong tru thang: tien vay VAO ngan khoc ngay, con
+   * nghia vu tra thi o lai. Do la toan bo y nghia cua don bay tai chinh, va
+   * neu gop chung mot con so thi khong con gi de day.
+   */
+  debt: number;
+  /** Tong lai vay da tra tu truoc toi nay, de bao cao. */
+  totalInterestPaid: number;
   dailyLog: DailyLog;
   streak: StreakState;
   /** Rank bac thanh pho cao nhat da nhan thuong, de khong tra thuong hai lan. */
