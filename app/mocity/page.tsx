@@ -696,10 +696,14 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
              * nen doi cho no hop ly hon.
              */}
             <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white shadow-inner"
+              className="flex h-8 w-9 shrink-0 flex-col items-center justify-center rounded-lg leading-none text-white shadow-inner"
               style={{ background: 'linear-gradient(135deg, #34D399, #0F766E)' }}
             >
-              B.{cityTier.rank}
+              <span className="text-[7px] font-black uppercase tracking-wider opacity-80">Bậc</span>
+              <span className="text-[11px] font-black tabular-nums">
+                {cityTier.rank}
+                <span className="text-[8px] opacity-70">/{CITY_TIERS.length}</span>
+              </span>
             </span>
             <div className="min-w-0 hidden sm:block">
               <div className="flex items-center gap-1.5">
@@ -710,8 +714,12 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   {buildings.length}/{derived.capacity}
                 </span>
               </div>
+              {/*
+               * "60%" tran trui khong noi duoc la phan tram cua cai gi. Them
+               * chu "Hài lòng" de khong phai doan.
+               */}
               <p className="truncate text-[10px] font-bold text-amber-400/80">
-                {cityTier.name} · {Math.round(derived.happiness)}%
+                {cityTier.name} · Hài lòng {Math.round(derived.happiness)}%
                 {derived.happiness < HAPPINESS_WARNING_AT && (
                   <span className="text-red-400"> ⚠</span>
                 )}
