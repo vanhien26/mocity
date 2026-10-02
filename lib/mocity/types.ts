@@ -57,6 +57,12 @@ export interface MayorQuestDef {
   rewardCoins: number;
   rewardGems: number;
   rewardXp: number;
+  /**
+   * Chang tien trinh. 1 la nhap mon (xong trong buoi dau), 2 la dai han.
+   * Bang Nhiem Vu nhom theo truong nay, neu khong 18 muc se thanh mot danh
+   * sach dai khong co moc nao de nguoi choi dinh huong.
+   */
+  stage: 1 | 2;
 }
 
 export interface BuildingNode {
@@ -219,8 +225,83 @@ export interface DailyLog {
   talked: number;
   eventsResolved: number;
   starEvolved: number;
+  /**
+   * XP nhan roi da cong trong ngay. Co tran rieng (`IDLE_XP_DAILY_CAP`) vi
+   * khong co no thi de may chay mot ngay la gan het duong cong cap do.
+   */
+  idleXp: number;
   /** Id cac nhiem vu ngay da nhan thuong trong ngay nay. */
   claimed: string[];
+}
+
+/**
+ * CHUOI NGAY CHOI LIEN TIEP.
+ *
+ * `days` la so ngay lien tiep TINH LANG giua cac lan mo game. `lastDay` la
+ * khoa ngay da ghi nhan gan nhat de biet con tiep duoc hay phai reset.
+ *
+ * Day la co che giu nguoi choi quay lai re nhat va dat loi: nguoi choi da
+ * xay 12 ngay thi mat chuoi la mot thu ly, khong phai con so o.
+ */
+export interface StreakState {
+  /** So ngay lien tiep hien tai. 0 = vua ngat chuoi. */
+  days: number;
+  /** Khoa ngay `YYYY-M-D` ghi nhan gan nhat. */
+  lastDay: string;
+  /** Chuoi dai nhat da dat duoc, khong bao gio reset. */
+  best: number;
+}
+
+/* ── SỔ CÁI & BÁO CÁO KẾT QUẢ KINH DOANH ────────────────────────── */
+
+/**
+ * Mot ky so cua bao cao ket qua kinh doanh. Moi dong la MOT DONG trong bang
+ * P&L, khong phai tong hop tat ca cac dong - hieu sai se cong thieu.
+ */
+export interface LedgerEntry {
+  /** TONG DOANH THU (gross) truoc khi tru chi phi. */
+  grossRevenue: number;
+  /** Gia von hang ban. */
+  cogs: number;
+  /** Chi phi vat hanh. */
+  opex: number;
+  /** Thue thu nhap doanh nghiep. */
+  tax: number;
+  /** Loi nhuan rong = tien thuc vao ngan khoc tu hoat dong. */
+  netIncome: number;
+  /**
+   * Chi tieu von (capex): xay moi, nang cap, mo rong dat, len sao, lap tien ich.
+   * KHONG phai chi phi - no tao tai san, va game khong khu hao nen `capex` chi
+   * tich lu chu khong bao gio quay lai ngan khoc. Day la phan biet ma game
+   * nay day dung.
+   */
+  capex: number;
+  /** Kiem ke thi truong: chi tieu von bao tri, khong ghi vao P&L. */
+  inventoryBought: number;
+}
+
+export function emptyLedger(): LedgerEntry {
+  return {
+    grossRevenue: 0,
+    cogs: 0,
+    opex: 0,
+    tax: 0,
+    netIncome: 0,
+    capex: 0,
+    inventoryBought: 0,
+  };
+}
+
+/** Ledger theo ky. `day`/`month` reset khi doi ngay / doi thang. */
+export interface PeriodLedger extends LedgerEntry {
+  /** Khoa ngay `YYYY-M-D`, rong neu chua co du lieu. */
+  day: string;
+  /** Khoa thang `YYYY-M`. */
+  month: string;
+}
+
+export function emptyPeriodLedger(day: string, month: string): PeriodLedger {
+  return { ...emptyLedger(), day, month };
 }
 
 export type MayorGender = 'male' | 'female';
@@ -240,6 +321,15 @@ export interface CityState extends Currencies {
   npcs: NpcState[];
   unlockedManagers: string[];
   claimedQuests: string[];
+  /**
+   * So ngay `StreakMilestoneDef.days` da nhan thuong.
+   *
+   * Luu SO NGAY chu khong luu id nen mot lan chuoi dai hon van nhan duoc thuong
+   * moc da cham (vi du chuoi 10 ngay cham moc 3 va 7, chuoi 40 ngay cham them
+   * 14 va 30). Da cham `days` thi khong bao gio trao lai - nhanh vien khong
+   * doi lui, thuong cap bang so ngay.
+   */
+  streakClaimed: number;
   /** Kho do cua Thi Truong: itemId -> so luong */
   inventory: Record<string, number>;
   /** Danh sach Bau Vat (Relics) dang trang bi (toi da 3) */
@@ -275,6 +365,7 @@ export interface CityState extends Currencies {
   /** Dem han giai quyet su kien trong ngay. Tu reset sang 0 khi sang ngay moi. */
   eventLog: EventDayLog;
   dailyLog: DailyLog;
+  streak: StreakState;
   /** Rank bac thanh pho cao nhat da nhan thuong, de khong tra thuong hai lan. */
   cityTierClaimed: number;
   /**
@@ -289,7 +380,34 @@ export interface CityState extends Currencies {
   totalVolume: number;
   lastSeenAt: number;
   createdAt: number;
+  /**
+   * TONG DA NHAP - gom ca doanh thu va thuong cap. Chi dung de hien "tong so
+   * da vao ngan khoc". KHONG dung lam "doanh thu": xem `totalRevenue`.
+   */
   totalCoinsEarned: number;
+  /**
+   * DOANH THU VAN HAI sinh ra tu hoat dong cua thanh pho: san luong cua
+   * hang + phi ha tang giao dich so + lai tich luy. Day moi la dong "doanh thu"
+   * co nghia ke toan.
+   */
+  totalRevenue: number;
+  /**
+   * Tien thuong khong phai ban ra: nhiem vu Thị Truơng, bac thanh pho, thuong
+   * nhiem vu ngay, thuong nham chuc lan dau.
+   *
+   * Về kế toán đây là vốn góp của chủ sở hữu, KHÔNG phải doanh thu. Trước đây
+   * 2,96 triệu Xu thuong bị dán nhãn "Tổng Doanh Thu Tích Lũy" trên thẻ chia
+   * sẻ - dạy sai người chơi rằng tiền thưởng game là tiền bán hàng.
+   */
+  totalGrants: number;
+  /** Tiền thuong vi tương tác: chạm cư dân, thú cưng, quầy Lộc, bóng Xu. */
+  totalTapIncome: number;
+  /** Sổ cái vĩnh viễn, không reset. */
+  ledgerLifetime: PeriodLedger;
+  /** Sổ cái trong ngày. Reset lúc sang ngày mới. */
+  ledgerDay: PeriodLedger;
+  /** Sổ cái trong tháng. Reset lúc sang tháng mới. */
+  ledgerMonth: PeriodLedger;
   bubblesCollected: number;
   /** Thuong AFK chua nhan. null = da xu ly xong. */
   pendingOffline: { coins: number; elapsedMs: number } | null;
@@ -341,6 +459,27 @@ export interface BuildingDef {
   merchantCapacity?: number;
   /** FINTECH: cong them vao take rate cua thi truong. */
   takeRateBonus?: number;
+  /**
+   * TY LE GIA VON tren phan doanh thu ban hang cua cong trinh nay (0.35 =
+   * 35% doanh thu het vao mua hang ton kho + chi phi giao hang).
+   *
+   * Day la dong "Gia von hang ban" cua bao cao ket qua kinh doanh. KHONG
+   * ap dung cho doanh thu phi thu ho hay lai tich lu - nhung dong do khong
+   * co ha ton kho.
+   *
+   * Bien loi nhuan gop = 1 - tong ty le nay. Nganh ban le thuong 35-45%, cong
+   * trinh dich vu o giua, cong trinh giao dich so o cuoi (giao dich khong ton
+   * hang).
+   */
+  cogsRate?: number;
+  /**
+   * TY LE CHI PHI VAT HANH tren phan doanh thu cua cong trinh nay: thue mat
+   * bang, luong nhan vien, dien nuoc, bao tri thiet bi.
+   *
+   * Cua hang an uong ton trong nhan vien va mat bang nen OPEX cao; tram tu
+   * than tai chi can may chay nen OPEX thap.
+   */
+  opexRate?: number;
   /** Danh sach ID cong trinh tao hieu ung Combo Lien Ke khi dat canh nhau. */
   synergyWith?: string[];
   synergyLabel?: string;

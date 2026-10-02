@@ -7,10 +7,14 @@ import {
   CircleDollarSign,
   Crown,
   Database,
+  Flame,
   Gem,
   Gift,
   MessageSquareWarning,
+  Receipt,
   ScrollText,
+  TrendingDown,
+  TrendingUp,
   TriangleAlert,
   Users,
   X,
@@ -37,8 +41,10 @@ import {
 } from '@/lib/mocity/store';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
+import ProfitLossStatement from './ProfitLossStatement';
+import StreakBoard from './StreakBoard';
 
-type Tab = 'PROFILE' | 'QUESTS' | 'CITIZENS' | 'DATA';
+type Tab = 'PROFILE' | 'QUESTS' | 'CITIZENS' | 'LEDGER' | 'STREAK' | 'DATA';
 
 export default function MayorCenterModal({
   open,
@@ -194,6 +200,36 @@ export default function MayorCenterModal({
           >
             <Users size={14} className="shrink-0" />
             <span className="truncate">Cư Dân ({state.npcs.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTab('STREAK')}
+            aria-pressed={tab === 'STREAK'}
+            className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
+            style={
+              tab === 'STREAK'
+                ? { background: 'linear-gradient(180deg,#F97316,#C2410C)', color: '#FFFFFF', borderColor: '#7C2D12' }
+                : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
+            }
+          >
+            <Flame size={14} className="shrink-0" />
+            <span className="truncate">Chuỗi</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTab('LEDGER')}
+            aria-pressed={tab === 'LEDGER'}
+            className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
+            style={
+              tab === 'LEDGER'
+                ? { background: 'linear-gradient(180deg,#059669,#047857)', color: '#FFFFFF', borderColor: '#064E3B' }
+                : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
+            }
+          >
+            <Receipt size={14} className="shrink-0" />
+            <span className="truncate">Sổ Cái</span>
           </button>
 
           <button
@@ -443,11 +479,55 @@ export default function MayorCenterModal({
                 Nhiệm Vụ Kiến Thiết Đô Thị ({claimed.length}/{MAYOR_QUESTS.length})
               </h3>
 
-              {MAYOR_QUESTS.map((q) => {
-                const isClaimed = claimed.includes(q.id);
-                const completed = isQuestCompleted(q.id, state);
+              {/*
+               * Sap xep: chua nhan ma da xong len dau, dang lam o giua, da nhan
+               * xuong cuoi. Khong co buoc nay thi nut "Nhan thuong" nam lan giua
+               * danh sach 18 muc va nguoi choi phai cuon di tim.
+               */}
+              {([1, 2] as const).map((chang) => {
+                const nhom = MAYOR_QUESTS.filter((q) => q.stage === chang);
+                const xongNhom = nhom.filter((q) => claimed.includes(q.id)).length;
+                const moKhoa =
+                  chang === 1 ||
+                  MAYOR_QUESTS.filter((q) => q.stage === 1).every((q) => isQuestCompleted(q.id, state));
+
+                const thuTu = [...nhom].sort((a, b) => {
+                  const hang = (q: typeof a) =>
+                    claimed.includes(q.id) ? 2 : isQuestCompleted(q.id, state) ? 0 : 1;
+                  return hang(a) - hang(b);
+                });
 
                 return (
+                  <div key={chang} className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-[#8A7355]">
+                        {chang === 1 ? 'Chặng 1 · Dựng Phố' : 'Chặng 2 · Bành Trướng'}
+                      </p>
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[9px] font-black"
+                        style={
+                          xongNhom === nhom.length
+                            ? { background: '#DCFCE7', color: '#15803D' }
+                            : { background: '#F3EADA', color: '#8A7355' }
+                        }
+                      >
+                        {xongNhom}/{nhom.length}
+                      </span>
+                    </div>
+
+                    {!moKhoa && (
+                      <p className="rounded-xl px-3 py-2 text-[10px] font-bold" style={{ background: '#F3EADA', color: '#8A7355' }}>
+                        Xong Chặng 1 để mở khóa phần thưởng lớn của Chặng 2.
+                      </p>
+                    )}
+
+                    {thuTu.map((q) => {
+                      const isClaimed = claimed.includes(q.id);
+                      // Chang 2 chua mo thi coi nhu chua xong, de khong hien nut
+                      // "Nhan thuong" mau thuan voi dong thong bao khoa o tren.
+                      const completed = moKhoa && isQuestCompleted(q.id, state);
+
+                      return (
                   <div
                     key={q.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border-2 p-3"
@@ -470,7 +550,7 @@ export default function MayorCenterModal({
                         <span className="flex items-center gap-1 text-blue-600">
                           <Gem size={11} className="shrink-0" />+{q.rewardGems} Kim Cương
                         </span>
-                        <span style={{ color: '#16A34A' }}>+{q.rewardXp} XP</span>
+                        <span style={{ color: '#16A34A' }}>+{formatCompact(q.rewardXp)} XP</span>
                       </div>
                     </div>
 
@@ -497,6 +577,9 @@ export default function MayorCenterModal({
                         Đang thực hiện
                       </span>
                     )}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -565,6 +648,10 @@ export default function MayorCenterModal({
               )}
             </div>
           )}
+
+          {tab === 'LEDGER' && <ProfitLossStatement />}
+
+          {tab === 'STREAK' && <StreakBoard />}
 
           {tab === 'DATA' && (
             <div className="space-y-3">

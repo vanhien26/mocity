@@ -263,7 +263,7 @@ export default function WelcomeScreen({
                   {hasNamedCity
                     ? `Vốn sẵn có ${formatNumber(coins)} Xu`
                     : `Vốn sẵn có ${formatNumber(STARTING_COINS)} Xu · Tặng thêm +${formatNumber(firstTimeBonus)} Xu`}
-                  {offlineBonus > 0 ? ` · +${formatCompact(offlineBonus)} Xu thuế nghỉ` : ''}
+                  {offlineBonus > 0 ? ` · +${formatCompact(offlineBonus)} Xu doanh thu vắng mặt` : ''}
                 </p>
               </div>
             </div>

@@ -59,11 +59,11 @@ const STREET_HERO_DIALOGUES: Record<string, string[]> = {
   ],
   'advisor-giao-su-khai': [
     '“Dòng tiền trong Đô Thị MoCity đang luân chuyển cực kỳ khỏe! Mỗi đồng Xu nhàn rỗi trong Túi Thần Tài đều đang sinh lãi kép mỗi giây.”',
-    '“Bí quyết của các Siêu Đô Thị là trang bị đủ 3 Bảo Vật Thị Trưởng trong Kho Đồ — hiệu suất thu ngân sẽ tăng vọt tới +95%!”',
+    '“Bí quyết của các Siêu Đô Thị là trang bị đủ 3 Bảo Vật Thị Trưởng trong Kho Đồ — hiệu suất thu ngân sẽ tăng vọt tới +90%!”',
     '“Khi Sàn Chứng Khoán đặt cạnh Tháp Tài Chính MoMo, hiệu ứng cộng hưởng tài chính sẽ đạt đỉnh cao!”',
   ],
   'advisor-mai': [
-    '“Thị Trưởng nhớ giữ chỉ số Hạnh Phúc trên 85% nhé! Khi cư dân vui vẻ, toàn bộ cửa hàng được cộng thêm tới +25% thuế thương mại!”',
+    '“Thị Trưởng nhớ giữ chỉ số Hạnh Phúc trên 85% nhé! Cư dân vui vẻ thì hệ số thu ngân cả phố tăng tới 1,4 lần so với nền!”',
     '“Một thành phố kiểu mẫu luôn có Công Viên Sinh Thái nằm giữa Khu Dân Cư và Khu Thương Mại.”',
   ],
   'advisor-hung': [

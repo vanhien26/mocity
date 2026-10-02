@@ -431,7 +431,7 @@ export default function ShophouseFacade({
             {shopType === 'FINTECH' && (
               <div className="flex h-full w-full flex-col justify-between p-2 text-white" style={{ backgroundColor: '#0C4A6E' }}>
                 <div className="flex items-center justify-between pb-1 px-1 rounded" style={{ borderBottom: '1px solid rgba(56,189,248,0.4)', backgroundColor: 'rgba(12,26,48,0.6)' }}>
-                  <span className="text-[7px] font-black text-yellow-300">LÃI SUẤT 6.1%/NĂM</span>
+                  <span className="text-[7px] font-black text-yellow-300">PHÍ THU HỘ 2,5%</span>
                   <ShieldCheck size={11} className="text-emerald-400 shrink-0" />
                 </div>
                 <div className="flex items-end justify-between px-1">

@@ -395,54 +395,6 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     ],
   },
   {
-    id: 'req-cinephile-bap-nuoc-khong-lo',
-    archetype: 'CINEPHILE',
-    missingService: 'BNPL',
-    title: 'Xếp hàng 40 phút mua bắp nước lỡ mất màn mở đầu phim bom tấn',
-    subtitle: 'Tuấn Rạp Chiếu đang giậm chân sốt ruột trước quầy bắp...',
-    body: 'Suất chiếu phim bom tấn Marvel vừa bắt đầu được 5 phút nhưng hàng người chờ mua bắp nước vẫn dài dằng dặc 50 mét. Tuấn đứng giữa hai lựa chọn: xem phim nhịn đói hoặc đứng chờ bắp rồi bỏ lỡ đoạn intro đỉnh nhất! Bạn sẽ:',
-    choices: [
-      {
-        id: 'pre-order-popcorn-momo',
-        text: 'Chi 320 XU nâng cấp tính năng Đặt Trước Combo Bắp Nước trên MoMo Cinema',
-        costCoins: 320,
-        btnTone: 'green',
-        tags: [
-          { label: '-320 XU', tone: 'red' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-          { label: 'khách rạp sướng rơn ++', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 30, xp: 60, happiness: 12 },
-        reply:
-          'Tuấn chỉ cần giơ mã QR trên app MoMo tại quầy Fast-Track, 10 giây nhận ngay xô bắp phô mai bốc khói cùng ly nước ngọt, kịp xem đoạn chiến đấu mở màn cực mãn nhãn!',
-      },
-      {
-        id: 'discount-combo-app',
-        text: 'Bày Tuấn mua combo bắp nước kèm vé trên app để vừa được giảm giá vừa nhận hàng nhanh',
-        btnTone: 'blue',
-        tags: [
-          { label: 'tiết kiệm thời gian +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 20, xp: 45, happiness: 6 },
-        reply:
-          '“Đặt trước trên MoMo vừa rẻ hơn mua tại quầy 20% lại khỏi phải chen lấn, quá đã Thị Trưởng ơi!”',
-      },
-      {
-        id: 'bring-boiled-corn',
-        text: 'Bảo Tuấn... mua 2 trái bắp luộc vỉa hè nhét túi quần lén mang vào rạp',
-        btnTone: 'red',
-        tags: [
-          { label: 'bảo vệ tịch thu', tone: 'red' },
-          { label: 'ngại ngùng cả buổi', tone: 'neutral' },
-        ],
-        effects: { trust: -10, happiness: -8 },
-        reply:
-          'Mùi bắp luộc ngào ngạt làm nhân viên soát vé phát hiện ngay lập tức, Tuấn phải đứng ăn hết 2 trái bắp ở sảnh mới được vào xem phim!',
-      },
-    ],
-  },
-  {
     id: 'req-merchant-loa-het-pin',
     archetype: 'MERCHANT_CASH',
     requiresDigital: false,
@@ -635,54 +587,6 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     ],
   },
   {
-    id: 'req-traveler-ve-tau-tet',
-    archetype: 'TRAVELER',
-    missingService: 'BNPL',
-    title: 'Ga xe lửa nghẹt thở săn vé tàu Tết về quê miền Trung',
-    subtitle: 'Chị Hương Săn Vé đang ôm túi xách xếp hàng từ 4 giờ sáng...',
-    body: 'Đợt mở bán vé tàu Tết tuyến Sài Gòn - Đà Nẵng vừa khởi động, hàng ngàn người chen chúc trước sảnh ga xe lửa. Chị Hương đứng chen lấn suốt 4 tiếng đồng hồ mà sắp tới lượt thì quầy vé thông báo nghẽn mạng nội bộ! Bạn sẽ:',
-    choices: [
-      {
-        id: 'book-train-momo-travel',
-        text: 'Tài trợ 380 XU đặt vé tàu trực tuyến chọn ghế mềm máy lạnh trên MoMo Travel',
-        costCoins: 380,
-        btnTone: 'green',
-        tags: [
-          { label: '-380 XU', tone: 'red' },
-          { label: 'chắc vé về quê ++', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 30, xp: 65, happiness: 12 },
-        reply:
-          'Vé tàu điện tử có mã QR hiện lên màn hình chỉ sau 3 cú chạm! Chị Hương mừng rỡ khoe vé với cả nhà, thong thả bắt xe ôm về nhà ngủ ngon giấc!',
-      },
-      {
-        id: 'guide-train-booking',
-        text: 'Hướng dẫn bà con đặt vé tàu hỏa và xe khách liên tỉnh trực tiếp trên app MoMo',
-        btnTone: 'blue',
-        tags: [
-          { label: 'bà con phấn khởi +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 22, xp: 50, happiness: 6 },
-        reply:
-          '“Ngồi nhà uống cà phê bấm chọn toa chọn chỗ ngồi trực quan, khỏi phải chen lấn bầm dập ở ga nữa!”',
-      },
-      {
-        id: 'ride-bicycle-home',
-        text: 'Bảo chị Hương... đạp xe đạp xuyên Việt 800 cây số về quê cho khỏe người',
-        btnTone: 'red',
-        tags: [
-          { label: 'qua Tết mới tới nhà', tone: 'red' },
-          { label: 'khép chuyện', tone: 'neutral' },
-        ],
-        effects: { trust: -12, happiness: -8 },
-        reply:
-          'Đạp xe tới được chân đèo Cù Mông thì đã qua mùng 10 Tết, chị Hương ngồi khóc bên chiếc xe đạp xẹp lốp!',
-      },
-    ],
-  },
-  {
     id: 'req-gig-vay-nhanh-cuu-tro',
     archetype: 'GIG_WORKER',
     missingService: 'CREDIT',
@@ -823,102 +727,6 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
         effects: { trust: -12, happiness: -8 },
         reply:
           'Tiếng loa pin oang oang làm cả xóm bức xúc ném vỏ lon xuống sân, tình làng nghĩa xóm sứt mẻ nghiêm trọng!',
-      },
-    ],
-  },
-  {
-    id: 'req-investor-lai-kep-than-tai',
-    archetype: 'INVESTOR',
-    missingService: 'SAVINGS',
-    title: 'Để 100 triệu nằm im trong tài khoản thanh toán không kỳ hạn',
-    subtitle: 'Chị Châu Cổ Đông đang nhìn lạm phát ăn mòn dòng tiền...',
-    body: 'Chị Châu có 100 triệu tiền vốn dự phòng kinh doanh nhưng để ở tài khoản thanh toán thông thường chỉ nhận lãi suất tượng trưng 0.1%/năm. Chị muốn tiền sinh lời mỗi ngày nhưng vẫn phải rút ra được bất kỳ lúc nào để nhập hàng. Bạn sẽ:',
-    choices: [
-      {
-        id: 'activate-tui-than-tai-pro',
-        text: 'Tài trợ 450 XU kích hoạt Túi Thần Tài Hạn Mức Cao sinh lời mỗi ngày rút 24/7',
-        costCoins: 450,
-        btnTone: 'green',
-        tags: [
-          { label: '-450 XU', tone: 'red' },
-          { label: 'lãi kép nhảy số ++', tone: 'green' },
-          { label: 'mở Tiết Kiệm Số', tone: 'green' },
-        ],
-        effects: { grantService: 'SAVINGS', trust: 30, xp: 70, happiness: 12 },
-        reply:
-          'Mỗi sáng mở mắt ra thấy tiền lãi ting ting đủ ăn tô phở bò đặc biệt! Khi cần nhập hàng chuyển khoản thẳng từ Túi Thần Tài trong 1 giây!',
-      },
-      {
-        id: 'explain-compound-interest',
-        text: 'Chia sẻ công thức lãi kép và cách phân bổ tiền nhàn rỗi an toàn trên MoMo',
-        btnTone: 'blue',
-        tags: [
-          { label: 'chị Châu tâm phục +', tone: 'green' },
-          { label: 'mở Tiết Kiệm Số', tone: 'green' },
-        ],
-        effects: { grantService: 'SAVINGS', trust: 22, xp: 50, happiness: 6 },
-        reply:
-          '“Tiền nhàn rỗi làm việc chăm chỉ cho mình cả trong lúc ngủ, bài toán tài chính quá xuất sắc!”',
-      },
-      {
-        id: 'hide-money-in-pot',
-        text: 'Khuyên chị Châu... đổi hết ra tiền mặt nhét vào hũ sành chôn dưới gốc xoài',
-        btnTone: 'red',
-        tags: [
-          { label: 'mối mọt ăn mục tiền', tone: 'red' },
-          { label: 'khép chuyện', tone: 'neutral' },
-        ],
-        effects: { trust: -10, happiness: -8 },
-        reply:
-          'Nửa năm sau đào hũ sành lên thì đàn mối đã gặm rách phân nửa cọc tiền, chị Châu khóc nghẹn ngào!',
-      },
-    ],
-  },
-  {
-    id: 'req-cinephile-ve-dem-sweetbox',
-    archetype: 'CINEPHILE',
-    missingService: 'BNPL',
-    title: 'Hẹn hò xem bom tấn nửa đêm nhưng rạp cháy sạch ghế đôi',
-    subtitle: 'Đức Mê Bom Tấn đang bối rối trước mặt bạn gái mới quen...',
-    body: 'Đức hẹn bạn gái đi xem suất chiếu sớm lúc 22h30 nhưng tới nơi thì hàng ghế đôi Sweetbox đã kín chỗ. Chỉ còn lại 2 ghế đơn lẻ loi cách xa nhau 5 dãy ghế, nếu ngồi vậy thì coi như buổi hẹn hò tan thành mây khói! Bạn sẽ:',
-    choices: [
-      {
-        id: 'reserve-sweetbox-momo',
-        text: 'Tài trợ 350 XU mở Ví Trả Sau giữ chỗ VIP Sweetbox rạp MoMo Cinema liên kết',
-        costCoins: 350,
-        btnTone: 'green',
-        tags: [
-          { label: '-350 XU', tone: 'red' },
-          { label: 'tình yêu thăng hoa ++', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 30, xp: 60, happiness: 12 },
-        reply:
-          'Ghế đôi Sweetbox rộng rãi êm ái, bắp nước đầy đủ, bạn gái Đức mỉm cười nép vào vai bạn trai! Một buổi tối lãng mạn trọn vẹn 10 điểm!',
-      },
-      {
-        id: 'book-ahead-tip',
-        text: 'Bày Đức thói quen đặt vé sớm trên MoMo Cinema chọn ghế đẹp trước khi đến rạp',
-        btnTone: 'blue',
-        tags: [
-          { label: 'kinh nghiệm hẹn hò +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 20, xp: 45, happiness: 6 },
-        reply:
-          '“Đặt trước trên app chọn đúng ghế đẹp lại còn dùng Ví Trả Sau không lo kẹt tiền cuối tháng, uy tín luôn!”',
-      },
-      {
-        id: 'sit-far-apart',
-        text: 'Bảo hai bạn... cứ ngồi cách nhau 5 dãy ghế, có gì nhắn tin qua Zalo nói chuyện',
-        btnTone: 'red',
-        tags: [
-          { label: 'bạn gái giận bỏ về', tone: 'red' },
-          { label: 'Đức cô đơn xem phim', tone: 'neutral' },
-        ],
-        effects: { trust: -10, happiness: -8 },
-        reply:
-          'Phim chiếu được 10 phút bạn gái nhắn tin “Mình không hợp nhau đâu” rồi bỏ về thẳng, Đức ngồi ôm xô bắp khóc thầm!',
       },
     ],
   },
@@ -1159,54 +967,6 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
         effects: { trust: -10, happiness: -8 },
         reply:
           'Vừa vuốt màn hình thì mảnh kính đâm chảy máu tay, máy tính bảng chập mạch tắt hẳn không cứu được!',
-      },
-    ],
-  },
-  {
-    id: 'req-traveler-khach-san-da-lat',
-    archetype: 'TRAVELER',
-    missingService: 'BNPL',
-    title: 'Lên Đà Lạt mùa lễ hội bị chủ trọ hủy phòng ép giá gấp 3',
-    subtitle: 'Nhóm Bạn Đà Lạt đang đứng co ro giữa sương mù lạnh buốt...',
-    body: 'Nhóm bạn 4 người đặt phòng qua tin nhắn miệng, khi lên tới nơi lúc 22h đêm thì chủ nhà trọ bảo đã cho khách khác thuê với giá gấp 3 lần. Ngoài trời mưa phùn 14 độ C, 4 bạn trẻ lang thang vali cồng kềnh sắp lả đi vì lạnh! Bạn sẽ:',
-    choices: [
-      {
-        id: 'emergency-hotel-booking',
-        text: 'Tài trợ 450 XU đặt khách sạn 4 sao cam kết giữ phòng qua MoMo Travel + trả góp Ví Trả Sau',
-        costCoins: 450,
-        btnTone: 'green',
-        tags: [
-          { label: '-450 XU', tone: 'red' },
-          { label: 'phòng ấm nệm êm ++', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 32, xp: 70, happiness: 12 },
-        reply:
-          'Nhận phòng khách sạn ấm áp với lò sưởi và trà nóng thơm lừng! MoMo Travel cam kết bảo vệ quyền lợi du khách 100%, chuyến đi được cứu nguy ngoạn mục!',
-      },
-      {
-        id: 'guide-hotel-portal',
-        text: 'Chỉ nhóm bạn cách đặt phòng khách sạn đối tác Agoda/Booking tích hợp trên MoMo để được bảo đảm giá',
-        btnTone: 'blue',
-        tags: [
-          { label: 'kinh nghiệm du lịch +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 22, xp: 50, happiness: 6 },
-        reply:
-          '“Đặt phòng qua ứng dụng có xác nhận thanh toán rõ ràng, khỏi sợ bị cò mồi hay chủ trọ lật kèo nữa!”',
-      },
-      {
-        id: 'sleep-in-bus-station',
-        text: 'Bảo cả nhóm... ra ghế đá bến xe đắp báo ngủ qua đêm chờ trời sáng',
-        btnTone: 'red',
-        tags: [
-          { label: 'cả nhóm cảm lạnh', tone: 'red' },
-          { label: 'chuyến đi bão táp', tone: 'neutral' },
-        ],
-        effects: { trust: -14, happiness: -8 },
-        reply:
-          'Sương đêm Đà Lạt buốt giá làm cả 4 bạn bị sốt cao viêm họng, sáng hôm sau phải bắt xe về thẳng bệnh viện!',
       },
     ],
   },

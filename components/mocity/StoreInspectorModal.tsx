@@ -84,6 +84,18 @@ export default function StoreInspectorModal({
 
   const assignedManager = node.managerId ? MANAGER_BY_ID[node.managerId] : undefined;
 
+  /**
+   * Doanh thu tang them khi len 1 cap. `nodeYieldBreakdown` da tinh san phan
+   * nhau cua moi cap, nen chi can hieu cua cap cu voi cap sau.
+   */
+  const currentYield = nodeYieldBreakdown(node, buildings).totalPerSec;
+  const nextYield = nodeYieldBreakdown(
+    { ...node, level: node.level + 1 },
+    buildings.map((b) => (b.id === node.id ? { ...b, level: b.level + 1 } : b)),
+  ).totalPerSec;
+  const marginalYield = Math.max(0, nextYield - currentYield);
+  const paybackMinutes = marginalYield > 0 ? cost1 / marginalYield / 60 : Number.POSITIVE_INFINITY;
+
   const handleLevelUpgrade = (count: number) => {
     const applied = Math.min(count, MAX_UPGRADE_PER_ACTION, headroom);
     const res = upgradeBuilding(node.col, node.row, applied);
@@ -198,6 +210,44 @@ export default function StoreInspectorModal({
             <X size={18} className="shrink-0" />
           </button>
         </div>
+
+        {/*
+          * THOI GIAN HOAN VON.
+          *
+          * `yieldInfo.totalPerSec` va `cost1` deu da co san trong component
+          * nay tu truoc nhung chua bao gio chia cho nhau. Thoi gian hoan von
+          * =(chi phi tang them) / (doanh thu tang them) la con so de doc nhat
+          * trong game idle - noi cho biet dong tieu nao duoc lai nhanh.
+          *
+          * Chi tinh khi chua dat cap toi da va tang cap thuc su tang them doanh
+          * thu (neu bang 0 thi khong bao gio hoa von duoc).
+          */}
+        {!atMaxLevel && cost1 > 0 && marginalYield > 0 && (
+          <div
+            className="border-b px-4 py-2.5"
+            style={{ background: 'rgba(5,150,105,0.10)', borderColor: '#10B98144' }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase" style={{ color: '#047857' }}>
+                  Hoàn vốn nâng cấp
+                </p>
+                <p className="text-base font-black tabular-nums" style={{ color: '#065F46' }}>
+                  {paybackMinutes < 60
+                    ? `${Math.round(paybackMinutes)} phút`
+                    : paybackMinutes < 60 * 24
+                      ? `${(paybackMinutes / 60).toFixed(1)} giờ`
+                      : `${(paybackMinutes / 1440).toFixed(1)} ngày`}
+                </p>
+              </div>
+              <p className="flex-1 text-right text-[10px] font-semibold leading-tight" style={{ color: '#3E2A1B' }}>
+                Bỏ {formatCompact(cost1)} Xu để nhận thêm {formatRate(marginalYield)}.
+                <br />
+                <span style={{ color: '#047857' }}>Đây là vốn, không phải chi phí vận hành.</span>
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Thong so Doanh Thu IDLE RPG & Combo Quy Hoach */}
         <div className="border-b px-4 py-3" style={{ background: 'rgba(201,162,39,0.12)', borderColor: '#C9A22744' }}>

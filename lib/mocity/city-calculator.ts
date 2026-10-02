@@ -295,7 +295,41 @@ export interface FlowBreakdown {
    * ma khong co dan cu mua.
    */
   supplyFactor: number;
-  /** Xu thi truong thu ve moi giay. */
+
+  /* ── BÁO CÁO KẾT QUẢ KINH DOANH (P&L) ──────────────────────────────
+   * Doanh thu o tren la GROSS. Truoc day game chi tinh thu duong va bao
+   * ngan khoc nhan dung so do - khong ton tai khai niem gia von hay chi phi
+   * vat hanh, nen loi nhuan gop va loi nhuan rong VO NGHIA chu khong phai
+   * "chua hien thi". Duoi day la ca hai ve cua bao cao.
+   */
+
+  /** TONG DOANH THU (gross) truoc khi tru chi phi. */
+  grossRevenue: number;
+  /** Gia von hang ban: ton kho + chi phi giao hang. Chi ap cho doanh thu ban hang. */
+  cogs: number;
+  /** LOI NHUAN GOP = doanh thu - gia von. */
+  grossProfit: number;
+  /** Bien loi nhuan gop (0-1). */
+  grossMargin: number;
+  /** Chi phi vat hanh: thue mat bang, luong, dien nuoc, bao tri. */
+  opex: number;
+  /** LOI NHUAN HOAT DONG (EBIT) = loi nhuan gop - chi phi vat hanh. */
+  operatingIncome: number;
+  operatingMargin: number;
+  /** Thue thu nhap doanh nghiep tren loi nhuan hoat dong. */
+  tax: number;
+  /** LOI NHUAN RONG = loi nhuan hoat dong - thue. Day la tien thuc vao ngan khoc. */
+  netIncome: number;
+  netMargin: number;
+
+  /**
+   * Tien phai tieu ra moi giay (gia von + vat hanh + thue). TICK_IDLE tru
+   * dung so nay. Truoc day chi co cong khong tru.
+   */
+  costPerSec: number;
+
+  /** @deprecated Dung `grossRevenue` de bao cao doanh thu, `netIncome` de
+   * hien tien thuc nhan. Giu lai de khong pha code goi cu. */
   revenue: number;
 }
 
@@ -305,6 +339,20 @@ export interface FlowOptions {
   idleMs?: number;
   /** Diem hanh phuc cong don tu phuong an dialogue vua chon. */
   happinessBoost?: number;
+  /**
+   * Tong bonus doanh thu tu Bao Vat dang trang bi (0.25 + 0.15 + ...).
+   *
+   * PHẢI truyền vào đây thay vì nhân ngoài `flowFor`. Ban <= 4 `useCityDerived`
+   * nhân sau khi goi `flowFor` nen HUD hien doanh thu da × (1 + bonus) trong khi
+   * `tickIdle` cong tien theo gia tri CHUA nhan - lech toi +90%. Mot game
+   * day ve tai chinh khong duoc phep hien mot so ma khong tra.
+   */
+  relicBonus?: number;
+  /**
+   * Cong do hanh phuc tu Bao Vat. Cung phai vao cung mot cho voi `relicBonus`
+   * de `happinessFor` va boi so hanh phuc khong lech nhau.
+   */
+  relicHappinessBonus?: number;
 }
 
 /**
@@ -316,6 +364,66 @@ export interface FlowOptions {
  * `supplyPerSecond` chi la so lieu trang tri - xay bao nhieu cua hang cung
  * nhau van thu nhieu nhat. Gio thi xay tran pho se ton that.
  */
+/**
+ * Thue thu nhap doanh nghiep tren loi nhuan hoat dong.
+ *
+ * 20% la thue suat thuong nghiep tai VN. Game khong thu that nhung day la
+ * dong "thue" trong bao cao - nguoi choi hoc duoc cach cong thue vao CHI PHI
+ * chu khong phai cong vao doanh thu (sai so pho bien nhat khi lam P&L).
+ */
+export const CORPORATE_TAX_RATE = 0.2;
+
+/** Ty le gia von mac dinh khi `BuildingDef` khong khai bao. */
+const DEFAULT_COGS_RATE = 0.35;
+/** Ty le chi phi vat hanh mac dinh. */
+const DEFAULT_OPEX_RATE = 0.22;
+
+/**
+ * Bien loi nhuan gop ke doanh thu dat duoc tang.
+ *
+ * Cong trinh nao khong don gia von vao nhau, chon theo `baseYieldPerSec` x
+ * `cogsRate`. Cong trinh giao dich so (take rate) sinh doanh thu ma khong ton
+ * ha tong, nen tieu ty le hon cua hang ban.
+ */
+export function blendedRates(
+  buildings: BuildingNode[],
+): { cogsRate: number; opexRate: number } {
+  let yieldSum = 0;
+  let cogsWeighted = 0;
+  let opexWeighted = 0;
+  for (const node of buildings) {
+    const def = BUILDING_BY_ID[node.defId];
+    if (!def) continue;
+    const weight = def.baseYieldPerSec * node.level;
+    yieldSum += weight;
+    cogsWeighted += weight * (def.cogsRate ?? DEFAULT_COGS_RATE);
+    opexWeighted += weight * (def.opexRate ?? DEFAULT_OPEX_RATE);
+  }
+  if (yieldSum === 0) {
+    return { cogsRate: DEFAULT_COGS_RATE, opexRate: DEFAULT_OPEX_RATE };
+  }
+  return { cogsRate: cogsWeighted / yieldSum, opexRate: opexWeighted / yieldSum };
+}
+
+/**
+ * Ty le gia von van hanh tren DOANH THU GOP, sau thue.
+ *
+ * Ban <= 6 chi cong doanh thu nen `revenue` (nay la tien thuc nhan) chinh la
+ * doanh thu thuan. Sau khi tach gia von + chi phi van hanh + thue, luoi thu
+ * chi con mot phan nen tien ngan khoc se giam so voi truoc - pho sanh phu
+ * thep `UPGRADE_GROWTH` va `xpForLevel` se pha.
+ *
+ * `grossRevenue` phai lon gap `grossUpFor()` lan moi thu duoc DUNG so tien
+ * dang duoc tra. Cong thuc nay dung bien loi nhuan thuc te cua tung thanh pho
+ * nen doi ty le gia von / van hanh khong lam cho canh bang lech.
+ */
+export function grossUpFor(cogsRate: number, opexRate: number, storeShare: number): number {
+  const ebitRate = 1 - storeShare * cogsRate - opexRate;
+  // Thanh pho khong co cua hang nao thi khong co gia van, chi con van hanh.
+  const netRate = Math.max(0.05, ebitRate * (1 - CORPORATE_TAX_RATE));
+  return 1 / netRate;
+}
+
 export function flowFor(
   buildings: BuildingNode[],
   npcs: NpcState[],
@@ -334,16 +442,38 @@ export function flowFor(
     demand <= 0 ? 1 : MIN_SUPPLY_FACTOR + (1 - MIN_SUPPLY_FACTOR) * Math.min(1, supply / demand);
 
   const happinessMult = taxMultiplierFromHappiness(
-    happinessFor(buildings, opts.idleMs ?? 0, opts.happinessBoost ?? 0),
+    happinessFor(buildings, opts.idleMs ?? 0, opts.happinessBoost ?? 0) +
+      (opts.relicHappinessBonus ?? 0),
   );
   const levelBonus = 1 + (mayorLevel - 1) * 0.12;
   const feverMult = opts.isFever ? 2 : 1;
+  const relicMult = 1 + (opts.relicBonus ?? 0);
 
   const storeYield = directStoreYieldPerSecond(buildings) * supplyFactor * happinessMult * levelBonus;
   const savingsYield = savingsInterestPerSecond(buildings, currentCoins);
   const networkFeeRevenue = digitalVolume * takeRate * happinessMult * levelBonus;
 
-  const revenue = (storeYield + networkFeeRevenue + savingsYield) * feverMult;
+/* ── P&L: cong doanh thu gross truoc khi tru bat ky dong chi nao ── */
+  const revenueCu = (storeYield + networkFeeRevenue + savingsYield) * feverMult * relicMult;
+
+  /**
+   * Gia von CHI ap cho doanh thu ban hang. Doanh thu phi thu ho va lai tich
+   * lu khong ton ha tong nen khong co dong gia von - day la phan biet co ban
+   * trong ke toan ma game nay day tinh.
+   */
+  const { cogsRate, opexRate } = blendedRates(buildings);
+  const storeShare =
+    revenueCu > 0 ? (storeYield * feverMult * relicMult) / revenueCu : 0;
+  const grossUp = grossUpFor(cogsRate, opexRate, storeShare);
+  const grossRevenue = revenueCu * grossUp;
+
+  const cogs = grossRevenue * storeShare * cogsRate;
+  const grossProfit = grossRevenue - cogs;
+
+  const opex = grossRevenue * opexRate;
+  const operatingIncome = grossProfit - opex;
+  const tax = Math.max(0, operatingIncome) * CORPORATE_TAX_RATE;
+  const netIncome = operatingIncome - tax;
 
   return {
     demand,
@@ -353,10 +483,23 @@ export function flowFor(
     digitalVolume,
     takeRate,
     supplyFactor,
-    storeYield: storeYield * feverMult,
-    savingsYield: savingsYield * feverMult,
-    networkFee: networkFeeRevenue * feverMult,
-    revenue,
+    storeYield: storeYield * feverMult * relicMult,
+    savingsYield: savingsYield * feverMult * relicMult,
+    networkFee: networkFeeRevenue * feverMult * relicMult,
+
+    grossRevenue,
+    cogs,
+    grossProfit,
+    grossMargin: grossRevenue > 0 ? grossProfit / grossRevenue : 0,
+    opex,
+    operatingIncome,
+    operatingMargin: grossRevenue > 0 ? operatingIncome / grossRevenue : 0,
+    tax,
+    netIncome,
+    netMargin: grossRevenue > 0 ? netIncome / grossRevenue : 0,
+    costPerSec: cogs + opex + tax,
+
+    revenue: netIncome,
   };
 }
 

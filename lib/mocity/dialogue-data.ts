@@ -299,54 +299,6 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     ],
   },
   {
-    id: 'req-cinema-hang-a1',
-    archetype: 'CINEPHILE',
-    missingService: 'BNPL',
-    title: 'Màn cầu hôn sái cổ ở hàng ghế A1 rạp phim',
-    subtitle: 'Anh Hoàng IT đang đeo nẹp cổ đứng trước rạp MoMo Cinema...',
-    body: 'Anh Hoàng định bao bạn gái đi xem bom tấn tối Thứ Bảy để tỏ tình, nhưng tới rạp mới mua vé nên chỉ còn 2 ghế góc sát màn hình (Hàng A1). Ngước lên xem được 15 phút là cả hai muốn... trật đốt sống cổ! Bạn sẽ:',
-    choices: [
-      {
-        id: 'vip-cinema',
-        text: 'Tài trợ 420 XU nâng cấp ghế đôi Sweetbox giữa rạp + Bắp Phô Mai Hoàng Kim',
-        costCoins: 420,
-        btnTone: 'green',
-        tags: [
-          { label: '-420 XU', tone: 'red' },
-          { label: 'cặp đôi hạnh phúc ++', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 32, xp: 65, happiness: 12 },
-        reply:
-          'Ngồi ghế đôi chính giữa rạp IMAX âm thanh vòm cực đỉnh, ăn bắp phô mai thơm lừng, bạn gái anh Hoàng gật đầu đồng ý cái rụp! Cả rạp vỗ tay rần rần!',
-      },
-      {
-        id: 'book-early',
-        text: 'Chỉ anh Hoàng đặt vé chọn ghế đẹp trước 3 ngày trên MoMo Cinema',
-        btnTone: 'blue',
-        tags: [
-          { label: 'anh Hoàng +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
-        ],
-        effects: { grantService: 'BNPL', trust: 22, xp: 50, happiness: 6 },
-        reply:
-          '“Hóa ra đặt trước trên app chọn được ngay hàng H chính giữa lại còn dùng Ví Trả Sau giữ chỗ trước khi lương về! Quá đỉnh Thị Trưởng ơi!”',
-      },
-      {
-        id: 'neck-pillow',
-        text: 'Khuyên hai bạn mua... 2 cái gối chữ U nằm ngửa ra sàn rạp mà xem',
-        btnTone: 'red',
-        tags: [
-          { label: 'bạn gái dỗi bỏ về', tone: 'red' },
-          { label: 'anh Hoàng FA tiếp', tone: 'neutral' },
-        ],
-        effects: { trust: -10, happiness: -8 },
-        reply:
-          'Bảo vệ rạp chiếu phim tưởng hai anh chị vào rạp tập dưỡng sinh nên mời ra sảnh uống nước lọc luôn rồi...',
-      },
-    ],
-  },
-  {
     id: 'req-cup-dien-noi-lau',
     archetype: 'FAMILY',
     requiresDigital: false,
@@ -657,11 +609,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 650,
         btnTone: 'green',
         tags: [
-          { label: '-1.300 XU tổng', tone: 'red' },
+          { label: '-650 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'toàn dân phấn khích ++', tone: 'green' },
         ],
-        effects: { coins: -650, trustAll: 18, xp: 100, happiness: 12 },
+        effects: { trustAll: 18, xp: 100, happiness: 12 },
         reply:
           'Từ nay đúng 6h sáng cả thành phố cùng tập thể dục nhịp điệu! Đám đông vỡ oà hào hứng vây quanh Thị Trưởng. Tòa Thị Chính thì nhẹ nhõm vì ngân khách đã xuống còn... hơn mất!',
       },
@@ -705,11 +657,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-1.600 XU tổng', tone: 'red' },
+          { label: '-800 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'biệt đội Shipper ++', tone: 'green' },
         ],
-        effects: { coins: -800, trustAll: 16, xp: 95, happiness: 12 },
+        effects: { trustAll: 16, xp: 95, happiness: 12 },
         reply:
           'Đường phố MoCity êm như nhung! Hiệp hội Shipper gửi lời cảm ơn tới Thị Trưởng bằng một bài tụng sáu câu. Họ không tặng gì cả, nhưng uy tín thì có.',
       },
@@ -753,11 +705,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 600,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 XU tổng', tone: 'red' },
+          { label: '-600 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'bắt sống kẻ gian', tone: 'green' },
         ],
-        effects: { coins: -600, trustAll: 16, xp: 85, happiness: 12 },
+        effects: { trustAll: 16, xp: 85, happiness: 12 },
         reply:
           'Sáng hôm sau khách vừa quét mã, Loa Thần Tài đứng im không đọc tiếng tiền về của Cô Tư! Tổ dân phố tóm gọn kẻ gian. Cô Tư nhìn Thị Trưởng bằng ánh mắt cảm ơn sâu sắc.',
       },
@@ -801,11 +753,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-1.600 XU tổng', tone: 'red' },
+          { label: '-800 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'ông Lộc mừng rơi nước mắt ++', tone: 'green' },
         ],
-        effects: { coins: -800, trustAll: 16, xp: 90, happiness: 12 },
+        effects: { trustAll: 16, xp: 90, happiness: 12 },
         reply:
           'Ông Lộc nói "Thị Trưởng chi mạnh tay quá, bà con ghi nhớ!" rồi bước ra chỗ vắng đếm lại số tiền trong ví. Còn con gà trống nhà chú Bảy thì thoát án lên nồi cháo!',
       },
@@ -849,10 +801,10 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 1500,
         btnTone: 'green',
         tags: [
-          { label: '-3.000 XU tổng', tone: 'red' },
+          { label: '-1.500 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
         ],
-        effects: { coins: -1500, trustAll: 22, xp: 120, happiness: 12 },
+        effects: { trustAll: 22, xp: 120, happiness: 12 },
         reply:
           'Doanh số đêm hội phá kỷ lục lịch sử! Tiệm nước bà chị Ba bán hết sạch trong 20 phút. Tuy nhiên Thị Trưởng cũng phải móc túi trả tiền thuê sân khấu, âm cơ nên buồn mà kệ.',
       },
@@ -866,7 +818,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
           { label: 'thưởng nóng cho đội xe', tone: 'neutral' },
           { label: 'uy tín toàn phố +', tone: 'green' },
         ],
-        effects: { coins: -900, trustAll: 12, xp: 75, happiness: 6 },
+        effects: { trustAll: 12, xp: 75, happiness: 6 },
         reply:
           'Mọi đơn hàng đều được giao nóng hổi trong 15 phút, khách hàng để lại hàng ngàn đánh giá 5 sao cho khu phố! Đội xe hài lòng, túi tiền ngân khách thì không hài lòng lắm.',
       },
@@ -898,11 +850,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 700,
         btnTone: 'green',
         tags: [
-          { label: '-1.400 XU tổng', tone: 'red' },
+          { label: '-700 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'cả xóm hoan hô ++', tone: 'green' },
         ],
-        effects: { coins: -700, trustAll: 18, xp: 90, happiness: 12 },
+        effects: { trustAll: 18, xp: 90, happiness: 12 },
         reply:
           'Sân khấu ca nhạc cuối tuần đông nghẹt như hội hoa xuân! Hai bác hát song ca xuất sắc, cả phố hát theo đến khàn cả giọng. Phần quà tặng cho Thị Trưởng là một tấm lòng chân thành.',
       },
@@ -946,11 +898,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 500,
         btnTone: 'green',
         tags: [
-          { label: '-1.000 XU tổng', tone: 'red' },
+          { label: '-500 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'tiểu thương vui vẻ ++', tone: 'green' },
         ],
-        effects: { coins: -500, trustAll: 16, xp: 80, happiness: 12 },
+        effects: { trustAll: 16, xp: 80, happiness: 12 },
         reply:
           'Không khí rộn rã tiếng cười bên quán cóc, ai cũng hỏi thăm Thị Trưởng sức khoẻ thế nào sau mùa "chi bao bọc chuyện nghe đồn" vừa rồi.',
       },
@@ -994,11 +946,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 900,
         btnTone: 'green',
         tags: [
-          { label: '-1.800 XU tổng', tone: 'red' },
+          { label: '-900 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'nước rút sạch bóng ++', tone: 'green' },
         ],
-        effects: { coins: -900, trustAll: 20, xp: 110, happiness: 12 },
+        effects: { trustAll: 20, xp: 110, happiness: 12 },
         reply:
           'Nước rút sạch trong 10 phút, mặt đường khô ráo! Anh Ba thở phào, cả xóm thở phào, còn túi tiền Thị Trưởng thì không thở phào.',
       },
@@ -1042,11 +994,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 600,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 XU tổng', tone: 'red' },
+          { label: '-600 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'khách kéo đến gấp đôi ++', tone: 'green' },
         ],
-        effects: { coins: -600, trustAll: 18, xp: 85, happiness: 12 },
+        effects: { trustAll: 18, xp: 85, happiness: 12 },
         reply:
           'Đại Ca mèo tam thể trở thành idol giới trẻ của cả khu phố! Quán cà phê kín khách đứng nghẹn cổ chụp ảnh. Phần quà tặng cho Thị Trưởng là một tấm lòng chân thành.',
       },
@@ -1090,11 +1042,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
         costCoins: 1200,
         btnTone: 'green',
         tags: [
-          { label: '-2.400 XU tổng', tone: 'red' },
+          { label: '-1.200 XU', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'toàn dân săn sale thành công ++', tone: 'green' },
         ],
-        effects: { coins: -1200, trustAll: 22, xp: 125, happiness: 12 },
+        effects: { trustAll: 22, xp: 125, happiness: 12 },
         reply:
           'Sóng 5G căng đét như cáp quang quân đội! Ai cũng giật được voucher giảm 50%, cả xóm reo hò. Hoá đơn điện tháng sau chắc chắn sẽ có một món ăn mới không ai đoán được.',
       },

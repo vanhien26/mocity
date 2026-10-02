@@ -31,7 +31,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'nộp phạt 1 chạm ++', tone: 'green' },
           { label: 'bà con yên lòng', tone: 'green' },
         ],
-        effects: { coins: -600, trustAll: 18, xp: 90, happiness: 12 },
+        effects: { trustAll: 18, xp: 90, happiness: 12 },
         reply:
           'Cư dân chỉ cần nhập số biên bản là nộp phạt trong 1 phút, biên lai điện tử gửi về tức thì! Không một ai phải bỏ ngày công đi xếp hàng.',
       },
@@ -79,7 +79,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'quyên góp 2 ngôi trường ++', tone: 'green' },
           { label: 'toàn dân tự hào', tone: 'green' },
         ],
-        effects: { coins: -900, trustAll: 22, xp: 110, happiness: 12 },
+        effects: { trustAll: 22, xp: 110, happiness: 12 },
         reply:
           'Cột mốc 2 triệu bước chân hoàn thành trong 1 buổi sáng! Hai điểm trường khang trang sắp được xây dựng trên vùng cao, cả thành phố ngập tràn niềm vui nhân ái!',
       },
@@ -127,7 +127,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: '100% công nhân có vé ++', tone: 'green' },
           { label: 'nước mắt sum vầy', tone: 'green' },
         ],
-        effects: { coins: -1100, trustAll: 24, xp: 125, happiness: 12 },
+        effects: { trustAll: 24, xp: 125, happiness: 12 },
         reply:
           'Tất cả bà con đều cầm chắc tấm vé tàu điện tử trên tay! Những giọt nước mắt hạnh phúc lăn dài trên má những người con xa quê lâu năm.',
       },
@@ -175,7 +175,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'chứng nhận số chuẩn bộ ++', tone: 'green' },
           { label: 'giao thông thông suốt', tone: 'green' },
         ],
-        effects: { coins: -750, trustAll: 20, xp: 95, happiness: 12 },
+        effects: { trustAll: 20, xp: 95, happiness: 12 },
         reply:
           'Chỉ cần quét mã QR là chứng nhận điện tử có hiệu lực ngay! Lực lượng kiểm tra quét mã QR xác thực trong 3 giây và cho xe qua nhanh chóng!',
       },
@@ -223,7 +223,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'điện lưới mát rượi ++', tone: 'green' },
           { label: 'bà con thở phào', tone: 'green' },
         ],
-        effects: { coins: -1200, trustAll: 22, xp: 120, happiness: 12 },
+        effects: { trustAll: 22, xp: 120, happiness: 12 },
         reply:
           'Hệ thống điện thông minh vận hành trơn tru! Quạt mát chạy vù vù, máy lạnh phả hơi sảng khoái, cả xóm thở phào hoan hô Thị Trưởng!',
       },
@@ -271,7 +271,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'rước máy xịn sò ++', tone: 'green' },
           { label: 'quản lý tài chính tốt', tone: 'green' },
         ],
-        effects: { coins: -850, trustAll: 20, xp: 100, happiness: 12 },
+        effects: { trustAll: 20, xp: 100, happiness: 12 },
         reply:
           'Khách hàng rinh điện thoại mới trong niềm hân hoan! Mỗi tháng chỉ trả một khoản nhỏ vừa sức, không lo thâm hụt ngân sách gia đình!',
       },
@@ -319,7 +319,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'toàn dân tích lũy ++', tone: 'green' },
           { label: 'tài chính xanh mướt', tone: 'green' },
         ],
-        effects: { coins: -800, trustAll: 20, xp: 105, happiness: 12 },
+        effects: { trustAll: 20, xp: 105, happiness: 12 },
         reply:
           'Khu phố trở thành hình mẫu đô thị tài chính thông minh! Tiền nhàn rỗi đẻ lãi mỗi ngày giúp bà con có thêm thu nhập thụ động bền vững.',
       },
@@ -367,7 +367,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'già trẻ hòa thuận ++', tone: 'green' },
           { label: 'không gian rực rỡ', tone: 'green' },
         ],
-        effects: { coins: -950, trustAll: 22, xp: 115, happiness: 12 },
+        effects: { trustAll: 22, xp: 115, happiness: 12 },
         reply:
           'Hai sân khấu lung linh đèn chiếu sáng! Cụ già khoan thai múa quạt, thanh niên ném bóng rổ sôi động, cuối buổi còn chụp ảnh chung giao lưu thắm thiết!',
       },
@@ -415,7 +415,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'giao sạch 50k ly ++', tone: 'green' },
           { label: 'shipper tôn vinh', tone: 'green' },
         ],
-        effects: { coins: -1000, trustAll: 24, xp: 125, happiness: 12 },
+        effects: { trustAll: 24, xp: 125, happiness: 12 },
         reply:
           'Biệt đội giao hàng chạy mượt như thoi đưa! Từng ly trà sữa mát lạnh giao tận tay khách đúng giờ, ai nấy đều tấm tắc khen dịch vụ 5 sao!',
       },
@@ -463,7 +463,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'thông xe 5 phút ++', tone: 'green' },
           { label: 'tài xế nhẹ nhõm', tone: 'green' },
         ],
-        effects: { coins: -700, trustAll: 18, xp: 95, happiness: 12 },
+        effects: { trustAll: 18, xp: 95, happiness: 12 },
         reply:
           'Các tài xế chỉ cần quét mã QR trên biển chỉ dẫn là tiền vào tài khoản VETC sau 2 giây! Barie mở liên hồi, đoàn xe thông suốt êm ả!',
       },
@@ -511,7 +511,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'cháy sạch 20 tấn quả ++', tone: 'green' },
           { label: 'nông dân phấn khởi', tone: 'green' },
         ],
-        effects: { coins: -900, trustAll: 22, xp: 110, happiness: 12 },
+        effects: { trustAll: 22, xp: 110, happiness: 12 },
         reply:
           '20 tấn bưởi da xanh và sầu riêng bán sạch veo trong 3 giờ! Loa Thần Tài đọc tiền ting ting không ngớt, bà con nông dân cười rạng rỡ đón vụ mùa bội thu!',
       },
@@ -559,7 +559,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'màn hình mới tinh ++', tone: 'green' },
           { label: 'toàn dân cảm kích', tone: 'green' },
         ],
-        effects: { coins: -1100, trustAll: 24, xp: 125, happiness: 12 },
+        effects: { trustAll: 24, xp: 125, happiness: 12 },
         reply:
           'Trung tâm bảo hành tiếp nhận xử lý thần tốc! Từng chiếc điện thoại sáng bóng trở lại, người dân cảm nhận được sự quan tâm chu đáo của Thị Trưởng!',
       },
@@ -607,7 +607,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'cứu sống 5 trái tim thơ ++', tone: 'green' },
           { label: 'hồ nước lung linh', tone: 'green' },
         ],
-        effects: { coins: -900, trustAll: 25, xp: 130, happiness: 12 },
+        effects: { trustAll: 25, xp: 130, happiness: 12 },
         reply:
           'Mặt hồ rực rỡ ngập tràn ánh sáng hy vọng! 5 em nhỏ mắc bệnh tim bẩm sinh đã được nhận trọn vẹn chi phí phẫu thuật, một đêm rằm linh thiêng lay động lòng người!',
       },
@@ -655,7 +655,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'trận đấu đỉnh cao ++', tone: 'green' },
           { label: 'Gen Z reo hò', tone: 'green' },
         ],
-        effects: { coins: -800, trustAll: 20, xp: 105, happiness: 12 },
+        effects: { trustAll: 20, xp: 105, happiness: 12 },
         reply:
           'Ping xanh ổn định 10ms! Những pha combat mãn nhãn làm khán giả đứng kín vỉa hè reo hò cuồng nhiệt, giải đấu thành công rực rỡ!',
       },
@@ -703,7 +703,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'toàn dân biết tiết kiệm ++', tone: 'green' },
           { label: 'cô Chín mát lòng', tone: 'green' },
         ],
-        effects: { coins: -650, trustAll: 20, xp: 95, happiness: 12 },
+        effects: { trustAll: 20, xp: 95, happiness: 12 },
         reply:
           'Công thức 50% thiết yếu, 30% linh hoạt, 20% tích lũy Túi Thần Tài đi sâu vào lòng người! Cả xóm bắt đầu hình thành thói quen ghi chép chi tiêu khoa học!',
       },
@@ -751,7 +751,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'đạt chuẩn 5 sao đô thị ++', tone: 'green' },
           { label: 'du lịch bùng nổ', tone: 'green' },
         ],
-        effects: { coins: -850, trustAll: 22, xp: 110, happiness: 12 },
+        effects: { trustAll: 22, xp: 110, happiness: 12 },
         reply:
           'Từ bà bán xôi đến bác tài xe ôm đều quét mã QR mượt mà! Nhóm phượt thủ livestream chấm MoCity 10/10 điểm đáng sống, video lọt top thịnh hành!',
       },
@@ -799,7 +799,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'bảo toàn lợi nhuận ++', tone: 'green' },
           { label: 'tài chính vững vàng', tone: 'green' },
         ],
-        effects: { coins: -950, trustAll: 22, xp: 115, happiness: 12 },
+        effects: { trustAll: 22, xp: 115, happiness: 12 },
         reply:
           'Nhà đầu tư hân hoan chốt lời một phần và cất vào tài khoản sinh lời an toàn trên MoMo! Niềm vui trọn vẹn, không lo thị trường đảo chiều!',
       },
@@ -847,7 +847,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'toàn đoàn an toàn ++', tone: 'green' },
           { label: 'bảo hiểm chi trả 100%', tone: 'green' },
         ],
-        effects: { coins: -1000, trustAll: 25, xp: 130, happiness: 12 },
+        effects: { trustAll: 25, xp: 130, happiness: 12 },
         reply:
           'Tiền bồi thường bảo hiểm hỗ trợ ăn ở giải ngân tức thì! Đoàn du khách được lưu trú khách sạn tiện nghi, bão tan được tàu đón về đất liền an toàn tuyệt đối!',
       },
@@ -895,7 +895,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'quét mã mua vàng 3 giây ++', tone: 'green' },
           { label: 'tiệm vàng hiện đại', tone: 'green' },
         ],
-        effects: { coins: -800, trustAll: 22, xp: 110, happiness: 12 },
+        effects: { trustAll: 22, xp: 110, happiness: 12 },
         reply:
           'Khách mua vàng chỉ cần quét mã MoMo xác thực sinh trắc học là xong! Không phải ôm cọc tiền mặt nguy hiểm, tiệm vàng Bác Phúc bán sạch 500 chỉ vàng Thần Tài trong buổi sáng!',
       },
@@ -943,7 +943,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'phố đêm rực sáng ++', tone: 'green' },
           { label: 'doanh số kỷ lục', tone: 'green' },
         ],
-        effects: { coins: -900, trustAll: 24, xp: 120, happiness: 12 },
+        effects: { trustAll: 24, xp: 120, happiness: 12 },
         reply:
           'Khách ăn uống no nê, tiền hoàn ting ting về túi lại đẻ ra lãi! Phố ẩm thực MoCity trở thành thiên đường du lịch đêm nức tiếng cả nước!',
       },
@@ -991,7 +991,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'tiếp sức em đến trường ++', tone: 'green' },
           { label: 'cả phố xúc động', tone: 'green' },
         ],
-        effects: { coins: -500, trustAll: 25, xp: 120, happiness: 12 },
+        effects: { trustAll: 25, xp: 120, happiness: 12 },
         reply:
           'Chiếc loa nhỏ vang lên những tiếng ting ting ấm áp! Khách thương bé Bi ngoan ngoãn quét mã ủng hộ rầm rộ, bé Bi có đủ tiền đóng học phí cả năm học!',
       },
@@ -1039,7 +1039,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'các boss vui vẻ ++', tone: 'green' },
           { label: 'chủ nhân an tâm', tone: 'green' },
         ],
-        effects: { coins: -750, trustAll: 20, xp: 95, happiness: 12 },
+        effects: { trustAll: 20, xp: 95, happiness: 12 },
         reply:
           'Các bé chó mèo được ăn ngon, nằm nệm mát, có camera livestream 24/7 cho chủ nhân ngắm nhìn! Ai nấy đều khen dịch vụ chu đáo vô cùng!',
       },
@@ -1087,7 +1087,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'săn quà ngập tràn ++', tone: 'green' },
           { label: 'đô thị tương lai', tone: 'green' },
         ],
-        effects: { coins: -1000, trustAll: 24, xp: 125, happiness: 12 },
+        effects: { trustAll: 24, xp: 125, happiness: 12 },
         reply:
           'Hình ảnh kỳ ảo tuyệt đẹp! Cả người già lẫn trẻ nhỏ hào hứng giơ máy săn lùng kho báu ảo nhận quà thật, tiếng cười reo vang vọng cả khu phố!',
       },
@@ -1135,7 +1135,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'an toàn tuyệt đối ++', tone: 'green' },
           { label: 'tài khoản bất khả xâm phạm', tone: 'green' },
         ],
-        effects: { coins: -850, trustAll: 22, xp: 110, happiness: 12 },
+        effects: { trustAll: 22, xp: 110, happiness: 12 },
         reply:
           'Bà con nắm chắc nguyên tắc vàng: Không click link lạ, không đọc OTP cho bất kỳ ai! Kẻ gian gửi tin nhắn lừa đảo bị các cụ "bắt bài" trêu lại tơi bời!',
       },
@@ -1183,7 +1183,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
           { label: 'vạn sự như ý ++', tone: 'green' },
           { label: 'năm mới thịnh vượng', tone: 'green' },
         ],
-        effects: { coins: -1500, trustAll: 30, xp: 150, happiness: 12 },
+        effects: { trustAll: 30, xp: 150, happiness: 12 },
         reply:
           'Pháo hoa rực rỡ bừng sáng cả bầu trời đêm! Hàng vạn phong bao lì xì điện tử ting ting may mắn vào ví mỗi cư dân. MoCity bước sang năm mới trong tình yêu thương, phồn vinh và hạnh phúc ngập tràn!',
       },

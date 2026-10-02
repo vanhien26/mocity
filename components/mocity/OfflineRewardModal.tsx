@@ -153,7 +153,7 @@ export default function OfflineRewardModal({
             >
               +{formatVND(displayed)}
             </p>
-            <p className="mt-2 text-sm font-bold tracking-wide text-white/50">XU THUẾ PHỐ</p>
+            <p className="mt-2 text-sm font-bold tracking-wide text-white/50">XU THU NHẬP KHI VẮNG</p>
           </div>
 
           {capped && (

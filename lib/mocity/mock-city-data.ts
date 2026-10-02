@@ -61,6 +61,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 60,
     costGems: 0,
+    cogsRate: 0.45,
+    opexRate: 0.35,
     maxLevel: 50,
     height: 22,
     hue: '#FB7185',
@@ -83,6 +85,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 90,
     costCoins: 80,
     costGems: 0,
+    cogsRate: 0.15,
+    opexRate: 0.3,
     maxLevel: 50,
     height: 24,
     hue: '#22C55E',
@@ -104,6 +108,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 140,
     costGems: 0,
+    cogsRate: 0.42,
+    opexRate: 0.28,
     maxLevel: 50,
     height: 28,
     hue: '#EB2F96',
@@ -126,6 +132,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 20,
     costCoins: 240,
     costGems: 0,
+    cogsRate: 0.4,
+    opexRate: 0.38,
     maxLevel: 50,
     height: 18,
     hue: '#16A34A',
@@ -147,6 +155,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 180,
     costCoins: 340,
     costGems: 0,
+    cogsRate: 0.2,
+    opexRate: 0.32,
     maxLevel: 50,
     height: 36,
     hue: '#3B82F6',
@@ -168,6 +178,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 450,
     costGems: 0,
+    cogsRate: 0.48,
+    opexRate: 0.34,
     maxLevel: 50,
     height: 34,
     hue: '#F472B6',
@@ -190,6 +202,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 680,
     costGems: 0,
+    cogsRate: 0.55,
+    opexRate: 0.3,
     maxLevel: 50,
     height: 40,
     hue: '#EC4899',
@@ -212,6 +226,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 780,
     costGems: 1,
+    cogsRate: 0.12,
+    opexRate: 0.15,
     maxLevel: 50,
     height: 38,
     hue: '#F59E0B',
@@ -234,6 +250,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 890,
     costGems: 0,
+    cogsRate: 0.25,
+    opexRate: 0.28,
     maxLevel: 50,
     height: 32,
     hue: '#06B6D4',
@@ -256,6 +274,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 1_050,
     costGems: 2,
+    cogsRate: 0.15,
+    opexRate: 0.22,
     maxLevel: 50,
     height: 46,
     hue: '#2563EB',
@@ -278,6 +298,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 1_280,
     costGems: 2,
+    cogsRate: 0.1,
+    opexRate: 0.18,
     maxLevel: 50,
     height: 42,
     hue: '#8B5CF6',
@@ -300,6 +322,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 320,
     costCoins: 1_450,
     costGems: 2,
+    cogsRate: 0.18,
+    opexRate: 0.25,
     maxLevel: 50,
     height: 54,
     hue: '#0EA5E9',
@@ -321,6 +345,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 60,
     costCoins: 1_750,
     costGems: 3,
+    cogsRate: 0.5,
+    opexRate: 0.32,
     maxLevel: 50,
     height: 48,
     hue: '#06B6D4',
@@ -343,6 +369,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 2_200,
     costGems: 3,
+    cogsRate: 0.46,
+    opexRate: 0.26,
     maxLevel: 50,
     height: 52,
     hue: '#D946EF',
@@ -365,6 +393,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 160,
     costCoins: 1_900,
     costGems: 3,
+    cogsRate: 0.25,
+    opexRate: 0.3,
     maxLevel: 50,
     height: 36,
     hue: '#6366F1',
@@ -387,6 +417,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 2_900,
     costGems: 5,
+    cogsRate: 0.08,
+    opexRate: 0.2,
     maxLevel: 50,
     height: 58,
     hue: '#3B82F6',
@@ -409,6 +441,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 0,
     costCoins: 3_600,
     costGems: 6,
+    cogsRate: 0.2,
+    opexRate: 0.35,
     maxLevel: 50,
     height: 44,
     hue: '#0EA5E9',
@@ -431,6 +465,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 120,
     costCoins: 4_800,
     costGems: 8,
+    cogsRate: 0.3,
+    opexRate: 0.25,
     maxLevel: 50,
     height: 36,
     hue: '#FBBF24',
@@ -452,6 +488,8 @@ export const BUILDINGS: BuildingDef[] = [
     population: 450,
     costCoins: 8_500,
     costGems: 15,
+    cogsRate: 0.14,
+    opexRate: 0.22,
     maxLevel: 50,
     height: 78,
     hue: '#F59E0B',
@@ -608,6 +646,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Bấm vào bảng tên trên thanh HUD để đặt tên Thị Trưởng & Thành Phố (đừng để tên mặc định kẻo Shipper tìm không ra!).',
     rewardCoins: 1_000,
     rewardGems: 3,
+    stage: 1,
     rewardXp: 150,
   },
   {
@@ -616,6 +655,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Xây dựng ít nhất 1 công trình Dân Cư (Khu Nhà Phố hoặc Ký Túc Xá Sinh Viên) để bà con có chỗ che mưa che nắng.',
     rewardCoins: 1_500,
     rewardGems: 3,
+    stage: 1,
     rewardXp: 200,
   },
   {
@@ -624,6 +664,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Xây dựng 1 Cửa Hàng thương mại đầu tiên để dân tình có chỗ “chữa lành” và tạo dòng XU/giây tự động.',
     rewardCoins: 2_000,
     rewardGems: 4,
+    stage: 1,
     rewardXp: 250,
   },
   {
@@ -632,6 +673,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Bấm vào 1 cửa hàng trên bản đồ và lắp đặt tiện ích “MoMo QR & Loa Thần Tài” đọc tiền về vang dội.',
     rewardCoins: 5_000,
     rewardGems: 5,
+    stage: 1,
     rewardXp: 400,
   },
   {
@@ -640,6 +682,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Nâng cấp bất kỳ cửa hàng nào đạt mốc Cấp 5 để kích hoạt hệ số nhân đôi sản lượng XU/giây.',
     rewardCoins: 8_000,
     rewardGems: 6,
+    stage: 1,
     rewardXp: 600,
   },
   {
@@ -648,6 +691,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Xây dựng Rạp Chiếu Phim MoMo Cinema (cho các cặp đôi khỏi ra công viên đếm muỗi) hoặc Trạm Túi Thần Tài (sinh lãi kép).',
     rewardCoins: 15_000,
     rewardGems: 8,
+    stage: 1,
     rewardXp: 900,
   },
   {
@@ -656,6 +700,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Mở bảng Quản lý Cửa hàng (Tab Quản Lý RPG) và bổ nhiệm 1 Quản Lý chuyên trách để ngồi mát ăn bát vàng.',
     rewardCoins: 20_000,
     rewardGems: 10,
+    stage: 1,
     rewardXp: 1_100,
   },
   {
@@ -664,6 +709,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Tiến hóa bất kỳ công trình nào từ 1★ lên 2★ để cả khu phố phải ngước nhìn.',
     rewardCoins: 25_000,
     rewardGems: 12,
+    stage: 1,
     rewardXp: 1_300,
   },
   {
@@ -672,6 +718,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Bấm nút “Giờ Vàng x2” trên thanh HUD để cả thành phố bước vào đại tiệc săn deal nhân đôi tốc độ kiếm XU.',
     rewardCoins: 18_000,
     rewardGems: 8,
+    stage: 1,
     rewardXp: 1_000,
   },
   {
@@ -680,7 +727,92 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     description: 'Sở hữu từ 6 công trình trở lên và đón ít nhất 200 Cư dân về sinh sống nhộn nhịp.',
     rewardCoins: 50_000,
     rewardGems: 20,
+    stage: 1,
     rewardXp: 2_000,
+  },
+
+  /*
+   * CHẶNG HAI.
+   *
+   * Mười nhiệm vụ trên đều xong trong vài chục phút đầu, sau đó bảng Nhiệm Vụ
+   * trống trơn và người chơi không còn mục tiêu dài hạn nào ngoài con số doanh
+   * thu tự chạy. Chặng này bám vào các hệ thống đã có sẵn nhưng ít người đụng
+   * tới: tiến hóa sao, module cửa hàng, quản lý, mở rộng đất, chuỗi ngày.
+   *
+   * Thưởng ở đây phải lớn hơn hẳn chặng một vì tới lúc đó doanh thu mỗi giây
+   * đã vài trăm Xu - thưởng 50.000 Xu không còn là phần thưởng nữa.
+   */
+  {
+    id: 'q-full-street',
+    title: 'Kín Mặt Tiền — Lấp Đầy 12 Lô Đất',
+    description: 'Sở hữu 12 công trình trên phố. Đất trống là tiền nằm im, Thị Trưởng ạ.',
+    rewardCoins: 180_000,
+    rewardGems: 25,
+    stage: 2,
+    rewardXp: 4_500,
+  },
+  {
+    id: 'q-three-managers',
+    title: 'Bộ Sậu Quản Lý — Bổ Nhiệm 3 Người',
+    description: 'Có ít nhất 3 cửa hàng đang được Quản Lý chuyên trách trông coi cùng lúc.',
+    rewardCoins: 260_000,
+    rewardGems: 30,
+    stage: 2,
+    rewardXp: 6_000,
+  },
+  {
+    id: 'q-module-master',
+    title: 'Phủ Sóng Tiện Ích — Lắp 6 Module',
+    description: 'Lắp tổng cộng 6 tiện ích lên các cửa hàng trong phố (QR, Loa, Ví Trả Sau...).',
+    rewardCoins: 350_000,
+    rewardGems: 35,
+    stage: 2,
+    rewardXp: 7_500,
+  },
+  {
+    id: 'q-three-star',
+    title: 'Dát Vàng Toàn Phố — Một Tiệm Lên ★★★',
+    description: 'Tiến hóa bất kỳ công trình nào lên 3 sao. Bảng hiệu phải sáng cả khu.',
+    rewardCoins: 500_000,
+    rewardGems: 40,
+    stage: 2,
+    rewardXp: 10_000,
+  },
+  {
+    id: 'q-level-20',
+    title: 'Công Trình Cấp 20 — Xây Cho Ra Xây',
+    description: 'Nâng bất kỳ công trình nào lên Cấp 20.',
+    rewardCoins: 700_000,
+    rewardGems: 45,
+    stage: 2,
+    rewardXp: 12_000,
+  },
+  {
+    id: 'q-streak-7',
+    title: 'Bảy Ngày Không Nghỉ — Thị Trưởng Mẫn Cán',
+    description: 'Giữ chuỗi ngày chơi liên tiếp đạt 7 ngày.',
+    rewardCoins: 450_000,
+    rewardGems: 50,
+    stage: 2,
+    rewardXp: 9_000,
+  },
+  {
+    id: 'q-tier-6',
+    title: 'Lên Hạng Đô Thị Quét Mã',
+    description: 'Đưa thành phố đạt Bậc 6 - Đô Thị Quét Mã. Cả phố không còn ai thối tiền lẻ.',
+    rewardCoins: 1_200_000,
+    rewardGems: 60,
+    stage: 2,
+    rewardXp: 18_000,
+  },
+  {
+    id: 'q-landmark',
+    title: 'Biểu Tượng Thành Phố — Dựng Một Landmark',
+    description: 'Xây Quảng Trường Heo Vàng hoặc Tháp Đôi MoMo Tower.',
+    rewardCoins: 900_000,
+    rewardGems: 55,
+    stage: 2,
+    rewardXp: 14_000,
   },
 ];
 
@@ -923,6 +1055,20 @@ export interface CityTierDef {
   rewardXp: number;
 }
 
+/**
+ * NGUONG DAN SO: phai doc cung `populationFor`, la `def.population * level`.
+ *
+ * Ban <= 5 dat nguong 120 / 320 / 700 / 1.400 / 2.800 / 5.500 / 10.000. Nghe
+ * hop ly nhung dan so NHAN THEO CAP cong trinh trong khi `minBuildings` thi
+ * khong, nen hai truc lech nhau rat nhanh: o moc 24 cong trinh nguoi choi da
+ * co ~15.900 dan trong khi bac 6 chi doi 2.800. Ket qua la toan bo thang bac
+ * chi con phu thuoc so cong trinh, con dan so la so trang tri.
+ *
+ * Nguong duoi day lay tu mo hinh tien trinh thuc (res chiem ~30% o dat, cap
+ * trung binh tang dan 1 -> 18): 180 / 540 / 2.250 / 6.000 / 15.960 / 25.650 /
+ * 41.040. Dat nguong hoi thap hon moc do mot chut de nguoi choi khong bi chan
+ * cung, nhung du cao de PHAI xay them nha o chu khong chi dan o dat.
+ */
 export const CITY_TIERS: CityTierDef[] = [
   {
     id: 'tier-xom-choi-la', rank: 1, name: 'Xóm Chòi Lá',
@@ -933,43 +1079,43 @@ export const CITY_TIERS: CityTierDef[] = [
   {
     id: 'tier-hem-ba-gac', rank: 2, name: 'Hẻm Ba Gác',
     tagline: 'Hẻm vừa đúng một chiếc ba gác, hai xe gặp nhau là phải lùi.',
-    minPopulation: 120, minBuildings: 3,
+    minPopulation: 150, minBuildings: 3,
     rewardCoins: 6_000, rewardGems: 4, rewardXp: 900,
   },
   {
     id: 'tier-pho-via-he', rank: 3, name: 'Phố Vỉa Hè',
     tagline: 'Bắt đầu có hàng quán mặt tiền, tối đến đèn vàng sáng cả dãy.',
-    minPopulation: 320, minBuildings: 6,
+    minPopulation: 500, minBuildings: 6,
     rewardCoins: 18_000, rewardGems: 8, rewardXp: 2_400,
   },
   {
     id: 'tier-thi-tu-tra-da', rank: 4, name: 'Thị Tứ Trà Đá',
     tagline: 'Đông người, có chỗ ngồi tám chuyện từ sáng tới chiều.',
-    minPopulation: 700, minBuildings: 10,
+    minPopulation: 2_000, minBuildings: 10,
     rewardCoins: 45_000, rewardGems: 14, rewardXp: 5_200,
   },
   {
     id: 'tier-quan-tra-sua', rank: 5, name: 'Quận Trà Sữa',
     tagline: 'GenZ kéo tới check-in, dòng tiền lên thấy rõ.',
-    minPopulation: 1_400, minBuildings: 16,
+    minPopulation: 5_500, minBuildings: 16,
     rewardCoins: 110_000, rewardGems: 22, rewardXp: 9_000,
   },
   {
     id: 'tier-do-thi-quet-ma', rank: 6, name: 'Đô Thị Quét Mã',
     tagline: 'Hết cảnh thối tiền bằng kẹo cao su, cả phố quét mã.',
-    minPopulation: 2_800, minBuildings: 24,
+    minPopulation: 14_000, minBuildings: 24,
     rewardCoins: 280_000, rewardGems: 32, rewardXp: 14_000,
   },
   {
     id: 'tier-dai-do-thi-ting-ting', rank: 7, name: 'Đại Đô Thị Ting Ting',
     tagline: 'Tiếng báo có tiền vang từ đầu hẻm tới cuối đại lộ.',
-    minPopulation: 5_500, minBuildings: 34,
+    minPopulation: 24_000, minBuildings: 34,
     rewardCoins: 700_000, rewardGems: 45, rewardXp: 20_000,
   },
   {
     id: 'tier-sieu-do-thi-khong-tien-mat', rank: 8, name: 'Siêu Đô Thị Không Tiền Mặt',
     tagline: 'Không còn ai cầm tiền lẻ. Thị Trưởng đã làm được.',
-    minPopulation: 10_000, minBuildings: 46,
+    minPopulation: 40_000, minBuildings: 46,
     rewardCoins: 1_800_000, rewardGems: 70, rewardXp: 25_000,
   },
 ];
@@ -1042,3 +1188,43 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
     rewardCoins: 12_000, rewardGems: 3, rewardXp: 4_500,
   },
 ];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CHUOI NGÀY CHƠI LIÊN TIẾP
+ *
+ * Cơ chế giữ người chơi quay lại rẻ nhất trong toàn bộ thiết kế: chỉ cần một
+ * con số đếm và một thông báo khi bị ngắt.
+ *
+ * Mốc thưởng tăng vọt, không đều — người chơi thấy "còn 2 ngày nữa là đủ 7"
+ * thì quay lại; thưởng tuyến tính thì không tạo lý do để quay lại.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export interface StreakMilestoneDef {
+  /** So ngay lien tiep de mo khoa. */
+  days: number;
+  title: string;
+  rewardCoins: number;
+  rewardGems: number;
+  rewardXp: number;
+}
+
+export const STREAK_MILESTONES: StreakMilestoneDef[] = [
+  { days: 3, title: '3 ngày — Phố đã quen mặt bạn', rewardCoins: 20_000, rewardGems: 2, rewardXp: 3_000 },
+  { days: 7, title: '1 tuần — Hàng xóm kín chào', rewardCoins: 60_000, rewardGems: 4, rewardXp: 9_000 },
+  { days: 14, title: '2 tuần — Thị Trưởng được cử tri tín nhiệm', rewardCoins: 180_000, rewardGems: 8, rewardXp: 20_000 },
+  { days: 30, title: '1 tháng — Cả thành phố đứng sau lưng bạn', rewardCoins: 600_000, rewardGems: 15, rewardXp: 45_000 },
+  { days: 60, title: '2 tháng — Bậc thành phố không còn chờ ai', rewardCoins: 1_500_000, rewardGems: 25, rewardXp: 90_000 },
+  { days: 100, title: '100 ngày — Huyền thoại Đại Lộ Hoa Sữa', rewardCoins: 4_000_000, rewardGems: 40, rewardXp: 180_000 },
+];
+
+/** Moc cao nhat ma chuoi hien tai da cham toi. */
+export function streakMilestoneReached(days: number): StreakMilestoneDef | null {
+  let best: StreakMilestoneDef | null = null;
+  for (const m of STREAK_MILESTONES) if (days >= m.days) best = m;
+  return best;
+}
+
+/** Moc tiep theo can them bao nhieu ngay. `null` = da cham toi da. */
+export function nextStreakMilestone(days: number): StreakMilestoneDef | null {
+  return STREAK_MILESTONES.find((m) => days < m.days) ?? null;
+}

@@ -9,6 +9,7 @@ import {
   CITY_TIERS,
   DAILY_QUESTS,
   cityTierFor,
+  STREAK_MILESTONES,
   MODULE_BY_ID,
   STARTER_INVENTORY,
   starUpgradeCost,
@@ -33,15 +34,20 @@ import {
 import { CITY_EVENTS, EVENT_BY_ID, REQUEST_BY_ID } from './dialogue-data';
 import { eligibleRequestFor } from './dialogue-engine';
 import { ARCHETYPES, DIGITAL_TRUST_THRESHOLD, archetypeForBuilding, npcNameFor } from './npc-data';
-import type {
-  ActiveRequest,
-  BuildingNode,
-  CityState,
-  Currencies,
-  DialogueEffects,
-  NpcState,
-  StoreModuleId,
-  TimeOfDay,
+import {
+  emptyLedger,
+  emptyPeriodLedger,
+  type ActiveRequest,
+  type BuildingNode,
+  type CityState,
+  type Currencies,
+  type DialogueEffects,
+  type LedgerEntry,
+  type NpcState,
+  type PeriodLedger,
+  type StreakState,
+  type StoreModuleId,
+  type TimeOfDay,
 } from './types';
 
 /**
@@ -49,8 +55,8 @@ import type {
  * save duoc gan theo tai khoan: khong thi hai nguoi dung lao tai khoan tren
  * cung mot may se ke thua toan bo thanh pho cua nhau (cung Xu, cung ten Tho).
  */
-const STORAGE_KEY_PREFIX = 'momo_city_v5';
-const STATE_VERSION = 5;
+const STORAGE_KEY_PREFIX = 'momo_city_v8';
+const STATE_VERSION = 8;
 export const OFFLINE_CAP_MS = 8 * 60 * 60 * 1000;
 const OFFLINE_MIN_MS = 60 * 1000;
 const PERSIST_DEBOUNCE_MS = 250;
@@ -91,6 +97,16 @@ function todayKey(ts: number): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+/**
+ * Khoa thang cho so cai thang. Khac `todayKey`: quy doi 1 ngay 0h cua thang
+ * sau se xoa so thang - day la ky bao cao ma nguoi choi can xem lai de
+ * danh gia xem ca thanh pho co dang on dinh khong.
+ */
+function monthKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth() + 1}`;
+}
+
 /** Tang mot bo dem nhiem vu ngay, tu reset khi sang ngay moi. */
 function bumpDaily(
   s: CityState,
@@ -103,7 +119,7 @@ function bumpDaily(
 }
 
 function emptyDailyLog(ts: number): import('./types').DailyLog {
-  return { day: todayKey(ts), built: 0, upgraded: 0, talked: 0, eventsResolved: 0, starEvolved: 0, claimed: [] };
+  return { day: todayKey(ts), built: 0, upgraded: 0, talked: 0, eventsResolved: 0, starEvolved: 0, idleXp: 0, claimed: [] };
 }
 
 function createInitialState(): CityState {
@@ -135,6 +151,8 @@ function createInitialState(): CityState {
     lastEngagedAt: now,
     eventLog: { day: todayKey(now), resolved: 0 },
     dailyLog: emptyDailyLog(now),
+    streak: { days: 0, lastDay: '', best: 0 },
+    streakClaimed: 0,
     cityTierClaimed: 1,
     happinessBoost: 0,
     tappedAt: {},
@@ -147,6 +165,12 @@ function createInitialState(): CityState {
     lastSeenAt: now,
     createdAt: now,
     totalCoinsEarned: STARTING_COINS,
+    totalRevenue: 0,
+    totalGrants: 0,
+    totalTapIncome: 0,
+    ledgerLifetime: emptyPeriodLedger(todayKey(now), monthKey(now)),
+    ledgerDay: emptyPeriodLedger(todayKey(now), monthKey(now)),
+    ledgerMonth: emptyPeriodLedger(todayKey(now), monthKey(now)),
     bubblesCollected: 0,
     pendingOffline: null,
     timeOfDay: 'DAY',
@@ -203,6 +227,49 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
     feverEverUsed: (s.feverUntil ?? 0) > 0,
     lastTalkAt: s.lastTalkAt ?? 0,
   }),
+  /**
+   * V5 -> V6: tach khoan thu thanh doanh thu / thuong cap / tien cham.
+   *
+   * Save cu khong the biet phan nao la doanh thu that, nen KHONG doan - ca
+   * `totalCoinsEarned` cu duoc giu o ca hai dong va con so doanh thu dung
+   * bat dau tu 0. Ngay khi nguoi choi lai, doanh thu moi cong dung vao
+   * `totalRevenue`; con so cu chi dung de hien tong nhap.
+   */
+  5: (s) => ({
+    ...s,
+    totalRevenue: 0,
+    totalGrants: s.totalCoinsEarned ?? 0,
+    totalTapIncome: 0,
+  }),
+  /**
+   * V6 -> V7: them so cai P&L (vĩnh viễn / ngày / tháng).
+   *
+   * Save cu khong co du lieu doanh thu / gia von theo ky nen KHONG doan - ca
+   * ba so bat dau tu 0 va cong dan tu tick dau tien. Khong suy tien doanh thu
+   * ra gia von theo ty le mac dinh: 2.959 trieu Xu thuong khong phai la loi
+   * nhuan nen uoc luong sai se ghi vao bao cao mot lan nua.
+   */
+  6: (s) => {
+    const day = todayKey(Date.now());
+    const month = monthKey(Date.now());
+    return {
+      ...s,
+      ledgerLifetime: emptyPeriodLedger(day, month),
+      ledgerDay: emptyPeriodLedger(day, month),
+      ledgerMonth: emptyPeriodLedger(day, month),
+    };
+  },
+  /**
+   * V7 -> V8: them chuoi ngay choi lien tiep.
+   *
+   * Khoi tao `days: 0` chu khong phai 1: nguoi choi moi chua choi ngay nao.
+   * `registerStreak` se tang len 1 ngay dau tien.
+   */
+  7: (s) => ({
+    ...s,
+    streak: s.streak ?? { days: 0, lastDay: '', best: 0 },
+    streakClaimed: s.streakClaimed ?? 0,
+  }),
 };
 
 const listeners = new Set<() => void>();
@@ -249,6 +316,18 @@ const XP_PER_STAR = 900;
  */
 const IDLE_XP_DIVISOR = 60;
 export const IDLE_XP_CAP = 4;
+/**
+ * Tran XP nhan roi MOI NGAY.
+ *
+ * Tran theo tick khong du. `IDLE_XP_CAP = 4`/giay nghe nho, nhung nhan voi
+ * 86.400 giay la 345.600 XP - bang 92% toan bo duong cong cap 1 -> 50
+ * (377.300 XP). Tuc la chi can de may chay dung mot ngay la gan cham cap toi
+ * da, trong khi muc tieu thiet ke la len cap phai den tu hanh dong.
+ *
+ * 9.000 XP/ngay = 2,4% duong cong: van thuong nguoi choi de may chay, nhung
+ * khong the thay the viec xay, nang cap va lam nhiem vu.
+ */
+export const IDLE_XP_DAILY_CAP = 9_000;
 
 /**
  * Tang cap do Thị Truong.
@@ -278,13 +357,41 @@ function addMayorXp(s: CityState, amount: number): Pick<CityState, 'mayorLevel' 
   return { mayorLevel: level, mayorXp: level >= MAX_MAYOR_LEVEL ? 0 : pool };
 }
 
-function withCoins(state: CityState, delta: number): CityState {
+/**
+ * Phan loai mot khoan thu cho `totalCoinsEarned`.
+ *
+ * `OPERATING` la doanh thu that cua thanh pho (san luong cua hang + phi ha
+ * tang + lai tich luy). `GRANT` la tien thuong: nhiem vu, bac thanh pho, qua
+ * dang nhap, qua offline. `TAP` la tien thuong vi cham vao cung dan / thu.
+ *
+ * Phan loai nay khong phai chi cho dep so lieu. Ban <= 4 tat ca gop chung vao
+ * `totalCoinsEarned` roi ShareCityCard dan nhan "TONG DOANH THU TICH LUY" -
+ * tuc 2,9 trieu Xu thuong cap bi bao cao nhu doanh thu ban hang. Ve ke toan
+ * do la von gop von chu so huu, khong phai doanh thu.
+ */
+type CoinFlow = 'OPERATING' | 'GRANT' | 'TAP';
+
+function withCoins(state: CityState, delta: number, flow: CoinFlow = 'GRANT'): CityState {
   const safeDelta = Number.isFinite(delta) ? delta : 0;
   const gained = Math.max(0, safeDelta);
   const next = { ...state, coins: Math.max(0, (Number.isFinite(state.coins) ? state.coins : 0) + safeDelta) };
   if (gained > 0) {
-    next.totalCoinsEarned = (Number.isFinite(next.totalCoinsEarned) ? next.totalCoinsEarned : 0) + gained;
-    Object.assign(next, addMayorXp(next, Math.min(IDLE_XP_CAP, gained / IDLE_XP_DIVISOR)));
+    const cur = (n: unknown) => (Number.isFinite(n) ? Math.max(0, n as number) : 0);
+    next.totalCoinsEarned = cur(next.totalCoinsEarned) + gained;
+    next.totalRevenue = cur(next.totalRevenue) + (flow === 'OPERATING' ? gained : 0);
+    next.totalGrants = cur(next.totalGrants) + (flow === 'GRANT' ? gained : 0);
+    next.totalTapIncome = cur(next.totalTapIncome) + (flow === 'TAP' ? gained : 0);
+    // Chi doanh thu van hua duoc sinh cap do Thị Truơng; thuong khong.
+    if (flow === 'OPERATING') {
+      const now = Date.now();
+      const log = next.dailyLog?.day === todayKey(now) ? next.dailyLog : emptyDailyLog(now);
+      const conLai = Math.max(0, IDLE_XP_DAILY_CAP - (log.idleXp ?? 0));
+      const them = Math.min(IDLE_XP_CAP, gained / IDLE_XP_DIVISOR, conLai);
+      if (them > 0) {
+        Object.assign(next, addMayorXp(next, them));
+        next.dailyLog = { ...log, idleXp: (log.idleXp ?? 0) + them };
+      }
+    }
   }
   return next;
 }
@@ -331,10 +438,19 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   if (typeof parsed.version !== 'number') return fresh;
   if (parsed.version > STATE_VERSION) return fresh;
 
-  const migrated =
-    parsed.version < STATE_VERSION
-      ? MIGRATIONS[parsed.version]?.({ ...fresh, ...parsed } as CityState) ?? fresh
-      : ({ ...fresh, ...parsed } as CityState);
+  /**
+   * Chay MIGRATIONS theo thu tu bac: save v3 phai qua 3 -> 4 -> 5 -> moi den
+   * 6. Ban <= 5 chi goi `MIGRATIONS[parsed.version]` MOT LAN, nen save v3 bo
+   * qua hoan toan buoc 4 va 5 - `feverEverUsed` va `lastTalkAt` deu khong duoc
+   * gan. Cac fallback o `normalizeStoredState` che lai loi nen test van xanh,
+   * nhung moi bat buoc them field sau nay se lam save v3 hong.
+   */
+  let migrated: CityState = { ...fresh, ...parsed } as CityState;
+  for (let v = parsed.version; v < STATE_VERSION; v++) {
+    const step = MIGRATIONS[v];
+    if (!step) continue;
+    migrated = step(migrated);
+  }
 
   const merged: CityState = { ...fresh, ...migrated };
   merged.version = STATE_VERSION;
@@ -369,6 +485,12 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.mayorXp = Number.isFinite(merged.mayorXp)
     ? Math.min(xpForLevel(merged.mayorLevel) - 1, Math.max(0, merged.mayorXp))
     : 0;
+  /* Ba dong khoan thu. Save cu khong tach duoc nen gan 0 phan chua biet. */
+  const nonNeg = (n: unknown) => (Number.isFinite(n) ? Math.max(0, n as number) : 0);
+  merged.totalRevenue = nonNeg(merged.totalRevenue);
+  merged.totalGrants = nonNeg(merged.totalGrants);
+  merged.totalTapIncome = nonNeg(merged.totalTapIncome);
+  merged.totalCoinsEarned = nonNeg(merged.totalCoinsEarned);
   merged.eventLog =
     migrated.eventLog && typeof migrated.eventLog.day === 'string'
       ? { day: migrated.eventLog.day, resolved: Math.max(0, migrated.eventLog.resolved ?? 0) }
@@ -383,6 +505,7 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
           talked: Math.max(0, migrated.dailyLog.talked ?? 0),
           eventsResolved: Math.max(0, migrated.dailyLog.eventsResolved ?? 0),
           starEvolved: Math.max(0, migrated.dailyLog.starEvolved ?? 0),
+          idleXp: Math.max(0, migrated.dailyLog.idleXp ?? 0),
           claimed: Array.isArray(migrated.dailyLog.claimed) ? migrated.dailyLog.claimed : [],
         }
       : emptyDailyLog(now);
@@ -391,6 +514,43 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     : 1;
   merged.tappedAt =
     migrated.tappedAt && typeof migrated.tappedAt === 'object' ? migrated.tappedAt : {};
+
+  /**
+   * Chuẩn hoá 3 sổ cái. Save V7 đã có sẵn, save cũ thì migration 6 tạo rỗng -
+   * ở đây chỉ chặn trường hợp save hỏng tay có object thiếu chữ.
+   */
+  const day = todayKey(now);
+  const month = monthKey(now);
+  /**
+   * Moi dong trong so cai la so duong. Save hong tay co gia tri am se lam
+   * bao cao hien "loi nhuan am" o nhung dong van phai la chi phi - nguoi choi
+   * nhin thay cong trinh sinh loi va doc sai hoan toan.
+   */
+  const normPeriod = (l: unknown): PeriodLedger => {
+    const src = (l ?? {}) as Partial<PeriodLedger>;
+    const out = emptyLedger();
+    for (const key of Object.keys(out) as (keyof LedgerEntry)[]) {
+      const v = src[key];
+      out[key] = Number.isFinite(v) ? Math.max(0, v as number) : 0;
+    }
+    return { ...out, day: src.day ?? day, month: src.month ?? month };
+  };
+  merged.ledgerLifetime = normPeriod(merged.ledgerLifetime);
+  merged.ledgerDay = normPeriod(merged.ledgerDay);
+  merged.ledgerMonth = normPeriod(merged.ledgerMonth);
+  // Sổ ngày/tháng phải trỏ đúng kỳ hiện tại, nếu lệch thì `rollPeriods` sẽ
+  // tự xoá khi người chơi tick - nhưng sửa ở đây cho HUD đọc ngay.
+  merged.ledgerDay.day = day;
+  merged.ledgerMonth.month = month;
+  merged.streak =
+    migrated.streak && typeof migrated.streak.lastDay === 'string'
+      ? {
+          days: nonNeg(migrated.streak.days),
+          lastDay: migrated.streak.lastDay,
+          best: nonNeg(migrated.streak.best),
+        }
+      : { days: 0, lastDay: '', best: 0 };
+  merged.streakClaimed = nonNeg(merged.streakClaimed);
   merged.happinessBoost = Number.isFinite(merged.happinessBoost)
     ? Math.min(HAPPINESS_BOOST_CAP, Math.max(0, merged.happinessBoost))
     : 0;
@@ -401,9 +561,21 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   const elapsed = now - (Number.isFinite(merged.lastSeenAt) ? merged.lastSeenAt : now);
   if (elapsed >= OFFLINE_MIN_MS) {
     const capped = Math.min(elapsed, OFFLINE_CAP_MS);
+    /**
+     * KHONG truyen `idleMs` khi tinh thuong offline.
+     *
+     * `idleMs` la moc dem cua suy giam hanh phuc (`HAPPINESS_DECAY_GRACE_MS`).
+     * Ban <= 7 truyen `now - lastEngagedAt` nen nguoi choi dong tab 8 tieng quay
+     * lai nhan tien TINH TREN hanh phuc da bi tru toi da - con nguoi choi
+     * quay lai moi gio thi nhan duoc nhieu hon 11%. Do la phat nguoc retention
+     * loop: game thuong cho su co mat va phat cho su van hoi.
+     *
+     * Thanh pho khong bi phat vi nguoi choi di ngoaii gio. Suy giam hanh phuc
+     * van ap dung khi game chay (`tickIdle`), nen khi mo len lai thi pho bi
+     * thay doi ngay - dung nghhia, va khong chan viec quay lai.
+     */
     const earned = offlineCoins(
       coinsPerSecond(merged.buildings, merged.npcs, merged.mayorLevel, merged.coins, {
-        idleMs: now - merged.lastEngagedAt,
         happinessBoost: merged.happinessBoost,
       }),
       capped,
@@ -470,7 +642,7 @@ export function claimOffline(): void {
     pendingOffline: null,
     lastSeenAt: Date.now(),
   };
-  setState(reward > 0 ? withCoins(cleared, reward) : cleared);
+  setState(reward > 0 ? withCoins(cleared, reward, 'OPERATING') : cleared);
 }
 
 export function dismissOffline(): void {
@@ -533,8 +705,16 @@ export function completeMayorLogin(mayorName: string, cityName: string, bonusCoi
     gems: Number.isFinite(state.gems) ? Math.max(0, state.gems) : 0,
     totalCoinsEarned:
       (Number.isFinite(state.totalCoinsEarned) ? Math.max(0, state.totalCoinsEarned) : 0) + loginBonus,
+    // Thuong nham chuc + phan thuong offline la GRANT, khong phai doanh thu.
+    totalGrants:
+      (Number.isFinite(state.totalGrants) ? Math.max(0, state.totalGrants) : 0) +
+      (isFirstRun ? Math.max(0, bonusCoins) : 0),
+    totalRevenue:
+      (Number.isFinite(state.totalRevenue) ? Math.max(0, state.totalRevenue) : 0) + offlineReward,
   };
   setState(baseState);
+  // Dang nhap la "mo game" - ghi nhan vao chuoi ngay choi lien tiep.
+  registerStreak();
   return loginBonus;
 }
 
@@ -556,28 +736,190 @@ export function triggerFeverMode(): boolean {
 /**
  * Tick AFK 1 lan/giay: cong Xu theo doanh thu Cua Hang + Phi ha tang + Lai kep Tui Than Tai.
  */
+/**
+ * Cong mot khoan vao MOT dong cua so cai. Khong dung khi dong = 0 (thuong
+ * bac, xay moi) va khong cho phep am (dong la so duong).
+ */
+function addToLedger(ledger: PeriodLedger, key: keyof LedgerEntry, amount: number): PeriodLedger {
+  if (!Number.isFinite(amount) || amount === 0) return ledger;
+  const cur = (ledger[key] as number) ?? 0;
+  return { ...ledger, [key]: Math.max(0, cur + amount) };
+}
+
+/**
+ * Reset so cai theo ky khi qua ngay / thang moi, giu nguyen so vi vien.
+ *
+ * Khong dung `useEffect`: `tickIdle` chay moi giay nen so ngay phai dung moc
+ * thoi gian thuc te chu khong phai thoi diem render.
+ */
+function rollPeriods(s: CityState, now: number): CityState {
+  const day = todayKey(now);
+  const month = monthKey(now);
+  let next = s;
+  if (s.ledgerDay?.day !== day) {
+    next = { ...next, ledgerDay: emptyPeriodLedger(day, month) };
+  }
+  if (s.ledgerMonth?.month !== month) {
+    next = { ...next, ledgerMonth: emptyPeriodLedger(day, month) };
+  }
+  return next;
+}
+
+/** Ngay hom qua theo lich dia phuong, dung de xet chuoi co lien tuc khong. */
+function yesterdayKey(ts: number): string {
+  const d = new Date(ts);
+  d.setDate(d.getDate() - 1);
+  return todayKey(d.getTime());
+}
+
+/**
+ * Tang chuoi ngay choi lien tiep.
+ *
+ * Chi dem MOT LAN moi ngay. Va ngay hom qua thi `days + 1`; va ngay khac
+ * (nguoi choi bo qua mot ngay) thi reset ve 1 - dung nghhia "chuoi bi ngat",
+ * khong phai "con so dem nguoc".
+ *
+ * @return So ngay moi, hoac 0 neu goi lai trong cung ngay (khong tang).
+ */
+export function registerStreak(): number {
+  const now = Date.now();
+  const today = todayKey(now);
+  const cur: StreakState = state.streak ?? { days: 0, lastDay: '', best: 0 };
+  if (cur.lastDay === today) return 0;
+
+  const days = cur.lastDay === yesterdayKey(now) ? cur.days + 1 : 1;
+  const next: StreakState = { days, lastDay: today, best: Math.max(cur.best, days) };
+  setState({ ...state, streak: next });
+  return days;
+}
+
+/**
+ * Nhan thuong cho cac moc chuoi da cham nhung chua nhan.
+ *
+ * Vong lap tu moi moc len: chuoi 40 ngay cham 3/7/14/30/60 thi trao ca 4 moc
+ * mot luot. Tra ve danh sach de UI bao tung moc.
+ */
+export function claimStreakMilestones() {
+  const days = currentStreak();
+  if (days === 0) return [];
+  const claimed = state.streakClaimed ?? 0;
+  const earned = STREAK_MILESTONES.filter((m) => m.days <= days && m.days > claimed);
+  if (earned.length === 0) return [];
+
+  let next = withCoins(state, earned.reduce((sum, m) => sum + m.rewardCoins, 0), 'GRANT');
+  next = {
+    ...next,
+    gems: next.gems + earned.reduce((sum, m) => sum + m.rewardGems, 0),
+    streakClaimed: Math.max(claimed, ...earned.map((m) => m.days)),
+  };
+  Object.assign(next, addMayorXp(next, earned.reduce((sum, m) => sum + m.rewardXp, 0)));
+  setState(next);
+  return earned;
+}
+
+/** So ngay chuoi hien tai. 0 neu chua choi ngay hom nay. */
+export function currentStreak(): number {
+  const cur = state.streak;
+  if (!cur) return 0;
+  const today = todayKey(Date.now());
+  return cur.lastDay === today ? cur.days : 0;
+}
+
+/**
+ * Chuoi da vong nhung chua gap - dung cho modal "quay lai" de canh bao
+ * "Chuoi 12 ngay cua ban bi ngat, bat dau lai tu hom nay".
+ */
+export function streakAtRisk(): number {
+  const cur = state.streak;
+  if (!cur || cur.days === 0) return 0;
+  return cur.lastDay === yesterdayKey(Date.now()) ? cur.days : 0;
+}
+
+/** Ghi mot ky hanh dong len ca 3 so cai (vĩnh viễn / ngày / tháng). */
+function postLedger(s: CityState, delta: Partial<LedgerEntry>): CityState {
+  const keys = Object.keys(delta) as (keyof LedgerEntry)[];
+  if (keys.length === 0) return s;
+  const apply = (l: PeriodLedger): PeriodLedger => {
+    let out = l;
+    for (const k of keys) out = addToLedger(out, k, delta[k] ?? 0);
+    return out;
+  };
+  return {
+    ...s,
+    ledgerLifetime: apply(s.ledgerLifetime),
+    ledgerDay: apply(s.ledgerDay),
+    ledgerMonth: apply(s.ledgerMonth),
+  };
+}
+
+/**
+ * Ghi hoat dong kinh doanh vao so cai theo `seconds` vua tick.
+ *
+ * `flowFor` tinh ca bon dong tren co so mot GIAY, nen nhan `seconds` de ra
+ * so tiền cua khoang thoi gian do. Day la nguyen tac ghi so: cong mot lan,
+ * dung khoang thoi gian, khong cong lai moi khung hinh.
+ */
+function recordOperatingFlow(s: CityState, flow: FlowBreakdown, seconds: number): CityState {
+  return postLedger(s, {
+    grossRevenue: flow.grossRevenue * seconds,
+    cogs: flow.cogs * seconds,
+    opex: flow.opex * seconds,
+    tax: flow.tax * seconds,
+    netIncome: flow.netIncome * seconds,
+  });
+}
+
+/**
+ * Tach mot lan: cong doanh thu thi truong vao ngan khoc.
+ *
+ * `opts.relicBonus` phai duoc truyen vao day (xem `FlowOptions`) - nguoc lai
+ * HUD hien mot con so ma ngan khoc khong nhan.
+ */
 export function tickIdle(): void {
   const now = Date.now();
   const elapsed = now - state.lastSeenAt;
   if (elapsed <= 0) return;
 
+  /** Reset so cai theo ngay/thang truoc khi ghi ky moi. */
+  const rolled = rollPeriods(state, now);
+
   const seconds = elapsed / 1000;
   const isFever = state.feverUntil > now;
+
+  let relicYieldBonus = 0;
+  let relicHappyBonus = 0;
+  for (const rId of state.equippedRelics ?? []) {
+    const def = INVENTORY_BY_ID[rId];
+    if (!def) continue;
+    relicYieldBonus += def.passiveYieldBonus ?? 0;
+    relicHappyBonus += def.passiveHappinessBonus ?? 0;
+  }
+
   const flow = flowFor(state.buildings, state.npcs, state.mayorLevel, state.coins, {
     isFever,
     idleMs: now - state.lastEngagedAt,
     happinessBoost: state.happinessBoost,
+    relicBonus: relicYieldBonus,
+    relicHappinessBonus: relicHappyBonus,
   });
 
   let next: CityState = {
-    ...state,
+    ...rolled,
     lastSeenAt: now,
-    totalVolume: state.totalVolume + flow.volume * seconds,
+    totalVolume: rolled.totalVolume + flow.volume * seconds,
     // Fever dang chay thi chot `feverEverUsed` ngay, de save ghi ra giua
     // chung khong bo mat quest `q-fever-mode`.
-    feverEverUsed: state.feverEverUsed || isFever,
+    feverEverUsed: rolled.feverEverUsed || isFever,
   };
-  if (flow.revenue > 0) next = withCoins(next, flow.revenue * seconds);
+  if (flow.revenue > 0) next = withCoins(next, flow.revenue * seconds, 'OPERATING');
+
+  /**
+   * Ghi so cai P&L. Doan nay cong DOANH THU GOP, gia von, chi phi van hanh va
+   * thue - ca hai ve cua bao cao - trong khi `withCoins` o tren chi cong
+   * LOI NHUAN RONG vao ngan khoc. Tach hai viec la bat buoc: coi doanh thu
+   * bang tien nhan se lam bao cao khong bao gio cong bang.
+   */
+  next = recordOperatingFlow(next, flow, seconds);
 
   next = maybeSpawnRequest(next, now);
   next = maybeSpawnEvent(next, now);
@@ -662,6 +1004,9 @@ export function claimTapReward(
     coins: Math.max(0, state.coins + safeCoins),
     bubblesCollected: state.bubblesCollected + 1,
     totalCoinsEarned: state.totalCoinsEarned + safeCoins,
+    // Tien cham cung dan / thu cu: tach rieng khoi doanh thu de bao cao
+    // khong tron hai thu khac nhau vao mot dong.
+    totalTapIncome: (Number.isFinite(state.totalTapIncome) ? Math.max(0, state.totalTapIncome) : 0) + safeCoins,
     tappedAt: { ...(state.tappedAt ?? {}), [source]: now },
   };
 
@@ -887,12 +1232,19 @@ export function buyInventoryItem(itemId: string): UseItemResult {
   if (def.category === 'RELIC' && curQty >= 1) {
     return { ok: false, message: 'Bạn đã sở hữu Bảo Vật này trong Kho Đồ rồi.' };
   }
-  setState({
-    ...state,
-    coins: state.coins - def.costCoins,
-    gems: state.gems - def.costGems,
-    inventory: { ...(state.inventory ?? {}), [itemId]: curQty + 1 },
-  });
+  setState(
+    postLedger(
+      {
+        ...state,
+        coins: state.coins - def.costCoins,
+        gems: state.gems - def.costGems,
+        inventory: { ...(state.inventory ?? {}), [itemId]: curQty + 1 },
+      },
+      // Vật phẩm / Bảo Vật là KIỂM KÊ THI TRƯỜNG: mang tính tài sản, tồn
+      // kho lau ngay nên không ghi vào chi phi vận hành.
+      { inventoryBought: def.costCoins },
+    ),
+  );
   return { ok: true, message: `Đã mua thêm +1 "${def.name}" vào Kho Đồ!` };
 }
 
@@ -1016,12 +1368,18 @@ export function buyLand(): boolean {
   const wallet = spend(state, cost);
   if (!wallet) return false;
 
-  setState({
-    ...state,
-    coins: wallet.coins,
-    unlockedCols: growCol ? state.unlockedCols + 1 : state.unlockedCols,
-    unlockedRows: growCol ? state.unlockedRows : state.unlockedRows + 1,
-  });
+  setState(
+    postLedger(
+      {
+        ...state,
+        coins: wallet.coins,
+        unlockedCols: growCol ? state.unlockedCols + 1 : state.unlockedCols,
+        unlockedRows: growCol ? state.unlockedRows : state.unlockedRows + 1,
+      },
+      // Mua dat la CHI TIEU VON: tao tai san, khong phai chi phi van hanh.
+      { capex: cost.coins },
+    ),
+  );
   return true;
 }
 
@@ -1075,7 +1433,8 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
   };
   nextState.dailyLog = bumpDaily(state, 'built');
   Object.assign(nextState, addMayorXp(nextState, XP_PER_BUILD));
-  setState(nextState);
+  // Xay moi la chi tieu von - tao cong trinh, khong phai chi phi van hanh.
+  setState(postLedger(nextState, { capex: def.costCoins }));
   return 'ok';
 }
 
@@ -1117,7 +1476,9 @@ export function upgradeBuilding(col: number, row: number, count = 1): UpgradeRes
   };
   nextState.dailyLog = bumpDaily(state, 'upgraded', actualCount);
   Object.assign(nextState, addMayorXp(nextState, XP_PER_UPGRADE * actualCount));
-  setState(nextState);
+  // Nang cap la chi tieu von: nang nang suc chua moi, khong ton tai loi nhuan
+  // hang nam - ghi vao P&L se giam sai doanh thu.
+  setState(postLedger(nextState, { capex: totalCost }));
   return 'ok';
 }
 
@@ -1162,7 +1523,7 @@ export function installStoreModule(
     npcs: nextNpcs,
   };
   Object.assign(nextState, addMayorXp(nextState, 60));
-  setState(nextState);
+  setState(postLedger(nextState, { capex: mod.costCoins }));
   return 'ok';
 }
 
@@ -1202,7 +1563,7 @@ export function assignStoreManager(col: number, row: number, managerId: string):
     buildings: nextBuildings,
   };
   Object.assign(nextState, addMayorXp(nextState, 75));
-  setState(nextState);
+  setState(postLedger(nextState, { capex: mgr.costCoins }));
   return 'ok';
 }
 
@@ -1228,7 +1589,7 @@ export function evolveBuildingStar(col: number, row: number): UpgradeResult {
   };
   nextState.dailyLog = bumpDaily(state, 'starEvolved');
   Object.assign(nextState, addMayorXp(nextState, XP_PER_STAR));
-  setState(nextState);
+  setState(postLedger(nextState, { capex: cost.coins }));
   return 'ok';
 }
 
@@ -1261,6 +1622,25 @@ export function isQuestCompleted(questId: string, s: CityState): boolean {
       return s.feverEverUsed === true || (s.feverUntil ?? 0) > 0;
     case 'q-expand-city':
       return s.buildings.length >= 6 && populationFor(s.buildings) >= 200;
+
+    /* ── Chặng hai ─────────────────────────────────────────────── */
+    case 'q-full-street':
+      return s.buildings.length >= 12;
+    case 'q-three-managers':
+      return s.buildings.filter((b) => !!b.managerId).length >= 3;
+    case 'q-module-master':
+      return s.buildings.reduce((n, b) => n + (b.modules ?? []).length, 0) >= 6;
+    case 'q-three-star':
+      return s.buildings.some((b) => (b.starRating || 1) >= 3);
+    case 'q-level-20':
+      return s.buildings.some((b) => b.level >= 20);
+    case 'q-streak-7':
+      return (s.streak?.best ?? 0) >= 7 || (s.streak?.days ?? 0) >= 7;
+    case 'q-tier-6':
+      return cityTierFor(populationFor(s.buildings), s.buildings.length).rank >= 6;
+    case 'q-landmark':
+      return s.buildings.some((b) => BUILDING_BY_ID[b.defId]?.zone === 'LANDMARK');
+
     default:
       return false;
   }
@@ -1273,7 +1653,7 @@ export function claimQuestReward(questId: string): boolean {
   const quest = MAYOR_QUESTS.find((q) => q.id === questId);
   if (!quest) return false;
 
-  let next = withCoins(state, quest.rewardCoins);
+  let next = withCoins(state, quest.rewardCoins, 'GRANT');
   next = {
     ...next,
     gems: next.gems + quest.rewardGems,
@@ -1437,16 +1817,21 @@ export function useCityDerived(): CityDerived {
     const happiness = clampHappiness(
       happinessFor(buildings, now - lastEngagedAt, happinessBoost) + relicHappyBonus,
     );
+    /**
+     * Bảo Vật phải được truyền VÀO `flowFor`, không nhân ngoài. Nhân ngoài thì
+     * HUD hiện doanh thu đã × (1 + bonus) còn `tickIdle` thực sự chỉ cộng
+     * `flow.revenue` chưa nhân - người chơi thấy 1,9× nhưng nhận 1×.
+     */
     const flow = flowFor(buildings, npcs, mayorLevel, coins, {
       isFever,
       idleMs: now - lastEngagedAt,
       happinessBoost,
+      relicBonus: relicYieldBonus,
+      relicHappinessBonus: relicHappyBonus,
     });
-    const boostedRevenue = flow.revenue * (1 + relicYieldBonus);
     return {
       ...flow,
-      revenue: boostedRevenue,
-      rate: boostedRevenue,
+      rate: flow.revenue,
       happiness,
       population: populationFor(buildings),
       taxMultiplier: taxMultiplierFromHappiness(happiness),
@@ -1501,7 +1886,7 @@ export function claimDailyQuest(questId: string, now = Date.now()): boolean {
   if (log.claimed.includes(questId)) return false;
   if (log[def.counter] < def.target) return false;
 
-  let next = withCoins(state, def.rewardCoins);
+  let next = withCoins(state, def.rewardCoins, 'GRANT');
   next = {
     ...next,
     gems: next.gems + def.rewardGems,
@@ -1529,7 +1914,7 @@ export function claimCityTierRewards(): import('./mock-city-data').CityTierDef[]
   const moi = CITY_TIERS.filter((t) => t.rank > claimedRank && t.rank <= reached.rank);
   let next = state;
   for (const t of moi) {
-    next = withCoins(next, t.rewardCoins);
+    next = withCoins(next, t.rewardCoins, 'GRANT');
     next = { ...next, gems: next.gems + t.rewardGems };
     Object.assign(next, addMayorXp(next, t.rewardXp));
   }

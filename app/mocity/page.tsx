@@ -8,6 +8,7 @@ import {
   ArrowUpCircle,
   CircleDollarSign,
   Crown,
+  Flame,
   Gift,
   Hammer,
   MapPin,
@@ -52,6 +53,8 @@ import {
   triggerFeverMode,
   triggerNextEvent,
   claimCityTierRewards,
+  IDLE_XP_DAILY_CAP,
+  claimStreakMilestones,
   upgradeBuilding,
   getCityState,
   useCity,
@@ -70,6 +73,9 @@ import {
   ZONES,
   upgradeCostCoins,
   xpForLevel,
+  nextCityTier,
+  cityTierFor,
+  CITY_TIERS,
 } from '@/lib/mocity/mock-city-data';
 import { BUILDING_ICON } from '@/components/mocity/building-icons';
 import { buildingAt, nodeYieldBreakdown } from '@/lib/mocity/city-calculator';
@@ -123,6 +129,13 @@ export default function MoCityPage() {
   const [mayorModalTab, setMayorModalTab] = useState<'PROFILE' | 'QUESTS' | 'CITIZENS'>('PROFILE');
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [inventoryTab, setInventoryTab] = useState<'ITEMS' | 'RELICS' | 'CHARACTERS'>('ITEMS');
+  /*
+   * Guong `ref` cua cac modal. Effect tu mo Chuyen Pho doc qua day thay vi qua
+   * deps: dua truc tiep vao deps se huy va dat lai hen gio moi lan nguoi choi
+   * mo/dong mot bang bat ky, nen vong 5-8 phut gan nhu khong bao gio chay het.
+   */
+  const modalDangMoRef = useRef(false);
+
   const [tab, setTab] = useState('ALL');
   const [toast, setToast] = useState<string | null>(null);
   const [newBuildKey, setNewBuildKey] = useState<string | null>(null);
@@ -154,6 +167,10 @@ export default function MoCityPage() {
 
   const coins = useCity((s) => s.coins);
   const totalCoinsEarned = useCity((s) => s.totalCoinsEarned);
+  const totalRevenue = useCity((s) => s.totalRevenue ?? 0);
+  /** So ngay choi lien tiep - chi doc, `registerStreak` lo phan ghi. */
+  const streakDays = useCity((s) => s.streak?.days ?? 0);
+  const streakBest = useCity((s) => s.streak?.best ?? 0);
   const gems = useCity((s) => s.gems);
   const level = useCity((s) => s.mayorLevel);
   const mayorXp = useCity((s) => s.mayorXp);
@@ -161,6 +178,11 @@ export default function MoCityPage() {
   const mayorName = useCity((s) => s.mayorName);
   const hasNamedCity = useCity((s) => s.hasNamedCity);
   const buildings = useCity((s) => s.buildings);
+  /*
+   * XP nhan roi da nhan hom nay. Doc qua selector de HUD canh bao ngay khi
+   * cham tran, thay vi de nguoi choi tu hoi sao cot XP dung yen.
+   */
+  const idleXpToday = useCity((s) => s.dailyLog?.idleXp ?? 0);
   const offline = useCity((s) => s.pendingOffline);
   const npcs = useCity((s) => s.npcs);
   const activeRequests = useCity((s) => s.activeRequests);
@@ -186,7 +208,9 @@ export default function MoCityPage() {
  * chung ham tinh mau cot.
  */
 const isMaxLevel = level >= MAX_MAYOR_LEVEL;
+const idleXpCapped = idleXpToday >= IDLE_XP_DAILY_CAP;
 const xpNeeded = xpForLevel(level);
+
 const xpPct = isMaxLevel ? 100 : Math.min(100, Math.round((mayorXp / xpNeeded) * 100));
 
 const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
@@ -199,12 +223,45 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   );
   const derived = useCityDerived();
 
+  /*
+   * Bac thanh pho tren HUD. Truoc day chi hien trong Toa Thi Chinh, nen muc
+   * tieu trung han duy nhat cua game lai la thu nguoi choi khong nhin thay.
+   *
+   * Suy tu `derived.population` chu KHONG goi `currentCityTier()`: ham do doc
+   * state o module nen khong kich hoat render lai, bac se dung yen cho toi khi
+   * co thu khac lam HUD ve lai.
+   */
+  const cityTier = cityTierFor(derived.population, buildings.length);
+  const cityTierNext = nextCityTier(cityTier.rank);
+  const cityTierPct = cityTierNext
+    ? Math.min(
+        100,
+        Math.round(
+          Math.min(
+            derived.population / cityTierNext.minPopulation,
+            buildings.length / cityTierNext.minBuildings,
+          ) * 100,
+        ),
+      )
+    : 100;
+
   const { shake, floatNumber } = useGameJuice();
   const { isAnimating: isCoinBouncing } = useBouncyCounter(coins);
 
   const [openRequestId, setOpenRequestId] = useState<string | null>(null);
   const [heldView, setHeldView] = useState<DialogueView | null>(null);
-  const [dialogueDismissed, setDialogueDismissed] = useState(false);
+  /*
+   * Hop thoai Chuyen Pho MO hay DONG, khong phai "da bi dong hay chua".
+   *
+   * Ban cu dung `dialogueDismissed` mac dinh `false`, cong voi mot effect tu
+   * dat lai `false` moi khi `liveView` doi tieu de. Nghia la bat cu su kien nao
+   * vua sinh ra la hop thoai tu bat len. Ma `maybeSpawnEvent` trong store sinh
+   * su kien moi 35 giay, nen hop thoai cu 35 giay lai chen ngang mot lan, de
+   * len ca Toa Thi Chinh dang mo - khong lien quan gi toi nhip 5-8 phut dat o
+   * `AUTO_EVENT_MIN_MS`. Dao lai thanh "mac dinh dong, chi mo khi co y dinh ro
+   * rang" lam cho nhip hien hop thoai co dung MOT nguon.
+   */
+  const [dialogueOpen, setDialogueOpen] = useState(false);
 
   useIdleTick(isPlaying);
 
@@ -258,7 +315,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     const cleanCity = cityInput.trim() || 'Đô Thị MoCity';
     const bonus = completeMayorLogin(cleanMayor, cleanCity, LOGIN_BONUS_COINS);
     setIsPlaying(true);
-    setDialogueDismissed(false);
     if (bonus > 0) {
       showToast(
         `Chào mừng ${cleanMayor}! Đã nhận +${formatNumber(bonus)} Xu (Ngân khố: ${formatNumber(coins + bonus)} Xu).`,
@@ -297,24 +353,39 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     setSelected((prev) => (prev?.col === col && prev?.row === row ? null : { col, row }));
   }, []);
 
+  modalDangMoRef.current = drawerOpen || inspectorOpen || mayorModalOpen || inventoryOpen;
+
   const handleOpenRequest = useCallback(
     (col: number, row: number) => {
       const node = buildingAt(buildings, col, row);
       if (!node) return;
       const request = activeRequests.find((r) => r.npcId === node.id);
-      if (request) setOpenRequestId(request.id);
+      if (request) {
+        setOpenRequestId(request.id);
+        setDialogueOpen(true);
+      }
     },
     [activeRequests, buildings],
   );
 
+  /**
+   * Doi thoai hien len man hinh.
+   *
+   * `subtitle` PHẢI truyền vào: `DialogueModal` hien `view.subtitle ??
+   * 'Chuyện này chỉ mình bạn biết...'`. Truoc day 70/70 script deu viet tay
+   * `subtitle` nhung duong nay bo qua, nen nguoi choi LUON thay fallback thay
+   * vi cau viet cua tac gia - mat sach 70 doan narrative dang nam trong code.
+   *
+   * `speakerTag` chua duoc render nen bo trong ma de khong nham la dang dung.
+   */
   const liveView = useMemo<DialogueView | null>(() => {
     if (pendingEvent) {
       const script = EVENT_BY_ID[pendingEvent.scriptId];
       if (script) {
         return {
           title: script.title,
+          subtitle: script.subtitle,
           speaker: script.speaker,
-          speakerTag: script.title,
           body: script.body,
           hue: '#C9A227',
           choices: script.choices,
@@ -328,8 +399,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
       if (script && npc) {
         return {
           title: script.title,
+          subtitle: script.subtitle,
           speaker: npc.name,
-          speakerTag: `${ARCHETYPES[npc.archetype].label} · ${script.title}`,
           body: script.body,
           hue: ARCHETYPES[npc.archetype].hue,
           choices: script.choices,
@@ -339,11 +410,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     return null;
   }, [activeRequests, npcs, openRequestId, pendingEvent]);
 
-  // Reset dismissed khi có event/request mới
-  const liveViewKey = liveView?.title ?? '';
-  useEffect(() => { setDialogueDismissed(false); }, [liveViewKey]);
-
-  const dialogueView = dialogueDismissed ? null : (heldView ?? liveView);
+  const dialogueView = dialogueOpen ? (heldView ?? liveView) : null;
 
   const handleChooseDialogue = useCallback(
     (choiceId: string) => {
@@ -368,12 +435,12 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   const handleCloseDialogue = useCallback(() => {
     setHeldView(null);
     setOpenRequestId(null);
-    setDialogueDismissed(true);
+    setDialogueOpen(false);
     dismissEvent();
   }, []);
 
   const handleOpenDialogue = useCallback(() => {
-    setDialogueDismissed(false);
+    setDialogueOpen(true);
     if (pendingEvent || activeRequests.length > 0) return;
 
     const result = triggerNextEvent();
@@ -389,11 +456,15 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   }, [activeRequests.length, pendingEvent, showToast]);
 
   /**
-   * Chuyen Pho tu dong hien sau moi 2-3 phut, khong cho nguoi choi bam nut.
+   * Nguon DUY NHAT tu dong mo Chuyen Pho: cu 5-8 phut mot lan.
    *
    * Doc state qua getCityState() thay vi dua pendingEvent/activeRequests vao
    * deps: neu them chung vao deps thi moi lan phoi thay doi se huy va dat lai
-   * hen gio, khien no gan nhu khong bao gio chay het 2 phut.
+   * hen gio, khien no gan nhu khong bao gio chay het mot vong.
+   *
+   * `dangMoModal` chan viec chen ngang khi nguoi choi dang lam viec khac. Thieu
+   * no thi hop thoai de len Toa Thi Chinh / Kho Do dang mo va an mat thao tac
+   * do - dung canh da gap khi kiem thu.
    */
   useEffect(() => {
     if (!isPlaying) return;
@@ -401,9 +472,11 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     const schedule = () => {
       timer = setTimeout(() => {
         const s = getCityState();
-        const dangBan = Boolean(s.pendingEvent) || s.activeRequests.length > 0;
-        if (!dangBan && triggerNextEvent() === 'ok') {
-          setDialogueDismissed(false);
+        const dangBan = s.activeRequests.length > 0;
+        const dangMoModal = modalDangMoRef.current;
+        if (!dangBan && !dangMoModal) {
+          // Da co san mot su kien treo thi mo luon, chua co thi goi them.
+          if (s.pendingEvent || triggerNextEvent() === 'ok') setDialogueOpen(true);
         }
         schedule();
       }, AUTO_EVENT_MIN_MS + Math.random() * (AUTO_EVENT_MAX_MS - AUTO_EVENT_MIN_MS));
@@ -424,6 +497,29 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     particles.confetti(window.innerWidth / 2, window.innerHeight * 0.35);
     showToast(`Thành phố lên bậc ${cao.rank}: ${cao.name}! ${cao.tagline}`);
   }, [buildings, isPlaying, showToast]);
+
+  /**
+   * Trao thuong moc chuoi ngay choi lien tiep.
+   *
+   * Chay khi `streak.days` doi: `claimStreakMilestones` tu bo qua moc da nhan
+   * nen goi lai nhieu lan khong cong them.
+   */
+  useEffect(() => {
+    if (!isPlaying) return;
+    const earned = claimStreakMilestones();
+    if (earned.length === 0) return;
+    const cao = earned[earned.length - 1];
+    particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
+    particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.42);
+    shake(5);
+    floatNumber(
+      window.innerWidth / 2,
+      window.innerHeight * 0.3,
+      `🔥 ${earned.length} chuỗi ngày vừa mở khoá!`,
+      '#EF4444',
+    );
+    showToast(`${cao.title} · +${formatCompact(cao.rewardCoins)} Xu +${cao.rewardGems} KC`);
+  }, [streakDays, isPlaying, showToast, shake, floatNumber]);
 
   const hasPendingEventOrRequest = Boolean(pendingEvent || activeRequests.length > 0);
   const pendingEventScript = pendingEvent ? EVENT_BY_ID[pendingEvent.scriptId] : null;
@@ -647,7 +743,73 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             <span className="text-xs font-black text-sky-200">{gems}</span>
           </div>
 
+          {/* Chuỗi ngày chơi liên tiếp */}
+          {/*
+           * Chi hien khi chuoi >= 2. Ngay 1 la chua phai chuoi - hien "1 ngày"
+           * chi nham gam o chuc nang. Khi chuoi bi ngat, so ngay da vong van
+           * hien (do la ly do người choi quay lai).
+           */}
+          {streakDays >= 2 && (
+            <div
+              className="flex shrink-0 items-center gap-1 rounded-xl border px-2 py-1.5"
+              style={{
+                background: 'linear-gradient(135deg, #3B0A05, #7C2D12)',
+                borderColor: '#FB923C',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+              }}
+              title={`Chuỗi ${streakDays} ngày liên tiếp · Kỷ lục ${streakBest} ngày`}
+            >
+              <Flame size={13} className="shrink-0 fill-orange-400 text-orange-400" />
+              <span className="text-xs font-black text-orange-100">{streakDays}</span>
+              <span className="hidden text-[9px] font-black uppercase text-orange-300/80 lg:inline">
+                ngày
+              </span>
+            </div>
+          )}
+
           {/* Thanh cấp Thị Trưởng */}
+          {/*
+           * Bac thanh pho: muc tieu trung han cua game. De canh the XP vi hai
+           * cai tra loi hai cau hoi khac nhau - "toi dang o dau" (bac) va "con
+           * bao lau nua len cap" (XP).
+           */}
+          <button
+            type="button"
+            onClick={() => {
+              setMayorModalTab('QUESTS');
+              setMayorModalOpen(true);
+            }}
+            className="hidden w-[150px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1 text-left transition-colors hover:brightness-125 lg:flex"
+            style={{
+              background: 'linear-gradient(135deg, #10251A, #1C4532)',
+              borderColor: '#34D399',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+            }}
+            title={
+              cityTierNext
+                ? `${cityTier.name} - lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình`
+                : `${cityTier.name} - bậc cao nhất`
+            }
+          >
+            <div className="flex items-baseline justify-between gap-1.5">
+              <span className="whitespace-nowrap text-[9px] font-black uppercase leading-none tracking-wide text-emerald-300">
+                Bậc Phố
+              </span>
+              <span className="whitespace-nowrap text-xs font-black leading-none text-emerald-100 tabular-nums">
+                {cityTier.rank}/{CITY_TIERS.length}
+              </span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#0C2219' }}>
+              <div
+                className="h-full rounded-full transition-[width] duration-500"
+                style={{ width: `${cityTierPct}%`, background: 'linear-gradient(90deg,#34D399,#FBBF24)' }}
+              />
+            </div>
+            <p className="truncate text-[9px] font-black leading-none text-emerald-300/80">
+              {cityTier.name}
+            </p>
+          </button>
+
           {/*
            * Ba dong deu `whitespace-nowrap`: ban cu rong 112px nen "THỊ TRƯỞNG"
            * xuong hai dong, dong "% XP nữa" cung xuong dong, the cao len 69px va
@@ -663,7 +825,11 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             title={
               isMaxLevel
                 ? 'Đã đạt cấp Thị Trưởng tối đa'
-                : `${formatNumber(mayorXp)} / ${formatNumber(xpNeeded)} XP để lên cấp ${level + 1}`
+                : `${formatNumber(mayorXp)} / ${formatNumber(xpNeeded)} XP để lên cấp ${level + 1}\n` +
+                  `XP nhàn rỗi hôm nay: ${formatNumber(Math.round(idleXpToday))} / ${formatNumber(IDLE_XP_DAILY_CAP)}` +
+                  (idleXpCapped
+                    ? '\nĐã chạm trần ngày. Xây, nâng cấp và làm nhiệm vụ để tiếp tục lên cấp.'
+                    : '')
             }
           >
             <div className="flex items-baseline justify-between gap-1.5">
@@ -681,7 +847,11 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               />
             </div>
             <p className="whitespace-nowrap text-[9px] font-black leading-none text-violet-300/80 tabular-nums">
-              {isMaxLevel ? 'Cấp tối đa' : `${xpPct}% · còn ${formatCompact(xpNeeded - mayorXp)} XP`}
+              {isMaxLevel
+                ? 'Cấp tối đa'
+                : idleXpCapped
+                  ? `${xpPct}% · hết XP nhàn rỗi`
+                  : `${xpPct}% · còn ${formatCompact(xpNeeded - mayorXp)} XP`}
             </p>
           </div>
         </div>
@@ -1093,6 +1263,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
         <ShareCityCard
           mayorName={mayorName || 'Thị Trưởng MoMo'}
           cityName={cityName || 'Đô Thị MoCity'}
+          totalRevenue={totalRevenue ?? 0}
           totalCoinsEarned={totalCoinsEarned ?? coins}
           coinsPerSec={derived.rate}
           buildingCount={buildings.length}

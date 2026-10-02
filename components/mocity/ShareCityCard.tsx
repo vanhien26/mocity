@@ -6,6 +6,14 @@ import { Share2, Download, X, Building2 } from 'lucide-react';
 interface ShareCityCardProps {
   mayorName: string;
   cityName: string;
+  /**
+   * DOANH THU van hai cua thanh pho (san luong + phi ha tang + lai).
+   * KHONG dung `totalCoinsEarned` - con do gop ca thuong nhiem vu va thuong
+   * bac thanh pho (2,9 trieu Xu) vao chung, va gan nhan "doanh thu" cho tien
+   * thuong. Về kế toán đó là von gop von chu so huu, khong phai doanh thu.
+   */
+  totalRevenue: number;
+  /** Tổng đã vào ngân khố: doanh thu + thưởng + tiền chạm. */
   totalCoinsEarned: number;
   coinsPerSec: number;
   buildingCount: number;
@@ -24,6 +32,7 @@ function formatVND(n: number) {
 function CardTemplate({
   mayorName,
   cityName,
+  totalRevenue,
   totalCoinsEarned,
   coinsPerSec,
   buildingCount,
@@ -79,19 +88,22 @@ function CardTemplate({
         borderRadius: 16, padding: '20px 24px', marginBottom: 16, textAlign: 'center',
       }}>
         <div style={{ fontSize: 11, fontWeight: 800, color: '#EB2F96', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6 }}>
-          Tổng Doanh Thu Tích Lũy
+          Doanh Thu Vận Hành
         </div>
         <div style={{ fontSize: 44, fontWeight: 900, color: '#EB2F96', letterSpacing: -1, lineHeight: 1 }}>
-          {formatVND(totalCoinsEarned)}
+          {formatVND(totalRevenue)}
         </div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>XU</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 6, lineHeight: 1.5 }}>
+          Chưa gồm thưởng nhiệm vụ & bậc thành phố
+        </div>
       </div>
 
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {[
           { label: 'Thu / giây', value: `${formatVND(coinsPerSec)} xu` },
-          { label: 'Công trình', value: `${buildingCount} cơ sở` },
+          { label: 'Tổng đã vào ngân khố', value: `${formatVND(totalCoinsEarned)} xu` },
         ].map(({ label, value }) => (
           <div key={label} style={{
             background: 'rgba(255,255,255,0.05)',
