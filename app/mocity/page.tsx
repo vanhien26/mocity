@@ -680,15 +680,26 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               setMayorModalTab('PROFILE');
               setMayorModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl border border-[#8B5E1A] bg-[#2A1305]/60 px-2.5 py-1 text-left transition-colors hover:border-[#C9A227]"
-            title="Bấm để mở Tòa Thị Chính & Đổi tên Khu Phố"
+            className="relative flex items-center gap-2 overflow-hidden rounded-xl border border-[#8B5E1A] bg-[#2A1305]/60 px-2.5 py-1 pb-1.5 text-left transition-colors hover:border-[#C9A227]"
+            title={
+              cityTierNext
+                ? `Bậc ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name}. Lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình.`
+                : `Bậc ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name} (bậc cao nhất).`
+            }
           >
-            {/* Level badge */}
+            {/*
+             * Huy hieu BAC THANH PHO, khong phai cap Thi Truong.
+             *
+             * O day truoc hien `C.{level}` - dung con so ma chip "THỊ TRƯỞNG
+             * Lv.{level}" o giua da hien, nen thanh HUD noi cung mot thu hai
+             * lan o hai cho khac nhau. Bac thanh pho thi chua co cho nao noi,
+             * nen doi cho no hop ly hon.
+             */}
             <span
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black text-white shadow-inner"
-              style={{ background: 'linear-gradient(135deg, #D82D8B, #9D174D)' }}
+              style={{ background: 'linear-gradient(135deg, #34D399, #0F766E)' }}
             >
-              C.{level}
+              B.{cityTier.rank}
             </span>
             <div className="min-w-0 hidden sm:block">
               <div className="flex items-center gap-1.5">
@@ -700,12 +711,26 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 </span>
               </div>
               <p className="truncate text-[10px] font-bold text-amber-400/80">
-                {mayorName || 'Thị Trưởng'} · {Math.round(derived.happiness)}%
+                {cityTier.name} · {Math.round(derived.happiness)}%
                 {derived.happiness < HAPPINESS_WARNING_AT && (
                   <span className="text-red-400"> ⚠</span>
                 )}
               </p>
             </div>
+
+            {/*
+             * Tien do len bac sau, ve nhu VIEN DAY cua nut: `absolute` nen
+             * khong cong them dong nao vao chieu cao thanh HUD.
+             */}
+            <span
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] overflow-hidden rounded-b-xl"
+              style={{ background: '#2A1305' }}
+            >
+              <span
+                className="block h-full transition-[width] duration-500"
+                style={{ width: `${cityTierPct}%`, background: 'linear-gradient(90deg,#34D399,#FBBF24)' }}
+              />
+            </span>
           </button>
         </div>
 
@@ -768,48 +793,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           )}
 
           {/* Thanh cấp Thị Trưởng */}
-          {/*
-           * Bac thanh pho: muc tieu trung han cua game. De canh the XP vi hai
-           * cai tra loi hai cau hoi khac nhau - "toi dang o dau" (bac) va "con
-           * bao lau nua len cap" (XP).
-           */}
-          <button
-            type="button"
-            onClick={() => {
-              setMayorModalTab('QUESTS');
-              setMayorModalOpen(true);
-            }}
-            className="hidden w-[150px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1 text-left transition-colors hover:brightness-125 lg:flex"
-            style={{
-              background: 'linear-gradient(135deg, #10251A, #1C4532)',
-              borderColor: '#34D399',
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
-            }}
-            title={
-              cityTierNext
-                ? `${cityTier.name} - lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình`
-                : `${cityTier.name} - bậc cao nhất`
-            }
-          >
-            <div className="flex items-baseline justify-between gap-1.5">
-              <span className="whitespace-nowrap text-[9px] font-black uppercase leading-none tracking-wide text-emerald-300">
-                Bậc Phố
-              </span>
-              <span className="whitespace-nowrap text-xs font-black leading-none text-emerald-100 tabular-nums">
-                {cityTier.rank}/{CITY_TIERS.length}
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#0C2219' }}>
-              <div
-                className="h-full rounded-full transition-[width] duration-500"
-                style={{ width: `${cityTierPct}%`, background: 'linear-gradient(90deg,#34D399,#FBBF24)' }}
-              />
-            </div>
-            <p className="truncate text-[9px] font-black leading-none text-emerald-300/80">
-              {cityTier.name}
-            </p>
-          </button>
-
           {/*
            * Ba dong deu `whitespace-nowrap`: ban cu rong 112px nen "THỊ TRƯỞNG"
            * xuong hai dong, dong "% XP nữa" cung xuong dong, the cao len 69px va
