@@ -798,8 +798,8 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   },
   {
     id: 'q-tier-6',
-    title: 'Lên Hạng Đô Thị Quét Mã',
-    description: 'Đưa thành phố đạt Bậc 6 - Đô Thị Quét Mã. Cả phố không còn ai thối tiền lẻ.',
+    title: 'Lên Rank Đô Thị Quét Mã',
+    description: 'Đưa thành phố đạt Rank 6 - Đô Thị Quét Mã. Cả phố không còn ai thối tiền lẻ.',
     rewardCoins: 1_200_000,
     rewardGems: 60,
     stage: 2,
@@ -1213,7 +1213,7 @@ export const STREAK_MILESTONES: StreakMilestoneDef[] = [
   { days: 7, title: '1 tuần — Hàng xóm kín chào', rewardCoins: 60_000, rewardGems: 4, rewardXp: 9_000 },
   { days: 14, title: '2 tuần — Thị Trưởng được cử tri tín nhiệm', rewardCoins: 180_000, rewardGems: 8, rewardXp: 20_000 },
   { days: 30, title: '1 tháng — Cả thành phố đứng sau lưng bạn', rewardCoins: 600_000, rewardGems: 15, rewardXp: 45_000 },
-  { days: 60, title: '2 tháng — Bậc thành phố không còn chờ ai', rewardCoins: 1_500_000, rewardGems: 25, rewardXp: 90_000 },
+  { days: 60, title: '2 tháng — Rank thành phố không còn chờ ai', rewardCoins: 1_500_000, rewardGems: 25, rewardXp: 90_000 },
   { days: 100, title: '100 ngày — Huyền thoại Đại Lộ Hoa Sữa', rewardCoins: 4_000_000, rewardGems: 40, rewardXp: 180_000 },
 ];
 

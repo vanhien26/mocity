@@ -353,7 +353,7 @@ export default function MayorCenterModal({
                 return (
                   <div className="rounded-2xl border-2 p-3.5 shadow-sm" style={{ background: '#FFFBEB', borderColor: '#C9A227' }}>
                     <p className="text-[10px] font-black uppercase tracking-wide text-[#8B6318]">
-                      Bậc Thành Phố {tier.rank}/{CITY_TIERS.length}
+                      Rank Thành Phố {tier.rank}/{CITY_TIERS.length}
                     </p>
                     <p className="mt-0.5 text-sm font-black text-[#3E2A1B]">{tier.name}</p>
                     <p className="mt-0.5 text-[11px] leading-relaxed text-[#6E4F3A]">{tier.tagline}</p>
@@ -369,7 +369,7 @@ export default function MayorCenterModal({
                         </p>
                       </>
                     ) : (
-                      <p className="mt-2 text-[10px] font-black text-[#B45309]">Đã đạt bậc cao nhất.</p>
+                      <p className="mt-2 text-[10px] font-black text-[#B45309]">Đã đạt rank cao nhất.</p>
                     )}
                   </div>
                 );

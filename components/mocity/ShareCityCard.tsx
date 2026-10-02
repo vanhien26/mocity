@@ -95,7 +95,7 @@ function CardTemplate({
         </div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>XU</div>
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 6, lineHeight: 1.5 }}>
-          Chưa gồm thưởng nhiệm vụ & bậc thành phố
+          Chưa gồm thưởng nhiệm vụ & rank thành phố
         </div>
       </div>
 

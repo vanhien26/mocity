@@ -495,7 +495,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     if (moi.length === 0) return;
     const cao = moi[moi.length - 1];
     particles.confetti(window.innerWidth / 2, window.innerHeight * 0.35);
-    showToast(`Thành phố lên bậc ${cao.rank}: ${cao.name}! ${cao.tagline}`);
+    showToast(`Thành phố lên Rank ${cao.rank}: ${cao.name}! ${cao.tagline}`);
   }, [buildings, isPlaying, showToast]);
 
   /**
@@ -683,12 +683,16 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             className="relative flex items-center gap-2 overflow-hidden rounded-xl border border-[#8B5E1A] bg-[#2A1305]/60 px-2.5 py-1 pb-1.5 text-left transition-colors hover:border-[#C9A227]"
             title={
               cityTierNext
-                ? `Bậc ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name}. Lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình.`
-                : `Bậc ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name} (bậc cao nhất).`
+                ? `Rank ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name}. Lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình.`
+                : `Rank ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name} (rank cao nhất).`
             }
           >
             {/*
              * Huy hieu BAC THANH PHO, khong phai cap Thi Truong.
+             *
+             * Dung chu "RANK" chu KHONG dung "LEVEL": `Lv.` da la cap Thi
+             * Truong o chip ben canh, hai tien trinh khac nhau ma cung goi
+             * Level thi lai nhap lam mot nhu ban cu.
              *
              * O day truoc hien `C.{level}` - dung con so ma chip "THỊ TRƯỞNG
              * Lv.{level}" o giua da hien, nen thanh HUD noi cung mot thu hai
@@ -699,7 +703,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               className="flex h-8 w-9 shrink-0 flex-col items-center justify-center rounded-lg leading-none text-white shadow-inner"
               style={{ background: 'linear-gradient(135deg, #34D399, #0F766E)' }}
             >
-              <span className="text-[7px] font-black uppercase tracking-wider opacity-80">Bậc</span>
+              <span className="text-[7px] font-black uppercase tracking-wider opacity-80">Rank</span>
               <span className="text-[11px] font-black tabular-nums">
                 {cityTier.rank}
                 <span className="text-[8px] opacity-70">/{CITY_TIERS.length}</span>
