@@ -38,6 +38,13 @@ export interface ShophouseFacadeProps {
   wallBg: string;
   wallHatch: string;
   signBg: string;
+  /**
+   * Câu đang nói của người trong nhà. `null` là im lặng.
+   *
+   * Điều phối ở cấp dãy phố chứ không để mỗi căn tự hẹn giờ: 10 căn cùng
+   * nói một lúc thì không ai đọc kịp câu nào.
+   */
+  windowSpeech?: string | null;
   onOpenBuild?: () => void;
 }
 
@@ -98,6 +105,77 @@ const DANG_NHA: DangNha[] = [
 export function dangNhaFor(houseNumber: number): DangNha {
   const i = Math.max(0, Math.floor(houseNumber / 2) - 1);
   return DANG_NHA[i % DANG_NHA.length];
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CƯ DÂN TRONG NHÀ - NGƯỜI Ở CỬA SỔ
+ *
+ * Trước đây cửa sổ chỉ là mảng kính phẳng, nên nhà xây xong trông như mô
+ * hình rỗng. Người chơi nhìn thấy cư dân đi dưới vỉa hè nhưng không thấy ai
+ * SỐNG trong những căn mình vừa dựng.
+ *
+ * Chỉ nhà ĐÃ XÂY mới có người. Ai đứng ở cửa sổ nào là cố định theo số nhà -
+ * cùng một căn thì luôn cùng một người, qua mọi lần render và mọi lần mở
+ * game. Ngẫu nhiên mỗi frame sẽ làm người trong nhà nhấp nháy đổi mặt.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Thoại của người TRONG NHÀ, khác hẳn thoại ngoài phố.
+ *
+ * Người đi bộ bình luận chuyện buôn bán và khuyến mãi. Người ở cửa sổ thì
+ * nói chuyện trong nhà: cơm nước, phơi đồ, tiếng ồn dưới phố, hóa đơn. Dùng
+ * chung một bộ câu cho cả hai thì bong bóng trên cửa sổ đọc như quảng cáo.
+ */
+export const THOAI_CUA_SO = [
+  'Cơm chín rồi, xuống ăn đi mấy đứa ơi!',
+  'Phơi đồ xong rồi mà trời lại kéo mây, sốt ruột ghê.',
+  'Dưới phố hôm nay đông quá, bán được hàng là mừng rồi.',
+  'Hoá đơn điện tháng này đóng qua app rồi nghen ba.',
+  'Ai hát karaoke sớm vậy trời, mới 7 giờ sáng mà.',
+  'Thị Trưởng ơi, hẻm mình xin thêm cái đèn đường nha!',
+  'Nay nhà làm bún riêu, ai rảnh qua ăn nghen.',
+  'Mưa là y như rằng dột chỗ cũ, sửa hoài không hết.',
+  'Con học bài chưa đó? Đừng có coi phim nữa nha!',
+  'Nghe nói sắp mở thêm tiệm mới, phố mình vui rồi.',
+  'Tiền chợ sáng nay quét mã cái rẹt, khỏi thối lẻ.',
+  'Phố xá sạch đẹp vầy ở mới thấy đáng tiền thuê.',
+];
+
+/** Tông da và áo, lấy từ dải màu thời kỳ cho khớp với cư dân chibi ngoài phố. */
+const DA_CU_DAN = ['#EFC49C', '#E0A87E', '#C98F68'];
+const AO_CU_DAN = ['#8C3B2E', '#4A6B5A', '#3E4C63', '#A8701F', '#73164A', '#6E8C72'];
+
+/**
+ * Một người ngồi trong khung cửa sổ, nhìn ra phố.
+ *
+ * Vẽ bằng khối bo tròn giống cư dân chibi: đầu to, vai nhỏ, mặt tối giản.
+ * Không có chân vì bị bệ cửa sổ che - đó cũng là lý do cỡ này đọc được ở
+ * khung kính chỉ 50x40px.
+ */
+function NguoiCuaSo({ seed, isNight }: { seed: number; isNight: boolean }) {
+  const da = DA_CU_DAN[seed % DA_CU_DAN.length];
+  const ao = AO_CU_DAN[(seed * 3) % AO_CU_DAN.length];
+  const toc = seed % 3 === 0 ? '#2B2420' : seed % 3 === 1 ? '#4A3B30' : '#6B4A2F';
+  const muc = '#2B2420';
+  /* Ban đêm người trong nhà thành bóng đổ ngược sáng trên nền đèn vàng. */
+  const mo = isNight ? 0.55 : 1;
+
+  return (
+    <span className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center" style={{ opacity: mo }}>
+      <svg width="30" height="30" viewBox="0 0 30 30" className="overflow-visible">
+        {/* Vai */}
+        <path d="M5 30 Q5 21 15 21 Q25 21 25 30 Z" fill={ao} />
+        {/* Đầu */}
+        <circle cx="15" cy="13" r="8" fill={da} />
+        {/* Tóc phủ đỉnh đầu */}
+        <path d="M7 12 Q7 4 15 4 Q23 4 23 12 Q19 8 15 8 Q11 8 7 12 Z" fill={toc} />
+        {/* Mắt và miệng, tối giản cho cỡ nhỏ */}
+        <circle cx="12" cy="13" r="1.3" fill={muc} />
+        <circle cx="18" cy="13" r="1.3" fill={muc} />
+        <path d="M13 17 Q15 19 17 17" fill="none" stroke={muc} strokeWidth="1.1" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
 }
 
 /**
@@ -175,12 +253,29 @@ export default function ShophouseFacade({
   starRating = 1,
   yieldPerSec = 0,
   timeOfDay = 'DAY',
+  windowSpeech = null,
   onOpenBuild,
 }: ShophouseFacadeProps) {
   const isNight = timeOfDay === 'NIGHT';
   const isSunset = timeOfDay === 'SUNSET';
   const pal = PALETTE[shopType];
   const dang = dangNhaFor(houseNumber);
+
+  /*
+   * AI Ở CỬA SỔ NÀO.
+   *
+   * Chỉ nhà ĐÃ XÂY mới có người - lô mới dựng xong chưa ai dọn vào thì cửa
+   * sổ để trống. Bốn vị trí cửa sổ đánh số 0-3; số nhà quyết định ô nào có
+   * người, nên cùng một căn thì luôn cùng người đứng đó.
+   *
+   * Không cho đủ cả 4 ô: nhà nào cũng kín người ở mọi cửa sổ thì thành ký
+   * túc xá chứ không phải nhà phố.
+   */
+  const oCoNguoi = (viTri: number): number | null => {
+    if (!isBuilt) return null;
+    const h = houseNumber * 7 + viTri * 31;
+    return h % 3 === 0 ? h : null;
+  };
 
   /* Màu kính cửa sổ theo giờ */
   const winFill = isNight
@@ -209,7 +304,16 @@ export default function ShophouseFacade({
    * tuong, kinh la mang phang dat long vao trong.
    */
   const frame = shade(pal.wall, 0.52);
-  const Win = ({ wide = false, children }: { wide?: boolean; children?: React.ReactNode }) => (
+  const Win = ({
+    wide = false,
+    /** Ghế ngồi của một cư dân. `null` là cửa sổ bỏ trống. */
+    nguoi = null,
+    children,
+  }: {
+    wide?: boolean;
+    nguoi?: number | null;
+    children?: React.ReactNode;
+  }) => (
     <div
       className="relative shrink-0"
       style={{ width: wide ? 76 : 58, height: wide ? 58 : 48, backgroundColor: frame }}
@@ -220,6 +324,11 @@ export default function ShophouseFacade({
       >
         <div className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2" style={{ backgroundColor: frame }} />
         <div className="absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2" style={{ backgroundColor: frame }} />
+        {/*
+         * Người vẽ SAU hai thanh nẹp kính nên nẹp nằm phía sau lưng, đúng
+         * như nhìn từ ngoài đường vào. Vẽ trước thì nẹp cắt ngang mặt.
+         */}
+        {nguoi !== null && <NguoiCuaSo seed={nguoi} isNight={isNight} />}
         {children}
       </div>
     </div>
@@ -320,14 +429,14 @@ export default function ShophouseFacade({
         className="relative flex items-center justify-around px-5 py-3"
         style={{ backgroundColor: wallColor, borderBottom: `2px solid ${shade(pal.wall, 0.8)}` }}
       >
-        <Win>
+        <Win nguoi={oCoNguoi(0)}>
           {shopType === 'CAFE' && isNight && (
             <div className="absolute inset-0 flex items-center justify-center opacity-60">
               <Coffee size={10} className="text-amber-900" />
             </div>
           )}
         </Win>
-        <Win>
+        <Win nguoi={oCoNguoi(1)}>
           {shopType === 'STATIONERY' && (
             <div className="absolute inset-0 flex items-center justify-center opacity-50">
               <BookOpen size={9} className="text-blue-900" />
@@ -349,8 +458,40 @@ export default function ShophouseFacade({
         className="relative flex items-end justify-around gap-2 px-4 pt-2"
         style={{ backgroundColor: wall2Color }}
       >
+        {/*
+         * Bong bóng của người trong nhà, neo ở ban công và tràn ra NGOÀI
+         * khối nhà. `overflow-visible` ở lớp cha cho phép nó vượt mép tường;
+         * nếu kẹp bên trong thì câu dài bị cắt mất nửa.
+         */}
+        {windowSpeech && (
+          <div
+            className="pointer-events-none absolute left-1/2 z-40 w-max max-w-[210px] -translate-x-1/2 whitespace-normal break-words border-2 px-2.5 py-1.5 text-center leading-snug shadow-md"
+            style={{
+              bottom: 'calc(100% + 6px)',
+              backgroundColor: '#FFFDF7',
+              borderColor: '#5A4A3F',
+              color: '#3E2A1B',
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            {windowSpeech}
+            <span
+              aria-hidden
+              className="absolute left-1/2 -translate-x-1/2"
+              style={{
+                top: '100%',
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '7px solid #5A4A3F',
+              }}
+            />
+          </div>
+        )}
         {/* Cửa sổ rộng tầng 2 */}
-        <Win wide>
+        <Win wide nguoi={oCoNguoi(2)}>
           {shopType === 'CINEMA' && (
             <div className="absolute inset-1 flex items-center justify-center rounded bg-pink-900/80">
               <span className="text-[7px] font-black text-pink-200 rotate-0">POSTER</span>
@@ -362,7 +503,7 @@ export default function ShophouseFacade({
             </div>
           )}
         </Win>
-        <Win>
+        <Win nguoi={oCoNguoi(3)}>
           {/* Rèm cửa nhẹ */}
           <div className="absolute bottom-0 inset-x-0 h-1/3 "
             style={{ backgroundColor: 'rgba(255,255,255,0.35)' }} />

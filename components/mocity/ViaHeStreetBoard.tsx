@@ -24,7 +24,7 @@ import { useAmbientChatter } from './SpeechBubble';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
 import MoMoMascot from './MoMoMascot';
 import StreetTraffic from './StreetTraffic';
-import ShophouseFacade, { EmptyLot, ShophouseRoofCap } from './ShophouseFacade';
+import ShophouseFacade, { EmptyLot, ShophouseRoofCap, THOAI_CUA_SO } from './ShophouseFacade';
 import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from './StreetAmbiance';
 import { useTrafficController } from './useTrafficController';
 import TrafficLightPole from './TrafficLightPole';
@@ -200,6 +200,8 @@ export default function ViaHeStreetBoard({
 
   const chatter = useAmbientChatter(npcs, streetMood);
 
+
+
   /**
    * Hàng đợi là trạng thái tức thời của hiệu ứng phố, không phải dữ liệu vĩnh
    * viễn. Không đưa vào `CityState` để tránh ghi đè save liên tục mỗi 500ms;
@@ -355,6 +357,42 @@ export default function ViaHeStreetBoard({
 
     return list;
   }, [activeRequests, safeRow, buildings, chatter, npcs, unlockedCols]);
+
+  /*
+   * NGƯỜI TRONG NHÀ NÓI CHUYỆN.
+   *
+   * Điều phối ở cấp dãy phố: mỗi lượt chỉ MỘT căn mở lời. Để từng căn tự hẹn
+   * giờ thì 10 căn cùng nói một lúc, bong bóng chồng lên nhau và không ai đọc
+   * kịp câu nào - đúng lỗi đã gặp với thoại cư dân ngoài phố.
+   *
+   * Lưu `col:row` chứ không lưu chỉ số mảng: `streetPlots` dựng lại mỗi khi
+   * người chơi đổi hàng phố, chỉ số cũ sẽ trỏ sang căn khác.
+   */
+  const [nhaDangNoi, setNhaDangNoi] = useState<{ o: string; cau: string } | null>(null);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const hen = () => {
+      timer = setTimeout(() => {
+        const daXay = streetPlots.filter((p) => !!p.node);
+        if (daXay.length === 0) {
+          setNhaDangNoi(null);
+          hen();
+          return;
+        }
+        const p = daXay[Math.floor(Math.random() * daXay.length)];
+        setNhaDangNoi({
+          o: `${p.col}:${p.row}`,
+          cau: THOAI_CUA_SO[Math.floor(Math.random() * THOAI_CUA_SO.length)],
+        });
+        // Bong bóng đứng 5,5 giây rồi tắt, chừa khoảng lặng trước lượt sau.
+        setTimeout(() => setNhaDangNoi(null), 5_500);
+        hen();
+      }, 9_000 + Math.random() * 7_000);
+    };
+    hen();
+    return () => clearTimeout(timer);
+  }, [streetPlots]);
 
   /**
    * Điểm tụ cho cư dân xếp hàng: chỉ tiệm thương mại mới có quầu thu ngân.
@@ -866,6 +904,9 @@ export default function ViaHeStreetBoard({
                             wallBg={plot.theme.wallBg}
                             wallHatch={plot.theme.wallHatch}
                             signBg={plot.theme.signBg}
+                            windowSpeech={
+                              nhaDangNoi?.o === `${plot.col}:${plot.row}` ? nhaDangNoi.cau : null
+                            }
                             onOpenBuild={() => {
                               onSelect(plot.col, plot.row);
                               onOpenBuildDrawer?.();
