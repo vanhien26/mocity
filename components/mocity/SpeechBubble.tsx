@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ambientLineFor } from '@/lib/mocity/dialogue-engine';
+import { streetLineFor, type CityMood } from '@/lib/mocity/dialogue-engine';
 import type { NpcState } from '@/lib/mocity/types';
 
 /** Toi da 2 bong bong cung luc - nhieu hon thanh nhieu loan, khong ai doc. */
@@ -16,8 +16,11 @@ export interface ChatterLine {
 /**
  * Xoay vong thoai ambient giua cac NPC. State ephemeral, khong persist:
  * thoai la hieu ung khong khi, khong phai du lieu game.
+ *
+ * @param mood Trang thai thành phố. Khi thành phố gặp khủng hoảng thì bà con
+ *             bình luận về chuyện đó thay vì kể chuyện thời tiết trên mạng.
  */
-export function useAmbientChatter(npcs: NpcState[]): ChatterLine[] {
+export function useAmbientChatter(npcs: NpcState[], mood: CityMood | null = null): ChatterLine[] {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function useAmbientChatter(npcs: NpcState[]): ChatterLine[] {
      * = 67 giay, mot NPC noi lai mot cau nguyen ban nhau suot 67 giay.
      * Voi chi 1-2 cau moi pool thi thay khe lai thay do.
      */
-    const text = ambientLineFor(npc, tick + i);
+    const text = streetLineFor(npc, tick + i, mood);
     if (text) lines.push({ npcId: npc.id, text });
   }
   return lines;

@@ -36,6 +36,7 @@ import WelcomeScreen from '@/components/mocity/WelcomeScreen';
 import StoreInspectorModal from '@/components/mocity/StoreInspectorModal';
 import MayorCenterModal from '@/components/mocity/MayorCenterModal';
 import TutorialCoach from '@/components/mocity/TutorialCoach';
+import RetroFilm from '@/components/mocity/RetroFilm';
 import InventoryModal from '@/components/mocity/InventoryModal';
 import { EVENT_BY_ID, REQUEST_BY_ID } from '@/lib/mocity/dialogue-data';
 import { HAPPINESS_WARNING_AT } from '@/lib/mocity/city-calculator';
@@ -63,6 +64,7 @@ import {
   useCityHydrated,
   MAX_MAYOR_LEVEL,
   FEVER_COST_GEMS,
+  FEVER_PER_DAY,
   type PlaceResult,
   type UpgradeResult,
 } from '@/lib/mocity/store';
@@ -247,6 +249,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     : 100;
 
   const { shake, floatNumber } = useGameJuice();
+  /** Cấp đã mừng lần gần nhất. `null` = chưa mừng lần nào, xem effect lên cấp. */
+  const levelDaQuanLy = useRef<number | null>(null);
   const { isAnimating: isCoinBouncing } = useBouncyCounter(coins);
 
   const [openRequestId, setOpenRequestId] = useState<string | null>(null);
@@ -496,8 +500,58 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     if (moi.length === 0) return;
     const cao = moi[moi.length - 1];
     particles.confetti(window.innerWidth / 2, window.innerHeight * 0.35);
+    /*
+     * Lên bậc thành phố nay đã gấp hiệu ứng chuỗi ngày.
+     *
+     * Trước đây chuỗi ngày có 3 lớp (confetti + vòng sáng + rung màn hình +
+     * số bay) còn lên bậc chỉ có 1 lớp. Người chơi chơi 40 ngày liên tiếp
+     * không thấy gì, xây tiệm lên bậc mới thấy náy - đảo ngược thứ tự ưu tiên
+     * của khoảnh khắc này.
+     */
+    particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.42);
+    shake(5);
+    floatNumber(
+      window.innerWidth / 2,
+      window.innerHeight * 0.32,
+      `🏙️ Rank ${cao.rank}/8 · ${cao.name}`,
+      '#D82D8B',
+    );
     showToast(`Thành phố lên Rank ${cao.rank}: ${cao.name}! ${cao.tagline}`);
-  }, [buildings, isPlaying, showToast]);
+  }, [buildings, isPlaying, showToast, shake, floatNumber]);
+
+  /*
+   * Phản hồi lên cấp Thị Trưởng.
+   *
+   * Trước đây `mayorLevel` tăng mà không có gì xảy ra: không hình, không
+   * số, không rung. Người chơi lên 50 cấp mà phải tự đi đếm mới biết mình
+   * lên cấp - cấp độ là biến quan trọng nhất trong game mà lại im lặng nhất.
+   */
+  useEffect(() => {
+    if (!isPlaying) return;
+    /*
+     * CHỈ mừng khi cấp TĂNG thật, không mừng lần chạy đầu.
+     *
+     * `isPlaying` chuyển từ false sang true ngay khi người chơi đặt tên xong,
+     * nên effect chạy một lần với `level = 1`. Không có ref này thì mọi người
+     * chơi mới đều thấy "Cấp 1!" ngay khi vừa vào phố - mừng một thứ họ
+     * chưa làm gì để có, và làm hỏng cả ý nghĩa của hiệu ứng.
+     */
+    const daDanh = levelDaQuanLy.current;
+    if (daDanh === null) {
+      levelDaQuanLy.current = level;
+      return;
+    }
+    if (level <= daDanh) {
+      levelDaQuanLy.current = level;
+      return;
+    }
+    levelDaQuanLy.current = level;
+
+    particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.45);
+    shake(3);
+    floatNumber(window.innerWidth / 2, window.innerHeight * 0.34, `⬆️ Cấp ${level}`, '#FACC15');
+    showToast(`Lên cấp ${level}! Càng cấp cao thì càng mở được công trình lớn.`);
+  }, [level, isPlaying, shake, floatNumber, showToast]);
 
   /**
    * Trao thuong moc chuoi ngay choi lien tiep.
@@ -600,15 +654,21 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
       showToast('Giờ Vàng x2 Doanh Thu đang hoạt động!');
       return;
     }
+    if (derived.feverLeftToday <= 0) {
+      showToast(`Hôm nay đã dùng hết ${FEVER_PER_DAY} lượt Giờ Vàng. Mai sẽ có thêm.`);
+      return;
+    }
     if (triggerFeverMode()) {
       shake(8);
       particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
       floatNumber(window.innerWidth / 2, window.innerHeight * 0.3, 'GIỜ VÀNG x2 XU! 🔥', '#EF4444');
-      showToast('Đã kích hoạt Giờ Vàng MoCity! Nhân đôi doanh thu toàn phố trong 60 giây.');
+      showToast(
+        `Đã kích hoạt Giờ Vàng MoCity! Còn ${derived.feverLeftToday - 1} lượt hôm nay.`,
+      );
     } else {
-      showToast('Cần 2 Kim Cương để kích hoạt Giờ Vàng x2 Xu.');
+      showToast(`Cần ${FEVER_COST_GEMS} Kim Cương để kích hoạt Giờ Vàng x2 Xu.`);
     }
-  }, [derived.isFever, floatNumber, shake, showToast]);
+  }, [derived.isFever, derived.feverLeftToday, floatNumber, shake, showToast]);
 
   const handleClaimOffline = useCallback(() => {
     particles.coinShower(window.innerWidth / 2, window.innerHeight * 0.5, 25);
@@ -621,6 +681,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#EDEAE2] text-[#1C171A]">
       <GameJuiceStyles />
       <FloatingNumbers />
+      <RetroFilm />
 
       {/* 0. CỔNG CHỜ SESSION + THANH PHỐ - tránh nháy thành phố mặc định 1 nhịp */}
       {(sessionStatus === 'loading' || !cityHydrated) && (

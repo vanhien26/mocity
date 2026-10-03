@@ -303,6 +303,23 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
           <Row label="− Thuế TNDN 20%" sublabel="Đóng góp xây phố phồn vinh 🏛️" value={-derived.tax} tone="minus" indent />
           <Row label="= Lợi nhuận ròng" sublabel="Tiền THẬT SỰ nhét túi quần ✨" value={derived.netIncome} tone="total" strong />
         </div>
+        {/* Khách bỏ hàng: doanh thu chưa kịp thành tiền. */}
+        {derived.crowdingFactor < 1 && (
+          <div
+            className="mt-2 rounded-xl px-2.5 py-2"
+            style={{ background: '#FFF7ED', border: '1px solid #FDBA74' }}
+          >
+            <p className="text-[10px] font-black text-[#9A3412]">
+              🧍 Khách bỏ hàng: đang mất {formatRate(derived.lostSales)}/giây
+            </p>
+            <p className="mt-1 text-[10px] font-semibold leading-relaxed text-[#7C2D12]">
+              Hàng đợi dài hơn số chỗ phục vụ thì một phần khách không còn đợi nữa mà bỏ đi
+              {' '}(còn {(derived.crowdingFactor * 100).toFixed(0)}% sức bán). Nâng cấp tiệm để thêm
+              chỗ phục vụ, hoặc xây thêm tiệm để chia bớt khách.
+            </p>
+          </div>
+        )}
+
         <p className="mt-2 border-t pt-2 text-[10px] font-semibold leading-relaxed text-[#5B3D22]">
           HUD đang hiện <b>{formatRate(derived.netIncome)}</b> — đây là <b>lợi nhuận ròng</b>,
           không phải doanh thu. Doanh thu gộp thật là {formatRate(derived.grossRevenue)}. Mỗi đồng
@@ -440,6 +457,9 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
           </li>
           <li>
             🛠️ <b>Chi tiêu vốn (CAPEX)</b>: Mua máy pha cà phê, đóng quầy bar là sắm &quot;cần câu cơm&quot; lâu dài, không trừ hết vào chi phí tháng mà tính vào tài sản của tiệm.
+          </li>
+          <li>
+            🧍 <b>Khách bỏ hàng là mất doanh thu thật</b>: Xếp hàng lâu hơn sức phục vụ thì khách đi luôn, không phải chờ. Đó là lý do nâng cấp tiệm không chỉ tăng giá bán mà còn phải tăng chỗ phục vụ.
           </li>
         </ul>
 

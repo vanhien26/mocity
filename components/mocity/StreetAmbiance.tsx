@@ -10,6 +10,11 @@ export const TIME_OF_DAY_META: Record<
   {
     label: string;
     icon: typeof Sun;
+    /**
+     * Bầu trời theo bảng màu bao cấp: bạc màu, ngả lục xám và vàng nghệ.
+     * Bản cũ dùng #60A5FA / #F472B6 / #7C3AED - xanh hồng tím bão hoà cao,
+     * thứ kéo mạnh nhất về cảm giác đương đại vì nó chiếm nửa khung hình.
+     */
     skyBg: string;
     lampLit: boolean;
     ambientTint: string;
@@ -18,28 +23,28 @@ export const TIME_OF_DAY_META: Record<
   DAWN: {
     label: 'Bình Minh',
     icon: Sunrise,
-    skyBg: 'linear-gradient(180deg, #FDBA74 0%, #F472B6 40%, #93C5FD 75%, #EDEAE2 100%)',
+    skyBg: 'linear-gradient(180deg, #E0B079 0%, #C98C87 40%, #A3B5B0 75%, #E8DCC0 100%)',
     lampLit: false,
     ambientTint: 'rgba(251, 191, 36, 0.08)',
   },
   DAY: {
     label: 'Ban Ngày',
     icon: Sun,
-    skyBg: 'linear-gradient(180deg, #60A5FA 0%, #BAE6FD 50%, #EDEAE2 100%)',
+    skyBg: 'linear-gradient(180deg, #8FA8AE 0%, #BCCBC4 50%, #E8DCC0 100%)',
     lampLit: false,
     ambientTint: 'transparent',
   },
   SUNSET: {
     label: 'Hoàng Hôn',
     icon: Sunset,
-    skyBg: 'linear-gradient(180deg, #EA580C 0%, #DB2777 40%, #7C3AED 75%, #EDEAE2 100%)',
+    skyBg: 'linear-gradient(180deg, #C26A2E 0%, #A84B3C 40%, #6B5473 75%, #D9C9A6 100%)',
     lampLit: true,
     ambientTint: 'rgba(234, 88, 12, 0.12)',
   },
   NIGHT: {
     label: 'Đêm Phố',
     icon: Moon,
-    skyBg: 'linear-gradient(180deg, #090D16 0%, #1E1B4B 50%, #2E1065 85%, #EDEAE2 100%)',
+    skyBg: 'linear-gradient(180deg, #11151A 0%, #232B33 50%, #33333D 85%, #6E655A 100%)',
     lampLit: true,
     ambientTint: 'rgba(15, 23, 42, 0.35)',
   },

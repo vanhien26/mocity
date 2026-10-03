@@ -43,6 +43,7 @@ import {
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
 import ProfitLossStatement from './ProfitLossStatement';
+import WeekComparisonPanel from './WeekComparisonPanel';
 import { markTutorialFlag, restartTutorial } from '@/lib/mocity/store';
 import StreakBoard from './StreakBoard';
 
@@ -670,7 +671,12 @@ export default function MayorCenterModal({
             </div>
           )}
 
-          {tab === 'LEDGER' && <ProfitLossStatement onToast={onToast} />}
+          {tab === 'LEDGER' && (
+            <div className="space-y-3">
+              <WeekComparisonPanel />
+              <ProfitLossStatement onToast={onToast} />
+            </div>
+          )}
 
           {tab === 'STREAK' && <StreakBoard />}
 

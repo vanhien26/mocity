@@ -14,10 +14,11 @@ import {
   X,
 } from 'lucide-react';
 import { BUILDING_BY_ID } from '@/lib/mocity/mock-city-data';
-import { nodeYieldBreakdown } from '@/lib/mocity/city-calculator';
+import { nodeYieldBreakdown, queueCapacityFor } from '@/lib/mocity/city-calculator';
 import { formatRate } from '@/lib/mocity/format';
-import { claimTapReward, useCity } from '@/lib/mocity/store';
+import { claimTapReward, publishShopQueue, useCity, useCityDerived } from '@/lib/mocity/store';
 import { EVENT_BY_ID } from '@/lib/mocity/dialogue-data';
+import { cityMood } from '@/lib/mocity/dialogue-engine';
 import { particles } from './ParticleEngine';
 import { useAmbientChatter } from './SpeechBubble';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
@@ -28,6 +29,7 @@ import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from '
 import { useTrafficController } from './useTrafficController';
 import TrafficLightPole from './TrafficLightPole';
 import StreetPets from './StreetPets';
+import { RETRO_BOARD_FILTER } from './RetroFilm';
 
 /**
  * Do rong mot lot dat tren pho. Moi lot rong 236px. Dung chung giua tinh be
@@ -148,8 +150,7 @@ export default function ViaHeStreetBoard({
   const pendingEvent = useCity((s) => s.pendingEvent);
   const timeOfDay = useCity((s) => s.timeOfDay ?? 'DAY');
   const traffic = useTrafficController(timeOfDay);
-
-  const chatter = useAmbientChatter(npcs);
+  const derivedCity = useCityDerived();
 
   const [streetToast, setStreetToast] = useState<string | null>(null);
   /**
@@ -162,6 +163,46 @@ export default function ViaHeStreetBoard({
    * moi o dat deu tim thay duoc.
    */
   const [activeRow, setActiveRow] = useState(0);
+
+  /**
+   * Số khách đang xếp ở mỗi tiệm, do `ExpressiveStreetCitizens` báo lên.
+   *
+   * Vừa để vẽ con số trên bảng hiệu, vừa là dữ liệu kinh tế: `setShopQueue`
+   * đẩy vào store để `flowFor` biết tiệm nào quá tải. Người chơi nhìn thấy
+   * hàng dài và doanh thu giảm cùng lúc - đó là một thông điệp.
+   */
+  const [shopQueues, setShopQueues] = useState<Record<string, number>>({});
+
+  /*
+   * Trạng thái khủng hoảng của thành phố, đổi câu thoại của bà con.
+   *
+   * Cùng nguồn số liệu với các cảnh báo đang hiện trên HUD và trong báo cáo P&L:
+   * hạnh phúc, hệ số dòng tiền, tỷ lệ nợ xấu, hàng đợi. Nếu bà con kể chuyện
+   * "khách bỏ hàng" thì người chơi phải thấy hàng đợi thật sự quá tải ở đâu đó.
+   */
+  const streetMood = useMemo(
+    () =>
+      cityMood({
+        happiness: derivedCity.happiness,
+        cashflowRatio: derivedCity.cashflowRatio,
+        nplRate: derivedCity.nplRate,
+        debt: derivedCity.debt,
+        shopsOverloaded: derivedCity.lostSales > 0 ? 1 : 0,
+        netIncomePerSec: derivedCity.netIncome,
+      }),
+    [derivedCity.happiness, derivedCity.cashflowRatio, derivedCity.nplRate, derivedCity.debt, derivedCity.lostSales, derivedCity.netIncome],
+  );
+
+  const chatter = useAmbientChatter(npcs, streetMood);
+
+  /**
+   * Hàng đợi là trạng thái tức thời của hiệu ứng phố, không phải dữ liệu vĩnh
+   * viễn. Không đưa vào `CityState` để tránh ghi đè save liên tục mỗi 500ms;
+   * giữ ở đây rồi đẩy vào một kho riêng mà `flowFor` đọc qua tham số.
+   */
+  useEffect(() => {
+    publishShopQueue(shopQueues);
+  }, [shopQueues]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
@@ -310,6 +351,31 @@ export default function ViaHeStreetBoard({
     return list;
   }, [activeRequests, safeRow, buildings, chatter, npcs, unlockedCols]);
 
+  /**
+   * Điểm tụ cho cư dân xếp hàng: chỉ tiệm thương mại mới có quầu thu ngân.
+   *
+   * `x` phải khớp DOM thật, nên dùng đúng công thức bên dưới: hẻm chiếm 132px
+   * cộng 16px margin, mỗi ô rộng 236px, cửa ở giữa ô. Số khách tối đa cũng
+   * bám theo công trình: cấp cao phục vụ được nhiều người hơn, đó là lý do
+   * nâng cấp tiệm nhìn thấy được ngay trên phố.
+   */
+  const shopAnchors = useMemo(
+    () =>
+      streetPlots.flatMap((plot, idx) => {
+        if (!plot.node || !plot.def) return [];
+        if (plot.def.zone !== 'COMMERCIAL') return [];
+        return [
+          {
+            id: plot.node.id,
+            x: 132 + 16 + idx * 236 + 118,
+            label: plot.def.shortName,
+            capacity: queueCapacityFor(plot.node),
+          },
+        ];
+      }),
+    [streetPlots],
+  );
+
   const handleScrollBy = (delta: number) => {
     scrollContainerRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
   };
@@ -446,7 +512,15 @@ export default function ViaHeStreetBoard({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         className="relative h-full w-full overflow-x-auto overflow-y-hidden cursor-grab active:cursor-grabbing transition-colors duration-700"
-        style={{ backgroundImage: TIME_OF_DAY_META[timeOfDay].skyBg }}
+        style={{
+          backgroundImage: TIME_OF_DAY_META[timeOfDay].skyBg,
+          /*
+           * Ngả màu CHỈ ở khung phố, không phủ lên HUD và modal - chữ nhỏ
+           * trong bảng phải giữ độ tương phản. Xem chú thích ở `RetroFilm`
+           * về việc `filter` phá `position: fixed` của con cháu.
+           */
+          filter: RETRO_BOARD_FILTER,
+        }}
       >
         <div
           className="relative h-full flex flex-col justify-end transition-transform duration-300"
@@ -645,6 +719,44 @@ export default function ViaHeStreetBoard({
                         </g>
                       )}
                     </svg>
+
+                    {/* Đếm khách xếp hàng. Chỉ hiện ở tiệm thương mại có quầu. */}
+                    {(() => {
+                      const hangDoi = plot.node ? shopQueues[plot.node.id] ?? 0 : 0;
+                      if (hangDoi <= 0) return null;
+                      const sucChua = plot.node ? queueCapacityFor(plot.node) : 1;
+                      const quaTai = hangDoi > sucChua;
+                      const satChan = hangDoi === sucChua;
+                      /*
+                       * NEAR-MISS HAI BƯỚC.
+                       *
+                       * Trước đây chỉ có đỏ (đã mất khách) và vàng. Giờ thêm
+                       * trạng thái "SÁT CHÂN": hàng đúng bằng sức chứa, tức là
+                       * thêm đúng một người nữa là mất khách. Đây là near-miss
+                       * theo nghĩa có ích: người chơi biết chính xác mình đang
+                       * ở cách ngưỡng bao xa và biết sửa bằng cách nào.
+                       */
+                      const mau = quaTai
+                        ? { bg: '#FECACA', bd: '#B91C1C', fg: '#7F1D1D' }
+                        : satChan
+                          ? { bg: '#FED7AA', bd: '#C2410C', fg: '#7C2D12' }
+                          : { bg: '#FFE9A8', bd: '#78533D', fg: '#7A4A00' };
+                      const canhBao = quaTai
+                        ? `hàng ${hangDoi} người nhưng chỉ phục vụ được ${sucChua} — đang mất khách!`
+                        : satChan
+                          ? `hàng ${hangDoi} người, vừa đủ ${sucChua} chỗ — thêm 1 người là mất khách`
+                          : `${hangDoi} khách xếp, phục vụ được ${sucChua}`;
+                      return (
+                        <span
+                          className="z-20 mb-1 flex items-center gap-1 rounded-full border-2 px-2 py-[1px] text-[10px] font-black shadow-sm"
+                          style={{ background: mau.bg, borderColor: mau.bd, color: mau.fg }}
+                          title={`${plot.def?.shortName ?? 'Tiệm'}: ${canhBao}`}
+                        >
+                          {quaTai ? '⚠️' : satChan ? '🔔' : '🧍'} {hangDoi} xếp
+                          <span className="opacity-70">/ chỗ {sucChua}</span>
+                        </span>
+                      );
+                    })()}
 
                     {/* Bong bóng Chuyện Phố (!) hoặc Thoại Tám Chuyện Vỉa Hè trên nóc tiệm */}
                     <div className="mb-2 flex min-h-[36px] flex-col items-center justify-end z-20">
@@ -923,6 +1035,8 @@ export default function ViaHeStreetBoard({
             {/* HỆ THỐNG CƯ DÂN ĐI BỘ */}
             <ExpressiveStreetCitizens
               streetWidth={streetWidth}
+              shops={shopAnchors}
+              onQueueChange={setShopQueues}
               onCitizenReward={(msg) => {
                 setStreetToast(msg);
                 setTimeout(() => setStreetToast(null), 4000);

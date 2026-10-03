@@ -25,6 +25,7 @@ export default function StreakBoard() {
   const atRisk = streakAtRisk();
   const reached = streakMilestoneReached(days);
   const next = nextStreakMilestone(days);
+  const shields = streak?.shields ?? 0;
 
   // Chuỗi đã vỡ: vẫn hiện kỷ lục và mốc đang chờ.
   const broken = days === 0 && (streak?.best ?? 0) > 0;
@@ -68,6 +69,17 @@ export default function StreakBoard() {
         {atRisk > 0 && (
           <p className="mt-2 rounded-lg bg-white/70 px-2 py-1 text-[11px] font-bold text-[#B45309]">
             Chuỗi {atRisk} ngày của bạn đang chờ được nối tiếp hôm nay.
+          </p>
+        )}
+        {/*
+         * Phiếu bảo vệ: hiện ở đây vì nó là câu trả lời trực tiếp cho câu hỏi
+         "bỏ một ngày thì mất gì". Không có nó thì cảnh báo trên đúng một dòng
+         "chuỗi 12 ngày đang chờ nối tiếp" nghe như đe doạ vô dụng.
+         */}
+        {shields > 0 && (
+          <p className="mt-2 rounded-lg border border-[#C9A227] bg-white/70 px-2 py-1 text-[11px] font-bold text-[#8B6318]">
+            🛡️ Bạn có {shields} phiếu bảo vệ. Bỏ đúng một ngày thì chuỗi được giữ,
+            chỉ mất 1 phiếu.
           </p>
         )}
         {broken && (
