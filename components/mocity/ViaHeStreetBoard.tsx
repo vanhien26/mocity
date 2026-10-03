@@ -40,6 +40,11 @@ const PLOT_WIDTH = 236;
 const STREET_PADDING = 420;
 
 /** Xu luong "di tuan" cua Thị Trưởng. Han 5 phut. */
+/*
+ * Thưởng đi tuần. Ba câu thoại từng ghi "+180 XU" trong khi hằng số là 120 -
+ * game nói một đằng trả một nẻo. Trong một sản phẩm dạy tài chính thì sai
+ * lệch giữa con số hứa và con số nhận là lỗi nặng, không phải lỗi chính tả.
+ */
 const PATROL_BONUS_COINS = 120;
 const PATROL_COOLDOWN_MS = 5 * 60 * 1000;
 
@@ -430,9 +435,9 @@ export default function ViaHeStreetBoard({
       return;
     }
     const funnyLines = [
-      'Trạm Heo Vàng MoCity: “Thị Trưởng vừa đi tuần khích lệ bà con tiểu thương! Nhận ngay +180 XU Lộc Đô Thị!”',
-      'Ông Lộc Đầu Tư: “Dòng tiền thanh toán số trên Đại lộ MoMo hôm nay tăng trưởng vượt bậc!” (+180 XU)',
-      'Cô Tư Tạp Hóa: “Cả dãy phố quét QR ting ting vui như Tết! Mời Thị Trưởng ly trà tắc!” (+180 XU)',
+      'Trạm Heo Vàng MoCity: “Thị Trưởng vừa đi tuần khích lệ bà con tiểu thương! Nhận ngay +120 XU Lộc Đô Thị!”',
+      'Ông Lộc Đầu Tư: “Dòng tiền thanh toán số trên Đại lộ MoMo hôm nay tăng trưởng vượt bậc!” (+120 XU)',
+      'Cô Tư Tạp Hóa: “Cả dãy phố quét QR ting ting vui như Tết! Mời Thị Trưởng ly trà tắc!” (+120 XU)',
     ];
     const msg = funnyLines[Math.floor(Math.random() * funnyLines.length)];
     setStreetToast(msg);
@@ -832,7 +837,7 @@ export default function ViaHeStreetBoard({
                           type="button"
                           onClick={handleClaimPatrolBonus}
                           className="absolute -bottom-6 left-2 z-20 flex items-end gap-1.5 group"
-                          title="Bấm để nhận Lộc Đi Tuần MoCity (+180 XU)"
+                          title="Bấm để nhận Lộc Đi Tuần MoCity (+120 XU)"
                         >
                           {/* Nhân vật Thị Trưởng mặc vest xanh vẫy tay */}
                           <div
@@ -848,7 +853,7 @@ export default function ViaHeStreetBoard({
                           {/* Quầy "TRẠM LỘC MOMO" */}
                           <div className="flex flex-col items-center">
                             <span className="mb-0.5 rounded bg-white/90 px-1 text-[8px] font-black text-[#D82D8B] shadow">
-                              +180 XU
+                              +120 XU
                             </span>
                             <div className="h-4 w-12 border-2 border-[#3E2A1B] bg-[#FDF2F8] flex justify-around items-center px-0.5">
                               <span className="h-2.5 w-2 bg-[#D82D8B]" />

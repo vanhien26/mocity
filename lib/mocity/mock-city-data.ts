@@ -644,7 +644,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-name-city',
     title: 'Khai Sinh Đô Thị — Đặt Tên Sao Cho Sang Miệng',
     description: 'Bấm vào bảng tên trên thanh HUD để đặt tên Thị Trưởng & Thành Phố (đừng để tên mặc định kẻo Shipper tìm không ra!).',
-    rewardCoins: 1_000,
+    rewardCoins: 200,
     rewardGems: 3,
     stage: 1,
     rewardXp: 150,
@@ -653,7 +653,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-first-home',
     title: 'Chấm Dứt Cảnh Ngủ Ghế Đá Công Viên',
     description: 'Xây dựng ít nhất 1 công trình Dân Cư (Khu Nhà Phố hoặc Ký Túc Xá Sinh Viên) để bà con có chỗ che mưa che nắng.',
-    rewardCoins: 1_500,
+    rewardCoins: 300,
     rewardGems: 3,
     stage: 1,
     rewardXp: 200,
@@ -662,7 +662,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-first-store',
     title: 'Khởi Nghiệp Trà Sữa & Cà Phê Hốt Bạc',
     description: 'Xây dựng 1 Cửa Hàng thương mại đầu tiên để dân tình có chỗ “chữa lành” và tạo dòng XU/giây tự động.',
-    rewardCoins: 2_000,
+    rewardCoins: 400,
     rewardGems: 4,
     stage: 1,
     rewardXp: 250,
@@ -671,7 +671,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-install-qr',
     title: 'Giải Cứu Cô Tư Khỏi Cảnh Thối Tiền Bằng Kẹo Cao Su',
     description: 'Bấm vào 1 cửa hàng trên bản đồ và lắp đặt tiện ích “MoMo QR & Loa Thần Tài” đọc tiền về vang dội.',
-    rewardCoins: 5_000,
+    rewardCoins: 700,
     rewardGems: 5,
     stage: 1,
     rewardXp: 400,
@@ -680,7 +680,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-milestone-lv5',
     title: 'Lên Đời Cửa Hàng — Đột Phá Cấp 5 Nhận x2 Doanh Thu',
     description: 'Nâng cấp bất kỳ cửa hàng nào đạt mốc Cấp 5 để kích hoạt hệ số nhân đôi sản lượng XU/giây.',
-    rewardCoins: 8_000,
+    rewardCoins: 1_000,
     rewardGems: 6,
     stage: 1,
     rewardXp: 600,
@@ -689,7 +689,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-cinema-tui-than-tai',
     title: 'Cứu Tinh Hẹn Hò & Thoát Kiếp Mì Tôm Cuối Tháng',
     description: 'Xây dựng Rạp Chiếu Phim MoMo Cinema (cho các cặp đôi khỏi ra công viên đếm muỗi) hoặc Trạm Túi Thần Tài (sinh lãi kép).',
-    rewardCoins: 15_000,
+    rewardCoins: 1_500,
     rewardGems: 8,
     stage: 1,
     rewardXp: 900,
@@ -698,7 +698,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-hire-manager',
     title: 'Tuyển CEO Về Trông Quán Nước',
     description: 'Mở bảng Quản lý Cửa hàng (Tab Quản Lý RPG) và bổ nhiệm 1 Quản Lý chuyên trách để ngồi mát ăn bát vàng.',
-    rewardCoins: 20_000,
+    rewardCoins: 1_800,
     rewardGems: 10,
     stage: 1,
     rewardXp: 1_100,
@@ -707,7 +707,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-star-evolve',
     title: 'Dát Vàng Bảng Hiệu — Tiến Hóa Lên 2 Sao (★★)',
     description: 'Tiến hóa bất kỳ công trình nào từ 1★ lên 2★ để cả khu phố phải ngước nhìn.',
-    rewardCoins: 25_000,
+    rewardCoins: 2_200,
     rewardGems: 12,
     stage: 1,
     rewardXp: 1_300,
@@ -716,7 +716,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-fever-mode',
     title: 'Bật Nhạc Lên! Kích Hoạt Giờ Vàng Siêu Sale x2 XU',
     description: 'Bấm nút “Giờ Vàng x2” trên thanh HUD để cả thành phố bước vào đại tiệc săn deal nhân đôi tốc độ kiếm XU.',
-    rewardCoins: 18_000,
+    rewardCoins: 1_600,
     rewardGems: 8,
     stage: 1,
     rewardXp: 1_000,
@@ -725,7 +725,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-expand-city',
     title: 'Đại Gia Bất Động Sản — Quy Hoạch 6 Tòa Nhà & 200 Dân',
     description: 'Sở hữu từ 6 công trình trở lên và đón ít nhất 200 Cư dân về sinh sống nhộn nhịp.',
-    rewardCoins: 50_000,
+    rewardCoins: 2_300,
     rewardGems: 20,
     stage: 1,
     rewardXp: 2_000,
@@ -746,7 +746,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-full-street',
     title: 'Kín Mặt Tiền — Lấp Đầy 12 Lô Đất',
     description: 'Sở hữu 12 công trình trên phố. Đất trống là tiền nằm im, Thị Trưởng ạ.',
-    rewardCoins: 180_000,
+    rewardCoins: 20_000,
     rewardGems: 25,
     stage: 2,
     rewardXp: 4_500,
@@ -755,7 +755,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-three-managers',
     title: 'Bộ Sậu Quản Lý — Bổ Nhiệm 3 Người',
     description: 'Có ít nhất 3 cửa hàng đang được Quản Lý chuyên trách trông coi cùng lúc.',
-    rewardCoins: 260_000,
+    rewardCoins: 30_000,
     rewardGems: 30,
     stage: 2,
     rewardXp: 6_000,
@@ -764,7 +764,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-module-master',
     title: 'Phủ Sóng Tiện Ích — Lắp 6 Module',
     description: 'Lắp tổng cộng 6 tiện ích lên các cửa hàng trong phố (QR, Loa, Ví Trả Sau...).',
-    rewardCoins: 350_000,
+    rewardCoins: 40_000,
     rewardGems: 35,
     stage: 2,
     rewardXp: 7_500,
@@ -773,7 +773,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-three-star',
     title: 'Dát Vàng Toàn Phố — Một Tiệm Lên ★★★',
     description: 'Tiến hóa bất kỳ công trình nào lên 3 sao. Bảng hiệu phải sáng cả khu.',
-    rewardCoins: 500_000,
+    rewardCoins: 55_000,
     rewardGems: 40,
     stage: 2,
     rewardXp: 10_000,
@@ -782,7 +782,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-level-20',
     title: 'Công Trình Cấp 20 — Xây Cho Ra Xây',
     description: 'Nâng bất kỳ công trình nào lên Cấp 20.',
-    rewardCoins: 700_000,
+    rewardCoins: 70_000,
     rewardGems: 45,
     stage: 2,
     rewardXp: 12_000,
@@ -791,7 +791,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-streak-7',
     title: 'Bảy Ngày Không Nghỉ — Thị Trưởng Mẫn Cán',
     description: 'Giữ chuỗi ngày chơi liên tiếp đạt 7 ngày.',
-    rewardCoins: 450_000,
+    rewardCoins: 50_000,
     rewardGems: 50,
     stage: 2,
     rewardXp: 9_000,
@@ -800,7 +800,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-tier-6',
     title: 'Lên Rank Đô Thị Quét Mã',
     description: 'Đưa thành phố đạt Rank 6 - Đô Thị Quét Mã. Cả phố không còn ai thối tiền lẻ.',
-    rewardCoins: 1_200_000,
+    rewardCoins: 120_000,
     rewardGems: 60,
     stage: 2,
     rewardXp: 18_000,
@@ -809,7 +809,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     id: 'q-landmark',
     title: 'Biểu Tượng Thành Phố — Dựng Một Landmark',
     description: 'Xây Quảng Trường Heo Vàng hoặc Tháp Đôi MoMo Tower.',
-    rewardCoins: 900_000,
+    rewardCoins: 90_000,
     rewardGems: 55,
     stage: 2,
     rewardXp: 14_000,
@@ -849,27 +849,51 @@ export function nextMilestoneLevel(level: number): number {
  * tang cap, bat ke cong trinh nao, nen ca 20 cong trinh deu co nhip nang cap
  * nhat quan.
  */
-const UPGRADE_YIELD_FACTOR = 600;
-/**
- * Do nhanh tien tang theo cap.
+/* ═══════════════════════════════════════════════════════════════════════════
+ * CHI PHÍ NÂNG CẤP - MỖI NHÓM CÔNG TRÌNH MỘT HỒ SƠ ĐẦU TƯ RIÊNG
  *
- * 1.25 la "cam ung phong no" kinh dien cua idle game, nhung o do doanh thu o
- * day la TUYEN TINH theo cap (`LEVEL_SCALE`) va chi nhay o moc 5/10/25/50. Hai
- * ben khong cung he, nen chi phi vuot xa doanh thu: cap 40 -> 41 cat 4.333.340
- * Xu de lay them 7,5 Xu/giay, tien hoa von 2,7 ngay. San luong cap 49 -> 50
- * nhay 780 Xu/giay (do moc x3 cua `milestoneMultiplierFor`) nen tro lai co lai
- * 690 phut - khong co nhip nang cap deu.
+ * Bản cũ dùng CHUNG một hệ số 600 và một tốc độ 1.15 cho mọi công trình, với
+ * chủ ý cho thời gian hoàn vốn bằng nhau ở mọi nơi. Nhưng chính điều đó làm
+ * người chơi KHÔNG CẦN NGHĨ: nâng cái gì cũng như nhau, nên không có quyết
+ * định nào có ý nghĩa. Đo thực tế: mười cấp đầu hoàn vốn 22, 26, 29 phút,
+ * gần như phẳng.
  *
- * 1.15 lam hoa von cap 40 -> 41 ve 152 phut, cap 49 -> 50 ve 5 phut, va giu
- * duong chi phi cung nhip voi moi cong trinh.
- */
-const UPGRADE_GROWTH = 1.15;
+ * Giờ bốn nhóm có bốn đường cong CẮT NHAU:
+ *
+ *   Thương mại  rẻ, hoàn vốn 14 phút ở cấp 1, nhưng leo nhanh nên cấp 49 là
+ *               4,6 ngày. Tiền tươi sớm, biên giảm dần - đúng bản chất quán
+ *               ăn và cửa hàng nhỏ.
+ *   Dân cư      ở giữa. Không sinh nhiều doanh thu trực tiếp nhưng nuôi dân,
+ *               mà thiếu dân thì mọi cửa hàng đều ế.
+ *   Fintech     37 phút ở cấp 1, chậm gấp đôi thương mại. Bù lại leo chậm
+ *               nên cấp 40 chỉ 8,6 giờ so với 25 giờ của thương mại.
+ *   Landmark    chậm nhất lúc đầu, tốt nhất về sau.
+ *
+ * Hệ quả thiết kế: không thể dồn tiền vào một tiệm mãi. Muốn đi xa phải mở
+ * rộng và phải đầu tư dài hạn - đó chính là bài học dòng tiền của game.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Chi phi len cap moi. Lam tron ve 5 don vi de so dep. */
+interface HoSoNangCap {
+  /** Hệ số chi phí, nhân với `baseYieldPerSec`. Cao = hoàn vốn lâu hơn. */
+  heSo: number;
+  /** Tốc độ leo chi phí mỗi cấp. Cao = biên lợi nhuận giảm nhanh. */
+  tocDo: number;
+}
+
+const HO_SO_NANG_CAP: Record<ZoneMeta['type'], HoSoNangCap> = {
+  COMMERCIAL: { heSo: 380, tocDo: 1.18 },
+  RESIDENTIAL: { heSo: 520, tocDo: 1.15 },
+  FINTECH: { heSo: 1_000, tocDo: 1.12 },
+  LANDMARK: { heSo: 1_600, tocDo: 1.1 },
+};
+
+/** Chi phí lên cấp mới. Làm tròn về 5 đơn vị để số đẹp. */
 export function upgradeCostCoins(def: BuildingDef, currentLevel: number): number {
-  const raw = def.baseYieldPerSec * UPGRADE_YIELD_FACTOR * Math.pow(UPGRADE_GROWTH, currentLevel - 1);
+  const ho = HO_SO_NANG_CAP[def.zone] ?? HO_SO_NANG_CAP.COMMERCIAL;
+  const raw = def.baseYieldPerSec * ho.heSo * Math.pow(ho.tocDo, currentLevel - 1);
   return Math.max(20, Math.round(raw / 5) * 5);
 }
+
 
 /** Chi phi nang sao cong trinh (1★ -> 5★). +35% doanh thu moi sao. */
 export function starUpgradeCost(def: BuildingDef, currentStar: number): { coins: number; gems: number } {
@@ -1080,43 +1104,43 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-hem-ba-gac', rank: 2, name: 'Hẻm Ba Gác',
     tagline: 'Hẻm vừa đúng một chiếc ba gác, hai xe gặp nhau là phải lùi.',
     minPopulation: 150, minBuildings: 3,
-    rewardCoins: 6_000, rewardGems: 4, rewardXp: 900,
+    rewardCoins: 600, rewardGems: 4, rewardXp: 900,
   },
   {
     id: 'tier-pho-via-he', rank: 3, name: 'Phố Vỉa Hè',
     tagline: 'Bắt đầu có hàng quán mặt tiền, tối đến đèn vàng sáng cả dãy.',
     minPopulation: 500, minBuildings: 6,
-    rewardCoins: 18_000, rewardGems: 8, rewardXp: 2_400,
+    rewardCoins: 2_000, rewardGems: 8, rewardXp: 2_400,
   },
   {
     id: 'tier-thi-tu-tra-da', rank: 4, name: 'Thị Tứ Trà Đá',
     tagline: 'Đông người, có chỗ ngồi tám chuyện từ sáng tới chiều.',
     minPopulation: 2_000, minBuildings: 10,
-    rewardCoins: 45_000, rewardGems: 14, rewardXp: 5_200,
+    rewardCoins: 5_000, rewardGems: 14, rewardXp: 5_200,
   },
   {
     id: 'tier-quan-tra-sua', rank: 5, name: 'Quận Trà Sữa',
     tagline: 'GenZ kéo tới check-in, dòng tiền lên thấy rõ.',
     minPopulation: 5_500, minBuildings: 16,
-    rewardCoins: 110_000, rewardGems: 22, rewardXp: 9_000,
+    rewardCoins: 12_000, rewardGems: 22, rewardXp: 9_000,
   },
   {
     id: 'tier-do-thi-quet-ma', rank: 6, name: 'Đô Thị Quét Mã',
     tagline: 'Hết cảnh thối tiền bằng kẹo cao su, cả phố quét mã.',
     minPopulation: 14_000, minBuildings: 24,
-    rewardCoins: 280_000, rewardGems: 32, rewardXp: 14_000,
+    rewardCoins: 30_000, rewardGems: 32, rewardXp: 14_000,
   },
   {
     id: 'tier-dai-do-thi-ting-ting', rank: 7, name: 'Đại Đô Thị Ting Ting',
     tagline: 'Tiếng báo có tiền vang từ đầu hẻm tới cuối đại lộ.',
     minPopulation: 24_000, minBuildings: 34,
-    rewardCoins: 700_000, rewardGems: 45, rewardXp: 20_000,
+    rewardCoins: 75_000, rewardGems: 45, rewardXp: 20_000,
   },
   {
     id: 'tier-sieu-do-thi-khong-tien-mat', rank: 8, name: 'Siêu Đô Thị Không Tiền Mặt',
     tagline: 'Không còn ai cầm tiền lẻ. Thị Trưởng đã làm được.',
     minPopulation: 40_000, minBuildings: 46,
-    rewardCoins: 1_800_000, rewardGems: 70, rewardXp: 25_000,
+    rewardCoins: 180_000, rewardGems: 70, rewardXp: 25_000,
   },
 ];
 
@@ -1160,22 +1184,22 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
   {
     id: 'd-tro-chuyen', title: 'Đi một vòng hỏi thăm 5 bà con',
     counter: 'talked', target: 5,
-    rewardCoins: 4_000, rewardGems: 2, rewardXp: 1_600,
+    rewardCoins: 400, rewardGems: 2, rewardXp: 1_600,
   },
   {
     id: 'd-nang-cap', title: 'Nâng cấp công trình 3 lượt',
     counter: 'upgraded', target: 3,
-    rewardCoins: 6_000, rewardGems: 2, rewardXp: 2_200,
+    rewardCoins: 600, rewardGems: 2, rewardXp: 2_200,
   },
   {
     id: 'd-xu-chuyen-pho', title: 'Phân xử 2 Chuyện Phố',
     counter: 'eventsResolved', target: 2,
-    rewardCoins: 8_000, rewardGems: 3, rewardXp: 2_800,
+    rewardCoins: 800, rewardGems: 3, rewardXp: 2_800,
   },
   {
     id: 'd-mo-tiem', title: 'Mở thêm 1 tiệm mới',
     counter: 'built', target: 1,
-    rewardCoins: 5_000, rewardGems: 2, rewardXp: 1_800,
+    rewardCoins: 500, rewardGems: 2, rewardXp: 1_800,
   },
   {
     /**
@@ -1185,7 +1209,7 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
      */
     id: 'd-tien-hoa', title: 'Dát vàng 1 tiệm lên ★★',
     counter: 'starEvolved', target: 1,
-    rewardCoins: 12_000, rewardGems: 3, rewardXp: 4_500,
+    rewardCoins: 1_200, rewardGems: 3, rewardXp: 4_500,
   },
 ];
 

@@ -75,6 +75,8 @@ export interface BuildingNode {
   lastCollectedAt: number;
   modules?: StoreModuleId[];
   managerId?: string;
+  stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+  lastFraudPreventedAt?: number;
 }
 
 /* ── Con nguoi trong thanh pho ──────────────────────────────────── */
@@ -193,6 +195,31 @@ export interface CityEventScript {
   speaker: string;
   body: string;
   minMayorLevel: number;
+  /**
+   * Điều kiện trạng thái thành phố để sự kiện này xuất hiện.
+   *
+   * Trước đây chỉ có `minMayorLevel`, nên 35 sự kiện được rải đều theo cấp và
+   * không sự kiện nào "biết" thành phố đang gặp khủng hoảng. Ông Lộc kể
+   * chuyện đánh bạc ngay cả khi thành phố cạn tiền, và chuyện cứu dòng tiền
+   * xuất hiện khi mọi thứ đang ổn.
+   *
+   * Không điều kiện nào nghĩa là luôn hợp lệ. Tất cả đều là AND với
+   * `minMayorLevel`.
+   */
+  /** Chỉ hiện khi hạnh phúc thấp hơn ngưỡng (0-100). */
+  happinessBelow?: number;
+  /** Chỉ hiện khi hệ số dòng tiền lưu động thấp hơn ngưỡng. */
+  cashflowBelow?: number;
+  /** Chỉ hiện khi tỷ lệ nợ xấu BNPL cao hơn ngưỡng (0-1). */
+  nplAbove?: number;
+  /** Chỉ hiện khi đang nợ trên ngưỡng này. */
+  debtAbove?: number;
+  /** Chỉ hiện khi hàng đợi quá tải ở ít nhất một tiệm. */
+  requiresCrowding?: boolean;
+  /** Chỉ hiện khi còn trễ hạn trả nợ. */
+  requiresLateFee?: boolean;
+  /** Chỉ hiện khi chưa có gói bảo hiểm nào. */
+  requiresNoInsurance?: boolean;
   choices: DialogueChoice[];
 }
 
@@ -250,6 +277,51 @@ export interface StreakState {
   lastDay: string;
   /** Chuoi dai nhat da dat duoc, khong bao gio reset. */
   best: number;
+  /**
+   * So phieu bao vui chuoi, toi da 3.
+   *
+   * Tu dong dung khi nguoi choi ngat chuoi: mat 1 phieu, chuoi giu nguyen.
+   * Nhan tu moc 7 ngay, moi moc 14 ngay them 1.
+   *
+   * Bien nay ton tai vi `streakClaimed` luu SO NGAY chu khong luu id moc, nen
+   * them no khong dung vao logic hieu moc hien co.
+   */
+  shields?: number;
+}
+
+/**
+ * SO LUC CUA MOT NGAY DA QUA.
+ *
+ * Ghi lai khi sang ngay moi, giu 7 ngay. Day la co so cua bang "so sanh voi
+ * chinh minh 7 ngay truoc" - ap luc co that ma khong can biet gi ve nguoi
+ * choi khac.
+ *
+ * Chi luu SO LIEU DA KET LUAN (doanh thu, loi nhuan, dan so), khong luu gi
+ * tri tai sanh. Ly do: so lieu ket luan la thu do nguoi choi so sanh, con
+ * so xu trong vi thi bien dong hang ngay va so sanh vo nghia.
+ */
+export interface DailySnapshot {
+  /** Khoa ngay `YYYY-M-D`. */
+  day: string;
+  /** Loi nhuan rong cua ngay do, da tru tat ca chi phi. */
+  netIncome: number;
+  /** Doanh thu van hanh cua ngay do, khong bao gom thuong cap. */
+  revenue: number;
+  danSo: number;
+  soCongTrinh: number;
+  mayorLevel: number;
+  /** Hạn phố đạt được trong ngày đó. */
+  cityTier: number;
+  /** Chuoi ngay tinh den cuoi ngay do. */
+  streak: number;
+  /** So su kien da giai quyet, de do kien luc. */
+  eventsResolved: number;
+  /**
+   * Hanh phuc tinh LUON SUY GIAM (tuc la luc moi mo game) chu khong phai luc
+   * vua ngan xong. Ly do: pho bi suy giam thi se lam kien luc, nen muốn
+   * so sanh cong bang thi ca hai ngay phai do cung mot cach.
+   */
+  happiness: number;
 }
 
 /* ── SỔ CÁI & BÁO CÁO KẾT QUẢ KINH DOANH ────────────────────────── */
@@ -342,6 +414,16 @@ export interface CityState extends Currencies {
   equippedRelics: string[];
   feverUntil: number;
   /**
+   * So lan da bat Giờ Vàng trong ngày hôm nay.
+   *
+   * `feverUntil` chỉ true trong 60 giây nên không giữ được lịch sử dùng.
+   * Không có biến này thì 20 Kim Cương khởi đầu bấm 10 lần là cạn ví, và
+   * Kim Cương mất hết vai trò là tiền tích trữ.
+   */
+  feverUsedToday?: number;
+  /** Khoa ngay `YYYY-M-D` ma `feverUsedToday` thuoc ve. */
+  feverDay?: string;
+  /**
    * Da BAO GIO kich hoat Giờ Vàng chua, ghi lai vĩnh viễn.
    *
    * `feverUntil` chi true trong 60 giay nen quest `q-fever-mode` kiem tra
@@ -391,6 +473,14 @@ export interface CityState extends Currencies {
   totalInterestPaid: number;
   dailyLog: DailyLog;
   streak: StreakState;
+  /**
+   * SO LUC 7 NGAY DA QUA, moi ngay mot ban ghi.
+   *
+   * Giu theo thu tu thoi gian tang dan, toi da 7 ban ghi. Dung cho bang so
+   * sanh voi chinh minh 7 ngay truoc. KHONG phai bang xep hang: game khong co
+   * du lieu ve nguoi choi khac, va day la gioi han cua kien truc client-only.
+   */
+  dailySnapshots?: DailySnapshot[];
   /** Rank bac thanh pho cao nhat da nhan thuong, de khong tra thuong hai lan. */
   cityTierClaimed: number;
   /**
@@ -438,6 +528,30 @@ export interface CityState extends Currencies {
   pendingOffline: { coins: number; elapsedMs: number } | null;
   /** Thoi diem trong ngay: BINH MINH, NGAY, HOANG HON, DEM */
   timeOfDay?: TimeOfDay;
+
+  /* ── Cơ chế Luật Chơi & Quản Trị Tài Chính Thực Chiến ── */
+  /** Điểm Tin Cậy MoMo (300 - 850). Quyết định hạn mức vay, lãi suất & độ uy tín */
+  trustScore?: number;
+  /** Quỹ Vận Hành Quán (Working Capital) - tiền dùng để tự động nhập hàng COGS và trả phí vận hành */
+  workingCapital?: number;
+  /** Ví Tiêu Dùng Cá Nhân của Thị Trưởng (Personal Wealth) - rút từ lợi nhuận ròng để mua sắm cá nhân */
+  personalWealth?: number;
+  /** Ngày đáo hạn khoản vay Ví Trả Sau 45 ngày (định dạng YYYY-M-D) */
+  loanDueDay?: string;
+  /** Số lần bị phạt phí trễ hạn do không trả nợ đúng ngày */
+  loanLateFeeCount?: number;
+  /** Số lần Loa Thần Tài đã ngăn chặn thành công nạn bill photoshop giả */
+  fraudBlockedCount?: number;
+  /** Tổng số Xu bị thất thoát do dính bill giả khi chưa có Loa Thần Tài */
+  fraudLossCoins?: number;
+  /** Số dư đang gửi sinh lời mỗi ngày trong Túi Thần Tài */
+  tuiThanTaiBalance?: number;
+  /** Tổng số tiền lãi đã tích lũy từ Túi Thần Tài */
+  tuiThanTaiInterestEarned?: number;
+  /** Đã trang bị Gói Bảo Hiểm Toàn Diện MoMo để phòng vệ rủi ro thiên tai/sự cố */
+  hasInsurance?: boolean;
+  /** Tổng số tiền bảo hiểm đã bồi thường khi gặp sự cố */
+  insuranceClaimsPaid?: number;
 }
 
 export type TimeOfDay = 'DAWN' | 'DAY' | 'SUNSET' | 'NIGHT';

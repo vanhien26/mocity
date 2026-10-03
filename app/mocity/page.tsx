@@ -91,7 +91,13 @@ import { cn } from '@/lib/cn';
  * (gate `hasNamedCity`), nen UI phai dung chung hang so nay de hien thi
  * khop voi thuc te.
  */
-const LOGIN_BONUS_COINS = 50_000;
+/*
+ * Thưởng nhậm chức. Bản cũ là 50.000 Xu, trong khi TỔNG giá mua hết cả 19
+ * công trình chỉ 33.090 Xu - thưởng xong là mua được tất cả và hết mục tiêu.
+ * 1.000 Xu mua được 5 công trình rẻ nhất, đủ để bắt đầu mà vẫn phải chờ tiền
+ * về mới đi tiếp.
+ */
+const LOGIN_BONUS_COINS = 1_000;
 
 const ERROR_MESSAGE: Record<PlaceResult, string> = {
   ok: '',

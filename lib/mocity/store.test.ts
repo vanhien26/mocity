@@ -104,9 +104,9 @@ describe('normalizeStoredState - version 3 (khong xoa sach thanh pho)', () => {
     assert.deepEqual(s.buildings[0].modules, ['QR_LOA_THAN_TAI']);
   });
 
-  it('nang len version 8 va bo sung field moi', () => {
+  it('nang len version 9 va bo sung field moi', () => {
     const s = normalizeStoredState(v3Save(), NOW);
-    assert.equal(s.version, 8);
+    assert.equal(s.version, 9);
     assert.equal(s.eventLog.resolved, 0);
     assert.deepEqual(s.tappedAt, {});
     assert.equal(s.happinessBoost, 0);
@@ -228,7 +228,7 @@ describe('normalizeStoredState - han muc su kien', () => {
 describe('normalizeStoredState - du lieu hong', () => {
   it('reset khi khong co version', () => {
     const s = normalizeStoredState(JSON.stringify({ coins: 50 }));
-    assert.equal(s.version, 8);
+    assert.equal(s.version, 9);
   });
 
   it('reset khi client cu hon server', () => {
@@ -345,7 +345,7 @@ describe('q-fever-mode - khong con la bait 60 giay', () => {
       JSON.stringify({ ...JSON.parse(v3Save()), version: 4, feverUntil: NOW + 30_000 }),
       NOW,
     );
-    assert.equal(s.version, 8);
+    assert.equal(s.version, 9);
     assert.equal(s.feverEverUsed, true, 'save v4 co Fever dang chay phai giu nhan');
   });
 
@@ -567,22 +567,22 @@ describe('Migration ladder phai chay DAY DU cac bac', () => {
    * test van xanh - nhung moi bat buoc them field sau nay se lam save v3 hong.
    * Biet `feverEverUsed` la field cua V5 nen save V3 khong duoc co no.
    */
-  it('save v3 qua duoc ca bac 4 den 8', () => {
+  it('save v3 qua duoc ca bac 4 den 9', () => {
     const s = normalizeStoredState(v3Save(), NOW);
-    assert.equal(s.version, 8);
+    assert.equal(s.version, 9);
     assert.equal(s.feverEverUsed, false, 'V5 phai gan false vi V3 chua co field');
     assert.equal(s.lastTalkAt, 0, 'V5 phai gan 0');
   });
 
-  it('save v4 qua duoc bac 5 den 8', () => {
+  it('save v4 qua duoc bac 5 den 9', () => {
     const s = normalizeStoredState(JSON.stringify({ ...JSON.parse(v3Save()), version: 4 }), NOW);
-    assert.equal(s.version, 8);
+    assert.equal(s.version, 9);
     assert.equal(typeof s.totalGrants, 'number');
   });
 
-  it('save v5 qua duoc bac 6 den 8', () => {
+  it('save v5 qua duoc bac 6 den 9', () => {
     const s = normalizeStoredState(JSON.stringify({ ...JSON.parse(v3Save()), version: 5 }), NOW);
-    assert.equal(s.version, 8);
+    assert.equal(s.version, 9);
     assert.equal(s.totalRevenue, 0);
   });
 
@@ -803,7 +803,7 @@ describe('Sổ cái - phân biệt chi phí vận hành và chi tiêu vốn', ()
     assert.equal(s.ledgerMonth.cogs, 0);
   });
 
-  it('migration v6 -> v8 KHONG uoc luong doanh thu cu', () => {
+  it('migration v6 -> v9 KHONG uoc luong doanh thu cu', () => {
     // 2,96 trieu Xu thuong khong phai loi nhuan. Uoc luong se ghi mot lan nua
     // vao bao cao - dung hon la de do so 0 va ghi tu tick dau tien.
     const s = normalizeStoredState(

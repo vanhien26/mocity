@@ -1,6 +1,7 @@
 import type { ArchetypeId, CityEventScript, RequestScript } from './types';
 import { EXTRA_REQUEST_SCRIPTS } from './dialogue-requests-extra';
 import { EXTRA_CITY_EVENTS } from './dialogue-events-extra';
+import { CONDITIONAL_CITY_EVENTS } from './dialogue-events-conditional';
 
 /**
  * Tầng 1 — Thoại Ambient "Tám Chuyện Vỉa Hè" (Mặn mòi, hài hước đời thường Việt Nam).
@@ -1081,6 +1082,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
 export const CITY_EVENTS: CityEventScript[] = [
   ...BASE_CITY_EVENTS,
   ...EXTRA_CITY_EVENTS,
+  ...CONDITIONAL_CITY_EVENTS,
 ];
 
 export const REQUEST_BY_ID: Record<string, RequestScript> = Object.fromEntries(

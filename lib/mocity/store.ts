@@ -34,9 +34,22 @@ import {
   populationFor,
   taxMultiplierFromHappiness,
   type FlowBreakdown,
+  checkFraudRiskForBuilding,
+  calculateMayorTrustScore,
+  calculateCashflowRatio,
+  calculateTuiThanTaiInterest,
+  calculateInsuranceCoverage,
+  currentShopQueue,
+  overloadedShopCount,
+  type CityCondition,
+  type FraudCheckResult,
+  nodeYieldBreakdown,
 } from './city-calculator';
+
+export { publishShopQueue } from './city-calculator';
 import { CITY_EVENTS, EVENT_BY_ID, REQUEST_BY_ID } from './dialogue-data';
 import { eligibleRequestFor } from './dialogue-engine';
+import { weekComparison, type WeekComparison } from './comparison';
 import { TUTORIAL_STEPS, currentTutorialStep, type TutorialStep } from './tutorial';
 import { ARCHETYPES, DIGITAL_TRUST_THRESHOLD, archetypeForBuilding, npcNameFor } from './npc-data';
 import {
@@ -44,6 +57,8 @@ import {
   emptyPeriodLedger,
   type ActiveRequest,
   type BuildingNode,
+  type CityEventScript,
+  type DailySnapshot,
   type CityState,
   type Currencies,
   type DialogueEffects,
@@ -60,8 +75,8 @@ import {
  * save duoc gan theo tai khoan: khong thi hai nguoi dung lao tai khoan tren
  * cung mot may se ke thua toan bo thanh pho cua nhau (cung Xu, cung ten Tho).
  */
-const STORAGE_KEY_PREFIX = 'momo_city_v8';
-const STATE_VERSION = 8;
+const STORAGE_KEY_PREFIX = 'momo_city_v9';
+const STATE_VERSION = 9;
 export const OFFLINE_CAP_MS = 8 * 60 * 60 * 1000;
 const OFFLINE_MIN_MS = 60 * 1000;
 const PERSIST_DEBOUNCE_MS = 250;
@@ -70,9 +85,22 @@ const MAX_ACTIVE_REQUESTS = 3;
 const REQUEST_INTERVAL_MS = 25 * 1000;
 const EVENT_INTERVAL_MS = 35 * 1000;
 
-/** Giá + thoi luong Giờ Vàng x2 doanh thu. */
-export const FEVER_COST_GEMS = 2;
+/**
+ * Giá + thời lượng Giờ Vàng x2 doanh thu.
+ *
+ * Giá nâng từ 2 lên 5: thu nhập một ngày 10-12 Kim Cương từ nhiệm vụ, nên
+ * giá 2 nghĩa là nửa ngày đã nghèo kim cương, tài sản tích trữ không có ý
+ * nghĩa. Giá 5 thì giữ được vai trò: có lựa chọn phải suy nghĩ.
+ */
+export const FEVER_COST_GEMS = 5;
 export const FEVER_DURATION_MS = 60 * 1000;
+/**
+ * Trần số lần bật Giờ Vàng trong ngày.
+ *
+ * Không có trần thì mọi thứ trên trở nên vô nghĩa: bấm liên tục tới khi hết
+ * kim cương là đồng ý mọi lúc, và không có lý do phải lưu lại.
+ */
+export const FEVER_PER_DAY = 2;
 
 /**
  * Toi da so su kien toan pho Thieu Truong duoc giai quyet trong mot ngay.
@@ -123,6 +151,15 @@ function bumpDaily(
   return { ...log, [key]: log[key] + amount };
 }
 
+/**
+ * SO BAN GHI SO LUC GIU LAI.
+ *
+ * 7 ngay: bang so sanh 7 ngay truoc la moi dung nhung cong thich ngay hom
+ * nay hon. Giu them 1 ban ghi de khi nguoi choi vua qua 7 ngay thi ngay 8
+ * van co moc so sanh (khong ra man hinh trong khoang khong).
+ */
+export const DAILY_SNAPSHOT_KEEP = 7;
+
 function emptyDailyLog(ts: number): import('./types').DailyLog {
   return { day: todayKey(ts), built: 0, upgraded: 0, talked: 0, eventsResolved: 0, starEvolved: 0, idleXp: 0, claimed: [] };
 }
@@ -148,6 +185,8 @@ function createInitialState(): CityState {
     equippedRelics: ['relic-heo-vang'],
     feverUntil: 0,
     feverEverUsed: false,
+    feverUsedToday: 0,
+    feverDay: '',
     activeRequests: [],
     pendingEvent: null,
     lastRequestAt: now,
@@ -160,8 +199,9 @@ function createInitialState(): CityState {
     debt: 0,
     totalInterestPaid: 0,
     dailyLog: emptyDailyLog(now),
-    streak: { days: 0, lastDay: '', best: 0 },
+    streak: { days: 0, lastDay: '', best: 0, shields: 0 },
     streakClaimed: 0,
+    dailySnapshots: [],
     cityTierClaimed: 1,
     happinessBoost: 0,
     tappedAt: {},
@@ -183,6 +223,17 @@ function createInitialState(): CityState {
     bubblesCollected: 0,
     pendingOffline: null,
     timeOfDay: 'DAY',
+    trustScore: 650,
+    workingCapital: STARTING_COINS,
+    personalWealth: 0,
+    loanDueDay: '',
+    loanLateFeeCount: 0,
+    fraudBlockedCount: 0,
+    fraudLossCoins: 0,
+    tuiThanTaiBalance: 0,
+    tuiThanTaiInterestEarned: 0,
+    hasInsurance: false,
+    insuranceClaimsPaid: 0,
   };
 }
 
@@ -283,7 +334,29 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
     streak: s.streak ?? { days: 0, lastDay: '', best: 0 },
     streakClaimed: s.streakClaimed ?? 0,
   }),
+  /**
+   * V8 -> V9: so luc 7 ngay qua + phieu bao vui chuoi + gioi han so lan dung
+   * Giờ Vàng trong ngày.
+   *
+   * `dailySnapshots` KHỞI TẠO RỖNG chứ không dựng lại từ ledger cũ: ledger
+   * chỉ giữ ba số tien (doanh thu, gia von, chi phi) nen suy ra loi nhuan
+   * rong, dan so va hanh phuc cho 7 ngay da qua la uoc luong. Uoc luong do se
+   * ghi mot lan nua nhung bao cao sai - dung hon la de cho bang so sanh
+   * chay sau khi nguoi choi da sung du 7 ngay.
+   */
+  8: (s) => ({
+    ...s,
+    dailySnapshots: Array.isArray(s.dailySnapshots) ? s.dailySnapshots : [],
+    feverUsedToday: nonNeg(s.feverUsedToday),
+    feverDay: typeof s.feverDay === 'string' ? s.feverDay : '',
+    streak: s.streak ? { ...s.streak, shields: nonNeg(s.streak.shields) } : s.streak,
+  }),
 };
+
+/** Gia tri so khong am, ho tro cho ca migration lan normalize. */
+function nonNeg(n: unknown): number {
+  return Number.isFinite(n) ? Math.max(0, n as number) : 0;
+}
 
 const listeners = new Set<() => void>();
 
@@ -304,7 +377,10 @@ function schedulePersist() {
 }
 
 function setState(next: CityState) {
-  state = next;
+  state = {
+    ...next,
+    workingCapital: Number.isFinite(next.coins) ? Math.max(0, next.coins) : 0,
+  };
   emit();
   schedulePersist();
 }
@@ -499,7 +575,6 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     ? Math.min(xpForLevel(merged.mayorLevel) - 1, Math.max(0, merged.mayorXp))
     : 0;
   /* Ba dong khoan thu. Save cu khong tach duoc nen gan 0 phan chua biet. */
-  const nonNeg = (n: unknown) => (Number.isFinite(n) ? Math.max(0, n as number) : 0);
   merged.totalRevenue = nonNeg(merged.totalRevenue);
   merged.totalGrants = nonNeg(merged.totalGrants);
   merged.totalTapIncome = nonNeg(merged.totalTapIncome);
@@ -571,21 +646,72 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   // tự xoá khi người chơi tick - nhưng sửa ở đây cho HUD đọc ngay.
   merged.ledgerDay.day = day;
   merged.ledgerMonth.month = month;
+  /*
+ * Chuan hoa `streak` trong MOT bieu thuc.
+ *
+ * Truoc day khoi tao o day dung mot object moi, nen moi field them vao sau
+ * do (nhu `shields` cua phieu bao vui chuoi) se bi quang mat trong khi
+ * `normalize` chay - chuoi goc ma nguoi choi vua phai cong phieu se mat phieu
+ * ngay lan reload dau tien. Moi field phai them vao cung khoi tao.
+ */
   merged.streak =
     migrated.streak && typeof migrated.streak.lastDay === 'string'
       ? {
           days: nonNeg(migrated.streak.days),
           lastDay: migrated.streak.lastDay,
           best: nonNeg(migrated.streak.best),
+          shields: nonNeg(migrated.streak.shields),
         }
-      : { days: 0, lastDay: '', best: 0 };
+      : { days: 0, lastDay: '', best: 0, shields: 0 };
   merged.streakClaimed = nonNeg(merged.streakClaimed);
+  /*
+   * Chuan hoa `dailySnapshots`: giu toi da 7 ban ghi va bo cac ban ghi hong.
+   *
+   * Cac truong cua tung ban ghi deu la SO DUONG, nen cua ban gihong ma co
+   * field con giong cau truc van duoc giu lai - mau doanh thu ve bang so sanh
+   * thi bao loi hon la mat hanh dong.
+   */
+  if (Array.isArray(merged.dailySnapshots)) {
+    const hopLe = merged.dailySnapshots.filter(
+      (snap): snap is NonNullable<typeof snap> =>
+        !!snap && typeof snap.day === 'string' && snap.day.length > 0,
+    );
+    merged.dailySnapshots = hopLe
+      .slice(-DAILY_SNAPSHOT_KEEP)
+      .map((snap) => ({
+        day: snap.day,
+        netIncome: nonNeg(snap.netIncome),
+        revenue: nonNeg(snap.revenue),
+        danSo: nonNeg(snap.danSo),
+        soCongTrinh: nonNeg(snap.soCongTrinh),
+        mayorLevel: nonNeg(snap.mayorLevel),
+        cityTier: nonNeg(snap.cityTier),
+        streak: nonNeg(snap.streak),
+        eventsResolved: nonNeg(snap.eventsResolved),
+        happiness: nonNeg(snap.happiness),
+      }));
+  } else {
+    merged.dailySnapshots = [];
+  }
+  merged.feverUsedToday = nonNeg(merged.feverUsedToday);
+  merged.feverDay = typeof merged.feverDay === 'string' ? merged.feverDay : '';
   merged.happinessBoost = Number.isFinite(merged.happinessBoost)
     ? Math.min(HAPPINESS_BOOST_CAP, Math.max(0, merged.happinessBoost))
     : 0;
   merged.lastEngagedAt = Number.isFinite(merged.lastEngagedAt) ? merged.lastEngagedAt : merged.lastEventAt;
   merged.feverEverUsed = merged.feverEverUsed === true || merged.feverUntil > 0;
   merged.lastTalkAt = Number.isFinite(merged.lastTalkAt) ? Math.max(0, merged.lastTalkAt) : 0;
+  merged.trustScore = typeof migrated.trustScore === 'number' ? Math.max(300, Math.min(850, migrated.trustScore)) : 650;
+  merged.workingCapital = typeof migrated.workingCapital === 'number' ? Math.max(0, migrated.workingCapital) : merged.coins;
+  merged.personalWealth = typeof migrated.personalWealth === 'number' ? Math.max(0, migrated.personalWealth) : 0;
+  merged.loanDueDay = typeof migrated.loanDueDay === 'string' ? migrated.loanDueDay : '';
+  merged.loanLateFeeCount = typeof migrated.loanLateFeeCount === 'number' ? Math.max(0, migrated.loanLateFeeCount) : 0;
+  merged.fraudBlockedCount = typeof migrated.fraudBlockedCount === 'number' ? Math.max(0, migrated.fraudBlockedCount) : 0;
+  merged.fraudLossCoins = typeof migrated.fraudLossCoins === 'number' ? Math.max(0, migrated.fraudLossCoins) : 0;
+  merged.tuiThanTaiBalance = typeof migrated.tuiThanTaiBalance === 'number' ? Math.max(0, migrated.tuiThanTaiBalance) : 0;
+  merged.tuiThanTaiInterestEarned = typeof migrated.tuiThanTaiInterestEarned === 'number' ? Math.max(0, migrated.tuiThanTaiInterestEarned) : 0;
+  merged.hasInsurance = typeof migrated.hasInsurance === 'boolean' ? migrated.hasInsurance : false;
+  merged.insuranceClaimsPaid = typeof migrated.insuranceClaimsPaid === 'number' ? Math.max(0, migrated.insuranceClaimsPaid) : 0;
 
   const elapsed = now - (Number.isFinite(merged.lastSeenAt) ? merged.lastSeenAt : now);
   if (elapsed >= OFFLINE_MIN_MS) {
@@ -616,9 +742,16 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
 
   merged.lastSeenAt = now;
   if (!merged.pendingEvent && resolvedEventsToday(merged, now) < MAX_EVENTS_PER_DAY) {
-    const eligible = CITY_EVENTS.filter((e) => merged.mayorLevel >= e.minMayorLevel);
+    /*
+     * Quay vong theo thoi gian thay vi `Math.random()`.
+     *
+     * Người chơi hay reload game khi vừa vào. Random ở đây nghĩa là mỗi lần
+     * reload một sự kiện, và người chơi chỉ cần reload cho tới khi gặp sự kiện
+     * dễ thì giải, còn lại thì đóng app luôn.
+     */
+    const eligible = eligibleCityEvents(merged, now);
     if (eligible.length > 0) {
-      const script = eligible[Math.floor(Math.random() * eligible.length)];
+      const script = eligible[Math.floor(now / EVENT_INTERVAL_MS) % eligible.length];
       merged.pendingEvent = { id: `${script.id}_${now.toString(36)}`, scriptId: script.id, createdAt: now };
     }
   }
@@ -709,7 +842,7 @@ function bumpResolvedEvents(s: CityState, now = Date.now()): Pick<CityState, 'ev
   };
 }
 
-export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 50_000, mayorGender?: import('./types').MayorGender): number {
+export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 1_000, mayorGender?: import('./types').MayorGender): number {
   const cleanMayor = mayorName.trim() || state.mayorName || 'Thị Trưởng MoMo';
   const cleanCity = cityName.trim() || state.cityName || 'Đô Thị MoCity';
   const offlineReward = state.pendingOffline && Number.isFinite(state.pendingOffline.coins)
@@ -747,14 +880,41 @@ export function completeMayorLogin(mayorName: string, cityName: string, bonusCoi
   return loginBonus;
 }
 
+/**
+ * So lan Giờ Vàng được dùng trong ngày hôm nay.
+ *
+ * Đọc qua hàm thay vì đọc thẳng field: bộ đếm phải tự về 0 khi sang ngày
+ * mới, mà field nằm trong state thì không có cái may thời gian để tự về.
+ */
+export function feverUsedToday(): number {
+  if (state.feverDay !== todayKey(Date.now())) return 0;
+  return state.feverUsedToday ?? 0;
+}
+
+/** Số lần Giờ Vàng còn dùng được hôm nay. */
+export function feverLeftToday(): number {
+  return Math.max(0, FEVER_PER_DAY - feverUsedToday());
+}
+
+/**
+ * Bật Giờ Vàng. Trả `false` khi đang chạy, hết lượt trong ngày, hoặc thiếu KC.
+ *
+ * `FEVER_COST_GEMS` đã nâng lên 5 và thêm `FEVER_PER_DAY`. Trước đây giá
+ * chỉ 2 KC, thu nhập một ngày 10-12 KC từ nhiệm vụ: người chơi bấm 5 lần là
+ * cạn kim cương, nên kim cương chỉ là tiền trang trí chứ không phải tài
+ * sản tích trữ. Có trần trong ngày thì nó mới đáng để giữ.
+ */
 export function triggerFeverMode(): boolean {
   const now = Date.now();
   if (state.feverUntil > now) return false;
+  if (feverLeftToday() <= 0) return false;
   if (state.gems < FEVER_COST_GEMS) return false;
   setState({
     ...state,
     gems: state.gems - FEVER_COST_GEMS,
     feverUntil: now + FEVER_DURATION_MS,
+    feverDay: todayKey(now),
+    feverUsedToday: feverUsedToday() + 1,
     // Ghi nhan vĩnh viễn: quest `q-fever-mode` phai hoan thanh duoc ke ca
     // sau khi 60 giay Fever da het.
     feverEverUsed: true,
@@ -786,12 +946,57 @@ function rollPeriods(s: CityState, now: number): CityState {
   const month = monthKey(now);
   let next = s;
   if (s.ledgerDay?.day !== day) {
+    /*
+     * GHI SO LUC NGAY CU DONG LAI truoc khi xoa so cai ngay.
+     *
+     * Thu tu bat buoc: phai chup `ledgerDay` TRUOC, boi vi dong tiep theo thay
+     * no bang so rong ngay moi. Ghi sau se luon ghi nhung con so rong.
+     */
+    next = withDailySnapshot(next);
     next = { ...next, ledgerDay: emptyPeriodLedger(day, month) };
   }
   if (s.ledgerMonth?.month !== month) {
     next = { ...next, ledgerMonth: emptyPeriodLedger(day, month) };
   }
   return next;
+}
+
+/**
+ * Chup so lieu cua ngay dang ket thuc vao chuoi snapshot 7 ngay.
+ *
+ * Khong dung lai `s` ma dung `next`: `rollPeriods` co the da them bien khac
+ * truoc khi goi ham nay, va ban ghi phai phan anh trang thai tai thoi diem
+ * ngay do dong.
+ *
+ * Mot ngay co the bi ghi lai nhieu lan (tickIdle chay moi giay, va`rollPeriods`
+ * chay o moi tick) nen phai chong ghi trung cung mot `day`.
+ */
+function withDailySnapshot(s: CityState): CityState {
+  const dayKey = s.ledgerDay?.day ?? '';
+  if (!dayKey) return s;
+
+  const cu = s.dailySnapshots ?? [];
+  if (cu.some((snap) => snap.day === dayKey)) return s;
+
+  const danSo = populationFor(s.buildings);
+  const hangPho = cityTierFor(danSo, s.buildings.length);
+
+  const snap: DailySnapshot = {
+    day: dayKey,
+    netIncome: s.ledgerDay?.netIncome ?? 0,
+    revenue: s.ledgerDay?.grossRevenue ?? 0,
+    danSo,
+    soCongTrinh: s.buildings.length,
+    mayorLevel: s.mayorLevel,
+    cityTier: hangPho.rank,
+    streak: s.streak?.days ?? 0,
+    eventsResolved: s.eventLog?.resolved ?? 0,
+    happiness: Math.round(
+      happinessFor(s.buildings, 0, s.happinessBoost ?? 0),
+    ),
+  };
+
+  return { ...s, dailySnapshots: [...cu, snap].slice(-DAILY_SNAPSHOT_KEEP) };
 }
 
 /** Ngay hom qua theo lich dia phuong, dung de xet chuoi co lien tuc khong. */
@@ -801,6 +1006,40 @@ function yesterdayKey(ts: number): string {
   return todayKey(d.getTime());
 }
 
+/** Hom kia. Dung de phan biet "bo mot ngay" voi "bo nhieu ngay". */
+function twoDaysAgoKey(ts: number): string {
+  const d = new Date(ts);
+  d.setDate(d.getDate() - 2);
+  return todayKey(d.getTime());
+}
+
+/** So phieu bao vui chuoi toi da cho phep. */
+export const STREAK_SHIELD_MAX = 3;
+
+/** Ngay chuoi bat dau duoc nhan phieu bao vui. */
+export const STREAK_SHIELD_DAY = 7;
+
+/**
+ * Phieu bao vui chuoi: quyet dinh chuoi co bi dung hay khong.
+ *
+ * Khong dung `Math.random()` va khong hoi nguoi choi. Nguoi choi khong the
+ * kiem chung bang mat mot nhan bam co bao nhieu, nen phai quy tac xac dinh.
+ *
+ * Quy tac: chi dung khi bo qua DUNG MOT ngay. Bo qua nhieu ngay la quyet
+ * dinh roi lo, khong duoc phieu giu - neu dung thi phieu se thanh vat leo
+ * va khong ai buoc cham khi vang.
+ *
+ * @return `true` neu phai dung phieu de giu chuoi.
+ */
+function shouldConsumeShield(cur: StreakState, now: number): boolean {
+  if ((cur.shields ?? 0) <= 0) return false;
+  if (cur.days <= 0) return false;
+  // Ngay choi gan nhat la hom qua -> chuoi con lien tuc, khong ngat.
+  if (cur.lastDay === yesterdayKey(now)) return false;
+  // Ngay choi gan nhat la hom kia -> bo DUNG MOT ngay -> dung phieu.
+  return cur.lastDay === twoDaysAgoKey(now);
+}
+
 /**
  * Tang chuoi ngay choi lien tiep.
  *
@@ -808,18 +1047,46 @@ function yesterdayKey(ts: number): string {
  * (nguoi choi bo qua mot ngay) thi reset ve 1 - dung nghhia "chuoi bi ngat",
  * khong phai "con so dem nguoc".
  *
- * @return So ngay moi, hoac 0 neu goi lai trong cung ngay (khong tang).
+ * @return `days` la chuoi moi, `usedShield` la co dung phieu hay khong.
  */
-export function registerStreak(): number {
+export function registerStreak(): { days: number; usedShield: boolean } {
   const now = Date.now();
   const today = todayKey(now);
   const cur: StreakState = state.streak ?? { days: 0, lastDay: '', best: 0 };
-  if (cur.lastDay === today) return 0;
+  if (cur.lastDay === today) return { days: 0, usedShield: false };
 
-  const days = cur.lastDay === yesterdayKey(now) ? cur.days + 1 : 1;
-  const next: StreakState = { days, lastDay: today, best: Math.max(cur.best, days) };
+  const tiepTuc = cur.lastDay === yesterdayKey(now);
+  const usedShield = !tiepTuc && shouldConsumeShield(cur, now);
+  const shields = cur.shields ?? 0;
+
+  const days = tiepTuc || usedShield ? cur.days + 1 : 1;
+  const next: StreakState = {
+    days,
+    lastDay: today,
+    best: Math.max(cur.best, days),
+    shields: usedShield ? shields - 1 : shields,
+  };
   setState({ ...state, streak: next });
-  return days;
+  return { days, usedShield };
+}
+
+/**
+ * Tra phieu bao vui chuoi theo moc da cham.
+ *
+ * Moc 7 ngay cho 1, moi 14 ngay them 1, toi da 3. Thiet ke cua: nguoi choi
+ * chi dung phieu khi CHAINH xay ra, tuc la nguoi choi da chay duoc vai ngay
+ * lien tiep. Cho phieu tu ngay 1 thi tro thanh va muc 7 ngay khong con gi la.
+ *
+ * @return So phieu vua nhan, 0 neu khong du dieu kien.
+ */
+export function grantShieldForStreak(days: number): number {
+  const cur = state.streak ?? { days: 0, lastDay: '', best: 0 };
+  const shields = cur.shields ?? 0;
+  if (days < STREAK_SHIELD_DAY) return 0;
+  if (days !== STREAK_SHIELD_DAY && days % 14 !== 0) return 0;
+  if (shields >= STREAK_SHIELD_MAX) return 0;
+  setState({ ...state, streak: { ...cur, shields: shields + 1 } });
+  return 1;
 }
 
 /**
@@ -843,6 +1110,13 @@ export function claimStreakMilestones() {
   };
   Object.assign(next, addMayorXp(next, earned.reduce((sum, m) => sum + m.rewardXp, 0)));
   setState(next);
+  /*
+   * Tra phieu bao vui cho tung moc vua cham.
+   *
+   * Gọi SAU `setState` vi `grantShieldForStreak` đọc `state.streak` từ module
+   * và tự ghi state. Nhờ vậy hai lần `setState` không tranh nhau.
+   */
+  for (const m of earned) grantShieldForStreak(m.days);
   return earned;
 }
 
@@ -933,6 +1207,7 @@ export function tickIdle(): void {
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
     debt: state.debt ?? 0,
+    shopQueue: currentShopQueue(),
   });
 
   let next: CityState = {
@@ -966,7 +1241,69 @@ export function tickIdle(): void {
 
   next = maybeSpawnRequest(next, now);
   next = maybeSpawnEvent(next, now);
+
+  const tuiGain = calculateTuiThanTaiInterest(state.tuiThanTaiBalance ?? 0, seconds);
+  if (tuiGain > 0) {
+    next = {
+      ...next,
+      tuiThanTaiBalance: (next.tuiThanTaiBalance ?? 0) + tuiGain,
+      tuiThanTaiInterestEarned: (next.tuiThanTaiInterestEarned ?? 0) + tuiGain,
+      // Lãi tiền gửi là khoản thu nhập tài chính, phải có trong sổ cái.
+      totalRevenue: (next.totalRevenue ?? 0) + tuiGain,
+    };
+    const day = todayKey(now);
+    const month = monthKey(now);
+    next.ledgerLifetime = addToLedger(next.ledgerLifetime, 'grossRevenue', tuiGain);
+    next.ledgerLifetime.netIncome = Math.max(0, next.ledgerLifetime.netIncome + tuiGain);
+    next.ledgerDay = addToLedger(next.ledgerDay, 'grossRevenue', tuiGain);
+    next.ledgerDay.netIncome = Math.max(0, next.ledgerDay.netIncome + tuiGain);
+    next.ledgerMonth = addToLedger(next.ledgerMonth, 'grossRevenue', tuiGain);
+    next.ledgerMonth.netIncome = Math.max(0, next.ledgerMonth.netIncome + tuiGain);
+    void day;
+    void month;
+  }
+
   setState(next);
+  processLoanOverdue(now);
+  maybeTriggerHazardTick();
+  maybeProcessFraudTick();
+}
+
+function processLoanOverdue(now: number): void {
+  const due = state.loanDueDay ?? '';
+  const overdue = due && todayKey(now) > due && (state.debt ?? 0) > 0;
+  if (!overdue) return;
+
+  const fee = Math.max(50, Math.round((state.debt ?? 0) * 0.05));
+  const actualFee = Math.min(state.coins, fee);
+  if (actualFee <= 0) return;
+
+  const next = {
+    ...state,
+    coins: Math.max(0, state.coins - actualFee),
+    loanLateFeeCount: (state.loanLateFeeCount ?? 0) + 1,
+    loanDueDay: todayKey(now + 7 * 24 * 3600 * 1000),
+  };
+  setState({
+    ...next,
+    ledgerLifetime: addToLedger(next.ledgerLifetime, 'opex', actualFee),
+    ledgerDay: addToLedger(next.ledgerDay, 'opex', actualFee),
+    ledgerMonth: addToLedger(next.ledgerMonth, 'opex', actualFee),
+  });
+}
+
+function maybeTriggerHazardTick(): void {
+  if (Math.random() >= 0.00008) return;
+  if (state.coins <= 0) return;
+  const damage = Math.max(120, Math.round(state.coins * 0.08));
+  triggerHazardEvent(damage);
+}
+
+function maybeProcessFraudTick(): void {
+  if (state.buildings.length === 0) return;
+  if (Math.random() >= 0.0003) return;
+  const pick = state.buildings[Math.floor(Math.random() * state.buildings.length)];
+  if (pick) processFraudCheckForBuilding(pick.id);
 }
 
 function maybeSpawnRequest(current: CityState, now: number): CityState {
@@ -995,9 +1332,18 @@ function maybeSpawnEvent(current: CityState, now: number): CityState {
   if (now - current.lastEventAt < EVENT_INTERVAL_MS) return current;
   if (resolvedEventsToday(current) >= MAX_EVENTS_PER_DAY) return current;
 
-  const eligible = CITY_EVENTS.filter((e) => current.mayorLevel >= e.minMayorLevel);
+  const eligible = eligibleCityEvents(current, now);
   if (eligible.length === 0) return current;
 
+  /*
+   * QUAY VONG THEO THOI GIAN, KHONG `Math.random()`.
+   *
+   * `Math.random()` o day nghia la nguoi choi co the reload cho den khi gap
+   * su kien tot nhat - dang sau doanh nghiep, khac het muc dich cua su kien
+   * la day con phu. `Math.floor(now / EVENT_INTERVAL_MS) % length` giu su kien
+   * chay vong qua, va gop voi `eligibleCityEvents` thi su kien phu trang thai
+   * duoc day vao danh sach truoc nen van co nhip de quyet.
+   */
   const script = eligible[Math.floor(now / EVENT_INTERVAL_MS) % eligible.length];
   return {
     ...current,
@@ -1366,12 +1712,19 @@ export function triggerNextEvent(specificScriptId?: string): NextEventResult {
   if (now - state.lastEventAt < EVENT_INTERVAL_MS) return 'cooldown';
   if (resolvedEventsToday(state) >= MAX_EVENTS_PER_DAY) return 'dailyLimit';
 
-  const eligible = CITY_EVENTS.filter((e) => state.mayorLevel >= e.minMayorLevel);
+  const eligible = eligibleCityEvents(state);
   if (eligible.length === 0) return 'level';
 
+  /*
+   * Chon theo THU TU THOI GIAN, KHONG `Math.random()`.
+   *
+   * Nut "Chuyen Pho" cho nguoi choi quyet dinh khi nao xem, nen dung chon
+   * ngau nhien trong danh sach dang cho, ma giong cac muc khac: reload
+   * cho den khi gap phuong an de se la farm loop.
+   */
   const script = specificScriptId
-    ? (CITY_EVENTS.find((e) => e.id === specificScriptId) ?? eligible[0])
-    : eligible[Math.floor(Math.random() * eligible.length)];
+    ? (eligible.find((e) => e.id === specificScriptId) ?? eligible[0])
+    : eligible[Math.floor(Date.now() / EVENT_INTERVAL_MS) % eligible.length];
   setState({
     ...state,
     pendingEvent: { id: `${script.id}_${now.toString(36)}`, scriptId: script.id, createdAt: now },
@@ -1383,6 +1736,83 @@ export function triggerNextEvent(specificScriptId?: string): NextEventResult {
 /** So su kien con lai trong ngay, dung cho hien thi tren UI. */
 export function eventsLeftToday(): number {
   return Math.max(0, MAX_EVENTS_PER_DAY - resolvedEventsToday(state));
+}
+
+/* ── Sự kiện theo trạng thái thành phố ────────────────────────────── */
+
+/**
+ * Đọc trạng thái phố để làm điều kiện cho kịch bản sự kiện.
+ *
+ * Chỉ trạng thái RẼ TIỀN và RỦI RO, không đụng `coins` trần 0: sự kiện phải
+ * chạm vào việc kinh doanh mà người chơi nhìn thấy trên báo cáo P&L, nếu lấy
+ * `coins` thì một người chơi vừa xây xong và một người đang phá sản nghiệp
+ * nhận cùng một kịch bản.
+ */
+function cityConditionFor(s: CityState): CityCondition {
+  const flow = flowFor(s.buildings, s.npcs, s.mayorLevel, s.coins, flowOptsFor(s));
+  return {
+    happiness: clampHappiness(happinessFor(s.buildings, 0, s.happinessBoost ?? 0)),
+    nplRate: flow.nplRate,
+    debt: s.debt ?? 0,
+    cashflowRatio: calculateCashflowRatio(
+      s.workingCapital ?? s.coins,
+      flow.opex,
+      flow.interestExpense,
+    ),
+    shopsOverloaded: overloadedShopCount(s.buildings, currentShopQueue()),
+    lateFeeCount: s.loanLateFeeCount ?? 0,
+    hasInsurance: s.hasInsurance ?? false,
+  };
+}
+
+/**
+ * Kịch bản có hợp với trạng thái phố hiện tại không.
+ *
+ * Tất cả điều kiện trong `CityEventScript` là AND. Kịch bản không khai báo
+ * điều kiện nào thì luôn hợp lệ, nên thêm điều kiện mới không phá kịch bản cũ.
+ */
+export function eventFits(script: CityEventScript, cond: CityCondition): boolean {
+  if (script.happinessBelow !== undefined && cond.happiness >= script.happinessBelow) return false;
+  if (script.cashflowBelow !== undefined && cond.cashflowRatio >= script.cashflowBelow) return false;
+  /*
+   * `nplAbove` và `debtAbove` dùng `>=` để BẮT ĐẦU kịch bản, khác với hai
+   * ngưỡng trên là `>=` để LOẠI.
+   *
+   * Lý do: hai nhóm này là ngưỡng "đã vượt", nên chạm ngưỡng là phải có trợ
+   * giúp. `cityMood` cũng kích hoạt đúng tại ngưỡng (`nplRate >= 0.12`). Nếu ở
+   * đây dùng `>` thì người chơi thấy bà con bày tay báo "nợ xấu cao" mà
+   * không có kịch bản nào chạy theo - hai hệ thống nói hai chuyện khác nhau.
+   */
+  if (script.nplAbove !== undefined && cond.nplRate < script.nplAbove) return false;
+  if (script.debtAbove !== undefined && cond.debt < script.debtAbove) return false;
+  if (script.requiresCrowding && cond.shopsOverloaded <= 0) return false;
+  if (script.requiresLateFee && cond.lateFeeCount <= 0) return false;
+  if (script.requiresNoInsurance && cond.hasInsurance) return false;
+  return true;
+}
+
+/**
+ * Danh sách sự kiện hợp lệ: đủ cấp Thị Trưởng VÀ hợp trạng thái phố.
+ *
+ * Tách khỏi `normalizeStoredState` để hàm đó không phải gọi `flowFor` - đường
+ * hydrate phải giữ được rẻ vì nó chạy mỗi lần mở game.
+ */
+export function eligibleCityEvents(s: CityState, now = Date.now()): CityEventScript[] {
+  const byLevel = CITY_EVENTS.filter((e) => s.mayorLevel >= e.minMayorLevel);
+  // Không tốn công tính trạng thái phố khi không kịch bản nào cần nó.
+  const canCoDieuKien = byLevel.some(
+    (e) =>
+      e.happinessBelow !== undefined ||
+      e.nplAbove !== undefined ||
+      e.debtAbove !== undefined ||
+      e.requiresCrowding ||
+      e.requiresLateFee ||
+      e.requiresNoInsurance ||
+      e.cashflowBelow !== undefined,
+  );
+  if (!canCoDieuKien) return byLevel;
+  const cond = cityConditionFor(s);
+  return byLevel.filter((e) => eventFits(e, cond));
 }
 
 /* ── Xay dung & Nang cap IDLE RPG ───────────────────────────────── */
@@ -1439,6 +1869,7 @@ function flowOptsFor(s: CityState): FlowOptions {
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
     debt: s.debt ?? 0,
+    shopQueue: currentShopQueue(),
   };
 }
 
@@ -1460,14 +1891,18 @@ export function takeLoan(amount: number): LoanResult {
 
   /*
    * Tien vay KHONG phai doanh thu, cung khong phai tien thuong: no la mot
-   * khoan no. Nen cong thang vao `coins` chu khong qua `withCoins` - neu di
-   * qua do thi no se chui vao `totalCoinsEarned` va bao cao se noi rang vay
-   * tien la mot nguon thu nhap.
+   * khoan no. Nen cong thang vao `coins` chu khong qua `withCoins`.
+   * Gán chu kỳ đáo hạn 45 ngày cho khoản nợ.
    */
+  const now = Date.now();
+  const dueDay = todayKey(now + 45 * 24 * 3600 * 1000);
+
   setState({
     ...state,
     coins: state.coins + amount,
+    workingCapital: (state.workingCapital ?? state.coins) + amount,
     debt: (state.debt ?? 0) + amount,
+    loanDueDay: state.loanDueDay || dueDay,
   });
   return { ok: true, amount };
 }
@@ -1484,13 +1919,166 @@ export function repayLoan(amount: number): RepayResult {
   const traThuc = Math.min(amount, duNo);
   if (state.coins < traThuc) return { ok: false, reason: 'funds' };
 
+  const remaining = duNo - traThuc;
+  const isFullyRepaid = remaining <= 0;
+  const trustDelta = isFullyRepaid ? 20 : 5;
+  const newTrustScore = Math.min(850, (state.trustScore ?? 650) + trustDelta);
+
   // Tra no la giam nghia vu, KHONG phai chi phi - khong ghi vao P&L.
   setState({
     ...state,
     coins: state.coins - traThuc,
-    debt: duNo - traThuc,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - traThuc),
+    debt: remaining,
+    loanDueDay: isFullyRepaid ? '' : state.loanDueDay,
+    trustScore: newTrustScore,
   });
-  return { ok: true, amount: traThuc, remaining: duNo - traThuc };
+  return { ok: true, amount: traThuc, remaining };
+}
+
+/* ── CÁC HÀNH ĐỘNG QUẢN TRỊ TÀI CHÍNH THỰC CHIẾN (GAME RULES) ── */
+
+/**
+ * LUẬT 1: Rút tiền từ Quỹ Vận Hành sang Ví Tiêu Dùng Cá Nhân Thị Trưởng.
+ * Giúp người chơi tích lũy tài sản cá nhân, nhưng nếu rút lố sẽ khiến quán kẹt vốn!
+ */
+export function transferToPersonalWealth(amount: number): boolean {
+  if (!Number.isFinite(amount) || amount <= 0) return false;
+  if (state.coins < amount) return false;
+
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - amount),
+    personalWealth: (state.personalWealth ?? 0) + amount,
+  });
+  return true;
+}
+
+/**
+ * Nạp tiền từ Ví Cá Nhân về lại Quỹ Vận Hành của Thành Phố / Quán xá.
+ */
+export function depositToWorkingCapital(amount: number): boolean {
+  if (!Number.isFinite(amount) || amount <= 0) return false;
+  const availableWealth = state.personalWealth ?? 0;
+  if (availableWealth < amount) return false;
+
+  setState({
+    ...state,
+    personalWealth: availableWealth - amount,
+    coins: state.coins + amount,
+    workingCapital: (state.workingCapital ?? 0) + amount,
+  });
+  return true;
+}
+
+/**
+ * LUẬT 5: Gửi tiền nhàn rỗi vào Túi Thần Tài để tự động sinh lãi đêm.
+ */
+export function depositToTuiThanTai(amount: number): boolean {
+  if (!Number.isFinite(amount) || amount <= 0) return false;
+  if (state.coins < amount) return false;
+
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - amount),
+    tuiThanTaiBalance: (state.tuiThanTaiBalance ?? 0) + amount,
+  });
+  return true;
+}
+
+/**
+ * Rút tiền từ Túi Thần Tài về Ngân Khố Thành Phố (rút tức thì 24/7).
+ */
+export function withdrawFromTuiThanTai(amount: number): boolean {
+  if (!Number.isFinite(amount) || amount <= 0) return false;
+  const bal = state.tuiThanTaiBalance ?? 0;
+  if (bal < amount) return false;
+
+  setState({
+    ...state,
+    tuiThanTaiBalance: bal - amount,
+    coins: state.coins + amount,
+    workingCapital: (state.workingCapital ?? 0) + amount,
+  });
+  return true;
+}
+
+/**
+ * LUẬT 6: Mua Gói Bảo Hiểm Toàn Diện MoMo phòng vệ rủi ro thời tiết/thiên tai.
+ */
+export function buyMoMoInsurance(costCoins = 2500): boolean {
+  if (state.hasInsurance) return false;
+  if (state.coins < costCoins) return false;
+
+  setState({
+    ...state,
+    coins: state.coins - costCoins,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - costCoins),
+    hasInsurance: true,
+  });
+  return true;
+}
+
+/**
+ * Xử lý sự kiện thiên tai/sự cố đường phố: tính toán bồi thường bảo hiểm.
+ */
+export function triggerHazardEvent(damageCoins: number): {
+  coveredAmount: number;
+  outOfPocket: number;
+  hasInsurance: boolean;
+} {
+  const hasIns = state.hasInsurance ?? false;
+  const { coveredAmount, outOfPocket } = calculateInsuranceCoverage(damageCoins, hasIns);
+  const actualDeduct = Math.min(state.coins, outOfPocket);
+
+  const next = {
+    ...state,
+    coins: Math.max(0, state.coins - actualDeduct),
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - actualDeduct),
+    insuranceClaimsPaid: (state.insuranceClaimsPaid ?? 0) + coveredAmount,
+  };
+  setState(
+    postLedger(next, { opex: actualDeduct }),
+  );
+
+  return { coveredAmount, outOfPocket, hasInsurance: hasIns };
+}
+
+/**
+ * LUẬT 3: Xử lý rủi ro lừa đảo Bill Photoshop cho 1 cửa hàng.
+ */
+export function processFraudCheckForBuilding(
+  buildingId: string,
+  randomRoll?: number,
+): { hasAttempt: boolean; blockedByLoa: boolean; lostAmount: number } {
+  const node = state.buildings.find((b) => b.id === buildingId);
+  if (!node) return { hasAttempt: false, blockedByLoa: false, lostAmount: 0 };
+
+  const rate = nodeYieldBreakdown(node, state.buildings).totalPerSec || 20;
+
+  const result = checkFraudRiskForBuilding(node, rate, randomRoll);
+  if (!result.hasFraudAttempt) return { hasAttempt: false, blockedByLoa: result.blockedByLoa, lostAmount: 0 };
+
+  if (result.blockedByLoa) {
+    setState({
+      ...state,
+      fraudBlockedCount: (state.fraudBlockedCount ?? 0) + 1,
+    });
+    return { hasAttempt: true, blockedByLoa: true, lostAmount: 0 };
+  }
+
+  // Bị mất tiền do không có Loa Thần Tài
+  const actualLost = Math.min(state.coins, result.lostAmount);
+  const next = {
+    ...state,
+    coins: Math.max(0, state.coins - actualLost),
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - actualLost),
+    fraudLossCoins: (state.fraudLossCoins ?? 0) + actualLost,
+  };
+  setState(postLedger(next, { opex: actualLost }));
+  return { hasAttempt: true, blockedByLoa: false, lostAmount: actualLost };
 }
 
 export function buyLand(): boolean {
@@ -1921,6 +2509,18 @@ export function importCitySave(raw: string): ImportResult {
 export interface CityDerived extends FlowBreakdown {
   rate: number;
   happiness: number;
+  /**
+   * Bảng so sánh với chính mình 7 ngày trước.
+   *
+   * KHÔNG phải bảng xếp hạng: game không có dữ liệu về người chơi khác, nên
+   * "so với người khác" là một con số bịa. Đây là áp lực thật vì chính người
+   * chơi biết mình sắp làm nhiều hơn hay ít hơn.
+   */
+  weekCompare: WeekComparison;
+  /** Số phần tư bảo vệ chuỗi ngày còn lại. */
+  streakShields: number;
+  /** Số lần Giờ Vàng còn dùng được hôm nay. */
+  feverLeftToday: number;
   population: number;
   taxMultiplier: number;
   landCost: number;
@@ -1938,6 +2538,24 @@ export interface CityDerived extends FlowBreakdown {
    * vung nguy hiem: lai an gan het loi nhuan.
    */
   interestCoverage: number;
+  /** Điểm Tin Cậy MoMo (300 - 850) */
+  trustScore: number;
+  /** Hệ số an toàn dòng tiền lưu động (> 2.0: Tốt, < 1.0: Nguy hiểm) */
+  cashflowRatio: number;
+  /** Quỹ Vận Hành Quán */
+  workingCapital: number;
+  /** Ví Tiêu Dùng Cá Nhân của Thị Trưởng */
+  personalWealth: number;
+  /** Đã trang bị Bảo Hiểm MoMo */
+  hasInsurance: boolean;
+  /** Số dư sinh lời Túi Thần Tài */
+  tuiThanTaiBalance: number;
+  /** Ngày đáo hạn nợ Ví Trả Sau */
+  loanDueDay: string;
+  /** Số lần chặn đứng bill giả */
+  fraudBlockedCount: number;
+  /** Thất thoát do bill giả */
+  fraudLossCoins: number;
 }
 
 export function setTimeOfDay(tod: TimeOfDay): void {
@@ -1987,6 +2605,7 @@ export function useCity<T>(selector: (s: CityState) => T): T {
 }
 
 const EMPTY_RELICS: string[] = [];
+const EMPTY_SNAPSHOTS: DailySnapshot[] = [];
 
 export function useCityDerived(): CityDerived {
   const buildings = useCity((s) => s.buildings);
@@ -2006,6 +2625,28 @@ export function useCityDerived(): CityDerived {
    */
   const lastSeenAt = useCity((s) => s.lastSeenAt);
   const debt = useCity((s) => s.debt ?? 0);
+  const trustScoreRaw = useCity((s) => s.trustScore);
+  const workingCapital = useCity((s) => s.workingCapital ?? s.coins);
+  const personalWealth = useCity((s) => s.personalWealth ?? 0);
+  const hasInsurance = useCity((s) => s.hasInsurance ?? false);
+  const tuiThanTaiBalance = useCity((s) => s.tuiThanTaiBalance ?? 0);
+  const loanDueDay = useCity((s) => s.loanDueDay ?? '');
+  const lateFeeCount = useCity((s) => s.loanLateFeeCount ?? 0);
+  const fraudBlockedCount = useCity((s) => s.fraudBlockedCount ?? 0);
+  const fraudLossCoins = useCity((s) => s.fraudLossCoins ?? 0);
+  /*
+   * Field cho bảng so sánh 7 ngày.
+   *
+   * KHÔNG gộp thành một selector trả object mới: `useSyncExternalStore` so
+   * sánh bằng tham chiếu, nên object tạo mới ở mỗi lần gọi là loop vô hạn
+   * (xem ghi chú ngay dưới). Mỗi field đọc riêng, đều là reference có sẵn
+   * trong state hoặc hằng rỗng.
+   */
+  const dailySnapshots = useCity((s) => s.dailySnapshots ?? EMPTY_SNAPSHOTS);
+  const ledgerDay = useCity((s) => s.ledgerDay);
+  const streakShields = useCity((s) => s.streak?.shields ?? 0);
+  const feverUsedTodayRaw = useCity((s) => s.feverUsedToday ?? 0);
+  const feverDayRaw = useCity((s) => s.feverDay ?? '');
 
   return useMemo(() => {
     let relicYieldBonus = 0;
@@ -2038,10 +2679,36 @@ export function useCityDerived(): CityDerived {
       idleMs: now - lastEngagedAt,
       happinessBoost,
       relicBonus: relicYieldBonus,
-      relicHappinessBonus: relicHappyBonus,
+relicHappinessBonus: relicHappyBonus,
       debt,
+      shopQueue: currentShopQueue(),
     });
     const debtCeiling = debtCeilingFor(flow.operatingIncome);
+    const trustScore = calculateMayorTrustScore(
+      trustScoreRaw ?? 650,
+      debt,
+      debtCeiling,
+      lateFeeCount,
+      happiness,
+    );
+    const cashflowRatio = calculateCashflowRatio(workingCapital, flow.opex, flow.interestExpense);
+
+    const danSo = populationFor(buildings);
+
+    /*
+     * `ledgerDay` là số của ngày ĐANG CHẠY, chưa đóng. Đối chiếu nó với bản
+     * ghi của ngày đã qua là so sánh công bằng: cùng một khoảng thời gian,
+     * cùng một cách tính.
+     */
+    const danSoHomNay = danSo;
+  const weekCompare = weekComparison(dailySnapshots, {
+    netIncome: ledgerDay?.netIncome ?? 0,
+    revenue: ledgerDay?.grossRevenue ?? 0,
+    danSo: danSoHomNay,
+    soCongTrinh: buildings.length,
+    mayorLevel,
+  });
+
     return {
       ...flow,
       rate: flow.revenue,
@@ -2050,12 +2717,27 @@ export function useCityDerived(): CityDerived {
       loanHeadroom: Math.max(0, debtCeiling - debt),
       interestCoverage: interestCoverage(flow.operatingIncome, flow.interestExpense),
       happiness,
-      population: populationFor(buildings),
+      weekCompare,
+      streakShields,
+      feverLeftToday: Math.max(
+        0,
+        FEVER_PER_DAY - (feverDayRaw === todayKey(lastSeenAt) ? feverUsedTodayRaw : 0),
+      ),
+      population: danSo,
       taxMultiplier: taxMultiplierFromHappiness(happiness),
       landCost: landCostCoins(unlockedCols, unlockedRows),
       capacity: unlockedCols * unlockedRows,
       used: buildings.length,
       isFever,
+      trustScore,
+      cashflowRatio,
+      workingCapital,
+      personalWealth,
+      hasInsurance,
+      tuiThanTaiBalance,
+      loanDueDay,
+      fraudBlockedCount,
+      fraudLossCoins,
     };
   }, [
     buildings,
@@ -2070,6 +2752,20 @@ export function useCityDerived(): CityDerived {
     happinessBoost,
     lastSeenAt,
     debt,
+    trustScoreRaw,
+    workingCapital,
+    personalWealth,
+    hasInsurance,
+    tuiThanTaiBalance,
+    loanDueDay,
+    lateFeeCount,
+    fraudBlockedCount,
+    fraudLossCoins,
+    dailySnapshots,
+    ledgerDay,
+    streakShields,
+    feverUsedTodayRaw,
+    feverDayRaw,
   ]);
 }
 

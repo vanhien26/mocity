@@ -244,6 +244,92 @@ export function supplyPerSecond(buildings: BuildingNode[]): number {
   }, 0);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * HÀNG ĐỢI VÀ KHÁCH BỎ HÀNG
+ *
+ * Hang doi tren pho khong phai chi hinh anh: no la mot so duoc ghi ra trong bao
+ * cao. Khach xep hang lau thi bo di - do la doanh thu mat di va la cai gia
+ * cua viec nang cap nang luc phuc vu.
+ *
+ * Ve co so an: thieu nang luc thi khach BO HANG truoc kha mua, chu khong phai
+ * chay cham hon ma van mua duoc. Do la mat doanh thu thuan, khong phai chi
+ * thieu doanh thu.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** So cho phuc vu dong thoi cua mot cua tiem, tang theo cap. */
+export function queueCapacityFor(node: BuildingNode): number {
+  return 1 + Math.min(3, Math.floor(node.level / 6));
+}
+
+/**
+ * Tran phan tram: khong cho thap hon - do la ca nang luon van chay.
+ *
+ * Cua hang chan khach la khong lam an, nen con 65% suc ban cung hon la dung
+ * rut kinh doanh. Nguoi choi phai sua bang cach nang cap hoac xay them tiem,
+ * khong phai bang cach de khach chong.
+ */
+export const MIN_CROWDING_FACTOR = 0.35;
+
+/**
+ * He so khach bo hang cua MOT cua tiem.
+ *
+ * 1.0 = hang vua du, khong ai bo. Vuot vuot cho thang roi tang dan.
+ *
+ * Cong thuc dung cong thuc hang doi: xep hang 8 nguoi o quan co 2 cho phuc vu
+ * thi thiet hai phai gap hon xep hang 3 nguoi o quan co 4 cho. Vi vay tien
+ * nhan theo ban cua thuong.
+ */
+export function shopCrowdingFactor(node: BuildingNode, queueLength: number): number {
+  if (queueLength <= 0) return 1;
+  const capacity = queueCapacityFor(node);
+  if (queueLength <= capacity) return 1;
+  const vuot = queueLength / capacity - 1;
+  return Math.max(MIN_CROWDING_FACTOR, 1 - vuot * 0.22);
+}
+
+/**
+ * He so khach bo hang cua ca pho, cong don theo nang luc phuc vu de mot tiem
+ * lon bi kiem phuc vu het khong lam lien muc ca phe nho bi mat doanh thu.
+ *
+ * @param shopQueue `buildingId` -> so khach dang xep hang. Thieu khoa thi
+ *                  coi nhu khong ai xep, vi du chua mo hang doi.
+ */
+export function crowdingFactorFor(
+  buildings: BuildingNode[],
+  shopQueue: Record<string, number> = {},
+): number {
+  let total = 0;
+  let weighted = 0;
+  for (const node of buildings) {
+    const def = BUILDING_BY_ID[node.defId];
+    if (!def?.merchantCapacity) continue;
+    const weight = def.merchantCapacity * (1 + (node.level - 1) * LEVEL_SCALE);
+    total += weight;
+    weighted += weight * shopCrowdingFactor(node, shopQueue[node.id] ?? 0);
+  }
+  if (total === 0) return 1;
+  return weighted / total;
+}
+
+/**
+ * Doanh thu mat vi khach bo hang, tinh theo giay. Hien o bao cao de nguoi choi
+ * thay "nang len" khong chi tang duoc don hang ma con giu duoc khach.
+ */
+export function lostSalesPerSecond(
+  buildings: BuildingNode[],
+  shopQueue: Record<string, number> = {},
+  multiplier = 1,
+): number {
+  let lost = 0;
+  for (const node of buildings) {
+    const def = BUILDING_BY_ID[node.defId];
+    if (!def?.merchantCapacity) continue;
+    const rate = nodeYieldBreakdown(node, buildings).totalPerSec;
+    lost += rate * (1 - shopCrowdingFactor(node, shopQueue[node.id] ?? 0));
+  }
+  return lost * multiplier;
+}
+
 /**
  * Ti le giao dich di qua kenh so, tinh theo nang luc chu khong theo dau nguoi:
  * mot trung tam thuong mai chuyen doi co gia tri hon mot quan ca phe.
@@ -295,6 +381,13 @@ export interface FlowBreakdown {
    * ma khong co dan cu mua.
    */
   supplyFactor: number;
+  /**
+   * He so khach bo hang: 1.0 = moi tiem phuc vu kip. Xuong khi hang doi dai
+   * qua suc chua cua tiem.
+   */
+  crowdingFactor: number;
+  /** Doanh thu mat vi khach xep hang lau roi bo di, tinh theo giay. */
+  lostSales: number;
 
   /* ── BÁO CÁO KẾT QUẢ KINH DOANH (P&L) ──────────────────────────────
    * Doanh thu o tren la GROSS. Truoc day game chi tinh thu duong va bao
@@ -371,6 +464,15 @@ export interface FlowOptions {
   relicHappinessBonus?: number;
   /** Du no hien tai. Sinh ra chi phi lai vay tru vao P&L moi giay. */
   debt?: number;
+  /**
+   * So khach dang xep hang o moi cua tiem: `buildingId` -> so nguoi.
+   *
+   * Hang qua cong su dung se lam mot phan khach BO HANG. Do la doanh thu mat
+   * that, nen phai cat vao `storeYield` chu khong duoc chi hien thi tren pho.
+   * `tickIdle` va HUD deu phai truyền cùng một giá trị, nếu không số trên
+   * man hinh lai khong phai so tien ngan khoc nhan.
+   */
+  shopQueue?: Record<string, number>;
 }
 
 /**
@@ -591,6 +693,15 @@ export function flowFor(
   const supplyFactor =
     demand <= 0 ? 1 : MIN_SUPPLY_FACTOR + (1 - MIN_SUPPLY_FACTOR) * Math.min(1, supply / demand);
 
+  /**
+   * Khach bo hang lam CAT san luong cong trinh, khong phai chi giam nhe.
+   *
+   * `directStoreYieldPerSecond` la so san luong `co the` ban. Hang doi dai
+   * thi phan `khong ban duoc` phai tru ra truoc khi tinh doanh thu - neu
+   * chi giam sau cung thi P&L van tinh cong doanh thu ma khach da bo ve.
+   */
+  const crowdingFactor = crowdingFactorFor(buildings, opts.shopQueue ?? {});
+
   const happinessMult = taxMultiplierFromHappiness(
     happinessFor(buildings, opts.idleMs ?? 0, opts.happinessBoost ?? 0) +
       (opts.relicHappinessBonus ?? 0),
@@ -599,7 +710,12 @@ export function flowFor(
   const feverMult = opts.isFever ? 2 : 1;
   const relicMult = 1 + (opts.relicBonus ?? 0);
 
-  const storeYield = directStoreYieldPerSecond(buildings) * supplyFactor * happinessMult * levelBonus;
+  const storeYield =
+    directStoreYieldPerSecond(buildings) *
+    supplyFactor *
+    crowdingFactor *
+    happinessMult *
+    levelBonus;
   const savingsYield = savingsInterestPerSecond(buildings, currentCoins);
   const networkFeeRevenue = digitalVolume * takeRate * happinessMult * levelBonus;
 
@@ -651,6 +767,8 @@ export function flowFor(
     digitalVolume,
     takeRate,
     supplyFactor,
+    crowdingFactor,
+    lostSales: lostSalesPerSecond(buildings, opts.shopQueue ?? {}, feverMult * relicMult),
     storeYield: storeYield * feverMult * relicMult,
     savingsYield: savingsYield * feverMult * relicMult,
     networkFee: networkFeeRevenue * feverMult * relicMult,
@@ -674,6 +792,60 @@ export function flowFor(
 
     revenue: netIncome,
   };
+}
+
+/**
+ * Hàng đợi hiện tại của phố.
+ *
+ * `flowFor` là hàm thuần: cùng đầu vào phải cho cùng kết quả, nên không đọc
+ * biến module ở trong đó. Module này giữ bản sao hàng đợi mà UI đẩy lên, và
+ * các entry point của store (`tickIdle`, `loanHeadroom`) gọi qua đây để lấy
+ * đúng một nguồn sự thật cho cả HUD lẫn ngân khố.
+ *
+ * Rỗng khi phố chưa có tiệm nào xếp hàng.
+ */
+let liveShopQueue: Record<string, number> = {};
+
+export function publishShopQueue(counts: Record<string, number>): void {
+  liveShopQueue = counts;
+}
+
+export function currentShopQueue(): Record<string, number> {
+  return liveShopQueue;
+}
+
+/** Trạng thái thành phố, dùng làm điều kiện cho kịch bản sự kiện. */
+export interface CityCondition {
+  happiness: number;
+  /** Tỷ lệ nợ xấu BNPL (0-1). */
+  nplRate: number;
+  debt: number;
+  /** Hệ số an toàn dòng tiền lưu động. Dưới 1 là nguy cơ đứt gãy. */
+  cashflowRatio: number;
+  /** Số tiệm đang quá tải vì khách xếp hàng dài. */
+  shopsOverloaded: number;
+  /** Đã trễ hạn trả nợ chưa. */
+  lateFeeCount: number;
+  hasInsurance: boolean;
+}
+
+/**
+ * Số tiệm đang quá tải.
+ *
+ * Dùng cùng ngưỡng với cảnh báo trên biển hiệu (`queue > capacity`) để kịch
+ * bản "khách bỏ hàng" và hình ảnh nói cùng một chuyện.
+ */
+export function overloadedShopCount(
+  buildings: BuildingNode[],
+  shopQueue: Record<string, number> = {},
+): number {
+  let n = 0;
+  for (const node of buildings) {
+    const def = BUILDING_BY_ID[node.defId];
+    if (!def?.merchantCapacity) continue;
+    if (shopCrowdingFactor(node, shopQueue[node.id] ?? 0) < 1) n += 1;
+  }
+  return n;
 }
 
 /** Xu/giay tong cong cua toan thanh pho. */
@@ -713,4 +885,123 @@ export function buildingAt(
   row: number,
 ): BuildingNode | undefined {
   return buildings.find((b) => b.col === col && b.row === row);
+}
+
+/* ── Cơ chế Luật Chơi & Quản Trị Tài Chính Thực Chiến ── */
+
+export interface FraudCheckResult {
+  hasFraudAttempt: boolean;
+  blockedByLoa: boolean;
+  lostAmount: number;
+}
+
+/**
+ * LUẬT 3: Kiểm tra nguy cơ bị lừa đảo Bill Photoshop.
+ * Cửa hàng chưa có Loa Thần Tài đối mặt 12% nguy cơ bị dính bill giả lúc cao điểm.
+ * Khi lắp Loa Thần Tài -> Chặn đứng 100% rủi ro!
+ */
+export function checkFraudRiskForBuilding(
+  node: BuildingNode,
+  buildingYieldPerSec: number,
+  randomRoll = Math.random(),
+): FraudCheckResult {
+  const hasLoa = node.modules?.includes('QR_LOA_THAN_TAI') ?? false;
+  const hasFraudAttempt = randomRoll < 0.12;
+
+  if (!hasFraudAttempt) {
+    return { hasFraudAttempt: false, blockedByLoa: hasLoa, lostAmount: 0 };
+  }
+
+  if (hasLoa) {
+    return { hasFraudAttempt: true, blockedByLoa: true, lostAmount: 0 };
+  }
+
+  // Thất thoát đơn hàng kèm giá vốn
+  const lostAmount = Math.max(50, Math.round(buildingYieldPerSec * 8));
+  return { hasFraudAttempt: true, blockedByLoa: false, lostAmount };
+}
+
+/**
+ * LUẬT 4: Tính toán Điểm Tin Cậy MoMo (Mayor Trust Score: 300 - 850).
+ * Thang điểm thực tế dựa trên:
+ * - Dư nợ / Hạn mức
+ * - Kỷ luật trả nợ đúng hạn
+ * - Số lần bị phạt phí trễ hạn
+ * - Chỉ số hạnh phúc cư dân
+ */
+export function calculateMayorTrustScore(
+  baseScore = 650,
+  debt = 0,
+  debtCeiling = 1,
+  lateFeeCount = 0,
+  happinessIndex = 100,
+): number {
+  let score = baseScore;
+
+  // Sử dụng nợ quá mức (> 80% hạn mức) bị trừ điểm nhẹ
+  if (debtCeiling > 0 && debt > 0) {
+    const debtRatio = debt / debtCeiling;
+    if (debtRatio > 0.8) score -= 25;
+    else if (debtRatio > 0.5) score -= 10;
+  }
+
+  // Bị phạt trễ hạn: mỗi lần trừ 35 điểm
+  score -= lateFeeCount * 35;
+
+  // Hạnh phúc cư dân cao cộng điểm uy tín, thấp bị trừ
+  if (happinessIndex >= 85) score += 20;
+  else if (happinessIndex < 50) score -= 30;
+
+  return Math.max(300, Math.min(850, Math.round(score)));
+}
+
+/**
+ * LUẬT 1: Tính toán Tỷ Lệ Dòng Tiền Lưu Động (Cashflow Health Ratio).
+ * Ratio = Quỹ Vận Hành / (Chi phí vận hành + Lãi vay)
+ * > 2.0x: An toàn
+ * 1.0x - 1.9x: Trung bình
+ * < 1.0x: Nguy cơ đứt gãy dòng tiền (Insolvency)
+ */
+export function calculateCashflowRatio(
+  workingCapital: number,
+  opexPerSec: number,
+  interestPerSec = 0,
+): number {
+  const fixedCostPerSec = opexPerSec + interestPerSec;
+  if (fixedCostPerSec <= 0) return 99; // Không có chi phí cố định
+  // Chu kỳ tính an toàn 60 giây
+  const fixedCostCycle = fixedCostPerSec * 60;
+  return Number((workingCapital / fixedCostCycle).toFixed(2));
+}
+
+/**
+ * LUẬT 5: Lãi suất sinh lời Túi Thần Tài trên dòng tiền nhàn rỗi.
+ * Lãi suất 5.5%/năm tính theo số giây trôi qua.
+ */
+export function calculateTuiThanTaiInterest(
+  balance: number,
+  elapsedSec: number,
+  annualRate = 0.055,
+): number {
+  if (balance <= 0 || elapsedSec <= 0) return 0;
+  const ratePerSec = annualRate / (365 * 86400);
+  return balance * ratePerSec * elapsedSec;
+}
+
+/**
+ * LUẬT 6: Cơ chế bồi thường Bảo Hiểm MoMo khi gặp rủi ro thiên tai/sự cố.
+ * Có bảo hiểm -> Bảo hiểm chi trả 90%, người chơi chỉ chịu 10% mức khấu trừ.
+ * Không bảo hiểm -> Người chơi chịu toàn bộ 100%.
+ */
+export function calculateInsuranceCoverage(
+  damageAmount: number,
+  hasInsurance: boolean,
+): { coveredAmount: number; outOfPocket: number } {
+  if (damageAmount <= 0) return { coveredAmount: 0, outOfPocket: 0 };
+  if (!hasInsurance) {
+    return { coveredAmount: 0, outOfPocket: damageAmount };
+  }
+  const covered = Math.round(damageAmount * 0.9);
+  const outOfPocket = damageAmount - covered;
+  return { coveredAmount: covered, outOfPocket };
 }

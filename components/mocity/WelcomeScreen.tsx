@@ -4,7 +4,7 @@ import { ArrowRight, Crown, Gift, Store, X } from 'lucide-react';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 
 /** Hàng số thưởng nhậm chức, phải khớp `LOGIN_BONUS_COINS` trong page. */
-export const WELCOME_FIRST_TIME_BONUS = 50_000;
+export const WELCOME_FIRST_TIME_BONUS = 1_000;
 const STARTING_COINS = 600;
 
 export interface WelcomeScreenProps {
