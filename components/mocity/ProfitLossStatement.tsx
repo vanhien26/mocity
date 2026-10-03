@@ -60,7 +60,7 @@ function Row({
     >
       <div className="flex flex-col">
         <span
-          className="text-[11px] font-semibold"
+          className="text-[13px] font-semibold"
           style={{ color: strong ? '#4A3018' : '#6E4F3A' }}
           title={hint}
         >
@@ -85,7 +85,7 @@ function Row({
 function Pct({ value }: { value: number }) {
   return (
     <span
-      className="ml-1 rounded px-1 text-[9px] font-black"
+      className="ml-1 rounded px-1 text-[11px] font-black"
       style={{
         background: value >= 0 ? '#DCFCE7' : '#FEE2E2',
         color: value >= 0 ? '#047857' : '#B91C1C',
@@ -166,23 +166,23 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
       }}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-[10px] font-black uppercase tracking-wide" style={{ color: cang ? '#B91C1C' : '#8B6318' }}>
+        <p className="text-[12px] font-black uppercase tracking-wide" style={{ color: cang ? '#B91C1C' : '#8B6318' }}>
           Khoản vay Ngân Hàng Số MoMo
         </p>
-        <span className="text-[10px] font-black" style={{ color: '#8B6318' }}>
+        <span className="text-[12px] font-black" style={{ color: '#8B6318' }}>
           lãi {Math.round(LOAN_ANNUAL_RATE * 100)}%/năm
         </span>
       </div>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
-          <p className="text-[9px] font-black uppercase text-[#8A7355]">Dư nợ</p>
+          <p className="text-[11px] font-black uppercase text-[#8A7355]">Dư nợ</p>
           <p className="text-sm font-black tabular-nums" style={{ color: duNo > 0 ? '#B91C1C' : '#1C171A' }}>
             {formatNumber(duNo)} Xu
           </p>
         </div>
         <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
-          <p className="text-[9px] font-black uppercase text-[#8A7355]">Còn vay được</p>
+          <p className="text-[11px] font-black uppercase text-[#8A7355]">Còn vay được</p>
           <p className="text-sm font-black tabular-nums text-[#1C171A]">{formatNumber(conVay)} Xu</p>
         </div>
       </div>
@@ -194,14 +194,14 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
           style={{ width: `${pctDung}%`, background: cang ? '#DC2626' : 'linear-gradient(90deg,#34D399,#FBBF24)' }}
         />
       </div>
-      <p className="mt-1 text-[10px] font-bold" style={{ color: '#8B6318' }}>
+      <p className="mt-1 text-[12px] font-bold" style={{ color: '#8B6318' }}>
         Đã dùng {pctDung}% hạn mức. Hạn mức bằng {MAX_DEBT_TO_EBIT} lần lợi nhuận hoạt động một năm —
         ngân hàng cho vay theo <b>khả năng trả nợ</b>, không theo doanh thu.
       </p>
 
       {duNo > 0 && (
         <p
-          className="mt-1.5 rounded-lg px-2 py-1.5 text-[10px] font-bold leading-relaxed"
+          className="mt-1.5 rounded-lg px-2 py-1.5 text-[12px] font-bold leading-relaxed"
           style={{ background: cang ? '#FEE2E2' : '#FFFFFF', color: cang ? '#991B1B' : '#5B3D22' }}
         >
           Hệ số bao phủ lãi vay <b>{heSo.toFixed(2)}</b> = lợi nhuận hoạt động chia chi phí lãi vay.
@@ -224,7 +224,7 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
           type="button"
           onClick={vay}
           disabled={so <= 0 || so > conVay}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           style={{ background: '#2563EB' }}
         >
           Vay
@@ -233,13 +233,13 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
           type="button"
           onClick={tra}
           disabled={duNo <= 0 || coins <= 0}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           style={{ background: '#16A34A' }}
         >
           Trả nợ
         </button>
       </div>
-      <p className="mt-1 text-[9px] font-bold text-[#8A7355]">
+      <p className="mt-1 text-[11px] font-bold text-[#8A7355]">
         Để trống ô số rồi bấm Trả nợ để trả hết. Tiền vay vào ngân khố ngay nhưng
         <b> không phải doanh thu</b> — nó là nghĩa vụ phải trả.
       </p>
@@ -265,7 +265,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
         className="rounded-2xl border-2 p-3.5"
         style={{ background: '#F0FDF9', borderColor: '#10B98166' }}
       >
-        <p className="text-[10px] font-black uppercase tracking-wide text-[#047857]">
+        <p className="text-[12px] font-black uppercase tracking-wide text-[#047857]">
           Nhịp hiện tại · mỗi giây
         </p>
         <div className="mt-2 space-y-0.5">
@@ -309,10 +309,10 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             className="mt-2 rounded-xl px-2.5 py-2"
             style={{ background: '#FFF7ED', border: '1px solid #FDBA74' }}
           >
-            <p className="text-[10px] font-black text-[#9A3412]">
+            <p className="text-[12px] font-black text-[#9A3412]">
               🧍 Khách bỏ hàng: đang mất {formatRate(derived.lostSales)}/giây
             </p>
-            <p className="mt-1 text-[10px] font-semibold leading-relaxed text-[#7C2D12]">
+            <p className="mt-1 text-[12px] font-semibold leading-relaxed text-[#7C2D12]">
               Hàng đợi dài hơn số chỗ phục vụ thì một phần khách không còn đợi nữa mà bỏ đi
               {' '}(còn {(derived.crowdingFactor * 100).toFixed(0)}% sức bán). Nâng cấp tiệm để thêm
               chỗ phục vụ, hoặc xây thêm tiệm để chia bớt khách.
@@ -320,7 +320,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
           </div>
         )}
 
-        <p className="mt-2 border-t pt-2 text-[10px] font-semibold leading-relaxed text-[#5B3D22]">
+        <p className="mt-2 border-t pt-2 text-[12px] font-semibold leading-relaxed text-[#5B3D22]">
           HUD đang hiện <b>{formatRate(derived.netIncome)}</b> — đây là <b>lợi nhuận ròng</b>,
           không phải doanh thu. Doanh thu gộp thật là {formatRate(derived.grossRevenue)}. Mỗi đồng
           Xu bạn kiếm được đều phải trả tiền hàng, tiền mặt băng và thuế.
@@ -350,18 +350,18 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
               className="flex items-center justify-between rounded-t-2xl px-3 py-1.5"
               style={{ background: '#047857', color: '#fff' }}
             >
-              <p className="text-[10px] font-black uppercase tracking-wide">
+              <p className="text-[12px] font-black uppercase tracking-wide">
                 {PERIOD_LABEL[period]}
               </p>
               {period !== 'life' && (
-                <span className="text-[9px] font-bold opacity-80">
+                <span className="text-[11px] font-bold opacity-80">
                   {period === 'day' ? l.day : l.month}
                 </span>
               )}
             </div>
 
             {empty ? (
-              <p className="px-3 py-4 text-center text-[11px] font-semibold text-[#9C8767]">
+              <p className="px-3 py-4 text-center text-[13px] font-semibold text-[#9C8767]">
                 Chưa có phát sinh nào. Vận hành thành phố vài giây để có số liệu.
               </p>
             ) : (
@@ -418,7 +418,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
                   />
                 </div>
 
-                <p className="px-2 pt-1 text-[10px] font-semibold leading-relaxed text-[#6E4F3A]">
+                <p className="px-2 pt-1 text-[12px] font-semibold leading-relaxed text-[#6E4F3A]">
                   Biên lợi nhuận gộp <Pct value={l.grossRevenue > 0 ? grossProfit / l.grossRevenue : 0} />
                   {' · '}biên ròng <Pct value={l.grossRevenue > 0 ? net / l.grossRevenue : 0} />
                 </p>
@@ -433,10 +433,10 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
         className="rounded-2xl border-2 p-3.5"
         style={{ background: '#FFFBEB', borderColor: '#C9A22766' }}
       >
-        <p className="text-[10px] font-black uppercase tracking-wide text-[#8B6318]">
+        <p className="text-[12px] font-black uppercase tracking-wide text-[#8B6318]">
           💡 Khẩu Quyết Bỏ Túi Cho Chủ Quán MoCity
         </p>
-        <ul className="mt-2 space-y-2 text-[11px] leading-relaxed text-[#5B3D22]">
+        <ul className="mt-2 space-y-2 text-[13px] leading-relaxed text-[#5B3D22]">
           <li>
             💵 <b>Doanh thu gộp</b> là <i>tiền vô đếm sướng tay</i>, nhưng chưa trừ tiền thịt cá rau củ hay tiền nhà. Đừng vội mang đi mua sắm kẻo cuối tháng khóc thầm!
           </li>
@@ -468,7 +468,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
          * noi ro day la mo phong. Khong duoc de nguoi choi hieu cac con so trong
          * game la dieu kien that cua bat ky san pham nao.
          */}
-        <p className="mt-3 border-t pt-2 text-[10px] font-semibold leading-relaxed text-[#8A7355]">
+        <p className="mt-3 border-t pt-2 text-[12px] font-semibold leading-relaxed text-[#8A7355]">
           Các con số lãi suất, hạn mức và tỷ lệ nợ xấu trong game là mô phỏng để minh
           họa nguyên lý tài chính, không phải điều kiện thật của bất kỳ sản phẩm nào.
           Game không đưa ra lời khuyên tài chính.

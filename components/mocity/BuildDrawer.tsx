@@ -152,7 +152,7 @@ export default function BuildDrawer({
                     <span className="truncate text-sm font-bold" style={{ color: '#3E2A1B' }}>{def.name}</span>
                     {locked && (
                       <span
-                        className="flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                        className="flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold"
                         style={{ background: 'rgba(0,0,0,0.08)', color: '#7A6449' }}
                       >
                         <Lock size={9} className="shrink-0" />
@@ -160,10 +160,10 @@ export default function BuildDrawer({
                       </span>
                     )}
                   </span>
-                  <span className="mt-0.5 block truncate text-[11px]" style={{ color: '#8A7355' }}>
+                  <span className="mt-0.5 block truncate text-[13px]" style={{ color: '#8A7355' }}>
                     {def.description}
                   </span>
-                  <span className="mt-1 flex items-center gap-2.5 text-[11px]" style={{ color: '#7A6449' }}>
+                  <span className="mt-1 flex items-center gap-2.5 text-[13px]" style={{ color: '#7A6449' }}>
                     <span className="flex items-center gap-1 font-bold" style={{ color: '#5B3D22' }}>
                       <CircleDollarSign size={11} className="shrink-0" style={{ color: '#C9A227' }} />
                       {formatRate(def.baseYieldPerSec)}
@@ -192,7 +192,7 @@ export default function BuildDrawer({
                     {formatCompact(def.costCoins)}
                   </span>
                   {!locked && (
-                    <span className="text-[10px]" style={{ color: '#8A7355' }}>
+                    <span className="text-[12px]" style={{ color: '#8A7355' }}>
                       {affordable ? 'Xây ngay' : 'Thiếu Xu'}
                     </span>
                   )}

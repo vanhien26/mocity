@@ -258,7 +258,7 @@ export default function DialogueModal({
                   >
                     <span className="min-w-0">
                       <span
-                        className="block text-[10px] font-black uppercase tracking-wide"
+                        className="block text-[12px] font-black uppercase tracking-wide"
                         style={{ color: '#8A7355' }}
                       >
                         Tiện ích MoMo ngoài đời thật
@@ -318,7 +318,7 @@ export default function DialogueModal({
                           return (
                             <span
                               key={`${choice.id}-tag-${tIdx}`}
-                              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-extrabold leading-tight"
+                              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[13px] font-extrabold leading-tight"
                               style={{
                                 background: style.bg,
                                 color: style.text,

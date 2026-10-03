@@ -144,7 +144,7 @@ export default function MayorCenterModal({
               <h2 className="truncate text-sm font-black uppercase" style={{ color: '#F5E6C8' }}>
                 Tòa Thị Chính & Nhiệm Vụ
               </h2>
-              <p className="truncate text-[11px] font-bold" style={{ color: '#C4AC85' }}>
+              <p className="truncate text-[13px] font-bold" style={{ color: '#C4AC85' }}>
                 {state.mayorName} · Cấp Thị Trưởng {state.mayorLevel}
               </p>
             </div>
@@ -265,7 +265,7 @@ export default function MayorCenterModal({
                 style={{ background: '#FFFDF7', borderColor: '#C9A22766' }}
               >
                 <div>
-                  <label className="block text-[11px] font-black uppercase" style={{ color: '#5B3D22' }}>
+                  <label className="block text-[13px] font-black uppercase" style={{ color: '#5B3D22' }}>
                     Tên Thị Trưởng (Người Chơi)
                   </label>
                   <input
@@ -280,7 +280,7 @@ export default function MayorCenterModal({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-black uppercase" style={{ color: '#5B3D22' }}>
+                  <label className="block text-[13px] font-black uppercase" style={{ color: '#5B3D22' }}>
                     Tên Thành Phố Của Bạn
                   </label>
                   <input
@@ -343,7 +343,7 @@ export default function MayorCenterModal({
                   >
                     <div className="flex items-center gap-2">
                       <span
-                        className="rounded-md px-2 py-0.5 text-[10px] font-black text-white"
+                        className="rounded-md px-2 py-0.5 text-[12px] font-black text-white"
                         style={{ background: adv.hue }}
                       >
                         {adv.roleTitle}
@@ -352,7 +352,7 @@ export default function MayorCenterModal({
                         {adv.name}
                       </p>
                     </div>
-                    <p className="mt-1.5 text-[11px] font-semibold" style={{ color: '#5B3D22' }}>
+                    <p className="mt-1.5 text-[13px] font-semibold" style={{ color: '#5B3D22' }}>
                       “{adv.tip}”
                     </p>
                   </div>
@@ -374,24 +374,24 @@ export default function MayorCenterModal({
                   : 100;
                 return (
                   <div className="rounded-2xl border-2 p-3.5 shadow-sm" style={{ background: '#FFFBEB', borderColor: '#C9A227' }}>
-                    <p className="text-[10px] font-black uppercase tracking-wide text-[#8B6318]">
+                    <p className="text-[12px] font-black uppercase tracking-wide text-[#8B6318]">
                       Rank Thành Phố {tier.rank}/{CITY_TIERS.length}
                     </p>
                     <p className="mt-0.5 text-sm font-black text-[#3E2A1B]">{tier.name}</p>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#6E4F3A]">{tier.tagline}</p>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-[#6E4F3A]">{tier.tagline}</p>
 
                     {sau ? (
                       <>
                         <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full" style={{ background: '#E6D9B8' }}>
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: '#D82D8B' }} />
                         </div>
-                        <p className="mt-1.5 text-[10px] font-bold text-[#8B6318]">
+                        <p className="mt-1.5 text-[12px] font-bold text-[#8B6318]">
                           Lên {sau.name}: cần {sau.minPopulation.toLocaleString('vi-VN')} cư dân (đang {dan.toLocaleString('vi-VN')})
                           {' · '}{sau.minBuildings} công trình (đang {nha})
                         </p>
                       </>
                     ) : (
-                      <p className="mt-2 text-[10px] font-black text-[#B45309]">Đã đạt rank cao nhất.</p>
+                      <p className="mt-2 text-[12px] font-black text-[#B45309]">Đã đạt rank cao nhất.</p>
                     )}
                   </div>
                 );
@@ -399,15 +399,15 @@ export default function MayorCenterModal({
 
               {/* NHIỆM VỤ NGÀY */}
               <div className="rounded-2xl border-2 p-3.5 shadow-sm" style={{ background: '#FFFDF7', borderColor: '#2563EB66' }}>
-                <p className="text-[10px] font-black uppercase tracking-wide text-[#1D4ED8]">
+                <p className="text-[12px] font-black uppercase tracking-wide text-[#1D4ED8]">
                   Nhiệm Vụ Ngày · làm lại mỗi ngày
                 </p>
                 <div className="mt-2 space-y-1.5">
                   {dailyQuestViews().map((v) => (
                     <div key={v.def.id} className="flex items-center gap-2 rounded-xl px-2 py-1.5" style={{ background: '#F4F7FC' }}>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[11px] font-black text-[#3E2A1B]">{v.def.title}</p>
-                        <p className="text-[10px] font-bold text-[#6E4F3A]">
+                        <p className="truncate text-[13px] font-black text-[#3E2A1B]">{v.def.title}</p>
+                        <p className="text-[12px] font-bold text-[#6E4F3A]">
                           {v.progress}/{v.def.target} · +{v.def.rewardCoins.toLocaleString('vi-VN')} Xu ·{' '}
                           <span style={{ color: '#0284C7' }}>+{v.def.rewardGems} Kim Cương</span> ·{' '}
                           <span style={{ color: '#7C3AED' }}>+{v.def.rewardXp.toLocaleString('vi-VN')} XP</span>
@@ -417,7 +417,7 @@ export default function MayorCenterModal({
                         type="button"
                         disabled={!v.done || v.claimed}
                         onClick={() => handleClaimDaily(v.def.id, v.def.title)}
-                        className="shrink-0 rounded-lg px-2 py-1 text-[10px] font-black transition-transform active:scale-95 disabled:cursor-not-allowed"
+                        className="shrink-0 rounded-lg px-2 py-1 text-[12px] font-black transition-transform active:scale-95 disabled:cursor-not-allowed"
                         style={
                           v.claimed
                             ? { background: '#E2E8F0', color: '#94A3B8' }
@@ -479,7 +479,7 @@ export default function MayorCenterModal({
                   </div>
                 ) : (
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <p className="text-[11px] font-medium text-[#7A6449]">
+                    <p className="text-[13px] font-medium text-[#7A6449]">
                       Chưa có sự kiện nào đang treo. Bấm để nghe chuyện mới!
                     </p>
                     <button
@@ -497,7 +497,7 @@ export default function MayorCenterModal({
                 )}
               </div>
 
-              <h3 className="text-[11px] font-black uppercase tracking-wider text-[#5B3D22]">
+              <h3 className="text-[13px] font-black uppercase tracking-wider text-[#5B3D22]">
                 Nhiệm Vụ Kiến Thiết Đô Thị ({claimed.length}/{MAYOR_QUESTS.length})
               </h3>
 
@@ -562,10 +562,10 @@ export default function MayorCenterModal({
                       <p className="truncate text-xs font-black" style={{ color: '#3E2A1B' }}>
                         {q.title}
                       </p>
-                      <p className="mt-0.5 text-[11px]" style={{ color: '#7A6449' }}>
+                      <p className="mt-0.5 text-[13px]" style={{ color: '#7A6449' }}>
                         {q.description}
                       </p>
-                      <div className="mt-1.5 flex items-center gap-3 text-[10px] font-black">
+                      <div className="mt-1.5 flex items-center gap-3 text-[12px] font-black">
                         <span className="flex items-center gap-1" style={{ color: '#B45309' }}>
                           <CircleDollarSign size={11} className="shrink-0" />+{formatCompact(q.rewardCoins)} Xu
                         </span>
@@ -577,7 +577,7 @@ export default function MayorCenterModal({
                     </div>
 
                     {isClaimed ? (
-                      <span className="flex shrink-0 items-center gap-1 rounded-xl bg-black/5 px-3 py-2 text-[11px] font-bold text-[#8A7355]">
+                      <span className="flex shrink-0 items-center gap-1 rounded-xl bg-black/5 px-3 py-2 text-[13px] font-bold text-[#8A7355]">
                         <CheckCircle2 size={14} className="shrink-0" />
                         Đã nhận
                       </span>
@@ -595,7 +595,7 @@ export default function MayorCenterModal({
                         <span>Nhận thưởng</span>
                       </button>
                     ) : (
-                      <span className="shrink-0 rounded-xl border px-2.5 py-1.5 text-[10px] font-bold" style={{ borderColor: '#C9A22755', color: '#8A7355' }}>
+                      <span className="shrink-0 rounded-xl border px-2.5 py-1.5 text-[12px] font-bold" style={{ borderColor: '#C9A22755', color: '#8A7355' }}>
                         Đang thực hiện
                       </span>
                     )}
@@ -615,7 +615,7 @@ export default function MayorCenterModal({
                   <p className="text-xs font-black" style={{ color: '#3E2A1B' }}>
                     Thành phố chưa có cư dân hoặc chủ tiệm nào.
                   </p>
-                  <p className="mt-1 text-[11px]" style={{ color: '#7A6449' }}>
+                  <p className="mt-1 text-[13px]" style={{ color: '#7A6449' }}>
                     Hãy bấm “Xây dựng” để đặt Khu Nhà Phố, Ký Túc Xá hoặc Cửa Hàng đầu tiên!
                   </p>
                 </div>
@@ -631,7 +631,7 @@ export default function MayorCenterModal({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2">
                           <span
-                            className="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-black text-white"
+                            className="shrink-0 rounded-md px-2 py-0.5 text-[12px] font-black text-white"
                             style={{ background: arch?.hue ?? '#EB2F96' }}
                           >
                             {arch?.label ?? npc.role}
@@ -640,11 +640,11 @@ export default function MayorCenterModal({
                             {npc.name}
                           </p>
                         </div>
-                        <span className="shrink-0 text-[10px] font-black" style={{ color: '#16A34A' }}>
+                        <span className="shrink-0 text-[12px] font-black" style={{ color: '#16A34A' }}>
                           Tín nhiệm {npc.trust}%
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px]" style={{ color: '#7A6449' }}>
+                      <p className="mt-1 text-[13px]" style={{ color: '#7A6449' }}>
                         Nhu cầu: {arch?.painPoint}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1">
@@ -652,14 +652,14 @@ export default function MayorCenterModal({
                           npc.services.map((srv) => (
                             <span
                               key={srv}
-                              className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                              className="rounded-full border px-2 py-0.5 text-[12px] font-bold"
                               style={{ background: '#EFF6FF', borderColor: '#BFDBFE', color: '#1D4ED8' }}
                             >
                               {SERVICE_LABEL[srv] ?? srv}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[10px] font-semibold" style={{ color: '#A0916F' }}>
+                          <span className="text-[12px] font-semibold" style={{ color: '#A0916F' }}>
                             Chưa mở dịch vụ số — hãy gắn MoMo QR hoặc xử lý hội thoại `!`
                           </span>
                         )}
@@ -686,12 +686,12 @@ export default function MayorCenterModal({
                 <h2 className="text-xs font-black uppercase" style={{ color: '#4A3018' }}>
                   Thành Phố Của Bạn Đang Ở Đâu
                 </h2>
-                <p className="mt-1 text-[11px]" style={{ color: '#7A6449' }}>
+                <p className="mt-1 text-[13px]" style={{ color: '#7A6449' }}>
                   Toàn bộ Đô Thị MoCity nằm trong trình duyệt của thiết bị này, chưa đồng bộ lên
                   tài khoản. Xóa dữ liệu trình duyệt là mất vĩnh viễn. Hãy tải bản sao lưu trước khi
                   xóa bất kỳ thứ gì.
                 </p>
-                <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
                   {[
                     ['Ngân khố', `${formatNumber(state.coins)} Xu`],
                     ['Kim Cương', `${state.gems}`],
@@ -783,7 +783,7 @@ export default function MayorCenterModal({
 
                 {!confirmReset ? (
                   <>
-                    <p className="text-[11px]" style={{ color: '#7F1D1D' }}>
+                    <p className="text-[13px]" style={{ color: '#7F1D1D' }}>
                       Xóa vĩnh viễn {state.buildings.length} tiệm, {state.npcs.length} cư dân, toàn bộ Xu
                       và Kim Cương. Thành phố sẽ quay về {formatNumber(600)} Xu khởi điểm. Không hoàn tác được.
                     </p>
@@ -798,7 +798,7 @@ export default function MayorCenterModal({
                   </>
                 ) : (
                   <>
-                    <p className="text-[11px] font-black" style={{ color: '#991B1B' }}>
+                    <p className="text-[13px] font-black" style={{ color: '#991B1B' }}>
                       Chắc chắn? Nhấn nữa để xóa vĩnh viễn.
                     </p>
                     <div className="flex flex-wrap gap-2">

@@ -133,7 +133,7 @@ export default function TutorialCoach({ hidden = false }: { hidden?: boolean }) 
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[10px] font-black uppercase tracking-wide text-[#8A7355]">
+              <p className="text-[12px] font-black uppercase tracking-wide text-[#8A7355]">
                 Hướng dẫn · bước {stepIndex + 1}/{tongBuoc}
               </p>
               <button
@@ -150,14 +150,14 @@ export default function TutorialCoach({ hidden = false }: { hidden?: boolean }) 
 
             {hoiBoQua && (
               <div className="mt-1.5 rounded-lg px-2 py-1.5" style={{ background: '#FEF2F2' }}>
-                <p className="text-[11px] font-bold text-[#991B1B]">
+                <p className="text-[13px] font-bold text-[#991B1B]">
                   Bỏ qua hướng dẫn? Mở lại bất cứ lúc nào trong Thị Chính.
                 </p>
                 <div className="mt-1.5 flex gap-1.5">
                   <button
                     type="button"
                     onClick={skipTutorial}
-                    className="rounded-lg px-2.5 py-1 text-[10px] font-black text-white"
+                    className="rounded-lg px-2.5 py-1 text-[12px] font-black text-white"
                     style={{ background: '#DC2626' }}
                   >
                     Bỏ qua
@@ -165,7 +165,7 @@ export default function TutorialCoach({ hidden = false }: { hidden?: boolean }) 
                   <button
                     type="button"
                     onClick={() => setHoiBoQua(false)}
-                    className="rounded-lg border px-2.5 py-1 text-[10px] font-black"
+                    className="rounded-lg border px-2.5 py-1 text-[12px] font-black"
                     style={{ borderColor: '#C9A22788', color: '#5B3D22' }}
                   >
                     Học tiếp
@@ -175,11 +175,11 @@ export default function TutorialCoach({ hidden = false }: { hidden?: boolean }) 
             )}
 
             {xong ? (
-              <p className="mt-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold leading-relaxed text-[#14532D]" style={{ background: '#F0FDF4' }}>
+              <p className="mt-1 rounded-lg px-2 py-1.5 text-[13px] font-semibold leading-relaxed text-[#14532D]" style={{ background: '#F0FDF4' }}>
                 {step.lesson}
               </p>
             ) : (
-              <p className="mt-0.5 text-[11px] font-semibold leading-relaxed text-[#6E4F3A]">
+              <p className="mt-0.5 text-[13px] font-semibold leading-relaxed text-[#6E4F3A]">
                 {step.how}
               </p>
             )}

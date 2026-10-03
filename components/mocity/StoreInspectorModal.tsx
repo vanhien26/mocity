@@ -171,7 +171,7 @@ export default function StoreInspectorModal({
                   {def.name}
                 </h2>
                 <span
-                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black"
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[12px] font-black"
                   style={{ background: '#C9A227', color: '#3E2A1B' }}
                 >
                   Cấp {node.level}
@@ -192,7 +192,7 @@ export default function StoreInspectorModal({
                   ))}
                 </div>
                 {def.momoServiceTag && (
-                  <span className="truncate text-[10px] font-bold" style={{ color: '#F0C25E' }}>
+                  <span className="truncate text-[12px] font-bold" style={{ color: '#F0C25E' }}>
                     · {def.momoServiceTag}
                   </span>
                 )}
@@ -229,7 +229,7 @@ export default function StoreInspectorModal({
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase" style={{ color: '#047857' }}>
+                <p className="text-[12px] font-bold uppercase" style={{ color: '#047857' }}>
                   Hoàn vốn nâng cấp
                 </p>
                 <p className="text-base font-black tabular-nums" style={{ color: '#065F46' }}>
@@ -240,7 +240,7 @@ export default function StoreInspectorModal({
                       : `${(paybackMinutes / 1440).toFixed(1)} ngày`}
                 </p>
               </div>
-              <p className="flex-1 text-right text-[10px] font-semibold leading-tight" style={{ color: '#3E2A1B' }}>
+              <p className="flex-1 text-right text-[12px] font-semibold leading-tight" style={{ color: '#3E2A1B' }}>
                 Bỏ {formatCompact(cost1)} Xu để nhận thêm {formatRate(marginalYield)}.
                 <br />
                 <span style={{ color: '#047857' }}>Đây là vốn, không phải chi phí vận hành.</span>
@@ -253,14 +253,14 @@ export default function StoreInspectorModal({
         <div className="border-b px-4 py-3" style={{ background: 'rgba(201,162,39,0.12)', borderColor: '#C9A22744' }}>
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[10px] font-bold uppercase" style={{ color: '#7A6449' }}>
+              <p className="text-[12px] font-bold uppercase" style={{ color: '#7A6449' }}>
                 Sản lượng cửa hàng hiện tại
               </p>
               <p className="text-lg font-black tabular-nums" style={{ color: '#A67C1E' }}>
                 {formatRate(yieldInfo.totalPerSec)}
               </p>
             </div>
-            <div className="flex flex-wrap justify-end gap-1.5 text-[10px] font-black">
+            <div className="flex flex-wrap justify-end gap-1.5 text-[12px] font-black">
               <span className="rounded-lg border px-2 py-1" style={{ background: '#FFFBEB', borderColor: '#F59E0B66', color: '#B45309' }}>
                 Đột phá ×{yieldInfo.milestoneMultiplier.toFixed(1)}
               </span>
@@ -279,7 +279,7 @@ export default function StoreInspectorModal({
 
           {/* Hieu ung Lien Ke City Builder */}
           <div
-            className="mt-2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px]"
+            className="mt-2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[13px]"
             style={
               yieldInfo.synergyBonus > 0
                 ? { background: '#F0FDF4', borderColor: '#22C55E88', color: '#15803D' }
@@ -377,7 +377,7 @@ export default function StoreInspectorModal({
                       }
                     >
                       <span className="text-xs font-black uppercase">Nâng +1 Cấp</span>
-                      <span className="mt-0.5 flex items-center gap-1 text-[11px] font-bold">
+                      <span className="mt-0.5 flex items-center gap-1 text-[13px] font-bold">
                         <CircleDollarSign size={12} className="shrink-0" />
                         {formatCompact(cost1)} Xu
                       </span>
@@ -397,7 +397,7 @@ export default function StoreInspectorModal({
                       <span className="text-xs font-black uppercase">
                         Đột Phá Cấp {node.level + countToMilestone} (+{countToMilestone})
                       </span>
-                      <span className="mt-0.5 flex items-center gap-1 text-[11px] font-bold">
+                      <span className="mt-0.5 flex items-center gap-1 text-[13px] font-bold">
                         <CircleDollarSign size={12} className="shrink-0" />
                         {formatCompact(costMilestone)} Xu
                       </span>
@@ -408,7 +408,7 @@ export default function StoreInspectorModal({
                      * viec nguoi choi click lien tiep khong bi cam.
                      */}
                     {levelsLeftAfterMilestone > 0 && (
-                      <p className="text-center text-[10px] font-bold" style={{ color: '#9C8767' }}>
+                      <p className="text-center text-[12px] font-bold" style={{ color: '#9C8767' }}>
                         Còn {levelsLeftAfterMilestone} cấp nữa tới mốc ×{nextMilestone}
                       </p>
                     )}
@@ -427,7 +427,7 @@ export default function StoreInspectorModal({
                     <p className="text-xs font-black uppercase" style={{ color: '#3E2A1B' }}>
                       Tiến Hóa Kiến Trúc ({currentStar}★ / 5★)
                     </p>
-                    <p className="mt-0.5 text-[11px]" style={{ color: '#7A6449' }}>
+                    <p className="mt-0.5 text-[13px]" style={{ color: '#7A6449' }}>
                       Mỗi cấp Sao tăng +35% sản lượng Xu và +25% sức chứa Cư dân.
                     </p>
                   </div>
@@ -480,7 +480,7 @@ export default function StoreInspectorModal({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span
-                          className="rounded-md px-2 py-0.5 text-[10px] font-black text-white"
+                          className="rounded-md px-2 py-0.5 text-[12px] font-black text-white"
                           style={{ background: mod.color }}
                         >
                           +{Math.round(mod.yieldBonus * 100)}% Xu/s
@@ -489,7 +489,7 @@ export default function StoreInspectorModal({
                           {mod.name}
                         </p>
                       </div>
-                      <p className="mt-1 text-[11px]" style={{ color: '#7A6449' }}>
+                      <p className="mt-1 text-[13px]" style={{ color: '#7A6449' }}>
                         {mod.description}
                       </p>
                     </div>
@@ -500,7 +500,7 @@ export default function StoreInspectorModal({
                         Đã gắn
                       </span>
                     ) : levelLocked ? (
-                      <span className="flex shrink-0 items-center gap-1 rounded-xl bg-black/5 px-3 py-2 text-[11px] font-bold text-[#8A7355]">
+                      <span className="flex shrink-0 items-center gap-1 rounded-xl bg-black/5 px-3 py-2 text-[13px] font-bold text-[#8A7355]">
                         <Lock size={12} className="shrink-0" />
                         Yêu cầu Cấp {mod.unlockLevel}
                       </span>
@@ -517,7 +517,7 @@ export default function StoreInspectorModal({
                         }
                       >
                         <span>Tích hợp</span>
-                        <span className="text-[10px]">{formatCompact(mod.costCoins)} Xu</span>
+                        <span className="text-[12px]">{formatCompact(mod.costCoins)} Xu</span>
                       </button>
                     )}
                   </div>
@@ -545,7 +545,7 @@ export default function StoreInspectorModal({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-black text-white"
+                          className="shrink-0 rounded px-1.5 py-0.5 text-[12px] font-black text-white"
                           style={{ background: mgr.hue }}
                         >
                           {mgr.rarity}
@@ -553,11 +553,11 @@ export default function StoreInspectorModal({
                         <p className="truncate text-xs font-black" style={{ color: '#3E2A1B' }}>
                           {mgr.name}
                         </p>
-                        <span className="truncate text-[10px] font-bold" style={{ color: '#8A7355' }}>
+                        <span className="truncate text-[12px] font-bold" style={{ color: '#8A7355' }}>
                           · {mgr.title}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px]" style={{ color: '#5B3D22' }}>
+                      <p className="mt-1 text-[13px]" style={{ color: '#5B3D22' }}>
                         <strong>{mgr.skillName}:</strong> +{Math.round(mgr.yieldMultiplier * 100)}% Xu/s, +{mgr.happinessBonus} Hạnh phúc
                       </p>
                     </div>
@@ -581,7 +581,7 @@ export default function StoreInspectorModal({
                       >
                         <span>{isUnlocked ? 'Điều động' : 'Chiêu mộ'}</span>
                         {!isUnlocked && (
-                          <span className="flex items-center gap-1 text-[10px]">
+                          <span className="flex items-center gap-1 text-[12px]">
                             {formatCompact(mgr.costCoins)} Xu
                             {mgr.costGems > 0 && (
                               <>

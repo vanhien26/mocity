@@ -234,7 +234,7 @@ export default function InventoryModal({
                   <p className="text-xs font-black text-[#78350F]">
                     Quà Tặng Dân Phố
                   </p>
-                  <p className="text-[11px] font-bold text-[#92400E] break-words">
+                  <p className="text-[13px] font-bold text-[#92400E] break-words">
                     Bấm “Sử Dụng Ngay” để mời Cư dân Trà Sữa hoặc trao Hộp Quà, tăng Tín Cậy và Hạnh Phúc cho cả khu phố.
                   </p>
                 </div>
@@ -260,7 +260,7 @@ export default function InventoryModal({
                         >
                           <ItemIcon item={item} size={22} />
                           <span
-                            className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-black text-white shadow"
+                            className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[12px] font-black text-white shadow"
                             style={{ backgroundColor: count > 0 ? '#D82D8B' : '#6B7280' }}
                           >
                             x{count}
@@ -273,7 +273,7 @@ export default function InventoryModal({
                               {item.name}
                             </p>
                             <span
-                              className="rounded-md px-1.5 py-0.5 text-[10px] font-black text-white"
+                              className="rounded-md px-1.5 py-0.5 text-[12px] font-black text-white"
                               style={{
                                 backgroundColor:
                                   item.rarity === 'SSR'
@@ -285,7 +285,7 @@ export default function InventoryModal({
                             >
                               {item.rarity}
                             </span>
-                            <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-700">
+                            <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[12px] font-bold text-gray-700">
                               {item.category === 'GIFT' ? 'Quà Tặng NPC' : 'Vật Phẩm Dùng Ngay'}
                             </span>
                           </div>
@@ -320,7 +320,7 @@ export default function InventoryModal({
                           onClick={() => handleBuy(item)}
                           disabled={!canBuy}
                           className={cn(
-                            'flex h-8 w-full sm:w-36 items-center justify-center gap-1 rounded-xl border px-2.5 text-[11px] font-black transition-colors',
+                            'flex h-8 w-full sm:w-36 items-center justify-center gap-1 rounded-xl border px-2.5 text-[13px] font-black transition-colors',
                             canBuy
                               ? 'border-[#C9A227] bg-[#FFFBEB] text-[#78350F] hover:bg-[#FEF3C7]'
                               : 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400',
@@ -351,7 +351,7 @@ export default function InventoryModal({
                 <p className="text-xs font-black text-[#78350F]">
                   8 Nhân Vật Tiêu Biểu & Cố Vấn Khu Phố MoCity
                 </p>
-                <p className="mt-0.5 text-[11px] font-bold text-[#92400E] break-words">
+                <p className="mt-0.5 text-[13px] font-bold text-[#92400E] break-words">
                   Bấm “Trò Chuyện & Nhận Lộc” để nghe chuyện đời thường vui nhộn quanh phố, nhận ngay +{formatCompact(ADVISOR_TAP_COINS)} Xu và cơ hội rơi Vật Phẩm vào Kho Đồ (mỗi Cố vấn nghỉ 60 giây giữa hai lượt)!
                 </p>
               </div>

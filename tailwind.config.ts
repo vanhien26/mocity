@@ -26,14 +26,21 @@ const config: Config = {
       },
       fontFamily: {
         /*
-         * Oswald: grotesque bó hẹp, đúng chất chữ kẻ tay trên biển hiệu và
-         * băng rôn thời bao cấp. Thay Baloo 2 / Comfortaa / Nunito - ba font
-         * geometric sans bo tròn thiết kế cho cảm giác thân thiện đương đại,
-         * thứ nói "không retro" to nhất mà mắt không ý thức được.
+         * Be Vietnam Pro cho CHỮ GIAO DIỆN.
+         *
+         * Trước dùng Oswald vì nó bó hẹp đúng chất chữ kẻ tay trên biển hiệu
+         * bao cấp. Nhưng bó hẹp là đặc tính của font TRÌNH BÀY cỡ lớn, đem
+         * xuống cỡ 9-11px thì chữ dính vào nhau, và tiếng Việt có dấu chồng
+         * (ế, ộ, ữ, ậ) bị bóp mất khoảng thở theo chiều dọc - đo được Oswald
+         * hẹp hơn Arial 18% ở cùng cỡ chữ. Đọc lâu là mỏi mắt.
+         *
+         * Be Vietnam Pro thiết kế RIÊNG cho tiếng Việt nên bộ dấu có chỗ
+         * đứng đàng hoàng. Chất retro vẫn giữ bằng màu, kết cấu và góc vuông,
+         * không cần bóp chữ thân.
          */
-        sans: ['Oswald', '"Arial Narrow"', 'Arial', 'sans-serif'],
-        /** Bevan: slab nặng, dùng cho biển hiệu và tiêu đề. */
-        display: ['Bevan', 'Oswald', 'Georgia', 'serif'],
+        sans: ['"Be Vietnam Pro"', 'system-ui', '-apple-system', 'sans-serif'],
+        /** Bevan: slab nặng, CHỈ cho biển hiệu và tiêu đề cỡ lớn. */
+        display: ['Bevan', 'Georgia', 'serif'],
         /**
          * VT323 cho DÃY SỐ trên HUD.
          *

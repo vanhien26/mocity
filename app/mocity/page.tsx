@@ -709,7 +709,15 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
         }}
       >
         {/* LEFT: nav + city badge */}
-        <div className="flex items-center gap-2 min-w-0">
+        {/*
+         * Khối tên thành phố giữ CHỖ TỐI THIỂU.
+         *
+         * Be Vietnam Pro rộng hơn Oswald nên "Đô Thị MoCity" cần 109px trong
+         * khi chỗ còn lại chỉ 73px - tên bị cắt thành "Đô Thị ...". Cho nó
+         * `shrink-0` và một bề ngang tối thiểu, để phần co lại là nhóm nút
+         * bên phải vốn đều có icon tự giải thích.
+         */}
+        <div className="flex shrink-0 items-center gap-2 lg:min-w-[260px]">
           <Link
             href="/"
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#8B5E1A] bg-[#2A1305] text-[#C9A227] transition-colors hover:border-[#C9A227] hover:text-amber-300"
@@ -750,7 +758,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               <span className="text-[7px] font-black uppercase tracking-wider opacity-80">Rank</span>
               <span className="font-pixel text-[13px] leading-none">
                 {cityTier.rank}
-                <span className="text-[10px] opacity-70">/{CITY_TIERS.length}</span>
+                <span className="text-[12px] opacity-70">/{CITY_TIERS.length}</span>
               </span>
             </span>
             <div className="min-w-0 hidden sm:block">
@@ -758,7 +766,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 <span className="truncate text-xs font-black uppercase text-amber-200">
                   {cityName || 'Đô Thị MoCity'}
                 </span>
-                <span className="rounded bg-emerald-800/80 px-1 py-0.5 text-[9px] font-black text-emerald-300">
+                <span className="rounded bg-emerald-800/80 px-1 py-0.5 text-[11px] font-black text-emerald-300">
                   {buildings.length}/{derived.capacity}
                 </span>
               </div>
@@ -766,7 +774,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                * "60%" tran trui khong noi duoc la phan tram cua cai gi. Them
                * chu "Hài lòng" de khong phai doan.
                */}
-              <p className="truncate text-[10px] font-bold text-amber-400/80">
+              <p className="truncate text-[12px] font-bold text-amber-400/80">
                 {cityTier.name} · Hài lòng {Math.round(derived.happiness)}%
                 {derived.happiness < HAPPINESS_WARNING_AT && (
                   <span className="text-red-400"> ⚠</span>
@@ -805,7 +813,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="font-pixel text-base leading-none text-amber-200">{formatNumber(coins)}</span>
-                <span className="text-[10px] font-black text-amber-500">XU</span>
+                <span className="text-[12px] font-black text-amber-500">XU</span>
               </div>
               <p className="text-[10.5px] font-black text-emerald-400 leading-none">+{formatRate(derived.rate)}</p>
             </div>
@@ -842,7 +850,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             >
               <Flame size={14} className="shrink-0 fill-orange-400 text-orange-400" />
               <span className="text-xs font-black text-orange-100">{streakDays}</span>
-              <span className="hidden text-[10px] font-black uppercase text-orange-300/80 lg:inline">
+              <span className="hidden text-[12px] font-black uppercase text-orange-300/80 lg:inline">
                 ngày
               </span>
             </div>
@@ -872,7 +880,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             }
           >
             <div className="flex items-baseline justify-between gap-1.5">
-              <span className="whitespace-nowrap text-[10px] font-black uppercase leading-none tracking-wide text-violet-300">
+              <span className="whitespace-nowrap text-[12px] font-black uppercase leading-none tracking-wide text-violet-300">
                 Thị Trưởng
               </span>
               <span className="whitespace-nowrap font-pixel text-sm leading-none text-violet-100">
@@ -885,7 +893,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#8C7FA8,#B8307A)' }}
               />
             </div>
-            <p className="whitespace-nowrap text-[10px] font-black leading-none text-violet-300/80 tabular-nums">
+            <p className="whitespace-nowrap text-[12px] font-black leading-none text-violet-300/80 tabular-nums">
               {isMaxLevel
                 ? 'Cấp tối đa'
                 : idleXpCapped
@@ -910,24 +918,17 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             title="Chuyện Phố"
           >
             <MessageSquareWarning size={14} className="shrink-0" />
-            <span className="hidden md:inline text-[10px]">Chuyện Phố</span>
+            <span className="hidden md:inline text-[12px]">Chuyện Phố</span>
             {hasPendingEventOrRequest && (
               <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A8246B] text-[8px] font-black text-white">!</span>
             )}
           </button>
 
-          {/* Kho Đồ */}
-          <button
-            type="button"
-            onClick={() => { setInventoryTab('ITEMS'); setInventoryOpen(true); }}
-            className="relative flex h-9 items-center gap-1 rounded-lg border border-[#6B4423] bg-[#2A1305]/60 px-2.5 text-amber-300/70 transition-colors hover:border-amber-500 hover:text-amber-200"
-            title="Kho Đồ"
-          >
-            <Package size={14} className="shrink-0" />
-            {totalInventoryCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-0.5 text-[8px] font-black text-white">{totalInventoryCount}</span>
-            )}
-          </button>
+          {/*
+           * Kho Đồ ĐÃ BỎ khỏi thanh trên - nó trùng y hệt nút Kho Đồ trên
+           * thanh dưới. Hai lối vào cho cùng một bảng vừa thừa vừa chiếm chỗ
+           * của tên thành phố, vốn đang bị cắt mất chữ.
+           */}
 
           {/* Share */}
           <button
@@ -949,7 +950,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               if (hasNamedCity) { setMayorModalTab('PROFILE'); setMayorModalOpen(true); }
               else { setIsPlaying(false); }
             }}
-            className="flex h-9 items-center gap-1 rounded-lg border border-[#8B5E1A] bg-[#2A1305]/80 px-2 text-[10px] font-black text-amber-300 hover:border-[#C9A227]"
+            className="flex h-9 items-center gap-1 rounded-lg border border-[#8B5E1A] bg-[#2A1305]/80 px-2 text-[12px] font-black text-amber-300 hover:border-[#C9A227]"
             title={hasNamedCity ? 'Hồ Sơ Thị Trưởng' : 'Đăng Nhập'}
           >
             <Crown size={13} className="shrink-0 text-[#C9A227]" />
@@ -1010,7 +1011,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                         : `Lô mặt tiền trống (${selected.col + 1}-${selected.row + 1})`}
                     </p>
                     {selectedBuilding && (
-                      <span className="flex shrink-0 items-center gap-0.5 rounded-md border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-950">
+                      <span className="flex shrink-0 items-center gap-0.5 rounded-md border border-amber-300 bg-amber-100 px-2 py-0.5 text-[13px] font-black text-amber-950">
                         Cấp {selectedBuilding.level} · {selectedBuilding.starRating || 1}★
                       </span>
                     )}
@@ -1132,7 +1133,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 title="Quản Lý Tiệm & Loa QR"
               >
                 <SlidersHorizontal size={15} className="shrink-0 text-[#A8246B]" />
-                <span className="text-[9px] font-black leading-none">Quản Lý</span>
+                <span className="text-[11px] font-black leading-none">Quản Lý</span>
               </button>
 
               {/* Mở Rộng Phố */}
@@ -1149,7 +1150,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 title={canExpand ? `Mở Rộng Phố - ${formatCompact(derived.landCost)} Xu` : 'Mở Rộng Phố (chưa đủ Xu)'}
               >
                 <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#A8701F]' : 'text-gray-400')} />
-                <span className="text-[9px] font-black leading-none">Mở Rộng</span>
+                <span className="text-[11px] font-black leading-none">Mở Rộng</span>
                 {canExpand && (
                   <span className="absolute -top-1.5 -right-1 rounded bg-amber-400 px-1 text-[8px] font-black text-[#92400E] leading-tight">
                     {formatCompact(derived.landCost)}
@@ -1168,7 +1169,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 title="Nhiệm Vụ"
               >
                 <Star size={15} className="shrink-0 fill-amber-400 text-amber-600" />
-                <span className="text-[9px] font-black leading-none">Nhiệm Vụ</span>
+                <span className="text-[11px] font-black leading-none">Nhiệm Vụ</span>
                 {claimableQuestsCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white">
                     {claimableQuestsCount}
@@ -1187,7 +1188,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 title="Kho Đồ & Quà Tặng"
               >
                 <Package size={15} className="shrink-0 text-[#A8246B]" />
-                <span className="text-[9px] font-black leading-none">Kho Đồ</span>
+                <span className="text-[11px] font-black leading-none">Kho Đồ</span>
                 {totalInventoryCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white">
                     {totalInventoryCount}
@@ -1206,7 +1207,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 title="Nhân Vật & Thoại"
               >
                 <MessageSquareHeart size={15} className="shrink-0 text-[#059669]" />
-                <span className="text-[9px] font-black leading-none">Nhân Vật</span>
+                <span className="text-[11px] font-black leading-none">Nhân Vật</span>
               </button>
 
               {/* Tòa Thị Chính */}
@@ -1221,7 +1222,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 title="Tòa Thị Chính & Cư Dân"
               >
                 <Users size={15} className="shrink-0 text-[#2563EB]" />
-                <span className="text-[9px] font-black leading-none">Thị Chính</span>
+                <span className="text-[11px] font-black leading-none">Thị Chính</span>
               </button>
             </div>
           </div>

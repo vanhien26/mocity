@@ -67,7 +67,7 @@ export default function StreakBoard() {
         </p>
 
         {atRisk > 0 && (
-          <p className="mt-2 rounded-lg bg-white/70 px-2 py-1 text-[11px] font-bold text-[#B45309]">
+          <p className="mt-2 rounded-lg bg-white/70 px-2 py-1 text-[13px] font-bold text-[#B45309]">
             Chuỗi {atRisk} ngày của bạn đang chờ được nối tiếp hôm nay.
           </p>
         )}
@@ -77,13 +77,13 @@ export default function StreakBoard() {
          "chuỗi 12 ngày đang chờ nối tiếp" nghe như đe doạ vô dụng.
          */}
         {shields > 0 && (
-          <p className="mt-2 rounded-lg border border-[#C9A227] bg-white/70 px-2 py-1 text-[11px] font-bold text-[#8B6318]">
+          <p className="mt-2 rounded-lg border border-[#C9A227] bg-white/70 px-2 py-1 text-[13px] font-bold text-[#8B6318]">
             🛡️ Bạn có {shields} phiếu bảo vệ. Bỏ đúng một ngày thì chuỗi được giữ,
             chỉ mất 1 phiếu.
           </p>
         )}
         {broken && (
-          <p className="mt-2 rounded-lg bg-white/70 px-2 py-1 text-[11px] font-bold text-[#4B5563]">
+          <p className="mt-2 rounded-lg bg-white/70 px-2 py-1 text-[13px] font-bold text-[#4B5563]">
             Chuỗi gần nhất dài {streak?.best} ngày. Vào chơi hôm nay để bắt đầu lại.
           </p>
         )}
@@ -96,10 +96,10 @@ export default function StreakBoard() {
           style={{ background: '#FFFDF7', borderColor: '#FB923C66' }}
         >
           <div className="flex items-baseline justify-between gap-2">
-            <p className="text-[10px] font-black uppercase tracking-wide text-[#C2410C]">
+            <p className="text-[12px] font-black uppercase tracking-wide text-[#C2410C]">
               Mốc tiếp theo
             </p>
-            <p className="text-[11px] font-black text-[#6E4F3A]">
+            <p className="text-[13px] font-black text-[#6E4F3A]">
               {days}/{next.days} ngày
             </p>
           </div>
@@ -117,7 +117,7 @@ export default function StreakBoard() {
               }}
             />
           </div>
-          <p className="mt-1.5 text-[10px] font-bold text-[#8B6318]">
+          <p className="mt-1.5 text-[12px] font-bold text-[#8B6318]">
             Còn {Math.max(0, next.days - days)} ngày · +{formatCompact(next.rewardCoins)} Xu · +
             {next.rewardGems} KC
           </p>
@@ -131,7 +131,7 @@ export default function StreakBoard() {
           <p className="text-sm font-black text-[#C2410C]">
             Đã chạm tất cả {STREAK_MILESTONES.length} mốc chuỗi ngày.
           </p>
-          <p className="mt-0.5 text-[11px] font-semibold text-[#6E4F3A]">
+          <p className="mt-0.5 text-[13px] font-semibold text-[#6E4F3A]">
             Chuỗi dài nhất của bạn: {streak?.best ?? 0} ngày.
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function StreakBoard() {
         className="rounded-2xl border-2 p-3.5"
         style={{ background: '#FFFDF7', borderColor: '#FB923C44' }}
       >
-        <p className="text-[10px] font-black uppercase tracking-wide text-[#C2410C]">
+        <p className="text-[12px] font-black uppercase tracking-wide text-[#C2410C]">
           Lộ trình mốc
         </p>
         <div className="mt-2 space-y-1.5">
@@ -156,7 +156,7 @@ export default function StreakBoard() {
                 style={{ background: unlocked ? '#FFF7ED' : '#F9FAFB' }}
               >
                 <div
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-black"
                   style={{
                     background: unlocked ? '#FB923C' : '#E5E7EB',
                     color: unlocked ? '#fff' : '#9CA3AF',
@@ -166,18 +166,18 @@ export default function StreakBoard() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p
-                    className="truncate text-[11px] font-black"
+                    className="truncate text-[13px] font-black"
                     style={{ color: unlocked ? '#3E2A1B' : '#9CA3AF' }}
                   >
                     {m.title}
                   </p>
-                  <p className="text-[10px] font-bold text-[#6E4F3A]">
+                  <p className="text-[12px] font-bold text-[#6E4F3A]">
                     +{formatCompact(m.rewardCoins)} Xu · +{m.rewardGems} KC ·{' '}
                     +{formatCompact(m.rewardXp)} XP
                   </p>
                 </div>
                 <span
-                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-black"
                   style={
                     done
                       ? { background: '#DCFCE7', color: '#047857' }
@@ -195,7 +195,7 @@ export default function StreakBoard() {
       </div>
 
       {reached && (
-        <p className="px-1 text-[10px] font-semibold leading-relaxed text-[#6E4F3A]">
+        <p className="px-1 text-[12px] font-semibold leading-relaxed text-[#6E4F3A]">
           Thưởng mốc được trao một lần cho mỗi mốc. Chuỗi của bạn dài hơn sẽ tự động
           nhận được các mốc còn thiếu — không cần chơi lại đúng số ngày đó.
         </p>

@@ -120,7 +120,7 @@ export default function WelcomeScreen({
               <MoCityLogo size={64} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]">
+              <p className="truncate text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]">
                 Chào mừng {greeting}
               </p>
               <h1
@@ -151,7 +151,7 @@ export default function WelcomeScreen({
           {/* Thông tin thành phố hiện có (người chơi cũ) */}
           {hasNamedCity && (
             <div className="border-b-2 border-[#C9A22733] px-5 py-4">
-              <h2 className="text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]">
+              <h2 className="text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]">
                 Thành phố của bạn
               </h2>
               <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -165,7 +165,7 @@ export default function WelcomeScreen({
                     key={label}
                     className="min-w-0 rounded-xl border-2 border-[#D5CEBF] bg-white px-2.5 py-2"
                   >
-                    <dt className="truncate text-[10px] font-black uppercase text-[#8B7355]">
+                    <dt className="truncate text-[12px] font-black uppercase text-[#8B7355]">
                       {label}
                     </dt>
                     <dd className="truncate text-sm font-black text-[#3E2A1B]">{value}</dd>
@@ -178,7 +178,7 @@ export default function WelcomeScreen({
           {/* Hướng dẫn cho người mới */}
           {!hasNamedCity && (
             <div className="border-b-2 border-[#C9A22733] px-5 py-4">
-              <h2 className="text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]">
+              <h2 className="text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]">
                 Chơi thế nào
               </h2>
               <ul className="mt-2.5 grid gap-2 sm:grid-cols-3">
@@ -191,7 +191,7 @@ export default function WelcomeScreen({
                       <step.icon size={16} className="shrink-0 text-white" />
                     </span>
                     <p className="mt-2 truncate text-xs font-black text-[#3E2A1B]">{step.title}</p>
-                    <p className="mt-0.5 text-pretty text-[11px] leading-relaxed text-[#6E4F3A]">
+                    <p className="mt-0.5 text-pretty text-[13px] leading-relaxed text-[#6E4F3A]">
                       {step.body}
                     </p>
                   </li>
@@ -203,7 +203,7 @@ export default function WelcomeScreen({
           {/* Đặt tên thành phố (người mới) */}
           {!hasNamedCity && (
             <div className="border-b-2 border-[#C9A22733] px-5 py-4">
-              <h2 className="text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]">
+              <h2 className="text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]">
                 Đặt tên cho thành phố
               </h2>
               <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
@@ -214,7 +214,7 @@ export default function WelcomeScreen({
                 <div className="min-w-0">
                   <label
                     htmlFor="mocity-mayor-name"
-                    className="mb-1 block text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]"
+                    className="mb-1 block text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]"
                   >
                     Tên Thị Trưởng
                   </label>
@@ -231,7 +231,7 @@ export default function WelcomeScreen({
                 <div className="min-w-0">
                   <label
                     htmlFor="mocity-city-name"
-                    className="mb-1 block text-[11px] font-black uppercase tracking-wide text-[#6E4F3A]"
+                    className="mb-1 block text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]"
                   >
                     Tên Khu Phố
                   </label>
@@ -259,7 +259,7 @@ export default function WelcomeScreen({
                 <p className="truncate text-xs font-black text-[#78350F]">
                   {loginBonus > 0 ? 'Vốn khởi điểm & Thưởng nhậm chức' : 'Ngân khố Đô Thị'}
                 </p>
-                <p className="text-pretty text-[11px] font-bold text-[#92400E]">
+                <p className="text-pretty text-[13px] font-bold text-[#92400E]">
                   {hasNamedCity
                     ? `Vốn sẵn có ${formatNumber(coins)} Xu`
                     : `Vốn sẵn có ${formatNumber(STARTING_COINS)} Xu · Tặng thêm +${formatNumber(firstTimeBonus)} Xu`}
@@ -284,7 +284,7 @@ export default function WelcomeScreen({
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>
-            <p className="mt-2.5 text-center text-[10px] leading-relaxed text-[#8B7355]">
+            <p className="mt-2.5 text-center text-[12px] leading-relaxed text-[#8B7355]">
               Thành phố lưu trong trình duyệt này và gắn với tài khoản của bạn. Xóa dữ liệu trình duyệt là
               mất. Bạn có thể tải bản sao lưu trong Tòa Thị Chính.
             </p>
