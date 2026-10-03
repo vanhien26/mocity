@@ -15,7 +15,7 @@ import {
   taxMultiplierFromHappiness,
   HAPPINESS_BOOST_CAP,
 } from './city-calculator';
-import { BUILDINGS, BUILDING_BY_ID, STARTER_INVENTORY, upgradeCostCoins, CITY_TIERS } from './mock-city-data';
+import { BUILDINGS, BUILDING_BY_ID, STARTER_INVENTORY, upgradeCostCoins, CITY_TIERS, MILESTONE_LEVELS, milestoneMultiplierFor, nextMilestoneLevel } from './mock-city-data';
 import { CITY_EVENTS, REQUEST_SCRIPTS } from './dialogue-data';
 import { SERVICE_TOOL } from './npc-data';
 import type { BuildingNode, NpcState } from './types';
@@ -522,6 +522,39 @@ describe('tien trinh theo bac - tier la truc mo khoa', () => {
     for (let rank = 1; rank <= CITY_TIERS.length; rank++) {
       const any = BUILDINGS.some((b) => b.unlockAtTier === rank);
       assert.ok(any, `bac ${rank} khong mo khoa cong trinh nao - trong rong`);
+    }
+  });
+});
+
+
+describe('moc dot pha - luon co dich gan de chong nham chan', () => {
+  it('moi 5 cap trong [1..50] deu co mot moc ke tiep trong tam <= 5 cap', () => {
+    for (let lv = 1; lv <= 50; lv++) {
+      const next = nextMilestoneLevel(lv);
+      assert.ok(next - lv <= 5, `cap ${lv}: moc ke tiep ${next} cach qua xa (${next - lv} cap)`);
+    }
+  });
+
+  it('he so dot pha khong giam khi len cap (monotonic)', () => {
+    let prev = 0;
+    for (let lv = 1; lv <= 50; lv++) {
+      const m = milestoneMultiplierFor(lv);
+      assert.ok(m >= prev, `cap ${lv} he so ${m} nho hon cap truoc ${prev}`);
+      prev = m;
+    }
+  });
+
+  it('tong he so dot pha tai cap 50 bi chan (khong lam no kinh te)', () => {
+    const top = milestoneMultiplierFor(50);
+    assert.ok(top > 8 && top < 25, `he so dot pha cap 50 = ${top.toFixed(1)}, phai o giua 8 va 25`);
+  });
+
+  it('moi moc lam doanh thu nhay len that su', () => {
+    for (const m of MILESTONE_LEVELS) {
+      assert.ok(
+        milestoneMultiplierFor(m) > milestoneMultiplierFor(m - 1),
+        `vuot moc ${m} phai tang he so dot pha`,
+      );
     }
   });
 });

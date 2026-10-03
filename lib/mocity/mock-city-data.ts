@@ -841,14 +841,29 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
 ];
 
 /** Mốc cấp độ đột phá (Tier Breakthrough): đạt Lv.5, 10, 25, 50 nhận hệ số nhân lớn */
-export const MILESTONE_LEVELS = [5, 10, 25, 50] as const;
+/**
+ * MOC DOT PHA - cu moi 5 cap mot moc, de LUON co dot pha trong tam 5 cap toi.
+ *
+ * Ban cu chi co 4 moc 5/10/25/50: khoang 10->25 va 25->50 la mot doan phang
+ * dai dang dang, doanh thu cong tuyen tinh con chi phi tang ham mu, nguoi choi
+ * khong thay ly do nang tiep. Lich day hon giu "number go up" luon co dich gan.
+ *
+ * He so moc front-load (manh o dau de tao da), nho dan ve giua, roi mot cu
+ * finale lon o cap 50. Tong he so tai cap 50 ~15x (ban cu ~17.8x) - khong lam
+ * kinh te no vi chi phi nang cap van tang ham mu nhanh hon.
+ */
+export const MILESTONE_LEVELS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50] as const;
+
+const MILESTONE_STEP: Record<number, number> = {
+  5: 1.4, 10: 1.4, 15: 1.3, 20: 1.3, 25: 1.3,
+  30: 1.25, 35: 1.25, 40: 1.25, 45: 1.2, 50: 1.5,
+};
 
 export function milestoneMultiplierFor(level: number): number {
   let mult = 1;
-  if (level >= 5) mult *= 1.5;
-  if (level >= 10) mult *= 1.8;
-  if (level >= 25) mult *= 2.2;
-  if (level >= 50) mult *= 3.0;
+  for (const m of MILESTONE_LEVELS) {
+    if (level >= m) mult *= MILESTONE_STEP[m];
+  }
   return mult;
 }
 

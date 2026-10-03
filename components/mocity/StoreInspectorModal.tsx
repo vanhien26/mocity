@@ -18,6 +18,7 @@ import {
   BUILDING_BY_ID,
   MANAGER_BY_ID,
   nextMilestoneLevel,
+  milestoneMultiplierFor,
   starUpgradeCost,
   STORE_MANAGERS,
   STORE_MODULES,
@@ -65,6 +66,10 @@ export default function StoreInspectorModal({
   const zone = ZONES[def.zone];
   const yieldInfo = nodeYieldBreakdown(node, buildings);
   const nextMilestone = nextMilestoneLevel(node.level);
+  // He so dot pha CU THE cua moc sap toi (vd 1.4x), thay vi dai cung ban cu.
+  const nextMilestoneStep = node.level >= nextMilestone
+    ? 1
+    : milestoneMultiplierFor(nextMilestone) / milestoneMultiplierFor(nextMilestone - 1);
   const atMaxLevel = node.level >= def.maxLevel;
   const currentStar = node.starRating || 1;
   const starCost = starUpgradeCost(def, currentStar);
@@ -351,7 +356,7 @@ export default function StoreInspectorModal({
               <div className="rounded-2xl border-2 p-3.5" style={{ background: '#FFFDF7', borderColor: '#C9A22766' }}>
                 <div className="flex items-center justify-between text-xs font-black" style={{ color: '#3E2A1B' }}>
                   <span>Mốc Đột Phá Tiếp Theo: Cấp {nextMilestone}</span>
-                  <span style={{ color: '#D97706' }}>Thưởng Đột Phá ×1.5 – ×3.0 Xu/s</span>
+                  <span style={{ color: '#D97706' }}>Vượt mốc: ×{nextMilestoneStep.toFixed(2)} Xu/s</span>
                 </div>
                 <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-amber-950/15">
                   <div
@@ -409,7 +414,7 @@ export default function StoreInspectorModal({
                      */}
                     {levelsLeftAfterMilestone > 0 && (
                       <p className="text-center text-[12px] font-bold" style={{ color: '#9C8767' }}>
-                        Còn {levelsLeftAfterMilestone} cấp nữa tới mốc ×{nextMilestone}
+                        Còn {levelsLeftAfterMilestone} cấp nữa tới mốc Cấp {nextMilestone} (×{nextMilestoneStep.toFixed(2)})
                       </p>
                     )}
                   </div>
