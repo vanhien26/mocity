@@ -69,6 +69,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#E11D48',
     merchantCapacity: 85,
     unlockAtMayorLevel: 1,
+    unlockAtTier: 1,
     synergyWith: ['ky-tuc-xa-sinh-vien', 'rap-phim-momo', 'nha-pho-binh-dan'],
     synergyLabel: 'Combo Cà Phê & Phim/Sinh Viên (+25% Xu)',
   },
@@ -92,6 +93,7 @@ export const BUILDINGS: BuildingDef[] = [
     hue: '#22C55E',
     accent: '#15803D',
     unlockAtMayorLevel: 1,
+    unlockAtTier: 1,
     synergyWith: ['cong-vien', 'sieu-thi', 'tram-hoa-don'],
     synergyLabel: 'Combo Khu Dân Sinh Tiện Nghi (+25% Xu)',
   },
@@ -116,6 +118,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#C22181',
     merchantCapacity: 150,
     unlockAtMayorLevel: 1,
+    unlockAtTier: 1,
     synergyWith: ['nha-pho-binh-dan', 'chung-cu-cao-cap', 'tram-tui-than-tai'],
     synergyLabel: 'Combo Siêu Thị Cạnh Khu Dân Cư (+25% Xu)',
   },
@@ -139,6 +142,7 @@ export const BUILDINGS: BuildingDef[] = [
     hue: '#16A34A',
     accent: '#15803D',
     unlockAtMayorLevel: 1,
+    unlockAtTier: 1,
     synergyWith: ['nha-pho-binh-dan', 'ky-tuc-xa-sinh-vien', 'chung-cu-cao-cap'],
     synergyLabel: 'Combo Đô Thị Xanh An Cư (+25% Xu)',
   },
@@ -162,6 +166,7 @@ export const BUILDINGS: BuildingDef[] = [
     hue: '#3B82F6',
     accent: '#1D4ED8',
     unlockAtMayorLevel: 2,
+    unlockAtTier: 2,
     synergyWith: ['quan-ca-phe', 'rap-phim-momo', 'pho-am-thuc'],
     synergyLabel: 'Combo Làng Đại Học Sôi Động (+25% Xu)',
   },
@@ -186,6 +191,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#DB2777',
     merchantCapacity: 240,
     unlockAtMayorLevel: 2,
+    unlockAtTier: 2,
     synergyWith: ['rap-phim-momo', 'ky-tuc-xa-sinh-vien', 'to-hop-du-lich'],
     synergyLabel: 'Combo Ăn Khuya & Xem Phim (+25% Xu)',
   },
@@ -210,6 +216,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#BE185D',
     merchantCapacity: 320,
     unlockAtMayorLevel: 2,
+    unlockAtTier: 3,
     synergyWith: ['quan-ca-phe', 'pho-am-thuc', 'trung-tam-thuong-mai'],
     synergyLabel: 'Combo Xem Phim & Trà Sữa/Ẩm Thực (+25% Xu)',
   },
@@ -234,6 +241,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#D97706',
     takeRateBonus: 0.006,
     unlockAtMayorLevel: 2,
+    unlockAtTier: 2,
     synergyWith: ['sieu-thi', 'ngan-hang-so', 'san-chung-khoan', 'chung-cu-cao-cap'],
     synergyLabel: 'Hào Quang Lãi Kép Thần Tài (+25% Xu)',
   },
@@ -258,6 +266,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#0E7490',
     merchantCapacity: 290,
     unlockAtMayorLevel: 3,
+    unlockAtTier: 3,
     synergyWith: ['nha-pho-binh-dan', 'chung-cu-cao-cap', 'trung-tam-du-lieu'],
     synergyLabel: 'Combo Hạ Tầng Đô Thị Thông Minh (+25% Xu)',
   },
@@ -282,6 +291,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#1D4ED8',
     takeRateBonus: 0.008,
     unlockAtMayorLevel: 3,
+    unlockAtTier: 3,
     synergyWith: ['tram-tui-than-tai', 'trung-tam-vi-tra-sau', 'san-chung-khoan'],
     synergyLabel: 'Combo Trung Tâm Tài Chính Số (+25% Xu)',
   },
@@ -306,6 +316,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#6D28D9',
     takeRateBonus: 0.007,
     unlockAtMayorLevel: 3,
+    unlockAtTier: 4,
     synergyWith: ['trung-tam-thuong-mai', 'rap-phim-momo', 'to-hop-du-lich'],
     synergyLabel: 'Combo Kích Cầu Mua Sắm Trả Sau (+25% Xu)',
   },
@@ -329,6 +340,7 @@ export const BUILDINGS: BuildingDef[] = [
     hue: '#0EA5E9',
     accent: '#0369A1',
     unlockAtMayorLevel: 4,
+    unlockAtTier: 4,
     synergyWith: ['cong-vien', 'sieu-thi', 'trung-tam-thuong-mai'],
     synergyLabel: 'Combo Đô Thị Kiểu Mẫu (+25% Xu)',
   },
@@ -353,6 +365,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#0284C7',
     merchantCapacity: 420,
     unlockAtMayorLevel: 4,
+    unlockAtTier: 5,
     synergyWith: ['pho-am-thuc', 'trung-tam-thuong-mai', 'thap-momo'],
     synergyLabel: 'Combo Du Lịch & Mua Sắm Quốc Tế (+25% Xu)',
   },
@@ -377,6 +390,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#A21CAF',
     merchantCapacity: 560,
     unlockAtMayorLevel: 5,
+    unlockAtTier: 5,
     synergyWith: ['rap-phim-momo', 'trung-tam-vi-tra-sau', 'chung-cu-cao-cap'],
     synergyLabel: 'Combo Tổ Hợp Mua Sắm & Giải Trí (+25% Xu)',
   },
@@ -401,6 +415,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#4338CA',
     takeRateBonus: 0.005,
     unlockAtMayorLevel: 5,
+    unlockAtTier: 6,
     synergyWith: ['ky-tuc-xa-sinh-vien', 'san-chung-khoan'],
     synergyLabel: 'Combo Tri Thức Đầu Tư (+25% Xu)',
   },
@@ -425,6 +440,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#1E40AF',
     takeRateBonus: 0.011,
     unlockAtMayorLevel: 5,
+    unlockAtTier: 6,
     synergyWith: ['ngan-hang-so', 'tram-tui-than-tai', 'trung-tam-du-lieu'],
     synergyLabel: 'Combo Phố Wall Tài Chính (+25% Xu)',
   },
@@ -449,6 +465,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#0284C7',
     takeRateBonus: 0.012,
     unlockAtMayorLevel: 6,
+    unlockAtTier: 7,
     synergyWith: ['san-chung-khoan', 'ngan-hang-so', 'thap-momo'],
     synergyLabel: 'Combo Lõi Siêu Ứng Dụng (+25% Xu)',
   },
@@ -472,6 +489,7 @@ export const BUILDINGS: BuildingDef[] = [
     hue: '#FBBF24',
     accent: '#D97706',
     unlockAtMayorLevel: 7,
+    unlockAtTier: 7,
     synergyWith: ['cong-vien', 'thap-momo', 'tram-tui-than-tai'],
     synergyLabel: 'Combo Hào Quang Thiện Nguyện (+25% Xu)',
   },
@@ -496,6 +514,7 @@ export const BUILDINGS: BuildingDef[] = [
     accent: '#B45309',
     takeRateBonus: 0.015,
     unlockAtMayorLevel: 8,
+    unlockAtTier: 8,
     synergyWith: ['san-chung-khoan', 'trung-tam-thuong-mai', 'quang-truong-heo-vang'],
     synergyLabel: 'Combo Kỳ Quan Phồn Vinh (+25% Xu)',
   },
@@ -994,6 +1013,20 @@ export interface CityTierDef {
   rewardCoins: number;
   rewardGems: number;
   rewardXp: number;
+  /**
+   * Thu mo ra khi dat bac nay - LY DO de nguoi choi leo bac. Gom san pham
+   * tai chinh MoMo moi va/hoac nhom cong trinh/zone moi duoc phep xay.
+   */
+  unlocks?: {
+    /** Tieu de ngan hien o bang bac, vd "Mo Vay Nhanh". */
+    headline: string;
+    /** Mo ta 1 cau: hoc duoc gi / lam duoc gi moi. */
+    detail: string;
+    /** Tag san pham MoMo neu bac nay mo mot san pham tai chinh. */
+    productTag?: string;
+    /** Cong trinh moi duoc phep xay tu bac nay. */
+    buildingIds: string[];
+  };
 }
 
 /**
@@ -1016,49 +1049,93 @@ export const CITY_TIERS: CityTierDef[] = [
     tagline: 'Mới dựng tạm vài mái che, mưa xuống là cả xóm chạy dột.',
     minPopulation: 0, minBuildings: 0,
     rewardCoins: 0, rewardGems: 0, rewardXp: 0,
-  },
+
+    unlocks: {
+      headline: 'Khởi nghiệp bằng tiền mặt',
+      detail: 'Mở quán cà phê, nhà phố, siêu thị, công viên. Quy tắc đầu tiên: kiếm ra tiền trước khi tiêu.',
+      buildingIds: ['quan-ca-phe','nha-pho-binh-dan','sieu-thi','cong-vien'],
+    },  },
   {
     id: 'tier-hem-ba-gac', rank: 2, name: 'Hẻm Ba Gác',
     tagline: 'Hẻm vừa đúng một chiếc ba gác, hai xe gặp nhau là phải lùi.',
     minPopulation: 150, minBuildings: 3,
     rewardCoins: 600, rewardGems: 4, rewardXp: 900,
-  },
+
+    unlocks: {
+      headline: 'Mở Tiết Kiệm - Túi Thần Tài',
+      detail: 'Dòng tiền nhàn rỗi bắt đầu sinh lời mỗi ngày. Thêm ký túc xá và phố ăn để kéo dân.',
+      productTag: 'Túi Thần Tài · Tiết Kiệm Sinh Lời',
+      buildingIds: ['ky-tuc-xa-sinh-vien','pho-am-thuc','tram-tui-than-tai'],
+    },  },
   {
     id: 'tier-pho-via-he', rank: 3, name: 'Phố Vỉa Hè',
     tagline: 'Bắt đầu có hàng quán mặt tiền, tối đến đèn vàng sáng cả dãy.',
     minPopulation: 500, minBuildings: 6,
     rewardCoins: 2_000, rewardGems: 8, rewardXp: 2_400,
-  },
+
+    unlocks: {
+      headline: 'Mở Vay Nhanh - Ngân Hàng Số',
+      detail: 'Được vay vốn để tăng tốc xây dựng. Lãi vay trừ thẳng vào dòng tiền, vay khôn mới có lời.',
+      productTag: 'Ngân Hàng Số · Vay Nhanh',
+      buildingIds: ['rap-phim-momo','tram-hoa-don','ngan-hang-so'],
+    },  },
   {
     id: 'tier-thi-tu-tra-da', rank: 4, name: 'Thị Tứ Trà Đá',
     tagline: 'Đông người, có chỗ ngồi tám chuyện từ sáng tới chiều.',
     minPopulation: 2_000, minBuildings: 10,
     rewardCoins: 5_000, rewardGems: 14, rewardXp: 5_200,
-  },
+
+    unlocks: {
+      headline: 'Mở Ví Trả Sau (BNPL)',
+      detail: 'Cho dân mua trước trả sau, doanh thu bật lên nhưng kéo theo nợ xấu. Cân credit để không vỡ.',
+      productTag: 'Ví Trả Sau · Mua Trước Trả Sau',
+      buildingIds: ['trung-tam-vi-tra-sau','chung-cu-cao-cap'],
+    },  },
   {
     id: 'tier-quan-tra-sua', rank: 5, name: 'Quận Trà Sữa',
     tagline: 'GenZ kéo tới check-in, dòng tiền lên thấy rõ.',
     minPopulation: 5_500, minBuildings: 16,
     rewardCoins: 12_000, rewardGems: 22, rewardXp: 9_000,
-  },
+
+    unlocks: {
+      headline: 'Mở rộng quy mô dịch vụ',
+      detail: 'Tổ hợp du lịch và TTTM đẩy doanh thu, nhưng chi phí vận hành cũng phình theo. Giữ biên lợi nhuận.',
+      buildingIds: ['to-hop-du-lich','trung-tam-thuong-mai'],
+    },  },
   {
     id: 'tier-do-thi-quet-ma', rank: 6, name: 'Đô Thị Quét Mã',
     tagline: 'Hết cảnh thối tiền bằng kẹo cao su, cả phố quét mã.',
     minPopulation: 14_000, minBuildings: 24,
     rewardCoins: 30_000, rewardGems: 32, rewardXp: 14_000,
-  },
+
+    unlocks: {
+      headline: 'Mở Đầu Tư & Học Viện Tài Chính',
+      detail: 'Sàn đầu tư cho dòng vốn sinh sôi, học viện nâng dân trí tài chính toàn phố.',
+      productTag: 'Sàn Đầu Tư · Chứng Chỉ Quỹ',
+      buildingIds: ['hoc-vien-tai-chinh','san-chung-khoan'],
+    },  },
   {
     id: 'tier-dai-do-thi-ting-ting', rank: 7, name: 'Đại Đô Thị Ting Ting',
     tagline: 'Tiếng báo có tiền vang từ đầu hẻm tới cuối đại lộ.',
     minPopulation: 24_000, minBuildings: 34,
     rewardCoins: 75_000, rewardGems: 45, rewardXp: 20_000,
-  },
+
+    unlocks: {
+      headline: 'Hạ tầng lõi siêu ứng dụng',
+      detail: 'Trung tâm dữ liệu và quảng trường cộng đồng - nền tảng cho một đô thị không tiền mặt.',
+      buildingIds: ['trung-tam-du-lieu','quang-truong-heo-vang'],
+    },  },
   {
     id: 'tier-sieu-do-thi-khong-tien-mat', rank: 8, name: 'Siêu Đô Thị Không Tiền Mặt',
     tagline: 'Không còn ai cầm tiền lẻ. Thị Trưởng đã làm được.',
     minPopulation: 40_000, minBuildings: 46,
     rewardCoins: 180_000, rewardGems: 70, rewardXp: 25_000,
-  },
+
+    unlocks: {
+      headline: 'Kỳ quan Tháp MoMo',
+      detail: 'Đỉnh cao của MoCity. Xây Tháp Đôi MoMo, hoàn tất hành trình đô thị không tiền mặt.',
+      buildingIds: ['thap-momo'],
+    },  },
 ];
 
 /** Bậc cao nhất mà dân số + số công trình hiện tại với tới. */

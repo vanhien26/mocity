@@ -389,6 +389,20 @@ export default function MayorCenterModal({
                           Lên {sau.name}: cần {sau.minPopulation.toLocaleString('vi-VN')} cư dân (đang {dan.toLocaleString('vi-VN')})
                           {' · '}{sau.minBuildings} công trình (đang {nha})
                         </p>
+                        {sau.unlocks && (
+                          <div className="mt-2.5 rounded-xl border-2 border-dashed p-2.5" style={{ borderColor: '#D82D8B66', background: '#FDF2F8' }}>
+                            <p className="flex items-center gap-1.5 text-[12px] font-black uppercase tracking-wide text-[#BE185D]">
+                              🔓 Mở khóa khi lên bậc
+                            </p>
+                            <p className="mt-1 text-[13px] font-black text-[#3E2A1B]">{sau.unlocks.headline}</p>
+                            <p className="mt-0.5 text-[12px] leading-relaxed text-[#6E4F3A]">{sau.unlocks.detail}</p>
+                            {sau.unlocks.productTag && (
+                              <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-black text-white" style={{ background: '#D82D8B' }}>
+                                {sau.unlocks.productTag}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </>
                     ) : (
                       <p className="mt-2 text-[12px] font-black text-[#B45309]">Đã đạt rank cao nhất.</p>

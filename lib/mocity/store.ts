@@ -2003,7 +2003,8 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
   const def = BUILDING_BY_ID[defId];
   if (!def) return 'ok';
 
-  if (state.mayorLevel < def.unlockAtMayorLevel) return 'level';
+  // TRUC TIEN TRINH: cong trinh mo theo BAC DO THI, khong theo cap Thi Truong.
+  if (currentCityTier(state).rank < def.unlockAtTier) return 'level';
   if (!isInsideUnlocked(state, col, row)) return 'locked';
   if (buildingAt(state.buildings, col, row)) return 'occupied';
 

@@ -735,7 +735,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             className="relative flex items-center gap-2 overflow-hidden rounded-xl border border-[#8B5E1A] bg-[#2A1305]/60 px-2.5 py-1 pb-1.5 text-left transition-colors hover:border-[#C9A227]"
             title={
               cityTierNext
-                ? `Rank ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name}. Lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình.`
+                ? `Rank ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name}. Lên ${cityTierNext.name} cần ${cityTierNext.minPopulation.toLocaleString('vi-VN')} cư dân và ${cityTierNext.minBuildings} công trình.${cityTierNext.unlocks ? ` Mở khóa: ${cityTierNext.unlocks.headline}.` : ''}`
                 : `Rank ${cityTier.rank}/${CITY_TIERS.length} - ${cityTier.name} (rank cao nhất).`
             }
           >

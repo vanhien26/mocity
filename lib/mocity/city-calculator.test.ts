@@ -15,7 +15,7 @@ import {
   taxMultiplierFromHappiness,
   HAPPINESS_BOOST_CAP,
 } from './city-calculator';
-import { BUILDINGS, BUILDING_BY_ID, STARTER_INVENTORY, upgradeCostCoins } from './mock-city-data';
+import { BUILDINGS, BUILDING_BY_ID, STARTER_INVENTORY, upgradeCostCoins, CITY_TIERS } from './mock-city-data';
 import { CITY_EVENTS, REQUEST_SCRIPTS } from './dialogue-data';
 import { SERVICE_TOOL } from './npc-data';
 import type { BuildingNode, NpcState } from './types';
@@ -483,5 +483,45 @@ describe('vat pham khong duoc tro thanh may in tien', () => {
     const allChoices = [...CITY_EVENTS, ...REQUEST_SCRIPTS].flatMap((s) => s.choices);
     const paying = allChoices.filter((c) => (c.effects.coins ?? 0) > 0);
     assert.deepEqual(paying, []);
+  });
+});
+
+
+describe('tien trinh theo bac - tier la truc mo khoa', () => {
+  it('moi cong trinh co unlockAtTier hop le (1..8)', () => {
+    for (const b of BUILDINGS) {
+      assert.ok(
+        Number.isInteger(b.unlockAtTier) && b.unlockAtTier >= 1 && b.unlockAtTier <= CITY_TIERS.length,
+        `${b.id} unlockAtTier=${b.unlockAtTier} ngoai [1..${CITY_TIERS.length}]`,
+      );
+    }
+  });
+
+  it('bac 1 phai mo duoc it nhat mot cong trinh (khong bi chan cung luc moi vao)', () => {
+    const atTier1 = BUILDINGS.filter((b) => b.unlockAtTier === 1);
+    assert.ok(atTier1.length >= 1, 'khong co cong trinh nao mo o bac 1');
+  });
+
+  it('CityTierDef.unlocks.buildingIds khop dung voi unlockAtTier cua cong trinh', () => {
+    for (const t of CITY_TIERS) {
+      const listed = new Set(t.unlocks?.buildingIds ?? []);
+      // moi id liet ke phai ton tai va dung bac
+      for (const id of listed) {
+        const def = BUILDING_BY_ID[id];
+        assert.ok(def, `bac ${t.rank} liet ke id khong ton tai: ${id}`);
+        assert.equal(def.unlockAtTier, t.rank, `${id} unlockAtTier=${def.unlockAtTier} nhung duoc liet ke o bac ${t.rank}`);
+      }
+      // moi cong trinh mo o bac nay phai nam trong danh sach cua bac do
+      for (const b of BUILDINGS.filter((x) => x.unlockAtTier === t.rank)) {
+        assert.ok(listed.has(b.id), `${b.id} mo o bac ${t.rank} nhung khong duoc liet ke trong unlocks`);
+      }
+    }
+  });
+
+  it('khong co bac nao bi bo trong hoan toan tu 1 toi bac cao nhat', () => {
+    for (let rank = 1; rank <= CITY_TIERS.length; rank++) {
+      const any = BUILDINGS.some((b) => b.unlockAtTier === rank);
+      assert.ok(any, `bac ${rank} khong mo khoa cong trinh nao - trong rong`);
+    }
   });
 });

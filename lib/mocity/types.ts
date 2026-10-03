@@ -594,6 +594,14 @@ export interface BuildingDef {
   hue: string;
   accent: string;
   unlockAtMayorLevel: number;
+  /**
+   * BAC THANH PHO toi thieu de mo khoa cong trinh nay (rank 1..8).
+   *
+   * Day la TRUC TIEN TRINH chinh: cong trinh mo theo bac do thi, khong phai
+   * theo cap Thi Truong. Len bac moi la su kien mo ra san pham tai chinh +
+   * nhom cong trinh moi (xem CityTierDef.unlocks).
+   */
+  unlockAtTier: number;
   /** COMMERCIAL: suc chua giao dich moi giay. */
   merchantCapacity?: number;
   /** FINTECH: cong them vao take rate cua thi truong. */

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { X, CircleDollarSign, Gem, Zap, Lock } from 'lucide-react';
-import { BUILDINGS, ZONES } from '@/lib/mocity/mock-city-data';
+import { BUILDINGS, ZONES, CITY_TIERS, cityTierFor } from '@/lib/mocity/mock-city-data';
+import { populationFor } from '@/lib/mocity/city-calculator';
 import { BUILDING_ICON } from './building-icons';
 import { useCity } from '@/lib/mocity/store';
 import { formatRate, formatCompact } from '@/lib/mocity/format';
@@ -23,7 +24,10 @@ export default function BuildDrawer({
   onPick: (def: BuildingDef) => void;
   canAfford: (def: BuildingDef) => boolean;
 }) {
-  const mayorLevel = useCity((s) => s.mayorLevel);
+  const buildings = useCity((s) => s.buildings);
+  // Bac do thi hien tai la TRUC mo khoa cong trinh (xem CityTierDef.unlocks).
+  const tierRank = cityTierFor(populationFor(buildings), buildings.length).rank;
+  const tierNameByRank = (rank: number) => CITY_TIERS.find((t) => t.rank === rank)?.name ?? `Bậc ${rank}`;
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -43,8 +47,8 @@ export default function BuildDrawer({
   const visible = BUILDINGS.filter(
     (b) => activeTab === 'ALL' || b.zone === activeTab,
   ).sort((a, b) => {
-    const aLocked = mayorLevel < a.unlockAtMayorLevel ? 1 : 0;
-    const bLocked = mayorLevel < b.unlockAtMayorLevel ? 1 : 0;
+    const aLocked = tierRank < a.unlockAtTier ? 1 : 0;
+    const bLocked = tierRank < b.unlockAtTier ? 1 : 0;
     if (aLocked !== bLocked) return aLocked - bLocked;
     return a.costCoins - b.costCoins;
   });
@@ -112,7 +116,7 @@ export default function BuildDrawer({
         <div className="no-scrollbar max-h-[52vh] space-y-2 overflow-y-auto px-4 pb-5">
           {visible.map((def) => {
             const zone = ZONES[def.zone];
-            const locked = mayorLevel < def.unlockAtMayorLevel;
+            const locked = tierRank < def.unlockAtTier;
             const affordable = canAfford(def);
             const Icon = BUILDING_ICON[def.icon];
 
@@ -156,7 +160,7 @@ export default function BuildDrawer({
                         style={{ background: 'rgba(0,0,0,0.08)', color: '#7A6449' }}
                       >
                         <Lock size={9} className="shrink-0" />
-                        Cấp {def.unlockAtMayorLevel}
+                        {tierNameByRank(def.unlockAtTier)}
                       </span>
                     )}
                   </span>
