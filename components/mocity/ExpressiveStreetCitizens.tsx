@@ -336,71 +336,51 @@ const CITIZEN_DEFS: CitizenDef[] = [
  */
 const WALK_CSS = `
 /*
- * CHU KỲ ĐI BỘ PIXEL ART.
+ * CHU KỲ ĐI BỘ CHIBI - khớp xoay liên tục.
  *
- * Bản cũ xoay khớp bằng rotate(). Xoay một khối pixel tạo ra cạnh chéo khử
- * răng cưa, thứ phá hỏng pixel art nhanh nhất. Ở đây chân tay DỊCH CHUYỂN
- * theo trục, đúng cách pixel art thật làm, nên mọi cạnh luôn thẳng hàng lưới.
+ * Quay lại rotate() sau khi thử pixel art bốn khung hình: ở khung 56x72 thì
+ * số khung hình thấp không đọc thành phong cách, nó đọc thành giật cục.
  *
- * steps(4) để khung hình NHẢY giữa bốn tư thế thay vì trôi mượt. Chuyển động
- * mượt là quy ước vector; pixel art sống bằng số khung hình thấp và rõ ràng.
- *
- * 1 ô lưới = 4 đơn vị SVG, nên mọi giá trị dịch chuyển đều là bội của 4.
+ * BẪY ĐÃ TỪNG DÍNH: thuộc tính transform của CSS animation GHI ĐÈ transform
+ * attribute của SVG. Nhóm nào vừa có translate(...) vừa có animation rotate()
+ * sẽ mất phần translate và rơi về gốc toạ độ - tay chân văng khỏi thân. Vì
+ * vậy translate nằm ở nhóm NGOÀI, nhóm trong chỉ xoay.
  */
 .cit-walk-anim .cit-lb,
 .cit-walk-anim .cit-lf,
 .cit-walk-anim .cit-ab,
-.cit-walk-anim .cit-af,
-.cit-walk-anim .cit-bw,
-.cit-walk-anim .cit-hw { will-change: transform; }
+.cit-walk-anim .cit-af { transform-origin: 0px 0px; will-change: transform; }
+.cit-walk-anim .cit-hw { transform-origin: 28px 30px; will-change: transform; }
+.cit-walk-anim .cit-bw { transform-origin: 28px 50px; will-change: transform; }
 
-.walking .cit-lb { animation: pxLegB var(--spd,0.6s) steps(4,end) infinite; }
-.walking .cit-lf { animation: pxLegF var(--spd,0.6s) steps(4,end) infinite; }
-.walking .cit-ab { animation: pxArmB var(--spd,0.6s) steps(4,end) infinite; }
-.walking .cit-af { animation: pxArmF var(--spd,0.6s) steps(4,end) infinite; }
-.walking .cit-bw { animation: pxBob  var(--spd,0.6s) steps(4,end) infinite; }
-.idle    .cit-bw { animation: pxIdle 2.4s steps(2,end) infinite; }
+.walking .cit-lb { animation: cbLegB var(--spd,0.6s) ease-in-out infinite; }
+.walking .cit-lf { animation: cbLegF var(--spd,0.6s) ease-in-out infinite; }
+.walking .cit-ab { animation: cbArmB var(--spd,0.6s) ease-in-out infinite; }
+.walking .cit-af { animation: cbArmF var(--spd,0.6s) ease-in-out infinite; }
+.walking .cit-bw { animation: cbBob  var(--spd,0.6s) ease-in-out infinite; }
+.walking .cit-hw { animation: cbHead calc(var(--spd,0.6s)*2) ease-in-out infinite; }
+.idle    .cit-bw { animation: cbSway 3.2s ease-in-out infinite; }
+.idle    .cit-hw { animation: cbSway 4.4s ease-in-out infinite; }
 
-/* Chân sau và chân trước lệch pha nửa chu kỳ. */
-@keyframes pxLegB {
-  0%   { transform: translateX(-4px) }
-  25%  { transform: translateX(0) }
-  50%  { transform: translateX(4px) }
-  75%  { transform: translateX(0) }
-  100% { transform: translateX(-4px) }
+/*
+ * Biên độ chân 26 độ, tay 20 độ. Chibi chân ngắn nên cùng một góc cho ra
+ * sải bước nhỏ hơn người tỷ lệ thường, phải mở rộng hơn mới thấy là đang đi.
+ */
+@keyframes cbLegF { 0%,100%{transform:rotate(-26deg)} 50%{transform:rotate(26deg)} }
+@keyframes cbLegB { 0%,100%{transform:rotate(26deg)}  50%{transform:rotate(-26deg)} }
+@keyframes cbArmF { 0%,100%{transform:rotate(20deg)}  50%{transform:rotate(-20deg)} }
+@keyframes cbArmB { 0%,100%{transform:rotate(-20deg)} 50%{transform:rotate(20deg)} }
+/* Thân nhún HAI lần mỗi chu kỳ, vì mỗi chu kỳ là hai bước chân. */
+@keyframes cbBob {
+  0%,100% { transform: translateY(0) }
+  25%     { transform: translateY(-2.2px) }
+  50%     { transform: translateY(0) }
+  75%     { transform: translateY(-2.2px) }
 }
-@keyframes pxLegF {
-  0%   { transform: translateX(4px) }
-  25%  { transform: translateX(0) }
-  50%  { transform: translateX(-4px) }
-  75%  { transform: translateX(0) }
-  100% { transform: translateX(4px) }
-}
-/* Tay vung ngược chiều chân cùng bên, đúng dáng người đi. */
-@keyframes pxArmB {
-  0%   { transform: translateX(4px) }
-  50%  { transform: translateX(-4px) }
-  100% { transform: translateX(4px) }
-}
-@keyframes pxArmF {
-  0%   { transform: translateX(-4px) }
-  50%  { transform: translateX(4px) }
-  100% { transform: translateX(-4px) }
-}
-/* Thân nhún một ô ở hai khung giữa bước. */
-@keyframes pxBob {
-  0%   { transform: translateY(0) }
-  25%  { transform: translateY(-4px) }
-  50%  { transform: translateY(0) }
-  75%  { transform: translateY(-4px) }
-  100% { transform: translateY(0) }
-}
-/* Đứng yên: thở nhẹ, hai khung hình. */
-@keyframes pxIdle {
-  0%   { transform: translateY(0) }
-  50%  { transform: translateY(-4px) }
-  100% { transform: translateY(0) }
-}
+/* Đầu lắc nhẹ lệch pha với chân, nếu cùng pha sẽ thành gật gù máy móc. */
+@keyframes cbHead { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+@keyframes cbSway { 0%,100%{transform:rotate(-1.4deg)} 50%{transform:rotate(1.4deg)} }
+
 @keyframes citBubblePop {
   0% { opacity: 0; transform: translateY(6px) scale(0.92); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -527,156 +507,181 @@ function darker(hex: string): string {
   return best;
 }
 
+/**
+ * Nắn màu da trong DẢI DA RIÊNG, không qua bảng chung.
+ *
+ * Màu da gốc của 12 cư dân đều rất sáng (#FDE6D2, #FFF1E6). Qua bảng chung
+ * thì bậc gần nhất là #F0E6CE - đúng màu giấy và màu tường vôi, nên khuôn mặt
+ * đọc thành mặt nạ trắng bệch lẫn vào nền. Da là loại màu có ý nghĩa riêng,
+ * không được để nó cạnh tranh bậc với vôi và giấy.
+ */
+const DA_RAMP = ['#C98F68', '#E0A87E', '#EFC49C'];
+
+function nearestSkin(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  let best = DA_RAMP[0];
+  let bestD = Infinity;
+  for (const c of DA_RAMP) {
+    const d =
+      (r - parseInt(c.slice(1, 3), 16)) ** 2 +
+      (g - parseInt(c.slice(3, 5), 16)) ** 2 +
+      (b - parseInt(c.slice(5, 7), 16)) ** 2;
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+
 /** Nắn màu áo sao cho không trùng màu da, nếu không nhìn như không mặc áo. */
 function tachKhoiDa(ao: string, da: string): string {
   return ao === da ? darker(ao) : ao;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NHÂN VẬT CHIBI ĐƠN GIẢN
+ *
+ * Thay bản pixel art ở lượt trước. Pixel art ở khung 56x72 với chu kỳ bốn
+ * khung hình ra cứng như máy: kích thước quá nhỏ để số khung hình thấp đọc
+ * thành phong cách, nó chỉ đọc thành giật cục.
+ *
+ * Chibi giữ được cảm giác tự nhiên vì tay chân xoay quanh khớp theo đường
+ * cong liên tục. Đánh đổi: bớt retro hơn pixel. Bảng màu thời kỳ vẫn giữ để
+ * nhân vật không tách khỏi bối cảnh đã ngả màu.
+ *
+ * TỶ LỆ: đầu chiếm 46% chiều cao. Đó là ngưỡng chibi - thấp hơn thì thành
+ * người thường thu nhỏ, ở 56px sẽ không đọc được nét mặt.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmotion }) {
-  /*
-   * Nắn toàn bộ màu của nhân vật về bảng hạn chế. Màu gốc của 12 cư dân rải
-   * tự do khắp dải RGB; giữ nguyên thì dù vẽ bằng khối vuông vẫn ra cảm giác
-   * vector hiện đại vì màu quá nhiều và quá tươi.
-   */
-  const da = nearest(def.skinColor);
+  const da = nearestSkin(def.skinColor);
   const daToi = darker(da);
   const ao = tachKhoiDa(nearest(def.shirtColor), da);
   const aoToi = darker(ao);
   const quan = nearest(def.pantsColor);
-  const giay = darker(quan);
+  const quanToi = darker(quan);
   const toc = nearest(def.hairColor);
   const nhan = nearest(def.accentColor);
   const muc = '#2B2420';
 
-  /** Mắt và miệng theo cảm xúc. Mỗi nét là một khối, không có nét cong. */
+  /** Một chi: hình viên thuốc bo tròn, vẽ từ khớp đổ xuống. */
+  const Chi = ({ fill, dai, day = 7 }: { fill: string; dai: number; day?: number }) => (
+    <rect x={-day / 2} y={0} width={day} height={dai} rx={day / 2} fill={fill} />
+  );
+
   const mat = (() => {
     switch (emotion) {
       case 'STAR_EYES':
         return (
           <>
-            <B x={5} y={3} fill="#D9A441" />
-            <B x={8} y={3} fill="#D9A441" />
-            <B x={6} y={5} w={2} fill={muc} />
+            <path d="M20 17 L21.4 20 L24.4 21.4 L21.4 22.8 L20 25.8 L18.6 22.8 L15.6 21.4 L18.6 20 Z" fill={muc} />
+            <path d="M36 17 L37.4 20 L40.4 21.4 L37.4 22.8 L36 25.8 L34.6 22.8 L31.6 21.4 L34.6 20 Z" fill={muc} />
+            <path d="M23 28 Q28 33 33 28 Z" fill={muc} />
           </>
         );
       case 'SURPRISED':
         return (
           <>
-            <B x={5} y={3} h={2} fill={muc} />
-            <B x={8} y={3} h={2} fill={muc} />
-            <B x={6} y={5} fill={muc} />
+            <circle cx="20" cy="21" r="3.4" fill={muc} />
+            <circle cx="36" cy="21" r="3.4" fill={muc} />
+            <ellipse cx="28" cy="29" rx="3" ry="3.8" fill={muc} />
           </>
         );
       case 'TIRED':
         return (
           <>
-            <B x={5} y={4} fill={muc} />
-            <B x={8} y={4} fill={muc} />
-            <B x={6} y={5} w={2} fill={muc} />
+            <rect x="16.5" y="20" width="7" height="2.4" rx="1.2" fill={muc} />
+            <rect x="32.5" y="20" width="7" height="2.4" rx="1.2" fill={muc} />
+            <rect x="24" y="28.5" width="8" height="2.2" rx="1.1" fill={muc} />
           </>
         );
-      default: // HAPPY
+      default:
         return (
           <>
-            <B x={5} y={3} fill={muc} />
-            <B x={8} y={3} fill={muc} />
-            <B x={5} y={5} fill={muc} />
-            <B x={6} y={5} w={2} fill={da} />
-            <B x={8} y={5} fill={muc} />
+            <circle cx="20" cy="21" r="2.8" fill={muc} />
+            <circle cx="36" cy="21" r="2.8" fill={muc} />
+            <path d="M23.4 27.6 Q28 32.4 32.6 27.6 Q28 30 23.4 27.6 Z" fill={muc} />
           </>
         );
     }
   })();
 
-  /** Tóc và mũ. Mỗi kiểu là một mảng khối riêng. */
   const dauToc = (() => {
     switch (def.hairStyle) {
       case 'NON_LA':
         return (
           <>
-            <B x={6} y={0} w={2} fill="#E8C46A" />
-            <B x={5} y={1} w={4} fill="#D9A441" />
-            <B x={3} y={2} w={8} fill="#A8701F" />
+            <path d="M28 -8 L48 9 L8 9 Z" fill="#D9A441" />
+            <path d="M28 -8 L34 2 L22 2 Z" fill="#E8C46A" />
+            <rect x="6" y="8" width="44" height="3.4" rx="1.7" fill="#A8701F" />
           </>
         );
       case 'CAP_YELLOW':
         return (
           <>
-            <B x={4} y={1} w={6} fill="#D9A441" />
-            <B x={3} y={2} w={4} fill="#A8701F" />
+            <path d="M10 10 Q28 -8 46 10 Z" fill="#D9A441" />
+            <rect x="4" y="9" width="26" height="3.6" rx="1.8" fill="#A8701F" />
           </>
         );
       case 'HELMET_BLUE':
         return (
           <>
-            <B x={4} y={0} w={6} fill="#5C7390" />
-            <B x={3} y={1} w={8} fill="#3E4C63" />
-            <B x={3} y={2} h={2} fill="#3E4C63" />
-            <B x={10} y={2} h={2} fill="#3E4C63" />
+            <path d="M8 13 Q28 -10 48 13 Z" fill="#3E4C63" />
+            <rect x="7" y="11.5" width="42" height="3.4" rx="1.7" fill="#262F3D" />
           </>
         );
       case 'BALD_GLASSES':
         return (
           <>
-            <B x={4} y={1} w={6} fill={daToi} />
-            <B x={4} y={3} w={2} fill="#3E4C63" />
-            <B x={8} y={3} w={2} fill="#3E4C63" />
-            <B x={6} y={3} w={2} fill="#3E4C63" />
+            <path d="M12 10 Q28 -4 44 10 Z" fill={daToi} />
+            <circle cx="20" cy="21" r="6" fill="none" stroke="#3E4C63" strokeWidth="2" />
+            <circle cx="36" cy="21" r="6" fill="none" stroke="#3E4C63" strokeWidth="2" />
+            <rect x="25" y="20" width="6" height="2" fill="#3E4C63" />
           </>
         );
       case 'BOB':
         return (
           <>
-            <B x={4} y={1} w={6} fill={toc} />
-            <B x={3} y={2} h={3} fill={toc} />
-            <B x={10} y={2} h={3} fill={toc} />
+            <path d="M9 20 Q9 -4 28 -4 Q47 -4 47 20 Q42 10 28 10 Q14 10 9 20 Z" fill={toc} />
+            <rect x="7.5" y="14" width="5" height="18" rx="2.5" fill={toc} />
+            <rect x="43.5" y="14" width="5" height="18" rx="2.5" fill={toc} />
           </>
         );
       case 'BUN':
         return (
           <>
-            <B x={6} y={0} w={2} fill={toc} />
-            <B x={4} y={1} w={6} fill={toc} />
-            <B x={3} y={2} fill={toc} />
-            <B x={10} y={2} fill={toc} />
+            <circle cx="28" cy="-5" r="6.5" fill={toc} />
+            <path d="M9 18 Q9 -3 28 -3 Q47 -3 47 18 Q42 9 28 9 Q14 9 9 18 Z" fill={toc} />
           </>
         );
       case 'PONYTAIL':
         return (
           <>
-            <B x={4} y={1} w={6} fill={toc} />
-            <B x={3} y={2} fill={toc} />
-            <B x={10} y={2} h={4} fill={toc} />
+            <path d="M44 6 Q56 16 50 32 L45 29 Q49 18 40 10 Z" fill={toc} />
+            <path d="M9 18 Q9 -3 28 -3 Q47 -3 47 18 Q42 9 28 9 Q14 9 9 18 Z" fill={toc} />
           </>
         );
-      default: // SHORT
-        return (
-          <>
-            <B x={4} y={1} w={6} fill={toc} />
-            <B x={3} y={2} fill={toc} />
-            <B x={10} y={2} fill={toc} />
-          </>
-        );
+      default:
+        return <path d="M9 18 Q9 -3 28 -3 Q47 -3 47 18 Q42 9 28 9 Q14 9 9 18 Z" fill={toc} />;
     }
   })();
 
-  /** Đồ cầm tay, treo ở bàn tay phải (cột 10). */
   const doCam = (() => {
+    const g = (child: React.ReactNode) => <g transform="translate(44,46)">{child}</g>;
     switch (def.heldItem) {
       case 'MILK_TEA':
-        return (<><B x={10} y={12} fill="#E3D6B4" /><B x={10} y={11} fill="#8A6A43" /></>);
+        return g(<><rect x="-4" y="0" width="8" height="10" rx="1.5" fill="#E3D6B4" /><rect x="-4.6" y="-2" width="9.2" height="2.6" rx="1.3" fill="#8A6A43" /></>);
       case 'SHOPPING_BAG':
-        return (<><B x={10} y={12} w={2} h={2} fill={nhan} /><B x={10} y={11} w={2} fill={darker(nhan)} /></>);
+        return g(<><rect x="-5" y="0" width="10" height="11" rx="1.5" fill={nhan} /><path d="M-2.6 0 Q0 -5 2.6 0" fill="none" stroke={darker(nhan)} strokeWidth="1.6" /></>);
       case 'BRIEFCASE':
-        return (<><B x={10} y={12} w={2} h={2} fill="#6B4A2F" /><B x={10} y={11} w={2} fill="#4A3B30" /></>);
+        return g(<><rect x="-6" y="0" width="12" height="9" rx="1.5" fill="#6B4A2F" /><rect x="-2" y="-2.4" width="4" height="2.6" fill="#4A3B30" /></>);
       case 'LOTTERY_FAN':
-        return (<><B x={10} y={11} w={3} fill="#F0E6CE" /><B x={11} y={12} w={2} fill="#E3D6B4" /></>);
+        return g(<><rect x="-3" y="-1" width="7" height="11" rx="1" fill="#F0E6CE" transform="rotate(14)" /><rect x="0" y="-2" width="7" height="11" rx="1" fill="#E3D6B4" transform="rotate(-10)" /></>);
       case 'PHONE_QR':
-        return (<><B x={10} y={11} h={2} fill="#2B2420" /><B x={10} y={11} fill="#A9BEB4" /></>);
+        return g(<><rect x="-3.4" y="-1" width="6.8" height="11" rx="1.4" fill="#2B2420" /><rect x="-2.2" y="0.4" width="4.4" height="7" fill="#A9BEB4" /></>);
       case 'LAPTOP':
-        return (<><B x={10} y={12} w={2} fill="#8C9BB0" /><B x={10} y={11} w={2} fill="#5C7390" /></>);
+        return g(<><rect x="-6" y="2" width="12" height="2.6" rx="1" fill="#8C9BB0" /><rect x="-5" y="-5" width="10" height="7" rx="1" fill="#5C7390" /></>);
       case 'CAMERA':
-        return (<><B x={10} y={11} w={2} h={2} fill="#3E4C63" /><B x={11} y={12} fill="#8C9BB0" /></>);
+        return g(<><rect x="-6" y="0" width="12" height="8.4" rx="1.6" fill="#3E4C63" /><circle cx="0" cy="4.2" r="3" fill="#8C9BB0" /></>);
       default:
         return null;
     }
@@ -684,48 +689,35 @@ function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmot
 
   return (
     <>
-      {/* Bóng đổ: một dải khối, không phải ellipse mờ. */}
-      <B x={4} y={17} w={6} fill="rgba(43,36,32,0.3)" />
+      <ellipse cx="28" cy="69" rx="13" ry="2.6" fill="rgba(43,36,32,0.22)" />
 
       <g className="cit-bw">
-        {/* CHÂN SAU - đứng sau thân nên vẽ trước */}
-        <g className="cit-lb">
-          <B x={4} y={12} w={2} h={4} fill={darker(quan)} />
-          <B x={3} y={16} w={3} fill={giay} />
-        </g>
-        {/* CHÂN TRƯỚC */}
-        <g className="cit-lf">
-          <B x={8} y={12} w={2} h={4} fill={quan} />
-          <B x={8} y={16} w={3} fill={giay} />
-        </g>
+        {/* CHÂN - khớp ở hông, xoay quanh gốc toạ độ của nhóm trong */}
+        <g transform="translate(23,47)"><g className="cit-lb"><Chi fill={quanToi} dai={17} /></g></g>
+        <g transform="translate(33,47)"><g className="cit-lf"><Chi fill={quan} dai={17} /></g></g>
 
         {/* TAY SAU */}
-        <g className="cit-ab">
-          <B x={3} y={7} h={4} fill={aoToi} />
-          <B x={3} y={11} fill={da} />
-        </g>
+        <g transform="translate(16,34)"><g className="cit-ab"><Chi fill={aoToi} dai={15} day={6} /></g></g>
 
-        {/* THÂN */}
-        <B x={4} y={7} w={6} h={5} fill={ao} />
-        <B x={4} y={7} w={6} fill={aoToi} />
-        {def.hasTie && <B x={6} y={7} w={2} h={3} fill={nhan} />}
-        {!def.hasTie && <B x={6} y={9} w={2} fill={nhan} />}
-        {/* Thắt lưng */}
-        <B x={4} y={11} w={6} fill={darker(quan)} />
+        {/* THÂN - bo tròn, thu lại ở eo cho dáng chibi */}
+        <path d="M17 32 Q28 29 39 32 L37.5 50 Q28 53 18.5 50 Z" fill={ao} />
+        <path d="M17 32 Q28 29 39 32 L38.4 37 Q28 34 17.6 37 Z" fill={aoToi} />
+        {def.hasTie ? (
+          <path d="M26.6 31 L29.4 31 L30.6 43 L28 45.4 L25.4 43 Z" fill={nhan} />
+        ) : (
+          <circle cx="28" cy="40" r="2.6" fill={nhan} />
+        )}
 
         {/* TAY TRƯỚC */}
-        <g className="cit-af">
-          <B x={10} y={7} h={4} fill={ao} />
-          <B x={10} y={11} fill={da} />
-        </g>
+        <g transform="translate(40,34)"><g className="cit-af"><Chi fill={ao} dai={15} day={6} /></g></g>
         {doCam}
 
-        {/* ĐẦU */}
+        {/* ĐẦU - chiếm 46% chiều cao, tỷ lệ chibi */}
         <g className="cit-hw">
-          <B x={6} y={6} w={2} fill={daToi} />
-          <B x={4} y={2} w={6} h={4} fill={da} />
-          <B x={4} y={5} w={6} fill={daToi} />
-          <B x={4} y={5} w={6} fill={da} />
+          <rect x="24.5" y="27" width="7" height="6" fill={daToi} />
+          <circle cx="28" cy="21" r="17" fill={da} />
+          <ellipse cx="17.5" cy="25" rx="3.2" ry="2" fill="#C97A4A" opacity="0.5" />
+          <ellipse cx="38.5" cy="25" rx="3.2" ry="2" fill="#C97A4A" opacity="0.5" />
           {mat}
           {dauToc}
         </g>

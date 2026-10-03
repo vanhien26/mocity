@@ -10,7 +10,7 @@ const PROMOS = [
     title: 'Quét QR MoMo hoàn 15%',
     desc: 'Mua sắm tại cửa hàng đối tác, hoàn tối đa 50.000đ/ngày.',
     cta: 'Quét ngay',
-    color: '#EB2F96',
+    color: '#A8246B',
   },
   {
     id: 'bnpl-deal',
@@ -18,7 +18,7 @@ const PROMOS = [
     title: 'Mua trước trả sau 0% lãi',
     desc: 'Chia 3 kỳ không lãi suất, không cần thẻ ngân hàng.',
     cta: 'Kích hoạt',
-    color: '#7C3AED',
+    color: '#5C4A73',
   },
   {
     id: 'transfer-free',
@@ -26,7 +26,7 @@ const PROMOS = [
     title: 'Chuyển tiền miễn phí 100%',
     desc: 'Chuyển nội mạng MoMo không mất phí, nhanh 24/7.',
     cta: 'Chuyển ngay',
-    color: '#0EA5E9',
+    color: '#5C7390',
   },
   {
     id: 'savings',
@@ -34,7 +34,7 @@ const PROMOS = [
     title: 'Lãi suất 5.8%/năm',
     desc: 'Gửi linh hoạt, rút bất kỳ lúc nào, lãi trả hàng ngày.',
     cta: 'Gửi ngay',
-    color: '#16A34A',
+    color: '#4A6B5A',
   },
 ];
 
@@ -70,20 +70,20 @@ function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign
           {isWalking ? (
             <>
               <g className="momo-leg-l">
-                <rect x="17" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
-                <ellipse cx="21" cy="72" rx="6" ry="3" fill="#B81F68" />
+                <rect x="17" y="58" width="8" height="13" rx="4" fill="#D9A0BE" />
+                <ellipse cx="21" cy="72" rx="6" ry="3" fill="#73164A" />
               </g>
               <g className="momo-leg-r">
-                <rect x="31" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
-                <ellipse cx="35" cy="72" rx="6" ry="3" fill="#B81F68" />
+                <rect x="31" y="58" width="8" height="13" rx="4" fill="#D9A0BE" />
+                <ellipse cx="35" cy="72" rx="6" ry="3" fill="#73164A" />
               </g>
             </>
           ) : (
             <>
-              <rect x="17" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
-              <ellipse cx="21" cy="72" rx="6" ry="3" fill="#B81F68" />
-              <rect x="31" y="58" width="8" height="13" rx="4" fill="#F2C2DB" />
-              <ellipse cx="35" cy="72" rx="6" ry="3" fill="#B81F68" />
+              <rect x="17" y="58" width="8" height="13" rx="4" fill="#D9A0BE" />
+              <ellipse cx="21" cy="72" rx="6" ry="3" fill="#73164A" />
+              <rect x="31" y="58" width="8" height="13" rx="4" fill="#D9A0BE" />
+              <ellipse cx="35" cy="72" rx="6" ry="3" fill="#73164A" />
             </>
           )}
 
@@ -91,71 +91,71 @@ function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign
           {/* Tay trái */}
           {holdingSign ? (
             <g style={{ transformOrigin: '15px 42px', transform: 'rotate(-35deg)' }}>
-              <rect x="8" y="36" width="7" height="16" rx="3.5" fill="#F2C2DB" />
-              <rect x="-15" y="17" width="32" height="20" rx="5" fill="#EB2F96" />
+              <rect x="8" y="36" width="7" height="16" rx="3.5" fill="#D9A0BE" />
+              <rect x="-15" y="17" width="32" height="20" rx="5" fill="#A8246B" />
               <rect x="-13" y="19" width="28" height="16" rx="3" fill="#FFFDF7" />
-              <text x="1" y="26" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">KHUYẾN</text>
-              <text x="1" y="33" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#EB2F96" fontFamily="sans-serif">MÃI HOT</text>
+              <text x="1" y="26" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#A8246B" fontFamily="sans-serif">KHUYẾN</text>
+              <text x="1" y="33" textAnchor="middle" fontSize="5.5" fontWeight="900" fill="#A8246B" fontFamily="sans-serif">MÃI HOT</text>
             </g>
           ) : (
             <g className={isWalking ? 'momo-arm-l' : ''}>
-              <rect x="8" y="40" width="7" height="14" rx="3.5" fill="#F2C2DB" />
+              <rect x="8" y="40" width="7" height="14" rx="3.5" fill="#D9A0BE" />
             </g>
           )}
 
           {/* Body */}
-          <rect x="15" y="38" width="26" height="22" rx="9" fill="#FDE8F3" />
-          <path d="M15.4 52.5 Q28 57.5 40.6 52.5 L40.2 55.4 Q28 60 15.8 55.4 Z" fill="#EDC0D8" />
+          <rect x="15" y="38" width="26" height="22" rx="9" fill="#EBD7E0" />
+          <path d="M15.4 52.5 Q28 57.5 40.6 52.5 L40.2 55.4 Q28 60 15.8 55.4 Z" fill="#C98FAE" />
           {/* Lô gô m */}
-          <circle cx="28" cy="49" r="6" fill="#EB2F96" opacity="0.15" />
-          <text x="28" y="52.5" textAnchor="middle" fontSize="9" fontWeight="900" fill="#C0226E" fontFamily="sans-serif">m</text>
+          <circle cx="28" cy="49" r="6" fill="#A8246B" opacity="0.15" />
+          <text x="28" y="52.5" textAnchor="middle" fontSize="9" fontWeight="900" fill="#73164A" fontFamily="sans-serif">m</text>
 
           {/* Tay phải - vẫy */}
           <g className={isWalking ? 'momo-arm-r' : ''}>
-            <rect x="41" y="34" width="7" height="14" rx="3.5" fill="#F2C2DB" />
-            <ellipse cx="44.5" cy="32" rx="5" ry="4" fill="#F2C2DB" />
-            {/* Ngón tay */}
-            <ellipse cx="42" cy="29" rx="2" ry="1.5" fill="#F2C2DB" />
-            <ellipse cx="45.5" cy="28.5" rx="2" ry="1.5" fill="#F2C2DB" />
-            <ellipse cx="49" cy="30" rx="2" ry="1.5" fill="#F2C2DB" />
+            <rect x="41" y="34" width="7" height="14" rx="3.5" fill="#D9A0BE" />
+            <ellipse cx="44.5" cy="32" rx="5" ry="4" fill="#D9A0BE" />
+            {/*
+             * Bỏ ba ngón tay rời. Cư dân chibi chỉ có bàn tay là một khối,
+             * mascot chi tiết hơn hẳn sẽ tách khỏi phần còn lại của phố.
+             */}
           </g>
 
           {/* === ĐẦU === */}
           {/* Tai bên */}
-          <ellipse cx="10" cy="22" rx="5.5" ry="10" fill="#EB2F96" />
-          <ellipse cx="46" cy="22" rx="5.5" ry="10" fill="#EB2F96" />
+          <ellipse cx="10" cy="22" rx="5.5" ry="10" fill="#A8246B" />
+          <ellipse cx="46" cy="22" rx="5.5" ry="10" fill="#A8246B" />
           {/* Tai trong */}
-          <ellipse cx="10" cy="22" rx="2.5" ry="6" fill="#F472B6" />
-          <ellipse cx="46" cy="22" rx="2.5" ry="6" fill="#F472B6" />
+          <ellipse cx="10" cy="22" rx="2.5" ry="6" fill="#B8307A" />
+          <ellipse cx="46" cy="22" rx="2.5" ry="6" fill="#B8307A" />
           {/* Sừng */}
-          <ellipse cx="18" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" style={{ transform: 'rotate(-15deg)', transformOrigin: '18px 3.5px' }} />
-          <ellipse cx="38" cy="3.5" rx="3.5" ry="5.5" fill="#EB2F96" style={{ transform: 'rotate(15deg)', transformOrigin: '38px 3.5px' }} />
+          <ellipse cx="18" cy="3.5" rx="3.5" ry="5.5" fill="#A8246B" style={{ transform: 'rotate(-15deg)', transformOrigin: '18px 3.5px' }} />
+          <ellipse cx="38" cy="3.5" rx="3.5" ry="5.5" fill="#A8246B" style={{ transform: 'rotate(15deg)', transformOrigin: '38px 3.5px' }} />
           {/* Đầu chính */}
-          <ellipse cx="28" cy="17" rx="18" ry="17" fill="#EB2F96" />
+          <ellipse cx="28" cy="17" rx="18" ry="17" fill="#A8246B" />
           {/* Highlight đầu */}
-          <path d="M14.6 12.4 Q20 4.6 29.4 3.4 L29.8 6.2 Q21.6 7.6 17.4 13.8 Z" fill="#F265AC" />
+          <path d="M14.6 12.4 Q20 4.6 29.4 3.4 L29.8 6.2 Q21.6 7.6 17.4 13.8 Z" fill="#B8307A" />
           {/* Mặt */}
-          <ellipse cx="28" cy="22" rx="13.5" ry="14" fill="#FFF0F5" />
+          <ellipse cx="28" cy="22" rx="13.5" ry="14" fill="#F0E6CE" />
 
           {/* Lông mày */}
-          <path d="M18.2 15.1 Q21.5 12.1 24.8 15.1 L24.1 16.4 Q21.5 13.8 18.9 16.4 Z" fill="#C0226E" />
-          <path d="M31.2 15.1 Q34.5 12.1 37.8 15.1 L37.1 16.4 Q34.5 13.8 31.9 16.4 Z" fill="#C0226E" />
+          <path d="M18.2 15.1 Q21.5 12.1 24.8 15.1 L24.1 16.4 Q21.5 13.8 18.9 16.4 Z" fill="#73164A" />
+          <path d="M31.2 15.1 Q34.5 12.1 37.8 15.1 L37.1 16.4 Q34.5 13.8 31.9 16.4 Z" fill="#73164A" />
 
           {/* Mắt */}
           <circle cx="21.5" cy="21" r="5" fill="white" />
           <circle cx="34.5" cy="21" r="5" fill="white" />
-          <circle cx="21.5" cy="22" r="3.2" fill="#C0226E" />
-          <circle cx="34.5" cy="22" r="3.2" fill="#C0226E" />
+          <circle cx="21.5" cy="22" r="3.2" fill="#73164A" />
+          <circle cx="34.5" cy="22" r="3.2" fill="#73164A" />
           {/* Pupil nhỏ */}
           <circle cx="22.5" cy="21" r="1.2" fill="white" />
           <circle cx="35.5" cy="21" r="1.2" fill="white" />
 
           {/* Má hồng */}
-          <ellipse cx="14" cy="26.5" rx="4" ry="2.5" fill="#FFA8CC" />
-          <ellipse cx="42" cy="26.5" rx="4" ry="2.5" fill="#FFA8CC" />
+          <ellipse cx="14" cy="26.5" rx="4" ry="2.5" fill="#C98FAE" />
+          <ellipse cx="42" cy="26.5" rx="4" ry="2.5" fill="#C98FAE" />
 
           {/* Miệng cười */}
-          <path d="M21 29 Q28 35.5 35 29" fill="#EB2F96" />
+          <path d="M21 29 Q28 35.5 35 29" fill="#A8246B" />
           <path d="M22 29 Q28 34 34 29" fill="white" />
         </g>
       </svg>
@@ -312,7 +312,7 @@ export default function MoMoMascot({
           {bubbleText && (
             <div
               className="mb-1 w-max max-w-[240px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 px-2.5 py-1 text-[10px] font-black shadow-md"
-              style={{ borderColor: '#EB2F96', background: '#FFF0F7', color: '#C0226E' }}
+              style={{ borderColor: '#A8246B', background: '#F0E6CE', color: '#73164A' }}
             >
               {bubbleText}
             </div>
@@ -321,7 +321,7 @@ export default function MoMoMascot({
           {holdingSign && (
             <div
               className="absolute -inset-3 -z-10 rounded-full opacity-30 animate-ping"
-              style={{ background: 'radial-gradient(circle, #EB2F96 0%, transparent 70%)' }}
+              style={{ background: 'radial-gradient(circle, #A8246B 0%, transparent 70%)' }}
             />
           )}
 
@@ -333,7 +333,7 @@ export default function MoMoMascot({
             style={{ transform: `scaleX(${dir})` }}
           >
             <MascotSvg isWalking={isWalking} holdingSign={holdingSign} />
-            <span className="pointer-events-none absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#EB2F96] px-2 py-0.5 text-[8px] font-black text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#A8246B] px-2 py-0.5 text-[8px] font-black text-white opacity-0 transition-opacity group-hover:opacity-100">
               MoMo Mascot ✦
             </span>
           </button>
