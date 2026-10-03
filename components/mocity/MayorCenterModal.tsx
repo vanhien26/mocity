@@ -703,7 +703,6 @@ export default function MayorCenterModal({
                         ? `Lv.${state.mayorLevel} (tối đa)`
                         : `Lv.${state.mayorLevel} · ${formatNumber(state.mayorXp)}/${formatNumber(xpForLevel(state.mayorLevel))} XP`,
                     ],
-                    ['Bảo Vật đang trang bị', `${(state.equippedRelics ?? []).length} / 3`],
                   ].map(([label, value]) => (
                     <div
                       key={label}

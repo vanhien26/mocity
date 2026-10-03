@@ -322,24 +322,13 @@ describe('addMayorXp - khong cap thieu cap khi len nhieu cap mot luc', () => {
   });
 });
 
-describe('q-fever-mode - khong con la bait 60 giay', () => {
-  /**
-   * `feverUntil > 0` chi true trong 60 giay. Nguoi choi bat Fever roi di lam
-   * viec khac thi quest (18.000 Xu + 8 Kim Cuong) khong bao gio claim duoc -
-   * `claimedQuests` la vinh vien.
-   */
-  const base = () => normalizeStoredState(v3Save({ feverUntil: 0 }), NOW);
-
-  it('chua mo Fever thi quest chua hoan thanh', () => {
-    assert.equal(isQuestCompleted('q-fever-mode', base()), false);
-  });
-
-  it('het cua so 60 giay van giu duoc tinh trang da tung mo', () => {
-    const s = normalizeStoredState(currentSave({ feverUntil: 0, feverEverUsed: true }), NOW);
-    assert.equal(s.feverUntil <= NOW, true, 'fever da het');
-    assert.equal(isQuestCompleted('q-fever-mode', s), true);
-  });
-
+/*
+ * Giờ Vàng/Fever đã bỏ cùng toàn bộ hệ Bảo Vật/buff - không còn nút bấm,
+ * không còn vật phẩm, không còn quest `q-fever-mode`. Các field
+ * feverUntil/feverEverUsed vẫn còn trong CityState CHỈ để save cũ đọc được
+ * mà không vỡ migration, nên vẫn kiểm chuẩn hoá đúng cho các field đó.
+ */
+describe('field feverUntil/feverEverUsed cu - chi con giu cho tuong thich save', () => {
   it('migration tu save dang chay Fever khong phat nguoi choi', () => {
     const s = normalizeStoredState(
       JSON.stringify({ ...JSON.parse(v3Save()), version: 4, feverUntil: NOW + 30_000 }),

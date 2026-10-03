@@ -52,7 +52,6 @@ import {
   placeBuilding,
   resolveEvent,
   resolveRequest,
-  triggerFeverMode,
   triggerNextEvent,
   claimCityTierRewards,
   IDLE_XP_DAILY_CAP,
@@ -63,8 +62,6 @@ import {
   useCityDerived,
   useCityHydrated,
   MAX_MAYOR_LEVEL,
-  FEVER_COST_GEMS,
-  FEVER_PER_DAY,
   type PlaceResult,
   type UpgradeResult,
 } from '@/lib/mocity/store';
@@ -137,7 +134,7 @@ export default function MoCityPage() {
   const [mayorModalOpen, setMayorModalOpen] = useState(false);
   const [mayorModalTab, setMayorModalTab] = useState<'PROFILE' | 'QUESTS' | 'CITIZENS'>('PROFILE');
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  const [inventoryTab, setInventoryTab] = useState<'ITEMS' | 'RELICS' | 'CHARACTERS'>('ITEMS');
+  const [inventoryTab, setInventoryTab] = useState<'ITEMS' | 'CHARACTERS'>('ITEMS');
   /*
    * Guong `ref` cua cac modal. Effect tu mo Chuyen Pho doc qua day thay vi qua
    * deps: dua truc tiep vao deps se huy va dat lai hen gio moi lan nguoi choi
@@ -655,27 +652,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     }
   }, [floatNumber, showToast]);
 
-  const handleTriggerFever = useCallback(() => {
-    if (derived.isFever) {
-      showToast('Giờ Vàng x2 Doanh Thu đang hoạt động!');
-      return;
-    }
-    if (derived.feverLeftToday <= 0) {
-      showToast(`Hôm nay đã dùng hết ${FEVER_PER_DAY} lượt Giờ Vàng. Mai sẽ có thêm.`);
-      return;
-    }
-    if (triggerFeverMode()) {
-      shake(8);
-      particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
-      floatNumber(window.innerWidth / 2, window.innerHeight * 0.3, 'GIỜ VÀNG x2 XU! 🔥', '#B33A2B');
-      showToast(
-        `Đã kích hoạt Giờ Vàng MoCity! Còn ${derived.feverLeftToday - 1} lượt hôm nay.`,
-      );
-    } else {
-      showToast(`Cần ${FEVER_COST_GEMS} Kim Cương để kích hoạt Giờ Vàng x2 Xu.`);
-    }
-  }, [derived.isFever, derived.feverLeftToday, floatNumber, shake, showToast]);
-
   const handleClaimOffline = useCallback(() => {
     particles.coinShower(window.innerWidth / 2, window.innerHeight * 0.5, 25);
     claimOffline();
@@ -966,20 +942,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           {/* Time of Day */}
           <TimeOfDaySwitcher />
 
-          {/* Fever x2 */}
-          <button
-            type="button"
-            onClick={handleTriggerFever}
-            className={cn(
-              'flex h-9 items-center gap-1 rounded-lg border px-2 text-[10px] font-black transition-transform active:scale-95',
-              derived.isFever
-                ? 'border-amber-500 bg-amber-600/50 text-amber-200 animate-pulse'
-                : 'border-[#A8246B]/60 bg-[#A8246B]/10 text-[#A8246B] hover:bg-[#A8246B]/30',
-            )}
-          >
-            <span>{derived.isFever ? '⚡x2' : 'x2'}</span>
-          </button>
-
           {/* Mayor profile */}
           <button
             type="button"
@@ -1222,7 +1184,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   setInventoryOpen(true);
                 }}
                 className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Kho Đồ & Bảo Vật"
+                title="Kho Đồ & Quà Tặng"
               >
                 <Package size={15} className="shrink-0 text-[#A8246B]" />
                 <span className="text-[9px] font-black leading-none">Kho Đồ</span>

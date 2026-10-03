@@ -88,19 +88,17 @@ const EVENT_INTERVAL_MS = 35 * 1000;
 /**
  * Giá + thời lượng Giờ Vàng x2 doanh thu.
  *
- * Giá nâng từ 2 lên 5: thu nhập một ngày 10-12 Kim Cương từ nhiệm vụ, nên
- * giá 2 nghĩa là nửa ngày đã nghèo kim cương, tài sản tích trữ không có ý
- * nghĩa. Giá 5 thì giữ được vai trò: có lựa chọn phải suy nghĩ.
- */
-export const FEVER_COST_GEMS = 5;
-export const FEVER_DURATION_MS = 60 * 1000;
-/**
- * Trần số lần bật Giờ Vàng trong ngày.
+ * Giá nâng từ 2 lên 5...
  *
- * Không có trần thì mọi thứ trên trở nên vô nghĩa: bấm liên tục tới khi hết
- * kim cương là đồng ý mọi lúc, và không có lý do phải lưu lại.
+ * KHÔNG CÒN DÙNG NỮA. Giờ Vàng (Fever x2 doanh thu) đã bỏ cùng toàn bộ hệ
+ * Bảo Vật/buff - không còn nút bấm, không còn vật phẩm nào kích hoạt được.
+ * `feverUntil`/`feverEverUsed`/`feverUsedToday`/`feverDay` vẫn còn trong
+ * `CityState` CHỈ để save cũ đọc được mà không vỡ migration; không có
+ * đường nào ghi giá trị mới vào các field đó nữa nên chúng tự nhiên bất
+ * động. `isFever` trong `flowFor` vẫn là tham số hợp lệ - các test gọi
+ * trực tiếp hàm thuần này để kiểm chứng công thức nhân đôi, tách biệt khỏi
+ * việc trò chơi có đường nào bật nó hay không.
  */
-export const FEVER_PER_DAY = 2;
 
 /**
  * Toi da so su kien toan pho Thieu Truong duoc giai quyet trong mot ngay.
@@ -182,7 +180,9 @@ function createInitialState(): CityState {
     unlockedManagers: [],
     claimedQuests: [],
     inventory: { ...STARTER_INVENTORY },
-    equippedRelics: ['relic-heo-vang'],
+    // Truoc day trang bi san 'relic-heo-vang' (+25% doanh thu MIEN PHI ngay
+    // tu phut dau). Khong con RELIC nao trong INVENTORY_ITEMS nua nen de rong.
+    equippedRelics: [],
     feverUntil: 0,
     feverEverUsed: false,
     feverUsedToday: 0,
@@ -554,10 +554,14 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     Object.keys(migrated.inventory).length > 0
       ? { ...STARTER_INVENTORY, ...migrated.inventory }
       : { ...STARTER_INVENTORY };
-  merged.equippedRelics =
-    Array.isArray(migrated.equippedRelics) && migrated.equippedRelics.length > 0
-      ? migrated.equippedRelics
-      : ['relic-heo-vang'];
+  /*
+   * Save cu co the con id Relic (vd 'relic-heo-vang') trong mang nay - giu
+   * nguyen, vo hai: INVENTORY_BY_ID khong con muc nao nhu vay nen vong lap
+   * tinh yield bonus se bo qua qua `if (!def) continue`. Chi doi gia tri
+   * MAC DINH khi mang rong/thieu, truoc day la trang bi san mot Relic mien
+   * phi, gio khong con Relic nao de trang bi nua.
+   */
+  merged.equippedRelics = Array.isArray(migrated.equippedRelics) ? migrated.equippedRelics : [];
 
   merged.coins = Number.isFinite(merged.coins) ? Math.max(0, merged.coins) : 0;
   merged.gems = Number.isFinite(merged.gems) ? Math.max(0, merged.gems) : 0;
@@ -878,48 +882,6 @@ export function completeMayorLogin(mayorName: string, cityName: string, bonusCoi
   // Dang nhap la "mo game" - ghi nhan vao chuoi ngay choi lien tiep.
   registerStreak();
   return loginBonus;
-}
-
-/**
- * So lan Giờ Vàng được dùng trong ngày hôm nay.
- *
- * Đọc qua hàm thay vì đọc thẳng field: bộ đếm phải tự về 0 khi sang ngày
- * mới, mà field nằm trong state thì không có cái may thời gian để tự về.
- */
-export function feverUsedToday(): number {
-  if (state.feverDay !== todayKey(Date.now())) return 0;
-  return state.feverUsedToday ?? 0;
-}
-
-/** Số lần Giờ Vàng còn dùng được hôm nay. */
-export function feverLeftToday(): number {
-  return Math.max(0, FEVER_PER_DAY - feverUsedToday());
-}
-
-/**
- * Bật Giờ Vàng. Trả `false` khi đang chạy, hết lượt trong ngày, hoặc thiếu KC.
- *
- * `FEVER_COST_GEMS` đã nâng lên 5 và thêm `FEVER_PER_DAY`. Trước đây giá
- * chỉ 2 KC, thu nhập một ngày 10-12 KC từ nhiệm vụ: người chơi bấm 5 lần là
- * cạn kim cương, nên kim cương chỉ là tiền trang trí chứ không phải tài
- * sản tích trữ. Có trần trong ngày thì nó mới đáng để giữ.
- */
-export function triggerFeverMode(): boolean {
-  const now = Date.now();
-  if (state.feverUntil > now) return false;
-  if (feverLeftToday() <= 0) return false;
-  if (state.gems < FEVER_COST_GEMS) return false;
-  setState({
-    ...state,
-    gems: state.gems - FEVER_COST_GEMS,
-    feverUntil: now + FEVER_DURATION_MS,
-    feverDay: todayKey(now),
-    feverUsedToday: feverUsedToday() + 1,
-    // Ghi nhan vĩnh viễn: quest `q-fever-mode` phai hoan thanh duoc ke ca
-    // sau khi 60 giay Fever da het.
-    feverEverUsed: true,
-  });
-  return true;
 }
 
 /**
@@ -1479,30 +1441,7 @@ export function useInventoryItem(itemId: string): UseItemResult {
   const qty = state.inventory?.[itemId] ?? 0;
   if (qty <= 0) return { ok: false, message: 'Bạn đã dùng hết vật phẩm này trong Kho Đồ.' };
 
-  if (def.category === 'RELIC') {
-    const equipped = state.equippedRelics ?? [];
-    if (equipped.includes(itemId)) {
-      setState({
-        ...state,
-        equippedRelics: equipped.filter((id) => id !== itemId),
-      });
-      return { ok: true, message: `Đã tháo trang bị "${def.name}".` };
-    }
-    if (equipped.length >= 3) {
-      return {
-        ok: false,
-        message: 'Tối đa trang bị 3 Bảo Vật cùng lúc. Hãy tháo 1 Bảo Vật trước!',
-      };
-    }
-    setState({
-      ...state,
-      equippedRelics: [...equipped, itemId],
-    });
-    return {
-      ok: true,
-      message: `Đã trang bị Bảo Vật "${def.name}"! (${def.effectSummary})`,
-    };
-  }
+  // Không còn RELIC nào trong INVENTORY_ITEMS nên nhánh trang bị đã bỏ.
 
   // Giảm 1 số lượng đối với CONSUMABLE và GIFT
   const nextInv = { ...(state.inventory ?? {}), [itemId]: Math.max(0, qty - 1) };
@@ -1516,8 +1455,10 @@ export function useInventoryItem(itemId: string): UseItemResult {
    * `buyInventoryItem` khong chan so luong mua, chi can vong lap mua-ban la
    * pha het do kinh te - dung thu may in tien da gap o `hydrateCity`.
    *
-   * Bay gio XU chi den tu do kinh te cua thanh pho. Vat pham tra day keo:
-   * Uy tin (mo khoa QR), Kim Cuong, Giờ Vàng (x2 doanh thu), va cap do.
+   * Bay gio XU chi den tu do kinh te cua thanh pho. Vat pham GIFT con lai chi
+   * tra Tin Cay/Hanh Phuc cho NPC - khong con item nao buff truc tiep nguoi
+   * choi hay thanh pho nua (Loa Phuong, Giờ Vàng, Bao Li Xi, Bản Vẽ Quy
+   * Hoạch va 4 Relic da bo het, xem chu thich o INVENTORY_ITEMS).
    */
   const boostAllTrust = (n: number) => {
     nextState.npcs = nextState.npcs.map((npc) =>
@@ -1530,58 +1471,6 @@ export function useInventoryItem(itemId: string): UseItemResult {
       Math.max(0, (nextState.happinessBoost ?? 0) + n),
     );
   };
-
-  if (itemId === 'item-loa-phuong') {
-    boostAllTrust(20);
-    boostHappiness(8);
-    setState(nextState);
-    return {
-      ok: true,
-      message:
-        'Đã phát Loa Phường Vàng! +20 Tin Cậy toàn bộ Cư dân & +8 Hạnh Phúc. Bà con gọi đúng tên tiệm mình, kể cả mấy chỗ chưa lắp QR.',
-    };
-  }
-
-  if (itemId === 'item-lenh-bai-gio-vang') {
-    nextState.feverUntil = Date.now() + FEVER_DURATION_MS;
-    nextState.feverEverUsed = true;
-    setState(nextState);
-    return {
-      ok: true,
-      message: 'Đã kích hoạt Lệnh Bài Giờ Vàng! Nhân đôi doanh thu toàn phố trong 60 giây!',
-    };
-  }
-
-  if (itemId === 'item-bao-li-xi') {
-    nextState.gems = (nextState.gems ?? 0) + 18;
-    boostHappiness(6);
-    setState(nextState);
-    return {
-      ok: true,
-      message: 'Mở Bao Lì Xì Lộc Phát 68: nhận ngay +18 Kim Cương & +6 Hạnh Phúc!',
-    };
-  }
-
-  if (itemId === 'item-ban-ve-quy-hoach') {
-    if (nextState.buildings.length === 0) {
-      setState(nextState);
-      return {
-        ok: false,
-        message: 'Chưa có công trình nào để áp dụng Bản Vẽ Quy Hoạch. Hãy mở ít nhất một tiệm trước.',
-      };
-    }
-    nextState.buildings = nextState.buildings.map((b) => {
-      const bDef = BUILDING_BY_ID[b.defId];
-      const maxLv = bDef ? bDef.maxLevel : 20;
-      return { ...b, level: Math.min(maxLv, b.level + 1) };
-    });
-    Object.assign(nextState, addMayorXp(nextState, 100));
-    setState(nextState);
-    return {
-      ok: true,
-      message: `Đã dùng Bản Vẽ Quy Hoạch! Toàn bộ ${nextState.buildings.length} cửa tiệm trên phố được +1 Cấp miễn phí!`,
-    };
-  }
 
   if (itemId === 'gift-tra-sua') {
     boostAllTrust(25);
@@ -2338,13 +2227,8 @@ export function isQuestCompleted(questId: string, s: CityState): boolean {
       return s.buildings.some((b) => !!b.managerId);
     case 'q-star-evolve':
       return s.buildings.some((b) => (b.starRating || 1) >= 2);
-    case 'q-fever-mode':
-      /**
-       * Dung `feverEverUsed`, KHONG dung `feverUntil > 0`. Cua so 60 giay la
-       * qua nho so voi thoi gian nguoi choi phai tim nut "Nhan thuong" - het
-       * la 18.000 Xu + 8 Kim Cuong bay hoan toan.
-       */
-      return s.feverEverUsed === true || (s.feverUntil ?? 0) > 0;
+    case 'q-two-managers':
+      return s.buildings.filter((b) => !!b.managerId).length >= 2;
     case 'q-expand-city':
       return s.buildings.length >= 6 && populationFor(s.buildings) >= 200;
 
@@ -2519,8 +2403,6 @@ export interface CityDerived extends FlowBreakdown {
   weekCompare: WeekComparison;
   /** Số phần tư bảo vệ chuỗi ngày còn lại. */
   streakShields: number;
-  /** Số lần Giờ Vàng còn dùng được hôm nay. */
-  feverLeftToday: number;
   population: number;
   taxMultiplier: number;
   landCost: number;
@@ -2645,8 +2527,6 @@ export function useCityDerived(): CityDerived {
   const dailySnapshots = useCity((s) => s.dailySnapshots ?? EMPTY_SNAPSHOTS);
   const ledgerDay = useCity((s) => s.ledgerDay);
   const streakShields = useCity((s) => s.streak?.shields ?? 0);
-  const feverUsedTodayRaw = useCity((s) => s.feverUsedToday ?? 0);
-  const feverDayRaw = useCity((s) => s.feverDay ?? '');
 
   return useMemo(() => {
     let relicYieldBonus = 0;
@@ -2719,10 +2599,6 @@ relicHappinessBonus: relicHappyBonus,
       happiness,
       weekCompare,
       streakShields,
-      feverLeftToday: Math.max(
-        0,
-        FEVER_PER_DAY - (feverDayRaw === todayKey(lastSeenAt) ? feverUsedTodayRaw : 0),
-      ),
       population: danSo,
       taxMultiplier: taxMultiplierFromHappiness(happiness),
       landCost: landCostCoins(unlockedCols, unlockedRows),
@@ -2764,8 +2640,6 @@ relicHappinessBonus: relicHappyBonus,
     dailySnapshots,
     ledgerDay,
     streakShields,
-    feverUsedTodayRaw,
-    feverDayRaw,
   ]);
 }
 

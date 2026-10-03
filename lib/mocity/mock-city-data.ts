@@ -713,9 +713,14 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
     rewardXp: 1_300,
   },
   {
-    id: 'q-fever-mode',
-    title: 'Bật Nhạc Lên! Kích Hoạt Giờ Vàng Siêu Sale x2 XU',
-    description: 'Bấm nút “Giờ Vàng x2” trên thanh HUD để cả thành phố bước vào đại tiệc săn deal nhân đôi tốc độ kiếm XU.',
+    /*
+     * Thay cho q-fever-mode cũ (bấm nút Giờ Vàng x2) - nút đó đã bỏ cùng
+     * toàn bộ hệ Bảo Vật/buff. Thưởng giữ nguyên, điều kiện đổi sang một
+     * hành động thật không tạo thêm doanh thu miễn phí: thuê đủ 2 Quản Lý.
+     */
+    id: 'q-two-managers',
+    title: 'Mở Rộng Ê Kíp - Thuê 2 Quản Lý Cùng Lúc',
+    description: 'Mở bảng Quản Lý Cửa Hàng và bổ nhiệm Quản Lý cho 2 cửa tiệm khác nhau.',
     rewardCoins: 1_600,
     rewardGems: 8,
     stage: 1,
@@ -922,103 +927,21 @@ export function xpForLevel(level: number): number {
 /** Backward-compat: dung cho cac component chi can 1 con so tuong doi. */
 export const MAYOR_XP_PER_LEVEL = 500;
 
+/**
+ * KHÔNG CÒN VẬT PHẨM TRANG BỊ HAY BUFF.
+ *
+ * Trước đây có 4 CONSUMABLE (Loa Phường, Giờ Vàng x2, Bao Lì Xì, Bản Vẽ Quy
+ * Hoạch +1 cấp miễn phí) và 4 RELIC (Bảo Vật trang bị, cộng dồn tới +90%
+ * doanh thu nếu trang bị đủ 3 cái). Bỏ thẳng, không giảm nhẹ: thành phố mới
+ * tạo còn tự động trang bị sẵn `relic-heo-vang` (+25%) và tặng kèm
+ * `relic-cup-qr` (+30%) MIỄN PHÍ trong `STARTER_INVENTORY` - một người chơi
+ * mới vào game đã có +55% doanh thu không tốn một Xu nào, đè thẳng lên
+ * đường cân bằng kinh tế vừa chỉnh theo nhóm công trình.
+ *
+ * Chỉ còn GIFT - quà tặng cho NPC để tăng Tín Cậy/Hạnh Phúc, không phải tự
+ * buff bản thân hay thành phố.
+ */
 export const INVENTORY_ITEMS: InventoryItemDef[] = [
-  {
-    id: 'item-loa-phuong',
-    name: 'Loa Phường Phát Thanh Vàng',
-    category: 'CONSUMABLE',
-    rarity: 'SR',
-    description: 'Phát sóng thông báo khuyến mãi toàn khu phố, thu hút dòng người mua sắm tấp nập.',
-    effectSummary: 'Tăng +20 Tin Cậy toàn bộ Cư dân & +8 Hạnh Phúc',
-    hue: '#EB2F96',
-    costCoins: 18_000,
-    costGems: 0,
-  },
-  {
-    id: 'item-lenh-bai-gio-vang',
-    name: 'Lệnh Bài Giờ Vàng Siêu Ứng Dụng',
-    category: 'CONSUMABLE',
-    rarity: 'SSR',
-    description: 'Ấn lệnh đặc quyền của Thị Trưởng mở hội mua sắm đêm, nhân đôi tốc độ thu ngân.',
-    effectSummary: 'Kích hoạt ngay 60 giây Giờ Vàng x2 Doanh Thu toàn phố',
-    hue: '#F59E0B',
-    costCoins: 25_000,
-    costGems: 0,
-  },
-  {
-    id: 'item-bao-li-xi',
-    name: 'Bao Lì Xì Lộc Phát 68',
-    category: 'CONSUMABLE',
-    rarity: 'SR',
-    description: 'Phong bao lì xì đỏ thắm chứa ngân phiếu may mắn và Kim Cương từ Tòa Thị Chính.',
-    effectSummary: 'Mở nhận ngay +18 Kim Cương & +6 Hạnh Phúc',
-    hue: '#EF4444',
-    costCoins: 45_000,
-    costGems: 0,
-  },
-  {
-    id: 'item-ban-ve-quy-hoach',
-    name: 'Bản Vẽ Quy Hoạch Cấp Tốc',
-    category: 'CONSUMABLE',
-    rarity: 'SSR',
-    description: 'Bản thiết kế kiến trúc chuẩn Đô Thị 3D giúp nâng tầng đồng loạt các cửa tiệm đang hoạt động.',
-    effectSummary: 'Tăng ngay +1 Cấp miễn phí cho mọi cửa hàng trên phố',
-    hue: '#2563EB',
-    costCoins: 80_000,
-    costGems: 2,
-  },
-  {
-    id: 'relic-heo-vang',
-    name: 'Tượng Heo Vàng Thịnh Vượng',
-    category: 'RELIC',
-    rarity: 'SSR',
-    description: 'Bảo vật phong thủy của MoCity. Khi đặt tại Tòa Thị Chính giúp toàn bộ cửa tiệm buôn may bán đắt.',
-    effectSummary: 'Trang bị: +25% Doanh Thu Xu/giây toàn thành phố',
-    hue: '#F59E0B',
-    costCoins: 120_000,
-    costGems: 3,
-    passiveYieldBonus: 0.25,
-    passiveHappinessBonus: 5,
-  },
-  {
-    id: 'relic-so-do',
-    name: 'Sổ Đỏ Đại Lộ Hoa Sữa',
-    category: 'RELIC',
-    rarity: 'SR',
-    description: 'Chứng nhận quy hoạch đất vàng mặt tiền giúp tăng giá trị bất động sản và niềm vui khu dân cư.',
-    effectSummary: 'Trang bị: +15% Doanh Thu Xu/giây & +12 Điểm Hạnh Phúc',
-    hue: '#16A34A',
-    costCoins: 75_000,
-    costGems: 2,
-    passiveYieldBonus: 0.15,
-    passiveHappinessBonus: 12,
-  },
-  {
-    id: 'relic-cup-qr',
-    name: 'Cúp Thương Hiệu Quét QR Quốc Dân',
-    category: 'RELIC',
-    rarity: 'SSR',
-    description: 'Danh hiệu cao quý trao cho khu phố dẫn đầu thanh toán không tiền mặt và Loa Thần Tài.',
-    effectSummary: 'Trang bị: +30% Doanh Thu Xu/giây & +8 Điểm Hạnh Phúc',
-    hue: '#D82D8B',
-    costCoins: 150_000,
-    costGems: 4,
-    passiveYieldBonus: 0.30,
-    passiveHappinessBonus: 8,
-  },
-  {
-    id: 'relic-the-den',
-    name: 'Thẻ Đen Đặc Quyền Thị Trưởng',
-    category: 'RELIC',
-    rarity: 'SSR',
-    description: 'Thẻ kim loại giới hạn kết nối trực tiếp với Tháp Tài Chính và Sàn Chứng Khoán MoCity.',
-    effectSummary: 'Trang bị: +35% Doanh Thu Xu/giây & +10 Điểm Hạnh Phúc',
-    hue: '#7C3AED',
-    costCoins: 180_000,
-    costGems: 5,
-    passiveYieldBonus: 0.35,
-    passiveHappinessBonus: 10,
-  },
   {
     id: 'gift-tra-sua',
     name: 'Ly Trà Sữa Full Topping',
@@ -1048,12 +971,6 @@ export const INVENTORY_BY_ID: Record<string, InventoryItemDef> = Object.fromEntr
 );
 
 export const STARTER_INVENTORY: Record<string, number> = {
-  'item-loa-phuong': 2,
-  'item-lenh-bai-gio-vang': 2,
-  'item-bao-li-xi': 3,
-  'item-ban-ve-quy-hoach': 1,
-  'relic-heo-vang': 1,
-  'relic-cup-qr': 1,
   'gift-tra-sua': 3,
   'gift-hop-qua-tet': 1,
 };

@@ -142,8 +142,8 @@ export const CITY_ADVISORS: AdvisorDef[] = [
     id: 'advisor-heo-vang',
     name: 'Bé Heo Vàng MoMo',
     roleTitle: 'Sứ giả Sự kiện & Phúc lợi',
-    specialty: 'Giờ Vàng Siêu Ứng Dụng (Fever x2 Xu)',
-    tip: 'Trang bị Tượng Heo Vàng trong Kho Đồ và bật Giờ Vàng để nhân đôi doanh thu toàn phố!',
+    specialty: 'Sự kiện phố & Quà tặng cư dân',
+    tip: 'Ghé Kho Đồ mời bà con Trà Sữa hoặc trao Hộp Quà Đoàn Viên để tăng Tín Cậy cả khu phố!',
     hue: '#EB2F96',
   },
   {
@@ -167,7 +167,7 @@ export const CITY_ADVISORS: AdvisorDef[] = [
     name: 'Bảo Ngọc KOC',
     roleTitle: 'Reviewer Ẩm Thực & Điện Ảnh',
     specialty: 'Livestream quảng bá & Kéo khách Gen Z',
-    tip: 'Dùng Loa Phường Phát Thanh Vàng trong Kho Đồ để +20 Tin Cậy toàn khu phố, đủ để mấy chủ tiệm chịu quét QR!',
+    tip: 'Lắp Loa Thần Tài cho tiệm là tụi em có cớ quay clip review, kéo khách Gen Z xuống phố liền!',
     hue: '#8B5CF6',
   },
   {
@@ -182,8 +182,8 @@ export const CITY_ADVISORS: AdvisorDef[] = [
     id: 'advisor-giao-su-khai',
     name: 'Chuyên Gia Khải Chứng Khoán',
     roleTitle: 'Cố vấn Sàn Giao Dịch & Quỹ Mở',
-    specialty: 'Quản trị vốn & Bảo vật Thị Trưởng',
-    tip: 'Đừng quên mở Kho Đồ để trang bị tối đa 3 Bảo Vật Thị Trưởng giúp cộng dồn tới +90% sản lượng Xu!',
+    specialty: 'Quản trị vốn & Dòng tiền',
+    tip: 'Đọc kỹ Sổ Cái trước khi vay vốn - hạn mức tính theo lợi nhuận hoạt động, không phải theo doanh thu!',
     hue: '#7C3AED',
   },
 ];

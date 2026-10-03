@@ -134,16 +134,16 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
           'Bơm tiền từ ví cá nhân vào quỹ là chữa đúng bệnh nhưng chữa khỏi bệnh, không phải chữa bệnh. Kế toán phố vẫn thưa bạn: "Giảm chi phí vận hành đi Thị Trưởng!"',
       },
       {
-        id: 'sell-relic',
-        text: 'Bán Bảo Vật trang bị đang gây hại hiệu quả, thu tiền về bơm ngay vào quỹ',
+        id: 'pause-expansion',
+        text: 'Tạm ngừng mở rộng, dồn hết lợi nhuận hoạt động vào quỹ vận hành cho tới khi an toàn trở lại',
         btnTone: 'blue',
         tags: [
-          { label: 'mất bonus Bảo Vật', tone: 'red' },
-          { label: 'tiền về ngay', tone: 'green' },
+          { label: 'hệ số an toàn tăng dần', tone: 'green' },
+          { label: 'tốc độ mở rộng chậm lại', tone: 'red' },
         ],
         effects: { trustAll: 4, xp: 60, happiness: 6 },
         reply:
-          'Tháo Bảo Vật ra bán được giá tốt, nhưng doanh thu mỗi giây tụt luôn theo. Bạn phải chọn giữ dòng tiền hay giữ tốc độ kiếm tiền, không thể giữ cả hai.',
+          'Không xây thêm, không nâng cấp - để lợi nhuận tự bù lại quỹ vận hành. Chậm hơn nhưng không phải bán thứ gì để chữa cháy. Kế toán phố gật đầu: "Vậy mới gọi là kỷ luật tài chính!"',
       },
       {
         id: 'keep-draining',

@@ -2,31 +2,10 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { normalizeStoredState } from './store';
-import { FEVER_COST_GEMS, FEVER_PER_DAY } from './store';
 import { STREAK_SHIELD_DAY, STREAK_SHIELD_MAX } from './store';
 
 /** Moc thoi gian co dinh cho test chuan hoa save. */
 const NOW = 1_700_000_000_000;
-
-describe('Gio Vang - phai co gia va tran', () => {
-  it('gia phai du de Kim Cương la tai san tich tru chu khong phai tien trang tri', () => {
-    // Thu nhap mot ngay tu 5 nhiem vu daily la 10-12 KC. Gia 2 nghia la nua
-    // ngay da ngheo, nen gia phai lon hon.
-    assert.ok(
-      FEVER_COST_GEMS >= 5,
-      `gia ${FEVER_COST_GEMS} qua re so voi thu nhap 10-12 KC/ngay`,
-    );
-  });
-
-  it('phanh vien gia tri khi tran trong ngay', () => {
-    assert.ok(FEVER_PER_DAY >= 1 && FEVER_PER_DAY <= 3, `tran ${FEVER_PER_DAY} qua lon hoac qua nho`);
-  });
-
-  it('mien bac dau cho 20 KC nen cham toi duoc tran ngay', () => {
-    // 20 KC / 5 KC = 4 lan, nhung tran 2 nen chan o 2.
-    assert.ok(20 / FEVER_COST_GEMS > FEVER_PER_DAY, 'tran phai thu hon so lan cham duoc');
-  });
-});
 
 describe('phieu bao vui chuoi ngay', () => {
   const base = { version: 9, streak: { days: 0, lastDay: '', best: 0 } };
@@ -61,7 +40,13 @@ describe('phieu bao vui chuoi ngay', () => {
   });
 });
 
-describe('Gio Vang - mat kiem cuong sang ngay moi', () => {
+/*
+ * Giờ Vàng đã bỏ cùng toàn bộ hệ buff - không còn đường nào ghi
+ * feverUsedToday/feverDay nữa. Field vẫn còn trong CityState chỉ để save cũ
+ * đọc được mà không vỡ migration, nên vẫn kiểm chuẩn hoá đúng chứ không
+ * phải vì mục đích dùng cũ.
+ */
+describe('field feverUsedToday/feverDay cu - chi con giu cho tuong thich save', () => {
   it('b dem chua co gia tri mac dinh ve 0', () => {
     const s = normalizeStoredState(JSON.stringify({ version: 9 }), 1_700_000_000_000);
     assert.equal(s.feverUsedToday, 0);
