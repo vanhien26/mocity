@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { claimTapReward, recordCitizenTalk, spendCoins } from '@/lib/mocity/store';
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
+import { useGameJuice } from '@/lib/mocity/useGameJuice';
 import {
   CITIZEN_SCRIPTS,
   FINANCE_TAG_META,
@@ -107,6 +108,17 @@ export interface ShopAnchor {
   label: string;
   /** Số chỗ phục vụ đồng thời, tăng theo cấp tiệm. */
   capacity: number;
+  /**
+   * Doanh thu tiệm này tạo ra mỗi giây, ở CẤP ĐỘ CÔNG TRÌNH hiện tại.
+   *
+   * Dùng để hiển thị "+X Xu" khi một khách rời quầy sau khi được phục vụ.
+   * Đây là số liệu THẬT lấy từ cùng công thức nuôi `flowFor`, không phải số
+   * random - nhưng chỉ dùng để HIỂN THỊ, tuyệt đối không cộng thêm vào ví.
+   * Tiền thật đã chảy liên tục qua `tickIdle` mỗi giây rồi; vẽ "+X Xu" ở đây
+   * là tô đậm một khoảnh khắc của dòng tiền đó, không phải tạo dòng tiền
+   * thứ hai. Cộng thêm sẽ phá đường cân bằng kinh tế vừa chỉnh.
+   */
+  yieldPerSec: number;
 }
 
 /** shopId -> số khách đang xếp. */
@@ -756,6 +768,15 @@ export default function ExpressiveStreetCitizens({
   const walkBoundRef = useRef(Math.max(360, streetWidth - 140));
   walkBoundRef.current = Math.max(360, streetWidth - 140);
 
+  /*
+   * `floatNumber` tao tu hook nen phai luu vao ref de goi trong vong RAF -
+   * cung ly do voi `onQueueChangeRef` o duoi: dong trong lan render dau se
+   * thanh closure cu vinh vien.
+   */
+  const { floatNumber } = useGameJuice();
+  const floatNumberRef = useRef(floatNumber);
+  floatNumberRef.current = floatNumber;
+
   /**
    * Danh sach tiem giu trong ref.
    *
@@ -949,7 +970,31 @@ export default function ExpressiveStreetCitizens({
                * vẫn xếp hàng (đó là chuyện bình thường ở quán đông) nhưng phải
                * chờ lâu hơn, nên thời gian phục vụ nhân theo độ dài hàng.
                */
-              if (sim.serviceTimer > SERVICE_SECONDS + sim.queueSlot * 2.4) {
+              const phucVuGiay = SERVICE_SECONDS + sim.queueSlot * 2.4;
+              if (sim.serviceTimer > phucVuGiay) {
+                /*
+                 * GIAO DỊCH: khách vừa trả tiền cho đúng tiệm này.
+                 *
+                 * Số Xu hiển thị lấy từ `shop.yieldPerSec` - doanh thu THẬT
+                 * của tiệm ở cấp hiện tại, cùng công thức nuôi `flowFor` -
+                 * nhân với thời gian khách vừa đứng tại quầy. Đây CHỈ LÀ HIỂN
+                 * THỊ: tiền thật đã chảy liên tục qua `tickIdle` mỗi giây rồi,
+                 * nên tuyệt đối KHÔNG gọi hàm cộng Xu ở đây. Cộng thêm sẽ
+                 * cộng tiền hai lần và phá đường cân bằng kinh tế.
+                 */
+                const container = containerRefs.current[i];
+                if (shop.yieldPerSec > 0 && container) {
+                  const rect = container.getBoundingClientRect();
+                  const soTien = Math.max(1, Math.round(shop.yieldPerSec * phucVuGiay));
+                  floatNumberRef.current(
+                    rect.left + rect.width / 2,
+                    rect.top,
+                    `+${formatCompact(soTien)} Xu`,
+                    '#4A6B5A',
+                  );
+                  particles.coinShower(rect.left + rect.width / 2, rect.top, 5);
+                }
+
                 sim.behavior = 'WALKING';
                 sim.queueShopId = null;
                 sim.queueSlot = -1;

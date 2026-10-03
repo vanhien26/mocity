@@ -375,6 +375,8 @@ export default function ViaHeStreetBoard({
             x: 132 + 16 + idx * 236 + 118,
             label: plot.def.shortName,
             capacity: queueCapacityFor(plot.node),
+            // Dung cho hien thi "+X Xu" khi khach roi quay - xem chu thich ShopAnchor.
+            yieldPerSec: nodeYieldBreakdown(plot.node, buildings).totalPerSec,
           },
         ];
       }),
