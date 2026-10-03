@@ -669,3 +669,131 @@ export default function ShophouseFacade({
     </div>
   );
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Ô ĐẤT TRỐNG - HÀNG RÀO TÔN QUÂY, CỌC GỖ, ĐẤT TRỐNG
+ *
+ * Trước đây ô chưa xây vẫn dựng nguyên căn nhà 3 tầng, chỉ đổi biển hiệu
+ * thành "MẶT TIỀN TRỐNG" và kéo cửa sắt xuống. Nhìn thì cả dãy phố lúc nào
+ * cũng kín nhà, nên người chơi không thấy phố LỚN LÊN khi mình xây - thứ
+ * đáng ra là phần thưởng rõ nhất của việc mở tiệm.
+ *
+ * Bản vẽ đầu dùng đất màu #B9A882 nên dính luôn vào vỉa hè #D9BE8C ở dưới,
+ * hai dải thành một mảng nâu liền và cọc thì chìm mất. Giờ dùng hàng rào tôn
+ * quây - thứ thực sự đứng ở mọi lô đất bỏ không tại Việt Nam - nên có một
+ * mảng đứng, màu khác hẳn mặt đường, đọc ngay ra là "chỗ này chưa có nhà".
+ * ═══════════════════════════════════════════════════════════════════════════ */
+export function EmptyLot({
+  houseNumber,
+  unlocked,
+  timeOfDay = 'DAY',
+  onOpenBuild,
+}: {
+  houseNumber: number;
+  unlocked: boolean;
+  timeOfDay?: TimeOfDay;
+  onOpenBuild?: () => void;
+}) {
+  const isNight = timeOfDay === 'NIGHT';
+
+  /* Tôn cũ: xanh rêu bạc màu, loang gỉ. Khác hẳn tông vàng của vỉa hè. */
+  const ton = unlocked
+    ? (isNight ? '#2E4038' : '#6E8C72')
+    : (isNight ? '#38332B' : '#8A8578');
+  const tonDam = shade(ton, 0.72);
+  const gi = isNight ? '#5A3A22' : '#A8701F';
+  const dat = isNight ? '#2E2820' : '#7E6C4E';
+  const go = isNight ? '#3A2E24' : '#5C4228';
+
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpenBuild?.();
+      }}
+      className="relative w-full cursor-pointer"
+      style={{ height: 150 }}
+    >
+      {/* ── Dải đất lộ ra phía trên hàng rào ── */}
+      <div
+        className="absolute inset-x-0"
+        style={{
+          bottom: 92,
+          height: 14,
+          backgroundColor: dat,
+          backgroundImage: `repeating-linear-gradient(32deg, ${shade(dat, 0.8)} 0 2px, transparent 2px 11px)`,
+        }}
+      >
+        {/* Cỏ dại nhú lên khỏi mép đất */}
+        {[12, 29, 48, 67, 86].map((x, i) => (
+          <span
+            key={i}
+            className="absolute bottom-full"
+            style={{
+              left: `${x}%`,
+              width: 3,
+              height: 5 + ((houseNumber + i * 3) % 6),
+              backgroundColor: isNight ? '#2F4A3C' : '#5F7A4A',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ── HÀNG RÀO TÔN ── */}
+      <div
+        className="absolute inset-x-0 overflow-hidden"
+        style={{
+          bottom: 0,
+          height: 92,
+          backgroundColor: ton,
+          /* Sóng tôn: dải sáng tối xen kẽ chạy dọc. */
+          backgroundImage: `repeating-linear-gradient(90deg, ${tonDam} 0 2px, ${ton} 2px 7px, ${shade(ton, 1.08)} 7px 9px, ${ton} 9px 14px)`,
+          borderTop: `3px solid ${shade(ton, 1.12)}`,
+          borderBottom: `4px solid ${tonDam}`,
+        }}
+      >
+        {/* Vệt gỉ sét loang xuống, vị trí theo số nhà nên mỗi lô một kiểu */}
+        <span
+          className="absolute opacity-50"
+          style={{ left: `${8 + (houseNumber * 7) % 60}%`, top: 0, width: 13, height: 34, backgroundColor: gi }}
+        />
+        <span
+          className="absolute opacity-35"
+          style={{ left: `${30 + (houseNumber * 11) % 50}%`, bottom: 0, width: 9, height: 26, backgroundColor: gi }}
+        />
+
+        {/* Cọc gỗ chống phía sau tôn, nhô lên khỏi mép trên */}
+        {[14, 46, 78].map((x, i) => (
+          <span
+            key={i}
+            className="absolute"
+            style={{
+              left: `${x + ((houseNumber + i) % 4)}%`,
+              top: -8,
+              width: 7,
+              height: 100,
+              backgroundColor: go,
+              opacity: 0.92,
+              clipPath: 'polygon(0 100%, 0 6%, 50% 0, 100% 6%, 100% 100%)',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ── Biển treo trên hàng rào ── */}
+      <div className="absolute inset-x-0 flex justify-center" style={{ bottom: 36 }}>
+        <span
+          className="whitespace-nowrap border-2 px-2.5 py-1 text-[10px] font-black shadow-sm"
+          style={
+            unlocked
+              ? { backgroundColor: isNight ? '#3B2238' : '#F6E3B8', borderColor: '#A8246B', color: '#A8246B' }
+              : { backgroundColor: isNight ? '#2E2A22' : '#E3D6B4', borderColor: '#5C4228', color: '#5C4228' }
+          }
+        >
+          {unlocked ? `+ Khai Trương · Số ${houseNumber}` : `○ Chưa Mở · Số ${houseNumber}`}
+        </span>
+      </div>
+    </div>
+  );
+}

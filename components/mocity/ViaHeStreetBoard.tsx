@@ -24,7 +24,7 @@ import { useAmbientChatter } from './SpeechBubble';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
 import MoMoMascot from './MoMoMascot';
 import StreetTraffic from './StreetTraffic';
-import ShophouseFacade, { ShophouseRoofCap } from './ShophouseFacade';
+import ShophouseFacade, { EmptyLot, ShophouseRoofCap } from './ShophouseFacade';
 import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from './StreetAmbiance';
 import { useTrafficController } from './useTrafficController';
 import TrafficLightPole from './TrafficLightPole';
@@ -794,51 +794,86 @@ export default function ViaHeStreetBoard({
                       ) : null}
                     </div>
 
-                    {/* Bồn nước / mặt dựng vòm nhô lên trên nóc, nằm ngoài viền khối nhà. */}
-                    <ShophouseRoofCap
-                      houseNumber={plot.houseNumber}
-                      shopType={plot.theme.shopType}
-                      timeOfDay={timeOfDay}
-                    />
-
                     {/*
-                     * THÂN NHÀ ỐNG - cao thấp theo dáng của từng số nhà.
-                     * Không có hiệu ứng rê chuột: nhà nhấc lên khi hover làm cả
-                     * dãy phố nhảy theo con trỏ mỗi lần lướt ngang.
+                     * Ô TRỐNG thì chỉ có bãi đất cắm cọc, KHÔNG dựng nhà.
+                     *
+                     * Bản cũ vẫn dựng đủ 3 tầng cho ô chưa xây rồi kéo cửa sắt
+                     * xuống, nên dãy phố lúc nào cũng kín nhà và người chơi
+                     * không thấy phố lớn lên khi mình mở tiệm.
                      */}
-                    <div
-                      onClick={() => {
-                        onSelect(plot.col, plot.row);
-                      }}
-                      className="group relative w-[228px] cursor-pointer"
-                      style={{
-                        border: isSelected ? '4px solid #D82D8B' : '2.5px solid #5A4A3F',
-                        backgroundColor: plot.theme.wallBg,
-                        backgroundImage: `repeating-linear-gradient(-35deg, ${plot.theme.wallHatch} 0px, ${plot.theme.wallHatch} 2px, transparent 2px, transparent 8px)`,
-                        boxShadow: isSelected
-                          ? '0 0 0 5px rgba(216,45,139,0.35), 0 12px 24px rgba(216,45,139,0.2)'
-                          : '0 8px 0 rgba(74,59,50,0.14)',
-                      }}
-                    >
-                      <ShophouseFacade
-                        shopType={plot.theme.shopType}
-                        houseNumber={plot.houseNumber}
-                        shopTitle={isBuilt ? shopTitle : plot.theme.defaultLabel}
-                        isBuilt={isBuilt}
-                        unlocked={plot.unlocked}
-                        level={plot.node?.level}
-                        starRating={plot.node?.starRating}
-                        yieldPerSec={plot.yieldPerSec}
-                        timeOfDay={timeOfDay}
-                        wallBg={plot.theme.wallBg}
-                        wallHatch={plot.theme.wallHatch}
-                        signBg={plot.theme.signBg}
-                        onOpenBuild={() => {
-                          onSelect(plot.col, plot.row);
-                          onOpenBuildDrawer?.();
-                        }}
-                      />
-                    </div>
+                    {!isBuilt ? (
+                      <div
+                        onClick={() => onSelect(plot.col, plot.row)}
+                        className="relative w-[228px]"
+                        style={
+                          isSelected
+                            ? {
+                                outline: '4px solid #D82D8B',
+                                outlineOffset: -2,
+                                boxShadow: '0 0 0 5px rgba(216,45,139,0.3)',
+                              }
+                            : undefined
+                        }
+                      >
+                        <EmptyLot
+                          houseNumber={plot.houseNumber}
+                          unlocked={plot.unlocked}
+                          timeOfDay={timeOfDay}
+                          onOpenBuild={() => {
+                            onSelect(plot.col, plot.row);
+                            onOpenBuildDrawer?.();
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        {/* Bồn nước / mặt dựng vòm nhô lên trên nóc, nằm ngoài viền khối nhà. */}
+                        <ShophouseRoofCap
+                          houseNumber={plot.houseNumber}
+                          shopType={plot.theme.shopType}
+                          timeOfDay={timeOfDay}
+                        />
+
+                        {/*
+                         * THÂN NHÀ ỐNG - cao thấp theo dáng của từng số nhà.
+                         * Không có hiệu ứng rê chuột: nhà nhấc lên khi hover làm
+                         * cả dãy phố nhảy theo con trỏ mỗi lần lướt ngang.
+                         */}
+                        <div
+                          onClick={() => {
+                            onSelect(plot.col, plot.row);
+                          }}
+                          className="group relative w-[228px] cursor-pointer"
+                          style={{
+                            border: isSelected ? '4px solid #D82D8B' : '2.5px solid #5A4A3F',
+                            backgroundColor: plot.theme.wallBg,
+                            backgroundImage: `repeating-linear-gradient(-35deg, ${plot.theme.wallHatch} 0px, ${plot.theme.wallHatch} 2px, transparent 2px, transparent 8px)`,
+                            boxShadow: isSelected
+                              ? '0 0 0 5px rgba(216,45,139,0.35), 0 12px 24px rgba(216,45,139,0.2)'
+                              : '0 8px 0 rgba(74,59,50,0.14)',
+                          }}
+                        >
+                          <ShophouseFacade
+                            shopType={plot.theme.shopType}
+                            houseNumber={plot.houseNumber}
+                            shopTitle={shopTitle}
+                            isBuilt
+                            unlocked={plot.unlocked}
+                            level={plot.node?.level}
+                            starRating={plot.node?.starRating}
+                            yieldPerSec={plot.yieldPerSec}
+                            timeOfDay={timeOfDay}
+                            wallBg={plot.theme.wallBg}
+                            wallHatch={plot.theme.wallHatch}
+                            signBg={plot.theme.signBg}
+                            onOpenBuild={() => {
+                              onSelect(plot.col, plot.row);
+                              onOpenBuildDrawer?.();
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
 
                     {/*
                      * VAT PHAM VIA HE NGAY TRUOC CUA NHA.
