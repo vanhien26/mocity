@@ -116,6 +116,7 @@ function Pct({ value }: { value: number }) {
  * ═══════════════════════════════════════════════════════════════════════════ */
 function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
   const coins = useCity((s) => s.coins);
+  const coBank = useCity((s) => s.buildings.some((b) => b.defId === 'ngan-hang-so'));
   const derived = useCityDerived();
   const [soTien, setSoTien] = useState('');
 
@@ -140,7 +141,8 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
       onToast?.(`Đã giải ngân ${formatNumber(r.amount)} Xu. Dư nợ mới ${formatNumber(duNo + r.amount)} Xu.`);
       return;
     }
-    if (r.reason === 'noIncome') onToast?.('Thành phố chưa có lợi nhuận hoạt động nên chưa đủ điều kiện vay.');
+    if (r.reason === 'needBank') onToast?.('Cần xây Ngân Hàng Số (mở ở Bậc 3 - Phố Vỉa Hè) mới được vay.');
+    else if (r.reason === 'noIncome') onToast?.('Thành phố chưa có lợi nhuận hoạt động nên chưa đủ điều kiện vay.');
     else if (r.reason === 'ceiling') onToast?.(`Vượt hạn mức. Chỉ còn vay được ${formatNumber(conVay)} Xu.`);
     else onToast?.('Nhập số tiền muốn vay.');
   };
@@ -156,6 +158,21 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
     else if (r.reason === 'noDebt') onToast?.('Thành phố đang không có dư nợ.');
     else onToast?.('Nhập số tiền muốn trả.');
   };
+
+  // Chua co Ngan Hang So -> khoa Vay Nhanh, noi ro mo o Bac 3. Day la bai hoc
+  // tin dung: phai co quan he tin dung truoc moi vay duoc.
+  if (!coBank) {
+    return (
+      <div className="rounded-2xl border-2 border-dashed p-3.5" style={{ background: '#FAF7F0', borderColor: '#C9A22766' }}>
+        <p className="text-[12px] font-black uppercase tracking-wide" style={{ color: '#8B6318' }}>
+          🔒 Vay Nhanh - chưa mở
+        </p>
+        <p className="mt-1 text-[13px] leading-relaxed" style={{ color: '#6E4F3A' }}>
+          Xây <span className="font-black">Ngân Hàng Số MoMo</span> (mở ở Bậc 3 - Phố Vỉa Hè) để thiết lập quan hệ tín dụng. Có ngân hàng rồi mới được vay vốn tăng tốc xây dựng.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

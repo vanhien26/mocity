@@ -1731,7 +1731,7 @@ export function spendCoins(amount: number): boolean {
 
 export type LoanResult =
   | { ok: true; amount: number }
-  | { ok: false; reason: 'ceiling' | 'invalid' | 'noIncome' };
+  | { ok: false; reason: 'ceiling' | 'invalid' | 'noIncome' | 'needBank' };
 
 /**
  * Dung MOT bo tham so cho moi noi tinh dong tien.
@@ -1764,13 +1764,25 @@ function flowOptsFor(s: CityState): FlowOptions {
 
 /** Han muc vay con lai. 0 nghia la khong du kha nang tra de vay them. */
 export function loanHeadroom(s: CityState = state): number {
+  if (!hasBankAccess(s)) return 0;
   const flow = flowFor(s.buildings, s.npcs, s.mayorLevel, s.coins, flowOptsFor(s));
   const tran = debtCeilingFor(flow.operatingIncome);
   return Math.max(0, tran - (s.debt ?? 0));
 }
 
+/**
+ * Chi vay duoc khi da xay NGAN HANG SO (mo o Bac 3 - Pho Via He). Day la bai
+ * hoc tin dung dau tien: muon vay thi phai co quan he tin dung truoc, khong
+ * phai cu muon la co tien. Gate nay bien 'Vay Nhanh' thanh nang luc PHAI mo
+ * khoa chu khong phai co san.
+ */
+export function hasBankAccess(s: CityState = state): boolean {
+  return s.buildings.some((b) => b.defId === 'ngan-hang-so');
+}
+
 export function takeLoan(amount: number): LoanResult {
   if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: 'invalid' };
+  if (!hasBankAccess(state)) return { ok: false, reason: 'needBank' };
 
   const flow = flowFor(state.buildings, state.npcs, state.mayorLevel, state.coins, flowOptsFor(state));
   if (flow.operatingIncome <= 0) return { ok: false, reason: 'noIncome' };
@@ -2595,7 +2607,7 @@ relicHappinessBonus: relicHappyBonus,
       rate: flow.revenue,
       debt,
       debtCeiling,
-      loanHeadroom: Math.max(0, debtCeiling - debt),
+      loanHeadroom: buildings.some((b) => b.defId === 'ngan-hang-so') ? Math.max(0, debtCeiling - debt) : 0,
       interestCoverage: interestCoverage(flow.operatingIncome, flow.interestExpense),
       happiness,
       weekCompare,

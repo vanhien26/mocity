@@ -295,3 +295,31 @@ describe('phieu bao vui chuoi ngay - HANH VI THAT', () => {
     assert.equal(mocity.grantShieldForStreak(28), 1, '28 la boi so cua 14');
   });
 });
+
+describe('cong vay gate theo Ngan Hang So (Bac 3)', () => {
+  it('chua xay ngan hang thi khong vay duoc, headroom = 0', () => {
+    ls.clear();
+    hydrateCity('loan-a@momo.vn');
+    // Xay vai tiem tier-1 de co operating income duong.
+    mocity.placeBuilding(0, 0, 'quan-ca-phe');
+    mocity.placeBuilding(1, 0, 'sieu-thi');
+    assert.equal(mocity.hasBankAccess(getCityState()), false);
+    assert.equal(mocity.loanHeadroom(getCityState()), 0, 'khong co ngan hang thi han muc phai = 0');
+    const r = mocity.takeLoan(1000);
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.equal(r.reason, 'needBank');
+    assert.equal(getCityState().debt ?? 0, 0, 'khong duoc phat sinh no khi chua co ngan hang');
+  });
+
+  it('hasBankAccess bat true khi danh sach cong trinh co ngan-hang-so', () => {
+    ls.clear();
+    hydrateCity('loan-b@momo.vn');
+    const base = getCityState();
+    // Test helper thuan theo du lieu buildings, khong phu thuoc gate tier cua
+    // placeBuilding (bank mo o Bac 3, qua nang de dung len trong unit test).
+    const coBank = { ...base, buildings: [{ id: 'b1', defId: 'ngan-hang-so', col: 0, row: 0, level: 1, starRating: 1, lastCollectedAt: 0, modules: [] }] };
+    const khongBank = { ...base, buildings: [{ id: 'c1', defId: 'quan-ca-phe', col: 0, row: 0, level: 1, starRating: 1, lastCollectedAt: 0, modules: [] }] };
+    assert.equal(mocity.hasBankAccess(coBank as typeof base), true);
+    assert.equal(mocity.hasBankAccess(khongBank as typeof base), false);
+  });
+});
