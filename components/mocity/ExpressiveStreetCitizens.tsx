@@ -336,34 +336,71 @@ const CITIZEN_DEFS: CitizenDef[] = [
  */
 const WALK_CSS = `
 /*
- * Thuoc tinh transform cua CSS animation GHI DE transform attribute cua SVG, nen
- * group nao vua co translate(...) vua co animation rotate() se mat phan
- * translate va roi ve goc toa do. Vi vay translate nam o group NGOAI, con
- * group trong chi xoay - pivot cua no chinh la goc toa do cua chinh no.
+ * CHU KỲ ĐI BỘ PIXEL ART.
+ *
+ * Bản cũ xoay khớp bằng rotate(). Xoay một khối pixel tạo ra cạnh chéo khử
+ * răng cưa, thứ phá hỏng pixel art nhanh nhất. Ở đây chân tay DỊCH CHUYỂN
+ * theo trục, đúng cách pixel art thật làm, nên mọi cạnh luôn thẳng hàng lưới.
+ *
+ * steps(4) để khung hình NHẢY giữa bốn tư thế thay vì trôi mượt. Chuyển động
+ * mượt là quy ước vector; pixel art sống bằng số khung hình thấp và rõ ràng.
+ *
+ * 1 ô lưới = 4 đơn vị SVG, nên mọi giá trị dịch chuyển đều là bội của 4.
  */
 .cit-walk-anim .cit-lb,
 .cit-walk-anim .cit-lf,
 .cit-walk-anim .cit-ab,
 .cit-walk-anim .cit-af,
-.cit-walk-anim .cit-hw { transform-origin: 0px 0px; will-change: transform; }
-.cit-walk-anim .cit-bw { transform-origin: 28px 40px; will-change: transform; }
+.cit-walk-anim .cit-bw,
+.cit-walk-anim .cit-hw { will-change: transform; }
 
-.walking .cit-lb { animation: citLB var(--spd,0.6s) linear infinite; }
-.walking .cit-lf { animation: citLF var(--spd,0.6s) linear infinite; }
-.walking .cit-ab { animation: citAB var(--spd,0.6s) linear infinite; }
-.walking .cit-af { animation: citAF var(--spd,0.6s) linear infinite; }
-.walking .cit-bw { animation: citBob var(--spd,0.6s) ease-in-out infinite; }
-.walking .cit-hw { animation: citHw calc(var(--spd,0.6s)*2) ease-in-out infinite; }
-.idle    .cit-bw { animation: citSw 3s ease-in-out infinite; }
-.idle    .cit-hw { animation: citSw 4s ease-in-out infinite; }
+.walking .cit-lb { animation: pxLegB var(--spd,0.6s) steps(4,end) infinite; }
+.walking .cit-lf { animation: pxLegF var(--spd,0.6s) steps(4,end) infinite; }
+.walking .cit-ab { animation: pxArmB var(--spd,0.6s) steps(4,end) infinite; }
+.walking .cit-af { animation: pxArmF var(--spd,0.6s) steps(4,end) infinite; }
+.walking .cit-bw { animation: pxBob  var(--spd,0.6s) steps(4,end) infinite; }
+.idle    .cit-bw { animation: pxIdle 2.4s steps(2,end) infinite; }
 
-@keyframes citLF { 0%,100%{transform:rotate(-20deg)} 50%{transform:rotate(20deg)} }
-@keyframes citLB { 0%,100%{transform:rotate(20deg)}  50%{transform:rotate(-20deg)} }
-@keyframes citAF { 0%,100%{transform:rotate(18deg)}  50%{transform:rotate(-18deg)} }
-@keyframes citAB { 0%,100%{transform:rotate(-18deg)} 50%{transform:rotate(18deg)} }
-@keyframes citBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-@keyframes citHw  { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
-@keyframes citSw  { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
+/* Chân sau và chân trước lệch pha nửa chu kỳ. */
+@keyframes pxLegB {
+  0%   { transform: translateX(-4px) }
+  25%  { transform: translateX(0) }
+  50%  { transform: translateX(4px) }
+  75%  { transform: translateX(0) }
+  100% { transform: translateX(-4px) }
+}
+@keyframes pxLegF {
+  0%   { transform: translateX(4px) }
+  25%  { transform: translateX(0) }
+  50%  { transform: translateX(-4px) }
+  75%  { transform: translateX(0) }
+  100% { transform: translateX(4px) }
+}
+/* Tay vung ngược chiều chân cùng bên, đúng dáng người đi. */
+@keyframes pxArmB {
+  0%   { transform: translateX(4px) }
+  50%  { transform: translateX(-4px) }
+  100% { transform: translateX(4px) }
+}
+@keyframes pxArmF {
+  0%   { transform: translateX(-4px) }
+  50%  { transform: translateX(4px) }
+  100% { transform: translateX(-4px) }
+}
+/* Thân nhún một ô ở hai khung giữa bước. */
+@keyframes pxBob {
+  0%   { transform: translateY(0) }
+  25%  { transform: translateY(-4px) }
+  50%  { transform: translateY(0) }
+  75%  { transform: translateY(-4px) }
+  100% { transform: translateY(0) }
+}
+/* Đứng yên: thở nhẹ, hai khung hình. */
+@keyframes pxIdle {
+  0%   { transform: translateY(0) }
+  50%  { transform: translateY(-4px) }
+  100% { transform: translateY(0) }
+}
 @keyframes citBubblePop {
   0% { opacity: 0; transform: translateY(6px) scale(0.92); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -387,191 +424,311 @@ const EMOTION_EMOJIS: Record<FacialEmotion, string> = {
  * Cac diem xoay cua walk animation (chan 24/32,48 - tay 22/34,31 - dau 28,16)
  * phai giu nguyen, neu doi thi WALK_CSS transform-origin lech theo.
  */
-function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmotion }) {
-  /**
-   * Ba bac dam dan deu NHAT hon mau ao goc, khong dung bac sang hon: ao sang
-   * mau (#E2E8F0) nhan he so >1 se clip ve trang va tay bien mat khoi than.
-   */
-  const shirtDark = shade(def.shirtColor, 0.64);
-  const shirtLight = shade(def.shirtColor, 0.86);
-  const pantsDark = shade(def.pantsColor, 0.74);
-  const shoe = shade(def.pantsColor, 0.52);
-  const hairDark = shade(def.hairColor, 0.78);
-  const skinDark = shade(def.skinColor, 0.93);
-  const ink = '#3E2A1B';
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NHÂN VẬT PIXEL ART - LƯỚI 14 x 18
+ *
+ * viewBox 56x72 chia cho 4 ra đúng lưới 14 ngang, 18 dọc. Mọi hình đều là
+ * `<rect>` bám lưới, không có đường cong nào - đó là định nghĩa của pixel art,
+ * và cũng là lý do bản cut-paper cũ dù phẳng vẫn không đọc ra retro.
+ *
+ * VÌ SAO KHÔNG XOAY KHỚP NỮA
+ * Bản cũ hoạt hoạ bằng `rotate()` trên khớp tay chân. Xoay một khối pixel tạo
+ * ra cạnh chéo khử răng cưa - thứ phá hỏng pixel art nhanh nhất. Chu kỳ đi bộ
+ * ở đây dịch chuyển khối theo trục, đúng cách pixel art thật làm, nên mọi cạnh
+ * luôn thẳng hàng với lưới.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
-  /** Mot chan: ong quan phang + ban chan la mang rieng dam hon. */
-  const Leg = ({ fill }: { fill: string }) => (
-    <>
-      <path d="M-3.6 0 L3.5 -0.4 L3.9 13.6 L-3.1 14 Z" fill={fill} />
-      <path d="M-3.9 13.2 L4.1 12.8 L4.5 16.4 L-4.3 16.8 Z" fill={shoe} />
-    </>
+/** Một ô lưới bằng bao nhiêu đơn vị SVG. */
+const PX = 4;
+
+/** Vẽ một khối chữ nhật theo toạ độ lưới. */
+function B({ x, y, w = 1, h = 1, fill }: { x: number; y: number; w?: number; h?: number; fill: string }) {
+  return (
+    <rect
+      x={x * PX}
+      y={y * PX}
+      width={w * PX}
+      height={h * PX}
+      fill={fill}
+      shapeRendering="crispEdges"
+    />
   );
+}
+
+/**
+ * BẢNG MÀU HẠN CHẾ THỜI BAO CẤP.
+ *
+ * Pixel art sống bằng bảng màu hẹp. Màu gốc của 12 cư dân rải tự do khắp dải
+ * RGB, nên phải nắn về bảng này - nếu không thì dù vẽ bằng khối vuông vẫn ra
+ * cảm giác vector hiện đại vì màu quá nhiều và quá tươi.
+ */
+const RAMP = [
+  /* Mực và gỗ */
+  '#2B2420', '#4A3B30', '#6B4A2F', '#8A6A43',
+  /* Vôi, xi măng, giấy */
+  '#7E7667', '#B5AC98', '#C9B98F', '#E3D6B4', '#F0E6CE',
+  /* Da người - PHẢI có bậc riêng, nếu không mọi khuôn mặt sẽ nắn về màu
+     giấy và áo trắng cũng rơi vào đúng màu đó, thành ra như không mặc áo. */
+  '#C98F68', '#E0A87E', '#EFC49C',
+  /* Xanh rêu */
+  '#2F4A3C', '#4A6B5A', '#6E8C72', '#A9BEB4',
+  /* Đỏ son, gạch */
+  '#6B241C', '#8C3B2E', '#B33A2B', '#C97A4A',
+  /* Vàng nghệ */
+  '#7A4F14', '#A8701F', '#D9A441', '#E8C46A',
+  /* Xanh mực */
+  '#262F3D', '#3E4C63', '#5C7390', '#8C9BB0',
+  /* Hồng in */
+  '#4E0F32', '#73164A', '#A8246B',
+];
+
+/** Khoảng cách màu trong không gian RGB, đủ dùng cho việc nắn bảng. */
+function nearest(hex: string): string {
+  const v = hex.replace('#', '');
+  const r = parseInt(v.slice(0, 2), 16);
+  const g = parseInt(v.slice(2, 4), 16);
+  const b = parseInt(v.slice(4, 6), 16);
+  let best = RAMP[0];
+  let bestD = Infinity;
+  for (const c of RAMP) {
+    const cr = parseInt(c.slice(1, 3), 16);
+    const cg = parseInt(c.slice(3, 5), 16);
+    const cb = parseInt(c.slice(5, 7), 16);
+    const d = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2;
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+
+/** Độ sáng cảm nhận, dùng để so hai màu đậm nhạt. */
+function lum(hex: string): number {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+/**
+ * Bậc đậm hơn trong cùng bảng, chọn theo ĐỘ SÁNG chứ không theo chỉ số mảng.
+ *
+ * Bản đầu lùi một bậc theo chỉ số. Nhưng bảng nhóm theo họ màu, nên lùi một
+ * bậc có thể nhảy sang họ khác: `darker('#4A6B5A')` ra `#F0E6CE` - bóng đổ
+ * thành vùng sáng. Lỗi loại này chỉ lộ ra khi nhìn tận mắt từng nhân vật.
+ */
+function darker(hex: string): string {
+  const muc = lum(hex) * 0.62;
+  let best = RAMP[0];
+  let bestD = Infinity;
+  for (const c of RAMP) {
+    if (lum(c) >= lum(hex)) continue;
+    const d = Math.abs(lum(c) - muc);
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+
+/** Nắn màu áo sao cho không trùng màu da, nếu không nhìn như không mặc áo. */
+function tachKhoiDa(ao: string, da: string): string {
+  return ao === da ? darker(ao) : ao;
+}
+
+function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmotion }) {
+  /*
+   * Nắn toàn bộ màu của nhân vật về bảng hạn chế. Màu gốc của 12 cư dân rải
+   * tự do khắp dải RGB; giữ nguyên thì dù vẽ bằng khối vuông vẫn ra cảm giác
+   * vector hiện đại vì màu quá nhiều và quá tươi.
+   */
+  const da = nearest(def.skinColor);
+  const daToi = darker(da);
+  const ao = tachKhoiDa(nearest(def.shirtColor), da);
+  const aoToi = darker(ao);
+  const quan = nearest(def.pantsColor);
+  const giay = darker(quan);
+  const toc = nearest(def.hairColor);
+  const nhan = nearest(def.accentColor);
+  const muc = '#2B2420';
+
+  /** Mắt và miệng theo cảm xúc. Mỗi nét là một khối, không có nét cong. */
+  const mat = (() => {
+    switch (emotion) {
+      case 'STAR_EYES':
+        return (
+          <>
+            <B x={5} y={3} fill="#D9A441" />
+            <B x={8} y={3} fill="#D9A441" />
+            <B x={6} y={5} w={2} fill={muc} />
+          </>
+        );
+      case 'SURPRISED':
+        return (
+          <>
+            <B x={5} y={3} h={2} fill={muc} />
+            <B x={8} y={3} h={2} fill={muc} />
+            <B x={6} y={5} fill={muc} />
+          </>
+        );
+      case 'TIRED':
+        return (
+          <>
+            <B x={5} y={4} fill={muc} />
+            <B x={8} y={4} fill={muc} />
+            <B x={6} y={5} w={2} fill={muc} />
+          </>
+        );
+      default: // HAPPY
+        return (
+          <>
+            <B x={5} y={3} fill={muc} />
+            <B x={8} y={3} fill={muc} />
+            <B x={5} y={5} fill={muc} />
+            <B x={6} y={5} w={2} fill={da} />
+            <B x={8} y={5} fill={muc} />
+          </>
+        );
+    }
+  })();
+
+  /** Tóc và mũ. Mỗi kiểu là một mảng khối riêng. */
+  const dauToc = (() => {
+    switch (def.hairStyle) {
+      case 'NON_LA':
+        return (
+          <>
+            <B x={6} y={0} w={2} fill="#E8C46A" />
+            <B x={5} y={1} w={4} fill="#D9A441" />
+            <B x={3} y={2} w={8} fill="#A8701F" />
+          </>
+        );
+      case 'CAP_YELLOW':
+        return (
+          <>
+            <B x={4} y={1} w={6} fill="#D9A441" />
+            <B x={3} y={2} w={4} fill="#A8701F" />
+          </>
+        );
+      case 'HELMET_BLUE':
+        return (
+          <>
+            <B x={4} y={0} w={6} fill="#5C7390" />
+            <B x={3} y={1} w={8} fill="#3E4C63" />
+            <B x={3} y={2} h={2} fill="#3E4C63" />
+            <B x={10} y={2} h={2} fill="#3E4C63" />
+          </>
+        );
+      case 'BALD_GLASSES':
+        return (
+          <>
+            <B x={4} y={1} w={6} fill={daToi} />
+            <B x={4} y={3} w={2} fill="#3E4C63" />
+            <B x={8} y={3} w={2} fill="#3E4C63" />
+            <B x={6} y={3} w={2} fill="#3E4C63" />
+          </>
+        );
+      case 'BOB':
+        return (
+          <>
+            <B x={4} y={1} w={6} fill={toc} />
+            <B x={3} y={2} h={3} fill={toc} />
+            <B x={10} y={2} h={3} fill={toc} />
+          </>
+        );
+      case 'BUN':
+        return (
+          <>
+            <B x={6} y={0} w={2} fill={toc} />
+            <B x={4} y={1} w={6} fill={toc} />
+            <B x={3} y={2} fill={toc} />
+            <B x={10} y={2} fill={toc} />
+          </>
+        );
+      case 'PONYTAIL':
+        return (
+          <>
+            <B x={4} y={1} w={6} fill={toc} />
+            <B x={3} y={2} fill={toc} />
+            <B x={10} y={2} h={4} fill={toc} />
+          </>
+        );
+      default: // SHORT
+        return (
+          <>
+            <B x={4} y={1} w={6} fill={toc} />
+            <B x={3} y={2} fill={toc} />
+            <B x={10} y={2} fill={toc} />
+          </>
+        );
+    }
+  })();
+
+  /** Đồ cầm tay, treo ở bàn tay phải (cột 10). */
+  const doCam = (() => {
+    switch (def.heldItem) {
+      case 'MILK_TEA':
+        return (<><B x={10} y={12} fill="#E3D6B4" /><B x={10} y={11} fill="#8A6A43" /></>);
+      case 'SHOPPING_BAG':
+        return (<><B x={10} y={12} w={2} h={2} fill={nhan} /><B x={10} y={11} w={2} fill={darker(nhan)} /></>);
+      case 'BRIEFCASE':
+        return (<><B x={10} y={12} w={2} h={2} fill="#6B4A2F" /><B x={10} y={11} w={2} fill="#4A3B30" /></>);
+      case 'LOTTERY_FAN':
+        return (<><B x={10} y={11} w={3} fill="#F0E6CE" /><B x={11} y={12} w={2} fill="#E3D6B4" /></>);
+      case 'PHONE_QR':
+        return (<><B x={10} y={11} h={2} fill="#2B2420" /><B x={10} y={11} fill="#A9BEB4" /></>);
+      case 'LAPTOP':
+        return (<><B x={10} y={12} w={2} fill="#8C9BB0" /><B x={10} y={11} w={2} fill="#5C7390" /></>);
+      case 'CAMERA':
+        return (<><B x={10} y={11} w={2} h={2} fill="#3E4C63" /><B x={11} y={12} fill="#8C9BB0" /></>);
+      default:
+        return null;
+    }
+  })();
 
   return (
     <>
-      <ellipse cx="28" cy="66" rx="12" ry="2.8" fill="rgba(62,42,27,0.16)" />
+      {/* Bóng đổ: một dải khối, không phải ellipse mờ. */}
+      <B x={4} y={17} w={6} fill="rgba(43,36,32,0.3)" />
 
       <g className="cit-bw">
-        {/* CHAN */}
-        <g transform="translate(24,48)"><g className="cit-lb"><Leg fill={pantsDark} /></g></g>
-        <g transform="translate(32,48)"><g className="cit-lf"><Leg fill={def.pantsColor} /></g></g>
+        {/* CHÂN SAU - đứng sau thân nên vẽ trước */}
+        <g className="cit-lb">
+          <B x={4} y={12} w={2} h={4} fill={darker(quan)} />
+          <B x={3} y={16} w={3} fill={giay} />
+        </g>
+        {/* CHÂN TRƯỚC */}
+        <g className="cit-lf">
+          <B x={8} y={12} w={2} h={4} fill={quan} />
+          <B x={8} y={16} w={3} fill={giay} />
+        </g>
 
-        {/* TAY SAU - lop giay dam hon de lui ra sau than */}
-        <g transform="translate(22,31)"><g className="cit-ab">
-          <path d="M-2.8 -3 L2.6 -3.3 L3 13.4 L-2.4 13.8 Z" fill={shirtDark} />
-          <circle cx="0.3" cy="15.4" r="3" fill={skinDark} />
-          {def.heldItem === 'BRIEFCASE' && (
-            <g transform="translate(-4,18)">
-              <path d="M0 0 L10.2 0.4 L9.9 7.3 L-0.3 6.9 Z" fill="#C9A227" />
-              <path d="M0 0 L10.2 0.4 L10.1 2.4 L-0.1 2 Z" fill="#A5821A" />
-              <path d="M3.2 -0.1 Q3.3 -2.4 5 -2.35 Q6.7 -2.3 6.6 0 L5.6 -0.05 Q5.65 -1.5 5 -1.52 Q4.35 -1.54 4.3 -0.05 Z" fill="#8A6B12" />
-            </g>
-          )}
-          {def.heldItem === 'SHOPPING_BAG' && (
-            <g transform="translate(-4,17)">
-              <path d="M1.6 0.4 Q1.8 -3.6 4.6 -3.5 Q7.4 -3.4 7.3 0.6 L5.9 0.5 Q6 -2.2 4.6 -2.25 Q3.2 -2.3 3.1 0.35 Z" fill="#B8500A" />
-              <path d="M0 0 L9.2 0.5 L8.7 10.3 L-0.4 9.8 Z" fill="#E86A10" />
-              <path d="M0 0 L9.2 0.5 L9.1 3.2 L-0.1 2.7 Z" fill="#C85A0C" />
-            </g>
-          )}
-        </g></g>
+        {/* TAY SAU */}
+        <g className="cit-ab">
+          <B x={3} y={7} h={4} fill={aoToi} />
+          <B x={3} y={11} fill={da} />
+        </g>
 
-        {/* CO - mang skin noi dau voi than, tranh hieu ung dau troi */}
-        <path d="M24.8 23.6 L31.2 23.6 L31.5 30.4 L24.5 30.4 Z" fill={skinDark} />
+        {/* THÂN */}
+        <B x={4} y={7} w={6} h={5} fill={ao} />
+        <B x={4} y={7} w={6} fill={aoToi} />
+        {def.hasTie && <B x={6} y={7} w={2} h={3} fill={nhan} />}
+        {!def.hasTie && <B x={6} y={9} w={2} fill={nhan} />}
+        {/* Thắt lưng */}
+        <B x={4} y={11} w={6} fill={darker(quan)} />
 
-        {/* THAN - vai rong hon dau, day thu vao de khong doc thanh vay */}
-        <path d="M18.6 28.4 L37.6 29.2 L36.8 46.2 L34.6 50.4 L21.2 50 L19.4 45.8 Z" fill={def.shirtColor} />
-        <path d="M18.6 28.4 L24.6 28.7 L23.6 50.1 L21.2 50 L19.4 45.8 Z" fill={shade(def.shirtColor, 0.76)} />
-        {def.hasTie && (
-          <path d="M26.8 29 L29.2 29.1 L28.8 40.4 L27.8 43.4 L27 40.3 Z" fill={def.accentColor} />
-        )}
+        {/* TAY TRƯỚC */}
+        <g className="cit-af">
+          <B x={10} y={7} h={4} fill={ao} />
+          <B x={10} y={11} fill={da} />
+        </g>
+        {doCam}
 
-        {/* TAY TRUOC - lop giay sang hon de noi len truoc than */}
-        <g transform="translate(34,31)"><g className="cit-af">
-          <path d="M-2.8 -3.3 L2.6 -3 L3 13.8 L-2.4 13.4 Z" fill={shirtLight} />
-          <circle cx="0.3" cy="15.4" r="3" fill={def.skinColor} />
-          {def.heldItem === 'MILK_TEA' && (
-            <g transform="translate(-3.5,14)">
-              <path d="M4.5 -4.4 L6 -4.3 L5.6 1.2 L4.1 1.1 Z" fill="#E0458A" />
-              <path d="M0 0 L7.2 0.3 L6.6 9.3 L0.5 9 Z" fill="#F0D698" />
-              <path d="M0.3 5.4 L6.9 5.7 L6.6 9.3 L0.5 9 Z" fill="#D8B46A" />
-              <circle cx="2.4" cy="7.4" r="1.1" fill="#4A3524" />
-              <circle cx="4.9" cy="7.6" r="1.1" fill="#4A3524" />
-            </g>
-          )}
-          {def.heldItem === 'LOTTERY_FAN' && (
-            <g transform="translate(-3,15)">
-              <path d="M-0.5 1 L7 -1.4 L8.6 3.2 L1.1 5.6 Z" fill="#E03A52" />
-              <path d="M0.4 2.6 L8.2 1.6 L8.8 6.4 L1 7.4 Z" fill="#E6B412" />
-              <path d="M0.8 4.2 L8.4 5.6 L7.6 10.2 L0 8.8 Z" fill="#2BB37C" />
-            </g>
-          )}
-          {def.heldItem === 'PHONE_QR' && (
-            <g transform="translate(-3,14)">
-              <path d="M0 0 L6.2 0.3 L5.9 10.2 L-0.3 9.9 Z" fill="#C21F78" />
-              <path d="M1.4 1.6 L4.6 1.75 L4.5 4.9 L1.3 4.75 Z" fill="#FFF3F9" />
-              <path d="M2 2.3 L3.1 2.35 L3.05 3.4 L1.95 3.35 Z" fill="#C21F78" />
-            </g>
-          )}
-          {def.heldItem === 'LAPTOP' && (
-            <g transform="translate(-5,15)">
-              <path d="M0.4 0 L10.2 0.4 L9.9 7.2 L0.1 6.8 Z" fill="#D2DCE8" />
-              <path d="M1.6 1.2 L8.8 1.5 L8.6 5.8 L1.4 5.5 Z" fill="#2E8FC4" />
-              <path d="M-0.6 7 L11.4 7.5 L11.2 9.4 L-0.8 8.9 Z" fill="#8795A8" />
-            </g>
-          )}
-          {def.heldItem === 'CAMERA' && (
-            <g transform="translate(-4,14)">
-              <path d="M2.4 -1.4 L6.6 -1.5 L6.7 0.4 L2.5 0.5 Z" fill="#1C242E" />
-              <path d="M0 0.4 L9.2 0 L9.4 7.2 L0.2 7.6 Z" fill="#2A3442" />
-              <circle cx="4.7" cy="3.8" r="2.4" fill="#4A5A6E" />
-              <circle cx="4.7" cy="3.8" r="1.2" fill="#8FC4E8" />
-            </g>
-          )}
-        </g></g>
-
-        {/* DAU */}
-        <g transform="translate(28,16)"><g className="cit-hw">
-          {def.hairStyle === 'BUN' && <circle cx="-8.4" cy="-9" r="4.6" fill={hairDark} />}
-          {def.hairStyle === 'PONYTAIL' && (
-            <path d="M-8 -6.4 Q-18.4 -0.6 -14.2 8.4 L-10.6 7 Q-13.6 0.4 -5.6 -4.4 Z" fill={hairDark} />
-          )}
-
-          <circle cx="0" cy="0" r="12.6" fill={def.skinColor} />
-          <path d="M-11.4 4.6 Q0 12.4 11.4 4.4 L11.6 0.6 L-11.6 0.6 Z" fill={skinDark} opacity="0.5" />
-          <ellipse cx="-7.8" cy="2.6" rx="2.5" ry="1.5" fill="#F0A8BE" />
-          <ellipse cx="7.8" cy="2.6" rx="2.5" ry="1.5" fill="#F0A8BE" />
-
-          {emotion === 'HAPPY' && (
-            <>
-              <circle cx="-4.6" cy="-1.2" r="1.9" fill={ink} />
-              <circle cx="4.6" cy="-1.2" r="1.9" fill={ink} />
-              <path d="M-4.4 4.6 Q0.2 9 4.8 4.6 Q0.2 6.8 -4.4 4.6 Z" fill={ink} />
-            </>
-          )}
-          {emotion === 'STAR_EYES' && (
-            <>
-              <path d="M-4.6 -4.4 L-3.5 -2.3 L-1.4 -1.2 L-3.5 -0.1 L-4.6 2 L-5.7 -0.1 L-7.8 -1.2 L-5.7 -2.3 Z" fill={ink} />
-              <path d="M4.6 -4.4 L5.7 -2.3 L7.8 -1.2 L5.7 -0.1 L4.6 2 L3.5 -0.1 L1.4 -1.2 L3.5 -2.3 Z" fill={ink} />
-              <path d="M-3.8 4.2 L4.2 4.2 Q0.2 9.6 -3.8 4.2 Z" fill={ink} />
-            </>
-          )}
-          {emotion === 'SURPRISED' && (
-            <>
-              <circle cx="-4.6" cy="-1.4" r="2.5" fill={ink} />
-              <circle cx="4.6" cy="-1.4" r="2.5" fill={ink} />
-              <ellipse cx="0.3" cy="5.6" rx="2.5" ry="3.1" fill={ink} />
-            </>
-          )}
-          {emotion === 'TIRED' && (
-            <>
-              <path d="M-7.6 -1.8 L-1.6 -1.8 L-1.6 0.2 L-7.6 0.2 Z" fill={ink} />
-              <path d="M1.6 -1.8 L7.6 -1.8 L7.6 0.2 L1.6 0.2 Z" fill={ink} />
-              <path d="M-3.4 5.2 L3.8 5.2 L3.8 7 L-3.4 7 Z" fill={ink} />
-              <path d="M9.8 -6.2 Q12.2 -2.6 9.8 -1.2 Q7.4 -2.6 9.8 -6.2 Z" fill="#7FC4E8" />
-            </>
-          )}
-
-          {(def.hairStyle === 'SHORT' || def.hairStyle === 'BUN' || def.hairStyle === 'BOB') && (
-            <path d="M-12.8 -2.4 C-12.4 -14.6 12.6 -14.6 12.8 -2 C8.6 -7.8 -6.4 -8 -12.8 -2.4 Z" fill={def.hairColor} />
-          )}
-          {def.hairStyle === 'BOB' && (
-            <>
-              <path d="M-12.9 -3.2 Q-14.8 5.2 -11.4 9.2 L-8.4 7.6 Q-11.2 2.8 -10.2 -3.4 Z" fill={hairDark} />
-              <path d="M12.9 -3.2 Q14.8 5.2 11.4 9.2 L8.4 7.6 Q11.2 2.8 10.2 -3.4 Z" fill={hairDark} />
-            </>
-          )}
-          {def.hairStyle === 'NON_LA' && (
-            <>
-              <path d="M0 -18.6 L16.6 -3.6 L-16.6 -4.2 Z" fill="#DEBE63" />
-              <path d="M0 -18.6 L5.8 -11.2 L-5.8 -11.6 Z" fill="#EFD48A" />
-              <path d="M-17.2 -4.2 L17.2 -3.6 L16 -0.4 L-16.2 -1 Z" fill="#A8822F" />
-            </>
-          )}
-          {def.hairStyle === 'CAP_YELLOW' && (
-            <>
-              <path d="M-11.8 -3.2 C-11.4 -14.4 11 -14.4 11.2 -2.8 Z" fill="#D19A0E" />
-              <path d="M5 -3 L17.4 -2 L16.4 1.4 L5 0.3 Z" fill="#9A6E08" />
-            </>
-          )}
-          {def.hairStyle === 'HELMET_BLUE' && (
-            <>
-              <path d="M-13 -1.4 C-12.6 -15.2 12.8 -15.2 13 -1 Z" fill={def.accentColor} />
-              <path d="M-9.4 -6 Q0 -2.8 9.6 -6.2 L9 -8.8 Q0 -5.6 -8.8 -8.6 Z" fill="#FFFFFF" opacity="0.32" />
-              <path d="M-13.2 -1.2 L13.2 -0.8 L13 2.4 L-13.4 2 Z" fill={shade(def.accentColor, 0.72)} />
-            </>
-          )}
-          {def.hairStyle === 'BALD_GLASSES' && (
-            <>
-              <path d="M-12.8 1.4 C-12.6 -7.6 -8 -11.8 -3.4 -12.6 L-3.6 -9.2 C-7.4 -8.2 -9.8 -5 -9.8 1.2 Z" fill={def.hairColor} />
-              <path d="M12.8 1.4 C12.6 -7.6 8 -11.8 3.4 -12.6 L3.6 -9.2 C7.4 -8.2 9.8 -5 9.8 1.2 Z" fill={def.hairColor} />
-              <path d="M-9.8 -4 L-0.9 -4 L-0.9 1.6 L-9.8 1.6 Z" fill="#CFE4F7" opacity="0.72" />
-              <path d="M0.9 -4 L9.8 -4 L9.8 1.6 L0.9 1.6 Z" fill="#CFE4F7" opacity="0.72" />
-              <path d="M-1.1 -2.6 L1.1 -2.6 L1.1 -1.4 L-1.1 -1.4 Z" fill="#6E5A46" />
-            </>
-          )}
-        </g></g>
+        {/* ĐẦU */}
+        <g className="cit-hw">
+          <B x={6} y={6} w={2} fill={daToi} />
+          <B x={4} y={2} w={6} h={4} fill={da} />
+          <B x={4} y={5} w={6} fill={daToi} />
+          <B x={4} y={5} w={6} fill={da} />
+          {mat}
+          {dauToc}
+        </g>
       </g>
     </>
   );
