@@ -59,6 +59,112 @@ function shade(hex: string, k: number): string {
   return `#${((1 << 24) | (c((n >> 16) & 255) << 16) | (c((n >> 8) & 255) << 8) | c(n & 255)).toString(16).slice(1)}`;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DÁNG NHÀ - MỖI CĂN MỘT CHIỀU CAO
+ *
+ * Trước đây mọi căn đều 1 trệt 2 lầu, nóc sân thượng phẳng, cao đúng 386px:
+ * cả dãy phố là một đường kẻ ngang. Phố thật thì nhà cao thấp so le - căn
+ * 1 lầu mái ngói nằm cạnh căn 2 lầu có mặt dựng vòm.
+ *
+ * Dáng chọn theo SỐ NHÀ chứ không ngẫu nhiên, để mỗi ô đất luôn ra cùng một
+ * dáng qua mọi lần render và mọi lần mở game. Dãy 7 dáng xếp sao cho hai căn
+ * kề nhau luôn chênh rõ. Số nhà = cột*2 + hàng*20 + 2, nên chỉ số dáng là
+ * cột + hàng*10; 10 chia 7 dư 3 nên mỗi hàng phố bắt đầu ở một dáng khác.
+ *
+ * Giới hạn: căn cao nhất chỉ nhỉnh hơn bản cũ một chút. Phía trên nóc chỉ còn
+ * khoảng 64px trời trước khi bị cắt, nên khác biệt đến từ việc HẠ THẤP các
+ * căn 1 lầu chứ không đẩy căn nào cao vọt lên.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export type KieuMai = 'PHANG' | 'NGOI' | 'CAO';
+
+export interface DangNha {
+  /** Số lầu phía trên tầng trệt. */
+  soLau: 1 | 2;
+  /** PHANG: sân thượng có bồn nước. NGOI: mái ngói đỏ. CAO: mặt dựng vòm phố cũ. */
+  mai: KieuMai;
+}
+
+const DANG_NHA: DangNha[] = [
+  { soLau: 2, mai: 'PHANG' },
+  { soLau: 1, mai: 'NGOI' },
+  { soLau: 2, mai: 'CAO' },
+  { soLau: 1, mai: 'PHANG' },
+  { soLau: 2, mai: 'NGOI' },
+  { soLau: 1, mai: 'CAO' },
+  { soLau: 1, mai: 'NGOI' },
+];
+
+export function dangNhaFor(houseNumber: number): DangNha {
+  const i = Math.max(0, Math.floor(houseNumber / 2) - 1);
+  return DANG_NHA[i % DANG_NHA.length];
+}
+
+/**
+ * Phần nhô lên TRÊN NÓC: bồn nước inox hoặc mặt dựng vòm.
+ *
+ * Vẽ riêng, đặt PHÍA TRÊN khối nhà chứ không nằm trong nó. Khối nhà có viền
+ * hình chữ nhật bao quanh; thứ gì hẹp hơn bề ngang mà nằm bên trong thì hai
+ * bên nó sẽ lộ màu tường thay vì màu trời, nhìn như một cái hộp.
+ */
+export function ShophouseRoofCap({
+  houseNumber,
+  shopType,
+  timeOfDay = 'DAY',
+}: {
+  houseNumber: number;
+  shopType: ShopType;
+  timeOfDay?: TimeOfDay;
+}) {
+  const { mai } = dangNhaFor(houseNumber);
+  if (mai === 'NGOI') return null;
+
+  const isNight = timeOfDay === 'NIGHT';
+
+  if (mai === 'PHANG') {
+    // Bồn nước inox trên chân sắt - thứ có mặt trên nóc gần như mọi nhà phố.
+    const inox = isNight ? '#6E7378' : '#B8BCC0';
+    return (
+      <div aria-hidden className="pointer-events-none relative h-[24px] w-[228px]">
+        <div className="absolute bottom-0 right-6 flex flex-col items-center">
+          <div className="relative" style={{ width: 32, height: 16, backgroundColor: inox, borderRadius: '7px 7px 2px 2px' }}>
+            <div className="absolute inset-x-0 top-[5px] h-[2px]" style={{ backgroundColor: shade('#B8BCC0', 0.78) }} />
+            <div className="absolute inset-x-0 top-[10px] h-[2px]" style={{ backgroundColor: shade('#B8BCC0', 0.78) }} />
+          </div>
+          <div className="flex w-[26px] justify-between">
+            <span className="h-[8px] w-[3px]" style={{ backgroundColor: '#5A5048' }} />
+            <span className="h-[8px] w-[3px]" style={{ backgroundColor: '#5A5048' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // CAO: mặt dựng vòm kiểu phố cũ, khắc năm xây.
+  const pal = PALETTE[shopType];
+  const nen = isNight ? shade(pal.roofBg, 0.55) : pal.roofBg;
+  const nam = 1954 + ((houseNumber * 7) % 40);
+  return (
+    <div aria-hidden className="pointer-events-none flex h-[28px] w-[228px] items-end justify-center">
+      <div
+        className="relative flex items-end justify-center"
+        style={{ width: 104, height: 28, backgroundColor: nen, borderRadius: '52px 52px 0 0' }}
+      >
+        <div
+          className="absolute inset-x-[10px] top-[5px] bottom-0"
+          style={{ borderRadius: '42px 42px 0 0', border: `2px solid ${pal.stripe}`, borderBottom: 'none' }}
+        />
+        <span
+          className="relative mb-[3px] px-1.5 text-[9px] font-black leading-none tracking-wider"
+          style={{ color: pal.signBg }}
+        >
+          {nam}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function ShophouseFacade({
   shopType,
   houseNumber,
@@ -74,6 +180,7 @@ export default function ShophouseFacade({
   const isNight = timeOfDay === 'NIGHT';
   const isSunset = timeOfDay === 'SUNSET';
   const pal = PALETTE[shopType];
+  const dang = dangNhaFor(houseNumber);
 
   /* Màu kính cửa sổ theo giờ */
   const winFill = isNight
@@ -121,7 +228,30 @@ export default function ShophouseFacade({
   return (
     <div className="relative w-full flex flex-col" style={{ backgroundColor: wallColor }}>
 
-      {/* ═══ 1. SÂN THƯỢNG / PARAPET ═══════════════════════════════════ */}
+      {/* ═══ 1a. MÁI NGÓI ĐỎ ══════════════════════════════════════════════ */}
+      {/*
+       * Nhìn từ mặt phố, mái dốc có nóc chạy song song với đường hiện ra là
+       * một dải ngói chữ nhật, nên không cần cắt hình thang - và nhờ vậy
+       * khối nhà vẫn giữ được viền chữ nhật mà không lộ góc tường.
+       */}
+      {dang.mai === 'NGOI' && (
+        <div
+          className="relative w-full overflow-visible"
+          style={{
+            height: 34,
+            backgroundColor: isNight ? '#5E2A1E' : '#9C3B27',
+            backgroundImage:
+              'repeating-linear-gradient(90deg, rgba(43,36,32,0.24) 0 2px, transparent 2px 11px), repeating-linear-gradient(180deg, transparent 0 7px, rgba(43,36,32,0.2) 7px 9px)',
+          }}
+        >
+          <div className="absolute inset-x-0 top-0 h-[5px]" style={{ backgroundColor: '#6B241C' }} />
+          {/* Diềm mái nhô ra hai bên */}
+          <div className="absolute -left-1 -right-1 -bottom-[3px] h-[6px]" style={{ backgroundColor: '#5E2216' }} />
+        </div>
+      )}
+
+      {/* ═══ 1b. SÂN THƯỢNG / PARAPET ═══════════════════════════════════ */}
+      {dang.mai !== 'NGOI' && (
       <div
         className="relative w-full flex items-end justify-between px-2 overflow-visible"
         style={{ height: 44, backgroundColor: pal.roofBg, borderBottom: `3px solid ${shade(pal.roofBg, 0.68)}` }}
@@ -182,8 +312,10 @@ export default function ShophouseFacade({
         <div className="absolute bottom-0 inset-x-0 h-3"
           style={{ backgroundColor: pal.stripe }} />
       </div>
+      )}
 
-      {/* ═══ 2. TẦNG 3 — CỬA SỔ ════════════════════════════════════════ */}
+      {/* ═══ 2. TẦNG 3 — CỬA SỔ (chỉ nhà 2 lầu) ════════════════════════ */}
+      {dang.soLau >= 2 && (
       <div
         className="relative flex items-center justify-around px-5 py-3"
         style={{ backgroundColor: wallColor, borderBottom: `2px solid ${shade(pal.wall, 0.8)}` }}
@@ -210,6 +342,7 @@ export default function ShophouseFacade({
           </div>
         </div>
       </div>
+      )}
 
       {/* ═══ 3. TẦNG 2 — BAN CÔNG ═══════════════════════════════════════ */}
       <div

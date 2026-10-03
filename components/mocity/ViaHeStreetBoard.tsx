@@ -24,7 +24,7 @@ import { useAmbientChatter } from './SpeechBubble';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
 import MoMoMascot from './MoMoMascot';
 import StreetTraffic from './StreetTraffic';
-import ShophouseFacade from './ShophouseFacade';
+import ShophouseFacade, { ShophouseRoofCap } from './ShophouseFacade';
 import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from './StreetAmbiance';
 import { useTrafficController } from './useTrafficController';
 import TrafficLightPole from './TrafficLightPole';
@@ -693,9 +693,17 @@ export default function ViaHeStreetBoard({
                     className="relative flex flex-col items-center shrink-0"
                     style={{ width: 236 }}
                   >
-                    {/* Dây điện võng giữa các nhà ống */}
+                    {/*
+                     * Dây điện võng giữa các nhà ống.
+                     *
+                     * Neo từ CHÂN, không neo từ đỉnh. Nhà giờ cao thấp khác
+                     * nhau nên đỉnh mỗi cột lệch nhau; neo `top` thì mỗi
+                     * khúc dây nằm một độ cao và dây gãy bậc thang. Từ chân
+                     * lên 262px rơi đúng tầng ban công - tầng mà căn nào
+                     * cũng có, kể cả căn 1 lầu.
+                     */}
                     <svg
-                      className="pointer-events-none absolute top-[135px] left-0 z-20 w-full h-10 overflow-visible"
+                      className="pointer-events-none absolute bottom-[262px] left-0 z-20 w-full h-10 overflow-visible"
                       viewBox="0 0 236 36"
                     >
                       <path
@@ -786,12 +794,23 @@ export default function ViaHeStreetBoard({
                       ) : null}
                     </div>
 
-                    {/* THÂN NHÀ ỐNG 3 TẦNG CỠ LỚN (228PX RỘNG × ~345PX CAO) */}
+                    {/* Bồn nước / mặt dựng vòm nhô lên trên nóc, nằm ngoài viền khối nhà. */}
+                    <ShophouseRoofCap
+                      houseNumber={plot.houseNumber}
+                      shopType={plot.theme.shopType}
+                      timeOfDay={timeOfDay}
+                    />
+
+                    {/*
+                     * THÂN NHÀ ỐNG - cao thấp theo dáng của từng số nhà.
+                     * Không có hiệu ứng rê chuột: nhà nhấc lên khi hover làm cả
+                     * dãy phố nhảy theo con trỏ mỗi lần lướt ngang.
+                     */}
                     <div
                       onClick={() => {
                         onSelect(plot.col, plot.row);
                       }}
-                      className="group relative w-[228px] cursor-pointer transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(62,42,27,0.22)] active:scale-[0.98]"
+                      className="group relative w-[228px] cursor-pointer"
                       style={{
                         border: isSelected ? '4px solid #D82D8B' : '2.5px solid #5A4A3F',
                         backgroundColor: plot.theme.wallBg,
