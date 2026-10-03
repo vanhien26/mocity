@@ -5,7 +5,11 @@ import { createPortal } from 'react-dom';
 import { claimTapReward, recordCitizenTalk, spendCoins } from '@/lib/mocity/store';
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
-import { CITIZEN_SCRIPTS, type CitizenDialogueOption } from '@/lib/mocity/citizen-scenarios';
+import {
+  CITIZEN_SCRIPTS,
+  FINANCE_TAG_META,
+  type CitizenDialogueOption,
+} from '@/lib/mocity/citizen-scenarios';
 
 const CITIZEN_TAP_COINS = 25;
 const CITIZEN_TAP_COOLDOWN_MS = 5_000;
@@ -22,7 +26,14 @@ export type FacialEmotion = 'HAPPY' | 'STAR_EYES' | 'SURPRISED' | 'TIRED';
  * dung han lai cho den khi dong hoi thoai, khac han cac trang thai con lai von
  * tu het han theo behaviorTimer.
  */
-export type CitizenBehavior = 'WALKING' | 'ADMIRING_SHOP' | 'CHATTING' | 'WAVING' | 'TALKING';
+export type CitizenBehavior =
+  | 'WALKING'
+  | 'ADMIRING_SHOP'
+  | 'CHATTING'
+  | 'WAVING'
+  | 'TALKING'
+  /** Dang xep hang cho cua hang da mo. Chi giu chuc nang o RAM, khong dua vao React state. */
+  | 'QUEUEING';
 
 interface CitizenDef {
   id: string;
@@ -54,7 +65,39 @@ interface SimState {
   jumpOffset: number;
   bubbleTimer: number;
   speechCooldown: number;
+  /** Cửa hàng đang xếp hàng. `null` = đang đi dạo tự do. */
+  queueShopId: string | null;
+  /** Vị trí trong hàng đợi, 0 = sát cửa. -1 = chưa vào hàng. */
+  queueSlot: number;
+  /** Số giây đã phục vụ, dùng cho bong bóng "Cảm ơn Thị Trưởng". */
+  serviceTimer: number;
+  /** Khoảng lấy lý do kêu gọi cư dân vào tiệm, chống spam mỗi frame. */
+  nextShopPullAt: number;
+  /**
+   * Điểm neo sinh hoạt: mỗi cư dân quanh quẩn một khúc phố của mình.
+   *
+   * Trước đây biên duy nhất là mép trái và mép phải, nên cả 12 người đều tuần
+   * hành trọn chiều dài phố như lính gác. Đo 66 giây: ai cũng đi từ x≈190 tới
+   * x≈1220 trên khúc phố rộng 1.364px.
+   */
+  homeX: number;
+  /** Bán kính quanh `homeX` mà cư dân này đi lại. */
+  roamRadius: number;
 }
+
+/** Một cửa tiệm đã mở, dùng làm điểm tụ cho cư dân xếp hàng. */
+export interface ShopAnchor {
+  id: string;
+  /** Tọa độ X của cửa tiệm trên vỉa hè. */
+  x: number;
+  /** Tên hiển thị trên bảng hiệu. */
+  label: string;
+  /** Số chỗ phục vụ đồng thời, tăng theo cấp tiệm. */
+  capacity: number;
+}
+
+/** shopId -> số khách đang xếp. */
+export type ShopQueueCount = Record<string, number>;
 
 /** Appearance state - chỉ thay đổi khi behavior change (~mỗi 10-15s) */
 interface CitAppearance {
@@ -63,6 +106,24 @@ interface CitAppearance {
 }
 
 const ALL_EMOTIONS: FacialEmotion[] = ['HAPPY', 'STAR_EYES', 'SURPRISED', 'TIRED'];
+
+/** Thời gian đứng ở quầy để "giao dịch" trước khi rời đi. */
+const SERVICE_SECONDS = 6.5;
+
+/**
+ * Bong bong sau khi được phục vụ.
+ *
+ * Câu ngắn, đời thường, và gắn với việc quét mã - đó là hành động người chơi
+ * đã đầu tư (lắp Loa QR) mới thấy.
+ */
+const SERVED_LINE = [
+  'Ting ting! Xong rồi nha, quét MoMo một cái là xong!',
+  'Cảm ơn Thị Trưởng, tiệm vừa loa đọc tiền về êm tai lắm!',
+  'Hết nước sổ nơ rồi, giờ tui không cần mè mỗi lần bán nữa!',
+  'Thiệt là nhẹ hậu trường, không phải đếm tiền lẻ mỏi tay nữa!',
+  'Quét QR nhanh hơn đổi tiền lẻ, chú bán hàng cũng mừng lắm!',
+  'Để tiền vô Túi Thần Tài luôn đi, kẹp xong tiếp đồ!',
+];
 
 /** Dam/nhat mot mau hex theo he so - dung tao lop giay phia sau. */
 function shade(hex: string, k: number): string {
@@ -505,19 +566,50 @@ function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmot
 
 export default function ExpressiveStreetCitizens({
   onCitizenReward,
+  onQueueChange,
   streetWidth = 2400,
+  shops = [],
 }: {
   onCitizenReward?: (msg: string) => void;
+  /**
+   * Báo số khách đang xếp ở từng tiệm.
+   *
+   * Gửi ra ngoài để dải biển hiện đếm khách. Không gọi mỗi frame: chỉ gọi
+   * khi chữ số thực sự đổi, tối đa một lần mỗi 500ms.
+   */
+  onQueueChange?: (counts: ShopQueueCount) => void;
   /**
    * Be rong that cua day pho. Cu dan phai quay dau trong pham vi nay, neu khong
    * ho se di tiep ra ngoai via he va lo lung giua nen troi khi nguoi choi moi
    * mo it cot dat.
    */
   streetWidth?: number;
+  /**
+   * Danh sach cua tiem da mo. Cu dan tu chon tienm de xep hang; tiem dong thi
+   * chi con "ADMIRING_SHOP" nhu truoc.
+   */
+  shops?: ShopAnchor[];
 }) {
   /** Bien di lai, doc trong vong RAF nen giu o ref de khong resubscribe. */
   const walkBoundRef = useRef(Math.max(360, streetWidth - 140));
   walkBoundRef.current = Math.max(360, streetWidth - 140);
+
+  /**
+   * Danh sach tiem giu trong ref.
+   *
+   * RAF loop chi chay mot lan (mount) nen doc `shops` truc tiep se bien mat
+   * sau lan render dau tien. Giu o ref va gan gia tri moi moi render de loop
+   * luon thay pho moi nhung khong phai khoi dong lai RAF.
+   */
+  const shopsRef = useRef<ShopAnchor[]>(shops);
+  shopsRef.current = shops;
+
+  /**
+   * Callback báo hàng đợi cũng phải qua ref: RAF loop mount một lần nên
+   * `onQueueChange` đóng trong lần render đầu sẽ thành closure cũ vĩnh viễn.
+   */
+  const onQueueChangeRef = useRef(onQueueChange);
+  onQueueChangeRef.current = onQueueChange;
 
   // Appearance state: tất cả bắt đầu rỗng, không hiện ồ ạt bóng thoại khi mới vào
   const [appearances, setAppearances] = useState<CitAppearance[]>(() =>
@@ -540,6 +632,19 @@ export default function ExpressiveStreetCitizens({
       jumpOffset: 0,
       bubbleTimer: 0,
       speechCooldown: 2 + i * 4, // Trải đều cooldown ban đầu để tránh cư dân đồng loạt cất lời
+      queueShopId: null,
+      queueSlot: -1,
+      serviceTimer: 0,
+      /*
+       * MILI GIAY, cung thang do voi timestamp cua requestAnimationFrame.
+       * Ban cu dat `3 + i * 1.4` (3 toi 18) la gia tri co giay, trong khi nhip
+       * ke tiep lai la `now + 9000`, nen ca 12 nguoi cung thu ghe tiem ngay
+       * frame dau va y do rai deu khong chay.
+       */
+      nextShopPullAt: 3_000 + i * 1_400,
+      // Neo ngay chỗ xuất phát, bán kính so le để các vùng chồng lấn tự nhiên.
+      homeX: Math.min(c.startX, Math.max(360, streetWidth - 140)),
+      roamRadius: 170 + (i % 5) * 65,
     }))
   );
 
@@ -553,6 +658,14 @@ export default function ExpressiveStreetCitizens({
 
   // Batched appearance updates để flush vào React mỗi 200ms
   const pendingUpdates = useRef<Map<number, Partial<CitAppearance>>>(new Map());
+
+  /**
+   * Số khách đang xếp, dùng để so sánh trước/sau rồi mới gọi callback.
+   * Khởi tạo rỗng để lần đầu có hàng đều báo.
+   */
+  const lastQueueSigRef = useRef('');
+  /** Mốc thời gian tối thiểu giữa hai lần gọi callback, chặn render dày. */
+  const lastQueuePushRef = useRef(0);
 
   useEffect(() => {
     let rafId: number;
@@ -570,22 +683,120 @@ export default function ExpressiveStreetCitizens({
 
       if (typeof document !== 'undefined' && document.hidden) return;
 
+      /**
+       * HÀNG ĐỢI TIỆM - phân bổ chỗ đứng cho từng cửa hàng.
+       *
+       * Số thứ tự trong hàng là thứ tự index của cư dân đang xếp, nên người tới
+       * trước luôn đứng trước. Slot 0 sát cửa, mỗi slot lùi thêm 26px về trái.
+       */
+      const queueCounters = new Map<string, number>();
+      for (const s of simRef.current) {
+        /*
+         * KHONG loc theo `queueSlot >= 0`.
+         *
+         * Nguoi vua vao hang luon mang slot -1, nen dieu kien do tu loai tru
+         * chinh doi tuong can cap so: khong ai tung nhan slot 0. Hau qua la
+         * `targetX = shop.x - 34 - (-1)*26` tro thanh `shop.x - 8` - ca hang
+         * chong len nhau lech 8px ben trai cua - va luot phuc vu ket thuc o
+         * 4,1 giay thay vi 6,5 giay vi `SERVICE_SECONDS + (-1)*2.4`.
+         */
+        if (s.behavior === 'QUEUEING' && s.queueShopId) {
+          const occupied = queueCounters.get(s.queueShopId) ?? 0;
+          s.queueSlot = occupied;
+          queueCounters.set(s.queueShopId, occupied + 1);
+        }
+      }
+
       simRef.current.forEach((sim, i) => {
         const def = CITIZEN_DEFS[i];
         sim.jumpOffset = Math.max(0, sim.jumpOffset - dt * 25);
 
         const wasWalking = sim.behavior === 'WALKING';
+        const wasQueueing = sim.behavior === 'QUEUEING';
         if (wasWalking) {
           sim.x += sim.dir * def.speed * dt * 10;
+          /*
+           * Quay đầu ở biên VÙNG SINH HOẠT, vẫn kẹp trong biên phố.
+           *
+           * Vùng riêng làm mỗi người có một khúc quen thuộc thay vì cả 12
+           * người cùng quét hết mặt phố. Đi xếp hàng (`QUEUEING`) thì không
+           * chịu biên này - đói thì đi xa cũng phải đi.
+           */
           const maxX = walkBoundRef.current;
+          const canTrai = Math.max(180, sim.homeX - sim.roamRadius);
+          const canPhai = Math.min(maxX, sim.homeX + sim.roamRadius);
+
+          /*
+           * Ngoài vùng thì ĐỔI HƯỚNG đi về, không gán lại toạ độ.
+           *
+           * Xếp hàng xong ở một tiệm xa là cư dân đứng ngoài vùng của mình.
+           * Gán `sim.x = canPhai` ở đó sẽ làm nhân vật dịch chuyển tức thời cả
+           * trăm px - lỗi nặng hơn hẳn cái đang sửa. Chỉ kẹp cứng ở biên phố,
+           * vì ra khỏi đó là lơ lửng giữa nền trời.
+           */
+          if (sim.x > canPhai) sim.dir = -1;
+          else if (sim.x < canTrai) sim.dir = 1;
+
           if (sim.x > maxX) { sim.x = maxX; sim.dir = -1; }
           else if (sim.x < 180) { sim.x = 180; sim.dir = 1; }
           sim.walkPhase += 0.22 * dt * 10;
+        } else if (wasQueueing) {
+          /**
+           * Tiệm bị xoá giữa chừng (người chơi bán lại) thì cư dân phải tự
+           * rời hàng, nếu không họ đứng giữa vỉa hè vô thời hạn.
+           */
+          const shop = shopsRef.current.find((sh) => sh.id === sim.queueShopId);
+          if (!shop) {
+            sim.behavior = 'WALKING';
+            sim.queueShopId = null;
+            sim.queueSlot = -1;
+            sim.behaviorTimer = 6 + Math.random() * 6;
+            sim.dir = Math.random() < 0.5 ? 1 : -1;
+          } else {
+            /** Người phục vụ đứng sát cửa, người sau lùi dần theo hàng. */
+            const targetX = shop.x - 34 - sim.queueSlot * 26;
+            const gap = targetX - sim.x;
+            if (Math.abs(gap) < 2.5) {
+              // Đã tới chỗ: đứng yên, quay mặt về phía cửa tiệm.
+              sim.x = targetX;
+              sim.dir = targetX < shop.x ? 1 : -1;
+              sim.walkPhase += 0.05 * dt * 10;
+              sim.serviceTimer += dtSec;
+              if (sim.serviceTimer > 5.5 && sim.bubbleTimer <= 0) {
+                pendingUpdates.current.set(i, {
+                  bubbleText: SERVED_LINE[Math.floor(Math.random() * SERVED_LINE.length)],
+                  emotion: 'HAPPY',
+                });
+                sim.bubbleTimer = 4.2;
+              }
+              /**
+               * Chỗ phục vụ tính theo `queueSlot < capacity`. Người vượt số chỗ
+               * vẫn xếp hàng (đó là chuyện bình thường ở quán đông) nhưng phải
+               * chờ lâu hơn, nên thời gian phục vụ nhân theo độ dài hàng.
+               */
+              if (sim.serviceTimer > SERVICE_SECONDS + sim.queueSlot * 2.4) {
+                sim.behavior = 'WALKING';
+                sim.queueShopId = null;
+                sim.queueSlot = -1;
+                sim.serviceTimer = 0;
+                sim.behaviorTimer = 10 + Math.random() * 10;
+                sim.speechCooldown = 25 + Math.random() * 20;
+                sim.dir = Math.random() < 0.5 ? 1 : -1;
+                sim.jumpOffset = 8;
+                pendingUpdates.current.set(i, { emotion: 'STAR_EYES' });
+              }
+            } else {
+              const step = def.speed * dt * 10;
+              sim.x += Math.sign(gap) * Math.min(step, Math.abs(gap));
+              sim.dir = gap > 0 ? 1 : -1;
+              sim.walkPhase += 0.22 * dt * 10;
+            }
+          }
         } else {
           sim.walkPhase += 0.08 * dt * 10;
         }
 
-        const bodyBob = wasWalking
+        const bodyBob = wasWalking || wasQueueing
           ? Math.abs(Math.sin(sim.walkPhase)) * 3
           : Math.sin(sim.walkPhase) * 1.2;
 
@@ -608,13 +819,30 @@ export default function ExpressiveStreetCitizens({
         }
 
         // 1. Behavior transitions (Độc lập với bóng thoại - chỉ đổi dáng đi/dừng ngắm)
-        if (sim.behavior !== 'TALKING') {
+        if (sim.behavior !== 'TALKING' && sim.behavior !== 'QUEUEING') {
           sim.behaviorTimer -= dtSec;
           if (sim.behaviorTimer <= 0) {
             const roll = Math.random();
             if (wasWalking && roll < 0.42) {
-              sim.behavior = roll < 0.22 ? 'ADMIRING_SHOP' : 'CHATTING';
+              /*
+               * "NGAM TIEM" PHAI CO TIEM THAT DE NGAM.
+               *
+               * Ban cu doi hanh vi thuan theo dong ho, khong theo khong gian:
+               * nguoi choi thay nhan vat dung giua via he trong, mat ngoi sao,
+               * ngam mot cua tiem khong co o do. Do luong 66 giay cho thay 17
+               * trong 22 lan dung roi vao cho trong.
+               *
+               * Bay gio chi ngam khi dang dung CANH mot tiem (trong 120px).
+               * Khong co tiem nao gan thi dung CHATTING - dung ten voi viec
+               * dang xay ra la ba con tam chuyen giua pho.
+               */
+              const tiemGan = shopsRef.current.find((sh) => Math.abs(sh.x - sim.x) < 120);
+              sim.behavior = roll < 0.22 && tiemGan ? 'ADMIRING_SHOP' : 'CHATTING';
               sim.behaviorTimer = 4.5 + Math.random() * 4.5; // Dừng ngắm phố 4.5s - 9s
+              // Quay mat ve phia tiem dang ngam, khong dung yen nhin ra duong.
+              if (sim.behavior === 'ADMIRING_SHOP' && tiemGan) {
+                sim.dir = tiemGan.x > sim.x ? 1 : -1;
+              }
               const emo = sim.behavior === 'ADMIRING_SHOP' ? 'STAR_EYES' : (Math.random() < 0.5 ? 'HAPPY' : 'STAR_EYES');
               pendingUpdates.current.set(i, { emotion: emo });
             } else {
@@ -623,6 +851,50 @@ export default function ExpressiveStreetCitizens({
               if (Math.random() < 0.3) sim.dir = (sim.dir * -1) as 1 | -1;
               const emo = Math.random() < 0.6 ? def.emotion : (Math.random() < 0.5 ? 'HAPPY' : 'TIRED');
               pendingUpdates.current.set(i, { emotion: emo });
+            }
+          }
+        }
+
+        /**
+         * KÉO CƯ DÂN VỀ TIỆM.
+         *
+         * Chỉ xảy ra khi đang đi dạo và đã qua thời hạn riêng. Ưu tiên tiệm
+         * gần nhất chưa xếp đầy: đây là thứ khiến người chơi thấy "xây thêm
+         * tiệm thì phố đông hơn" bằng mắt, không cần đọc chỉ số nào.
+         */
+        if (wasWalking && sim.behavior === 'WALKING' && shopsRef.current.length > 0) {
+          if (now >= sim.nextShopPullAt) {
+            sim.nextShopPullAt = now + 9000 + Math.random() * 12000;
+            if (Math.random() < 0.55) {
+              // Sắp tiệm theo khoảng cách rồi chọn ngẫu nhiên trong nhóm gần nhất.
+              const ranked = shopsRef.current
+                .map((sh) => ({ sh, dist: Math.abs(sh.x - sim.x) }))
+                .sort((a, b) => a.dist - b.dist);
+              const shortlist = ranked.slice(0, Math.min(3, ranked.length));
+              const pick = shortlist[Math.floor(Math.random() * shortlist.length)]?.sh;
+              if (pick) {
+                /*
+                 * Dem theo SUC CHUA thay vi chan tu nguoi thu hai.
+                 *
+                 * Ban cu dung `some(...)`: chi can mot nguoi dang xep la ca pho
+                 * khong ai duoc vao nua. `queueCapacityFor` tinh 1 toi 4 cho
+                 * theo cap tiem va `ViaHeStreetBoard` da truyen sang, nhung
+                 * `capacity` khong duoc doc o dau ca - toan bo he thong suc
+                 * chua la ma chet. Voi 2 tiem thi toi da 2/12 cu dan co the o
+                 * tiem cung luc, nen nhin nhu khong ai ghe.
+                 */
+                const dangXep = simRef.current.filter(
+                  (o) => o !== sim && o.behavior === 'QUEUEING' && o.queueShopId === pick.id,
+                ).length;
+                if (dangXep < Math.max(1, pick.capacity)) {
+                  sim.behavior = 'QUEUEING';
+                  sim.queueShopId = pick.id;
+                  sim.queueSlot = -1;
+                  sim.serviceTimer = 0;
+                  sim.dir = pick.x > sim.x ? 1 : -1;
+                  pendingUpdates.current.set(i, { emotion: 'STAR_EYES' });
+                }
+              }
             }
           }
         }
@@ -651,7 +923,12 @@ export default function ExpressiveStreetCitizens({
           // Lọc các cư dân sẵn sàng nói (không bận nói chuyện modal, không trong cooldown)
           const candidates = simRef.current
             .map((s, idx) => ({ sim: s, idx }))
-            .filter(({ sim }) => sim.behavior !== 'TALKING' && sim.speechCooldown <= 0);
+            .filter(
+              ({ sim }) =>
+                sim.behavior !== 'TALKING' &&
+                sim.behavior !== 'QUEUEING' &&
+                sim.speechCooldown <= 0,
+            );
 
           if (candidates.length > 0) {
             const picked = candidates[Math.floor(Math.random() * candidates.length)];
@@ -677,6 +954,24 @@ export default function ExpressiveStreetCitizens({
       }
 
       // Flush appearance updates mỗi 200ms thay vì mỗi frame
+      /*
+       * BÁO HÀNG ĐỢI LÊN BIỂN HIỆU.
+       *
+       * `queueCounters` đã tính ở đầu vòng lặp nên ở đây chỉ chuyển thành
+       * object thường. Chỉ gọi khi chữ số khác lần trước VÀ đã qua 500ms,
+       * tránh setState mỗi frame.
+       */
+      if (onQueueChangeRef.current) {
+        const sig = [...queueCounters.entries()].map(([k, v]) => `${k}:${v}`).sort().join('|');
+        if (sig !== lastQueueSigRef.current && now - lastQueuePushRef.current >= 500) {
+          lastQueueSigRef.current = sig;
+          lastQueuePushRef.current = now;
+          const payload: ShopQueueCount = {};
+          for (const [k, v] of queueCounters) payload[k] = v;
+          onQueueChangeRef.current(payload);
+        }
+      }
+
       if (flushAccum >= 200 && pendingUpdates.current.size > 0) {
         flushAccum = 0;
         const updates = new Map(pendingUpdates.current);
@@ -701,6 +996,14 @@ export default function ExpressiveStreetCitizens({
   const [talkLine, setTalkLine] = useState<string>('');
   const [currentEmotion, setCurrentEmotion] = useState<FacialEmotion>('HAPPY');
   const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
+  /**
+   * Bài học tài chính của lựa chọn vừa chọn.
+   *
+   * Đây là phần "học chơi": mỗi nhân vật mang một chủ đề, mỗi câu trả lời
+   * chỉ ra chỉ số mà câu đó đụng tới, và sau đó hiện một dòng bài học để
+   * người chơi biết mình vừa học được gì.
+   */
+  const [lesson, setLesson] = useState<{ title: string; text: string } | null>(null);
 
   const handleClickCitizen = useCallback((idx: number) => {
     const def = CITIZEN_DEFS[idx];
@@ -715,6 +1018,7 @@ export default function ExpressiveStreetCitizens({
     recordCitizenTalk();
     setTalkingIdx(idx);
     setSelectedOptId(null);
+    setLesson(null);
 
     const script = CITIZEN_SCRIPTS[def.id];
     let greeting = `Dạ Thị Trưởng! Tui là ${def.name}, ${def.role.toLowerCase()} ở khu này.`;
@@ -743,6 +1047,7 @@ export default function ExpressiveStreetCitizens({
     setTalkLine(g.text);
     setCurrentEmotion(g.emotion);
     setSelectedOptId(null);
+    setLesson(null);
     setAppearances((prev) =>
       prev.map((a, i) => (i === talkingIdx ? { emotion: g.emotion, bubbleText: null } : a)),
     );
@@ -776,6 +1081,7 @@ export default function ExpressiveStreetCitizens({
     (opt: CitizenDialogueOption) => {
       if (talkingIdx === null) return;
       const def = CITIZEN_DEFS[talkingIdx];
+      const script = CITIZEN_SCRIPTS[def.id];
       const citizenX = simRef.current[talkingIdx]?.x ?? 400;
 
       if (opt.cost && opt.cost > 0) {
@@ -807,6 +1113,16 @@ export default function ExpressiveStreetCitizens({
       setSelectedOptId(opt.id);
       setTalkLine(opt.reply);
       setCurrentEmotion(nextEmotion);
+
+      /*
+       * Bài học hiện ngay sau lựa chọn, không phải lúc mở hội thoại.
+       *
+       * Đây là nguyên tắc "học bằng cách làm": người chơi đã trả lời xong mới
+       * đọc được phần giải thích, lúc này khái niệm mới có chỗ bám.
+       */
+      if (script?.financeTheme) {
+        setLesson({ title: script.financeTheme.title, text: script.financeTheme.lesson });
+      }
       setAppearances((prev) =>
         prev.map((a, i) => (i === talkingIdx ? { ...a, emotion: nextEmotion } : a)),
       );
@@ -824,6 +1140,7 @@ export default function ExpressiveStreetCitizens({
     sim.speechCooldown = 30 + Math.random() * 20;
     setTalkingIdx(null);
     setSelectedOptId(null);
+    setLesson(null);
   }, [talkingIdx]);
 
   return (
@@ -939,6 +1256,23 @@ export default function ExpressiveStreetCitizens({
                     {talkLine}
                   </p>
                 </div>
+                {/* Chủ đề tài chính của nhân vật: luôn hiện, kể cả lúc mới chào. */}
+                {(() => {
+                  const theme = talkingIdx !== null ? CITIZEN_SCRIPTS[CITIZEN_DEFS[talkingIdx].id]?.financeTheme : undefined;
+                  if (!theme) return null;
+                  const meta = FINANCE_TAG_META[theme.tag];
+                  return (
+                    <span
+                      className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] font-black"
+                      style={{
+                        backgroundColor: meta.tone === 'good' ? '#DCFCE7' : meta.tone === 'bad' ? '#FEE2E2' : '#F1F5F9',
+                        color: meta.tone === 'good' ? '#15803D' : meta.tone === 'bad' ? '#B91C1C' : '#475569',
+                      }}
+                    >
+                      📊 {theme.title}
+                    </span>
+                  );
+                })()}
               </div>
               <button
                 type="button"
@@ -950,6 +1284,18 @@ export default function ExpressiveStreetCitizens({
               </button>
             </div>
 
+            {/* Bài học tài chính, hiện sau khi người chơi đã chọn một phương án. */}
+            {lesson && (
+              <div className="mb-2.5 flex gap-2 rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-2.5">
+                <span aria-hidden="true" className="text-base leading-none">
+                  💡
+                </span>
+                <p className="text-[11px] font-semibold leading-relaxed text-[#78350F]">
+                  <span className="font-black">{lesson.title}:</span> {lesson.text}
+                </p>
+              </div>
+            )}
+
             {/* Danh sách kịch bản lựa chọn */}
             <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F0E6D8]">
               {activeOptions.map((opt) => {
@@ -960,6 +1306,11 @@ export default function ExpressiveStreetCitizens({
                     key={opt.id}
                     type="button"
                     onClick={() => handleTalkOption(opt)}
+                    title={
+                      opt.financeTags?.length
+                        ? opt.financeTags.map((t) => FINANCE_TAG_META[t].label).join(' · ')
+                        : undefined
+                    }
                     className="group relative rounded-xl px-3 py-2 text-xs font-black transition-all active:scale-95 text-left cursor-pointer"
                     style={
                       isPaid
