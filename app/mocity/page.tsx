@@ -514,7 +514,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
       window.innerWidth / 2,
       window.innerHeight * 0.32,
       `🏙️ Rank ${cao.rank}/8 · ${cao.name}`,
-      '#D82D8B',
+      '#A8246B',
     );
     showToast(`Thành phố lên Rank ${cao.rank}: ${cao.name}! ${cao.tagline}`);
   }, [buildings, isPlaying, showToast, shake, floatNumber]);
@@ -549,7 +549,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
 
     particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.45);
     shake(3);
-    floatNumber(window.innerWidth / 2, window.innerHeight * 0.34, `⬆️ Cấp ${level}`, '#FACC15');
+    floatNumber(window.innerWidth / 2, window.innerHeight * 0.34, `⬆️ Cấp ${level}`, '#D9A441');
     showToast(`Lên cấp ${level}! Càng cấp cao thì càng mở được công trình lớn.`);
   }, [level, isPlaying, shake, floatNumber, showToast]);
 
@@ -571,7 +571,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
       window.innerWidth / 2,
       window.innerHeight * 0.3,
       `🔥 ${earned.length} chuỗi ngày vừa mở khoá!`,
-      '#EF4444',
+      '#B33A2B',
     );
     showToast(`${cao.title} · +${formatCompact(cao.rewardCoins)} Xu +${cao.rewardGems} KC`);
   }, [streakDays, isPlaying, showToast, shake, floatNumber]);
@@ -614,7 +614,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
       if (result === 'ok') {
         setDrawerOpen(false);
         particles.buildCelebration(window.innerWidth / 2, window.innerHeight * 0.45);
-        floatNumber(window.innerWidth / 2, window.innerHeight * 0.45, `+${def.name}! 🎉`, '#D82D8B');
+        floatNumber(window.innerWidth / 2, window.innerHeight * 0.45, `+${def.name}! 🎉`, '#A8246B');
         const key = `${target.col}:${target.row}`;
         setNewBuildKey(key);
         if (buildAnimTimer.current) clearTimeout(buildAnimTimer.current);
@@ -642,7 +642,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   const handleBuyLand = useCallback(() => {
     if (buyLand()) {
       particles.confetti(window.innerWidth / 2, window.innerHeight * 0.6);
-      floatNumber(window.innerWidth / 2, window.innerHeight * 0.6, '+1 Mặt Tiền Đất! 🏗️', '#D97706');
+      floatNumber(window.innerWidth / 2, window.innerHeight * 0.6, '+1 Mặt Tiền Đất! 🏗️', '#A8701F');
       showToast('Đã mở rộng thêm lô đất mặt tiền mới trên Đại lộ MoCity!');
     } else {
       showToast('Chưa đủ Xu để mở rộng thêm mặt tiền mới.');
@@ -661,7 +661,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     if (triggerFeverMode()) {
       shake(8);
       particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
-      floatNumber(window.innerWidth / 2, window.innerHeight * 0.3, 'GIỜ VÀNG x2 XU! 🔥', '#EF4444');
+      floatNumber(window.innerWidth / 2, window.innerHeight * 0.3, 'GIỜ VÀNG x2 XU! 🔥', '#B33A2B');
       showToast(
         `Đã kích hoạt Giờ Vàng MoCity! Còn ${derived.feverLeftToday - 1} lượt hôm nay.`,
       );
@@ -766,9 +766,9 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               style={{ background: 'linear-gradient(135deg, #34D399, #0F766E)' }}
             >
               <span className="text-[7px] font-black uppercase tracking-wider opacity-80">Rank</span>
-              <span className="text-[11px] font-black tabular-nums">
+              <span className="font-pixel text-[13px] leading-none">
                 {cityTier.rank}
-                <span className="text-[8px] opacity-70">/{CITY_TIERS.length}</span>
+                <span className="text-[10px] opacity-70">/{CITY_TIERS.length}</span>
               </span>
             </span>
             <div className="min-w-0 hidden sm:block">
@@ -822,7 +822,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             <CircleDollarSign size={17} className="shrink-0 text-amber-400" />
             <div>
               <div className="flex items-baseline gap-1">
-                <span className="text-sm font-black text-amber-200">{formatNumber(coins)}</span>
+                <span className="font-pixel text-base leading-none text-amber-200">{formatNumber(coins)}</span>
                 <span className="text-[10px] font-black text-amber-500">XU</span>
               </div>
               <p className="text-[10.5px] font-black text-emerald-400 leading-none">+{formatRate(derived.rate)}</p>
@@ -839,7 +839,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             }}
           >
             <Star size={14} className="shrink-0 fill-sky-400 text-sky-400" />
-            <span className="text-xs font-black text-sky-200">{gems}</span>
+            <span className="font-pixel text-sm leading-none text-sky-200">{gems}</span>
           </div>
 
           {/* Chuỗi ngày chơi liên tiếp */}
@@ -876,7 +876,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             className="flex w-[155px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1"
             style={{
               background: 'linear-gradient(135deg, #1A0B2E, #3B1E5F)',
-              borderColor: '#A78BFA',
+              borderColor: '#8C7FA8',
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
             }}
             title={
@@ -893,14 +893,14 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               <span className="whitespace-nowrap text-[10px] font-black uppercase leading-none tracking-wide text-violet-300">
                 Thị Trưởng
               </span>
-              <span className="whitespace-nowrap text-xs font-black leading-none text-violet-100 tabular-nums">
+              <span className="whitespace-nowrap font-pixel text-sm leading-none text-violet-100">
                 Lv.{level}
               </span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#2A1A45' }}>
               <div
                 className="h-full rounded-full transition-[width] duration-500"
-                style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#A78BFA,#EB2F96)' }}
+                style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#8C7FA8,#B8307A)' }}
               />
             </div>
             <p className="whitespace-nowrap text-[10px] font-black leading-none text-violet-300/80 tabular-nums">
@@ -930,7 +930,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             <MessageSquareWarning size={14} className="shrink-0" />
             <span className="hidden md:inline text-[10px]">Chuyện Phố</span>
             {hasPendingEventOrRequest && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#D82D8B] text-[8px] font-black text-white">!</span>
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#A8246B] text-[8px] font-black text-white">!</span>
             )}
           </button>
 
@@ -943,7 +943,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           >
             <Package size={14} className="shrink-0" />
             {totalInventoryCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#D82D8B] px-0.5 text-[8px] font-black text-white">{totalInventoryCount}</span>
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-0.5 text-[8px] font-black text-white">{totalInventoryCount}</span>
             )}
           </button>
 
@@ -968,7 +968,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               'flex h-9 items-center gap-1 rounded-lg border px-2 text-[10px] font-black transition-transform active:scale-95',
               derived.isFever
                 ? 'border-amber-500 bg-amber-600/50 text-amber-200 animate-pulse'
-                : 'border-[#D82D8B]/60 bg-[#D82D8B]/10 text-[#D82D8B] hover:bg-[#D82D8B]/30',
+                : 'border-[#A8246B]/60 bg-[#A8246B]/10 text-[#A8246B] hover:bg-[#A8246B]/30',
             )}
           >
             <span>{derived.isFever ? '⚡x2' : 'x2'}</span>
@@ -1030,7 +1030,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                       style={{ color: selectedDef?.hue }}
                     />
                   ) : (
-                    <MapPin size={20} className="shrink-0 text-[#D82D8B]" />
+                    <MapPin size={20} className="shrink-0 text-[#A8246B]" />
                   )}
                 </span>
 
@@ -1061,7 +1061,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                           </span>
                         )}
                         {selectedYield.synergyBonus > 0 && (
-                          <span className="ml-1.5 text-[#D82D8B]">
+                          <span className="ml-1.5 text-[#A8246B]">
                             · Combo +{Math.round(selectedYield.synergyBonus * 100)}%
                           </span>
                         )}
@@ -1084,7 +1084,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                         className={cn(
                           'flex h-10 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black transition-all active:scale-95',
                           canAffordUpgrade
-                            ? 'border-[#78533D] bg-[#FACC15] text-[#1C171A] hover:bg-[#FDE047]'
+                            ? 'border-[#78533D] bg-[#D9A441] text-[#1C171A] hover:bg-[#FDE047]'
                             : 'cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400',
                         )}
                       >
@@ -1096,7 +1096,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                     <button
                       type="button"
                       onClick={() => setInspectorOpen(true)}
-                      className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#9D174D] bg-[#D82D8B] px-3.5 text-xs font-black text-white shadow hover:bg-[#EB2F96]"
+                      className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#73164A] bg-[#A8246B] px-3.5 text-xs font-black text-white shadow hover:bg-[#B8307A]"
                     >
                       <SlidersHorizontal size={14} className="shrink-0" />
                       <span>Loa QR & Quản Lý ({selectedBuilding.modules?.length ?? 0}/3)</span>
@@ -1106,7 +1106,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   <button
                     type="button"
                     onClick={() => setDrawerOpen(true)}
-                    className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#9D174D] bg-[#D82D8B] px-4 text-xs font-black text-white shadow hover:bg-[#EB2F96]"
+                    className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#73164A] bg-[#A8246B] px-4 text-xs font-black text-white shadow hover:bg-[#B8307A]"
                   >
                     <Hammer size={15} className="shrink-0" />
                     <span>+ Khai Trương Tiệm Tại Đây</span>
@@ -1138,7 +1138,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 type="button"
                 data-tour="build"
                 onClick={() => setDrawerOpen(true)}
-                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#9D174D] bg-[#D82D8B] px-4 text-xs font-black text-white shadow transition-transform hover:bg-[#EB2F96] active:scale-95"
+                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#73164A] bg-[#A8246B] px-4 text-xs font-black text-white shadow transition-transform hover:bg-[#B8307A] active:scale-95"
               >
                 <Hammer size={15} className="shrink-0" />
                 <span>Mở Tiệm Mới</span>
@@ -1160,10 +1160,10 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   }
                   setInspectorOpen(true);
                 }}
-                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
                 title="Quản Lý Tiệm & Loa QR"
               >
-                <SlidersHorizontal size={15} className="shrink-0 text-[#D82D8B]" />
+                <SlidersHorizontal size={15} className="shrink-0 text-[#A8246B]" />
                 <span className="text-[9px] font-black leading-none">Quản Lý</span>
               </button>
 
@@ -1180,7 +1180,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 )}
                 title={canExpand ? `Mở Rộng Phố - ${formatCompact(derived.landCost)} Xu` : 'Mở Rộng Phố (chưa đủ Xu)'}
               >
-                <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#D97706]' : 'text-gray-400')} />
+                <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#A8701F]' : 'text-gray-400')} />
                 <span className="text-[9px] font-black leading-none">Mở Rộng</span>
                 {canExpand && (
                   <span className="absolute -top-1.5 -right-1 rounded bg-amber-400 px-1 text-[8px] font-black text-[#92400E] leading-tight">
@@ -1196,13 +1196,13 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   setMayorModalTab('QUESTS');
                   setMayorModalOpen(true);
                 }}
-                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
                 title="Nhiệm Vụ"
               >
                 <Star size={15} className="shrink-0 fill-amber-400 text-amber-600" />
                 <span className="text-[9px] font-black leading-none">Nhiệm Vụ</span>
                 {claimableQuestsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#D82D8B] px-1 text-[8px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white">
                     {claimableQuestsCount}
                   </span>
                 )}
@@ -1215,13 +1215,13 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   setInventoryTab('ITEMS');
                   setInventoryOpen(true);
                 }}
-                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
                 title="Kho Đồ & Bảo Vật"
               >
-                <Package size={15} className="shrink-0 text-[#D82D8B]" />
+                <Package size={15} className="shrink-0 text-[#A8246B]" />
                 <span className="text-[9px] font-black leading-none">Kho Đồ</span>
                 {totalInventoryCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#D82D8B] px-1 text-[8px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white">
                     {totalInventoryCount}
                   </span>
                 )}
@@ -1234,7 +1234,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   setInventoryTab('CHARACTERS');
                   setInventoryOpen(true);
                 }}
-                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
                 title="Nhân Vật & Thoại"
               >
                 <MessageSquareHeart size={15} className="shrink-0 text-[#059669]" />
@@ -1249,7 +1249,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                   setMayorModalTab('CITIZENS');
                   setMayorModalOpen(true);
                 }}
-                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#D82D8B] hover:bg-white"
+                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
                 title="Tòa Thị Chính & Cư Dân"
               >
                 <Users size={15} className="shrink-0 text-[#2563EB]" />
