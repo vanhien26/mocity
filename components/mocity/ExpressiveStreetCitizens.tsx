@@ -83,6 +83,19 @@ interface SimState {
   homeX: number;
   /** Bán kính quanh `homeX` mà cư dân này đi lại. */
   roamRadius: number;
+  /**
+   * Vận tốc hiện tại, px mỗi đơn vị dt.
+   *
+   * Tách khỏi `dir * def.speed` để có tăng tốc và giảm tốc. Trước đây vận tốc
+   * đổi dấu tức thì ở biên: nhân vật đang đi 100% tốc độ thì frame sau đã đi
+   * ngược lại cũng 100%, không có nhịp dừng nào. Mắt người đọc ra ngay đó là
+   * chuyển động máy móc.
+   */
+  vel: number;
+  /** Hướng mặt đang hiển thị, tách khỏi `dir` để quay người có thời lượng. */
+  faceDir: 1 | -1;
+  /** Tiến độ cú quay người, 1 là vừa bắt đầu, 0 là xong. */
+  faceTurn: number;
 }
 
 /** Một cửa tiệm đã mở, dùng làm điểm tụ cho cư dân xếp hàng. */
@@ -645,6 +658,9 @@ export default function ExpressiveStreetCitizens({
       // Neo ngay chỗ xuất phát, bán kính so le để các vùng chồng lấn tự nhiên.
       homeX: Math.min(c.startX, Math.max(360, streetWidth - 140)),
       roamRadius: 170 + (i % 5) * 65,
+      vel: c.startDir * c.speed,
+      faceDir: c.startDir,
+      faceTurn: 0,
     }))
   );
 
@@ -714,7 +730,15 @@ export default function ExpressiveStreetCitizens({
         const wasWalking = sim.behavior === 'WALKING';
         const wasQueueing = sim.behavior === 'QUEUEING';
         if (wasWalking) {
-          sim.x += sim.dir * def.speed * dt * 10;
+          /*
+           * Vận tốc ĐUỔI THEO tốc độ mục tiêu thay vì nhảy thẳng tới.
+           *
+           * Hệ số 4/giây cho quãng đổi hướng khoảng 0,25 giây: đủ để thấy
+           * nhân vật chậm lại, dừng, rồi đi ngược, thay vì lật tức thì.
+           */
+          const vMuc = sim.dir * def.speed;
+          sim.vel += (vMuc - sim.vel) * Math.min(1, dtSec * 4);
+          sim.x += sim.vel * dt * 10;
           /*
            * Quay đầu ở biên VÙNG SINH HOẠT, vẫn kẹp trong biên phố.
            *
@@ -739,7 +763,8 @@ export default function ExpressiveStreetCitizens({
 
           if (sim.x > maxX) { sim.x = maxX; sim.dir = -1; }
           else if (sim.x < 180) { sim.x = 180; sim.dir = 1; }
-          sim.walkPhase += 0.22 * dt * 10;
+          // Chân bước nhanh chậm theo tốc độ THẬT: đi chậm thì bước ngắn lại.
+          sim.walkPhase += 0.22 * dt * 10 * Math.min(1, Math.abs(sim.vel) / def.speed);
         } else if (wasQueueing) {
           /**
            * Tiệm bị xoá giữa chừng (người chơi bán lại) thì cư dân phải tự
@@ -760,6 +785,7 @@ export default function ExpressiveStreetCitizens({
               // Đã tới chỗ: đứng yên, quay mặt về phía cửa tiệm.
               sim.x = targetX;
               sim.dir = targetX < shop.x ? 1 : -1;
+              sim.vel += (0 - sim.vel) * Math.min(1, dtSec * 6);
               sim.walkPhase += 0.05 * dt * 10;
               sim.serviceTimer += dtSec;
               if (sim.serviceTimer > 5.5 && sim.bubbleTimer <= 0) {
@@ -786,13 +812,17 @@ export default function ExpressiveStreetCitizens({
                 pendingUpdates.current.set(i, { emotion: 'STAR_EYES' });
               }
             } else {
-              const step = def.speed * dt * 10;
-              sim.x += Math.sign(gap) * Math.min(step, Math.abs(gap));
               sim.dir = gap > 0 ? 1 : -1;
-              sim.walkPhase += 0.22 * dt * 10;
+              const vMuc = sim.dir * def.speed;
+              sim.vel += (vMuc - sim.vel) * Math.min(1, dtSec * 4);
+              const step = Math.abs(sim.vel) * dt * 10;
+              sim.x += Math.sign(gap) * Math.min(step, Math.abs(gap));
+              sim.walkPhase += 0.22 * dt * 10 * Math.min(1, Math.abs(sim.vel) / def.speed);
             }
           }
         } else {
+          // Đứng lại: hãm dần về 0 chứ không tắt máy đột ngột.
+          sim.vel += (0 - sim.vel) * Math.min(1, dtSec * 6);
           sim.walkPhase += 0.08 * dt * 10;
         }
 
@@ -807,11 +837,35 @@ export default function ExpressiveStreetCitizens({
           container.style.zIndex = String(Math.round(60 - def.laneY));
         }
         const btn = btnRefs.current[i];
-        if (btn) btn.style.transform = `scaleX(${sim.dir})`;
+        if (btn) {
+          /*
+           * Quay người theo hướng ĐANG ĐI THẬT, và co lại ở giữa cú quay.
+           *
+           * `scaleX(dir)` lật tức thì làm nhân vật như bị soi gương. Nội suy
+           * qua `scaleX` nhỏ dần rồi lớn lại cho ra cảm giác xoay người.
+           */
+          const huong = Math.abs(sim.vel) > 0.02 ? Math.sign(sim.vel) : sim.dir;
+          const nguoc = huong !== sim.faceDir;
+          if (nguoc) sim.faceTurn = 1;
+          if (sim.faceTurn > 0) {
+            sim.faceTurn = Math.max(0, sim.faceTurn - dtSec * 7);
+            if (sim.faceTurn < 0.5) sim.faceDir = huong as 1 | -1;
+          }
+          const beNgang = sim.faceDir * Math.max(0.12, Math.abs(Math.cos(sim.faceTurn * Math.PI)));
+          btn.style.transform = `scaleX(${beNgang.toFixed(3)})`;
+        }
 
         const svg = svgRefs.current[i];
         if (svg) {
-          const cls = wasWalking ? 'walking' : 'idle';
+          /*
+           * Người đang đi TỚI tiệm cũng phải có nhịp chân.
+           *
+           * Bản cũ chỉ xét `wasWalking`, nên cư dân ở trạng thái QUEUEING
+           * trượt ngang vỉa hè hàng trăm px với dáng đứng yên. Đứng tại quầy
+           * rồi mới là `idle`.
+           */
+          const dangBuoc = wasWalking || (wasQueueing && Math.abs(sim.vel) > 0.04);
+          const cls = dangBuoc ? 'walking' : 'idle';
           if (!svg.classList.contains(cls)) {
             svg.classList.remove('walking', 'idle');
             svg.classList.add(cls);
