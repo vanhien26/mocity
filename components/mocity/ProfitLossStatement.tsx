@@ -127,154 +127,8 @@ function Pct({ value }: { value: number }) {
  * khoản vay và dòng "chi phí lãi vay" nó tạo ra trong cùng một màn hình, nếu
  * không thì vay tiền vẫn là chuyện không hậu quả.
  * ═══════════════════════════════════════════════════════════════════════════ */
-export function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
-  const coins = useCity((s) => s.coins);
-  const coBank = useCity((s) => s.buildings.some((b) => b.defId === 'ngan-hang-so'));
-  const derived = useCityDerived();
-  const [soTien, setSoTien] = useState('');
-
-  // Moc huong dan: nguoi choi da nhin thay han muc vay cua minh.
-  useEffect(() => {
-    markTutorialFlag('loan');
-  }, []);
-
-  const duNo = derived.debt;
-  const tran = derived.debtCeiling;
-  const conVay = derived.loanHeadroom;
-  const heSo = derived.interestCoverage;
-  const cang = Number.isFinite(heSo) && heSo < COVERAGE_WARNING_AT;
-  const pctDung = tran > 0 ? Math.min(100, Math.round((duNo / tran) * 100)) : 0;
-
-  const so = Number(soTien.replace(/\D/g, '')) || 0;
-
-  const vay = () => {
-    const r = takeLoan(so);
-    if (r.ok) {
-      setSoTien('');
-      onToast?.(`Đã giải ngân ${formatNumber(r.amount)} đồng. Dư nợ mới ${formatNumber(duNo + r.amount)} đồng.`);
-      return;
-    }
-    if (r.reason === 'needBank') onToast?.('Cần xây Ngân Hàng Số (mở ở Bậc 3 - Phố Vỉa Hè) mới được vay.');
-    else if (r.reason === 'noIncome') onToast?.('Thành phố chưa có lợi nhuận hoạt động nên chưa đủ điều kiện vay.');
-    else if (r.reason === 'ceiling') onToast?.(`Vượt hạn mức. Chỉ còn vay được ${formatNumber(conVay)} đồng.`);
-    else onToast?.('Nhập số tiền muốn vay.');
-  };
-
-  const tra = () => {
-    const r = repayLoan(so || duNo);
-    if (r.ok) {
-      setSoTien('');
-      onToast?.(`Đã trả ${formatNumber(r.amount)} đồng. Dư nợ còn ${formatNumber(r.remaining)} đồng.`);
-      return;
-    }
-    if (r.reason === 'funds') onToast?.('Ngân khố không đủ để trả khoản này.');
-    else if (r.reason === 'noDebt') onToast?.('Thành phố đang không có dư nợ.');
-    else onToast?.('Nhập số tiền muốn trả.');
-  };
-
-  // Chua co Ngan Hang So -> khoa Vay Nhanh, noi ro mo o Bac 3. Day la bai hoc
-  // tin dung: phai co quan he tin dung truoc moi vay duoc.
-  if (!coBank) {
-    return (
-      <div className="rounded-2xl border-2 border-dashed p-3.5" style={{ background: '#FAF7F0', borderColor: '#C9A22766' }}>
-        <p className="text-[12px] font-black uppercase tracking-wide" style={{ color: '#8B6318' }}>
-          🔒 Vay Nhanh - chưa mở
-        </p>
-        <p className="mt-1 text-[13px] leading-relaxed" style={{ color: '#6E4F3A' }}>
-          Xây <span className="font-black">Ngân Hàng Số</span> (mở ở Bậc 3 - Phố Vỉa Hè) để thiết lập quan hệ tín dụng. Có ngân hàng rồi mới được vay vốn tăng tốc xây dựng.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="rounded-2xl border-2 p-3.5"
-      style={{
-        background: cang ? '#FEF2F2' : '#FFFBEB',
-        borderColor: cang ? '#DC2626' : '#C9A227',
-      }}
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="text-[12px] font-black uppercase tracking-wide" style={{ color: cang ? '#B91C1C' : '#8B6318' }}>
-          Khoản vay Ngân Hàng Số
-        </p>
-        <span className="text-[12px] font-black" style={{ color: '#8B6318' }}>
-          lãi {Math.round(LOAN_ANNUAL_RATE * 100)}%/năm
-        </span>
-      </div>
-
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
-          <p className="text-[11px] font-black uppercase text-[#8A7355]">Dư nợ</p>
-          <p className="text-sm font-black tabular-nums" style={{ color: duNo > 0 ? '#B91C1C' : '#1C171A' }}>
-            {formatNumber(duNo)}
-          </p>
-        </div>
-        <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
-          <p className="text-[11px] font-black uppercase text-[#8A7355]">Còn vay được</p>
-          <p className="text-sm font-black tabular-nums text-[#1C171A]">{formatNumber(conVay)}</p>
-        </div>
-      </div>
-
-      {/* Han muc da dung */}
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#E6D9B8' }}>
-        <div
-          className="h-full rounded-full transition-[width] duration-500"
-          style={{ width: `${pctDung}%`, background: cang ? '#DC2626' : 'linear-gradient(90deg,#34D399,#FBBF24)' }}
-        />
-      </div>
-      <p className="mt-1 text-[12px] font-bold" style={{ color: '#8B6318' }}>
-        Đã dùng {pctDung}% hạn mức. Hạn mức bằng {MAX_DEBT_TO_EBIT} lần lợi nhuận hoạt động một năm —
-        ngân hàng cho vay theo <b>khả năng trả nợ</b>, không theo doanh thu.
-      </p>
-
-      {duNo > 0 && (
-        <p
-          className="mt-1.5 rounded-lg px-2 py-1.5 text-[12px] font-bold leading-relaxed"
-          style={{ background: cang ? '#FEE2E2' : '#FFFFFF', color: cang ? '#991B1B' : '#5B3D22' }}
-        >
-          Hệ số bao phủ lãi vay <b>{heSo.toFixed(2)}</b> = lợi nhuận hoạt động chia chi phí lãi vay.
-          {cang
-            ? ' Dưới 1,5 là vùng nguy hiểm: lãi đang ăn gần hết lợi nhuận, chỉ cần một tháng kém là vỡ nợ.'
-            : ' Trên 1,5 nghĩa là lợi nhuận vẫn đủ gánh lãi.'}
-        </p>
-      )}
-
-      <div className="mt-2 flex items-center gap-1.5">
-        <input
-          value={soTien}
-          onChange={(e) => setSoTien(e.target.value.replace(/\D/g, ''))}
-          inputMode="numeric"
-          placeholder="Số tiền VNĐ"
-          className="min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs font-black tabular-nums outline-none"
-          style={{ borderColor: '#C9A22788', background: '#FFFFFF', color: '#1C171A' }}
-        />
-        <button
-          type="button"
-          onClick={vay}
-          disabled={so <= 0 || so > conVay}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-          style={{ background: '#2563EB' }}
-        >
-          Vay
-        </button>
-        <button
-          type="button"
-          onClick={tra}
-          disabled={duNo <= 0 || coins <= 0}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-black text-white transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-          style={{ background: '#16A34A' }}
-        >
-          Trả nợ
-        </button>
-      </div>
-      <p className="mt-1 text-[11px] font-bold text-[#8A7355]">
-        Để trống ô số rồi bấm Trả nợ để trả hết. Tiền vay vào ngân khố ngay nhưng
-        <b> không phải doanh thu</b> — nó là nghĩa vụ phải trả.
-      </p>
-    </div>
-  );
+export function LoanPanel(_props: { onToast?: (msg: string) => void }) {
+  return null;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -328,12 +182,12 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
   };
 
   const handleBuyInsurance = () => {
-    if (buyMoMoInsurance(2500)) {
+    if (buyMoMoInsurance(2_000_000)) {
       onToast?.('🎉 Đã kích hoạt Gói Bảo Hiểm Toàn Diện MoMo! An tâm trước thiên tai, sự cố.');
     } else if (derived.hasInsurance) {
       onToast?.('Thành phố đã được bảo hiểm toàn diện!');
     } else {
-      onToast?.('Cần 2.500 đồng để mua gói bảo hiểm.');
+      onToast?.('Cần 2.000.000đ để mua gói bảo hiểm.');
     }
   };
 
@@ -378,10 +232,10 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
 
         <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-[#6E4F3A]">
           {derived.trustScore >= 800
-            ? '🌟 Điểm hạng Vàng: Lịch sử tín dụng và thanh toán QR xuất sắc, trần vay tối đa!'
+            ? '🌟 Điểm hạng Vàng: Quản lý dòng tiền và thanh toán QR xuất sắc, phố thị hưng thịnh!'
             : derived.trustScore >= 700
-              ? '👍 Điểm hạng Chuẩn: Duy trì thanh toán đúng hạn và số dư lành mạnh để mở thêm ưu đãi.'
-              : '⚠️ Cảnh báo: Nợ xấu hoặc chậm trả nợ làm giảm điểm tin cậy. Cần tối ưu chi phí!'}
+              ? '👍 Điểm hạng Chuẩn: Duy trì dòng tiền lành mạnh và số dư ổn định để mở thêm ưu đãi.'
+              : '⚠️ Cần tối ưu chi phí vận hành và giá vốn để gia tăng điểm tín nhiệm đô thị!'}
         </p>
 
         {/* Tách bạch Quỹ Vận Hành vs Ví Cá Nhân */}
@@ -508,7 +362,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
             </div>
             <p className="mt-1 text-[10.5px] font-medium leading-tight text-[#4B5563]">
               {derived.hasInsurance
-                ? 'Được bồi thường 80% khi gặp sự cố mưa ngập, chập điện mặt bằng.'
+                ? 'Được bồi thường 90% khi gặp thiên tai mưa ngập, và chi trả 100% phí khắc phục sự cố mặt bằng.'
                 : 'Chưa có khiên bảo vệ! Sự cố có thể làm tổn thất 10-20% tài sản ngân khố.'}
             </p>
           </div>
@@ -517,11 +371,11 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
             <button
               type="button"
               onClick={handleBuyInsurance}
-              disabled={coins < 2500}
+              disabled={coins < 2_000_000}
               className="mt-2 w-full rounded-lg py-1.5 text-center text-[11px] font-black text-white transition-transform active:scale-95 disabled:opacity-40"
               style={{ background: '#DC2626' }}
             >
-              Mua gói bảo vệ (2.500 đồng)
+              Mua gói bảo vệ (2.000.000đ)
             </button>
           )}
         </div>
@@ -572,28 +426,12 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             strong
           />
           <Row label="− Chi phí vận hành" sublabel="Tiền nuôi quán (mặt bằng, điện nước) 🏢" value={-derived.opex} tone="minus" indent />
-          {derived.bnplCredit > 0 && (
-            <Row
-              label={`− Dự phòng nợ xấu Ví Trả Sau (${(derived.nplRate * 100).toFixed(1)}%)`}
-              sublabel="Trừ hao khách xù nợ, quỵt bill 🙈"
-              value={-derived.badDebt}
-              tone="minus"
-              indent
-              hint="Một phần hạn mức đã cấp sẽ không đòi được. Cấp tín dụng vượt khả năng trả của cư dân thì tỷ lệ này tăng."
-            />
-          )}
           <Row
             label={`= Lợi nhuận hoạt động${derived.operatingMargin ? ` (biên ${(derived.operatingMargin * 100).toFixed(0)}%)` : ''}`}
             sublabel="Hiệu quả làm ăn thực tế 📊"
             value={derived.operatingIncome}
             strong
           />
-          {derived.debt > 0 && (
-            <>
-              <Row label="− Chi phí lãi vay" sublabel="Tiền lãi ngân hàng réo gọi 💳" value={-derived.interestExpense} tone="minus" indent />
-              <Row label="= Lợi nhuận trước thuế" sublabel="Lãi trước khi đóng góp cho phố" value={derived.pretaxIncome} strong />
-            </>
-          )}
           <Row label="− Thuế TNDN 20%" sublabel="Đóng góp xây phố phồn vinh 🏛️" value={-derived.tax} tone="minus" indent />
           <Row label="= Lợi nhuận ròng" sublabel="Tiền THẬT SỰ nhét túi quần ✨" value={derived.netIncome} tone="total" strong />
         </div>
@@ -636,11 +474,8 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
       {(Object.keys(PERIOD_LABEL) as Period[]).map((period) => {
         const l = ledgers[period];
         const grossProfit = l.grossRevenue - l.cogs;
-        const noXau = l.badDebt ?? 0;
-        const operating = grossProfit - l.opex - noXau;
-        const laiVay = l.interestExpense ?? 0;
-        // Lai vay tru TRUOC thue, nen loi nhuan rong phai tru ca hai.
-        const net = operating - laiVay - l.tax;
+        const operating = grossProfit - l.opex;
+        const net = operating - l.tax;
         /*
          * DONG TIEN TU DO.
          *
@@ -695,16 +530,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
                   tone="minus"
                   indent
                 />
-                {noXau > 0 && (
-                  <Row label="− Dự phòng nợ xấu Ví Trả Sau" sublabel="Trừ hao khách xù nợ, quỵt bill 🙈" value={-noXau} tone="minus" indent />
-                )}
                 <Row label={`= Lợi nhuận hoạt động`} sublabel="Hiệu quả làm ăn thực tế 📊" value={operating} strong />
-                {laiVay > 0 && (
-                  <>
-                    <Row label="− Chi phí lãi vay" sublabel="Tiền lãi ngân hàng réo gọi 💳" value={-laiVay} tone="minus" indent />
-                    <Row label="= Lợi nhuận trước thuế" sublabel="Lãi trước khi đóng góp cho phố" value={operating - laiVay} strong />
-                  </>
-                )}
                 <Row label={`− Thuế TNDN`} sublabel="Đóng góp xây phố phồn vinh 🏛️" value={-l.tax} tone="minus" indent />
                 <Row
                   label="= Lợi nhuận ròng"
@@ -779,12 +605,6 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             ✨ <b>Lợi nhuận ròng</b> mới là <i>tiền thật sự nhét túi quần</i> mang về nhà. Phải lấy Doanh thu trừ sạch Giá vốn, Vận hành và Thuế mới ra con số này.
           </li>
           <li>
-            🙈 <b>Dự phòng nợ xấu</b>: Cho khách quẹt Ví Trả Sau thì phải trừ hao có người trễ hạn hoặc xù nợ. <i>Cho vay chưa bao giờ là cho không!</i>
-          </li>
-          <li>
-            💳 <b>Tiền vay không phải tiền trên trời rơi xuống</b>: Vay vốn vào ví liền tay nhưng là cục nợ phải trả. Dùng vốn để mở rộng quán sinh lời, cấm lấy đi tiêu hoang!
-          </li>
-          <li>
             🛠️ <b>Chi tiêu vốn (CAPEX)</b>: Mua máy pha cà phê, đóng quầy bar là sắm &quot;cần câu cơm&quot; lâu dài, không trừ hết vào chi phí tháng mà tính vào tài sản của tiệm.
           </li>
           <li>
@@ -798,9 +618,8 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
          * game la dieu kien that cua bat ky san pham nao.
          */}
         <p className="mt-3 border-t pt-2 text-[12px] font-semibold leading-relaxed text-[#8A7355]">
-          Các con số lãi suất, hạn mức và tỷ lệ nợ xấu trong game là mô phỏng để minh
-          họa nguyên lý tài chính, không phải điều kiện thật của bất kỳ sản phẩm nào.
-          Game không đưa ra lời khuyên tài chính.
+          Các con số kinh doanh và tài chính trong game là mô phỏng phục vụ giải trí,
+          không phải điều kiện thật của bất kỳ sản phẩm nào. Game không đưa ra lời khuyên tài chính.
         </p>
       </div>
     </div>

@@ -20,11 +20,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'nạp-vetc-momo',
-        text: 'Nạp cấp tốc 300 đồng vào tài khoản VETC qua MoMo cho xe qua trạm tức thì',
-        costCoins: 300,
+        text: 'Nạp cấp tốc 300.000đ vào tài khoản VETC qua MoMo cho xe qua trạm tức thì',
+        costCoins: 300000,
         btnTone: 'green',
         tags: [
-          { label: '-300 đồng', tone: 'red' },
+          { label: '-300.000đ', tone: 'red' },
           { label: 'thông trạm ngay ++', tone: 'green' },
           { label: 'anh Lâm đội ơn', tone: 'green' },
         ],
@@ -68,13 +68,13 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'gift-5g-data',
-        text: 'Tài trợ 250 đồng nạp gói Data 5G Siêu Tốc 10GB qua MoMo + mở Ví Trả Sau',
-        costCoins: 250,
+        text: 'Tài trợ 250.000đ nạp gói Data 5G Siêu Tốc 10GB qua MoMo + Thẻ Thành Viên',
+        costCoins: 250000,
         btnTone: 'green',
         tags: [
-          { label: '-250 đồng', tone: 'red' },
+          { label: '-250.000đ', tone: 'red' },
           { label: 'kết nối 5G tức thì', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
+          { label: 'ưu đãi thành viên', tone: 'green' },
         ],
         effects: { grantService: 'BNPL', trust: 30, xp: 60, happiness: 12 },
         reply:
@@ -82,15 +82,15 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
       },
       {
         id: 'guide-data-topup',
-        text: 'Chỉ Khánh dùng Ví Trả Sau nạp thẻ Data 1 ngày ứng trước trả sau',
+        text: 'Chỉ Khánh dùng MoMo săn voucher nạp thẻ Data 1 ngày ưu đãi',
         btnTone: 'blue',
         tags: [
           { label: 'Khánh vượt ải +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
+          { label: 'ưu đãi thành viên', tone: 'green' },
         ],
         effects: { grantService: 'BNPL', trust: 22, xp: 45, happiness: 6 },
         reply:
-          '“Ứng trước gói Data bằng Ví Trả Sau nhanh như chớp mắt, cứu nguy cho tương lai của em luôn Thị Trưởng ơi!”',
+          '“Săn voucher nạp Data bằng MoMo nhanh như chớp mắt, cứu nguy cho tương lai của em luôn Thị Trưởng ơi!”',
       },
       {
         id: 'climb-tree-wifi',
@@ -116,11 +116,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'pay-tuition-now',
-        text: 'Chi 450 đồng hỗ trợ thanh toán học phí qua Cổng Dịch Vụ Giáo Dục MoMo',
-        costCoins: 450,
+        text: 'Chi 450.000đ hỗ trợ thanh toán học phí qua Cổng Dịch Vụ Giáo Dục MoMo',
+        costCoins: 450000,
         btnTone: 'green',
         tags: [
-          { label: '-450 đồng', tone: 'red' },
+          { label: '-450.000đ', tone: 'red' },
           { label: 'gia đình chị Mai ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -164,11 +164,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'buy-moto-insurance',
-        text: 'Tài trợ 200 đồng mua ngay Bảo Hiểm Xe Máy Điện Tử MoMo nhận giấy trong 30 giây',
-        costCoins: 200,
+        text: 'Tài trợ 200.000đ mua ngay Bảo Hiểm Xe Máy Điện Tử MoMo nhận giấy trong 30 giây',
+        costCoins: 200000,
         btnTone: 'green',
         tags: [
-          { label: '-200 đồng', tone: 'red' },
+          { label: '-200.000đ', tone: 'red' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
           { label: 'anh Khoa thở phào ++', tone: 'green' },
         ],
@@ -212,11 +212,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'setup-expense-tracker',
-        text: 'Chi 350 đồng mở Trợ Lý Quản Lý Chi Tiêu MoMo phân bổ chuẩn 50/30/20 + thưởng nóng',
-        costCoins: 350,
+        text: 'Chi 350.000đ mở Trợ Lý Quản Lý Chi Tiêu MoMo phân bổ chuẩn 50/30/20 + thưởng nóng',
+        costCoins: 350000,
         btnTone: 'green',
         tags: [
-          { label: '-350 đồng', tone: 'red' },
+          { label: '-350.000đ', tone: 'red' },
           { label: 'chị Vy thức tỉnh ++', tone: 'green' },
           { label: 'mở Tiết Kiệm Số', tone: 'green' },
         ],
@@ -260,11 +260,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'activate-flight-delay-ins',
-        text: 'Tài trợ 380 đồng kích hoạt Bảo Hiểm Trễ Chuyến Bay MoMo bồi thường 1 triệu tức thì',
-        costCoins: 380,
+        text: 'Tài trợ 380.000đ kích hoạt Bảo Hiểm Trễ Chuyến Bay MoMo bồi thường 1 triệu tức thì',
+        costCoins: 380000,
         btnTone: 'green',
         tags: [
-          { label: '-380 đồng', tone: 'red' },
+          { label: '-380.000đ', tone: 'red' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
           { label: 'cặp đôi vui vẻ ++', tone: 'green' },
         ],
@@ -308,11 +308,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'renew-bhyt-momo',
-        text: 'Chi 300 đồng đóng gia hạn BHYT hộ gia đình qua MoMo + đưa bà về nhà an toàn',
-        costCoins: 300,
+        text: 'Chi 300.000đ đóng gia hạn BHYT hộ gia đình qua MoMo + đưa bà về nhà an toàn',
+        costCoins: 300000,
         btnTone: 'green',
         tags: [
-          { label: '-300 đồng', tone: 'red' },
+          { label: '-300.000đ', tone: 'red' },
           { label: 'bà Phúc cảm động ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -356,11 +356,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'open-fund-certificate',
-        text: 'Tài trợ 400 đồng mở tài khoản Chứng Chỉ Quỹ Mở MoMo Dragon Capital từ 10.000đ',
-        costCoins: 400,
+        text: 'Tài trợ 400.000đ mở tài khoản Chứng Chỉ Quỹ Mở MoMo Dragon Capital từ 10.000đ',
+        costCoins: 400000,
         btnTone: 'green',
         tags: [
-          { label: '-400 đồng', tone: 'red' },
+          { label: '-400.000đ', tone: 'red' },
           { label: 'trở thành nhà đầu tư ++', tone: 'green' },
           { label: 'mở Tín Dụng Số', tone: 'green' },
         ],
@@ -404,11 +404,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'gift-smart-speaker-pro',
-        text: 'Tài trợ 350 đồng tặng Loa Thần Tài MoMo Pro pin trâu 48h cắm sạc độc lập tại quầy',
-        costCoins: 350,
+        text: 'Tài trợ 350.000đ tặng Loa Thần Tài MoMo Pro pin trâu 48h cắm sạc độc lập tại quầy',
+        costCoins: 350000,
         btnTone: 'green',
         tags: [
-          { label: '-350 đồng', tone: 'red' },
+          { label: '-350.000đ', tone: 'red' },
           { label: 'mở Loa QR cả tiệm', tone: 'green' },
           { label: 'chị Hai yên tâm ++', tone: 'green' },
         ],
@@ -452,11 +452,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'emergency-bill-pay',
-        text: 'Chi 400 đồng thanh toán khẩn cấp qua MoMo & hỗ trợ đội thợ dò tìm điểm vỡ',
-        costCoins: 400,
+        text: 'Chi 400.000đ thanh toán khẩn cấp qua MoMo & hỗ trợ đội thợ dò tìm điểm vỡ',
+        costCoins: 400000,
         btnTone: 'green',
         tags: [
-          { label: '-400 đồng', tone: 'red' },
+          { label: '-400.000đ', tone: 'red' },
           { label: 'nước chảy mát lành ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -500,13 +500,13 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'grant-bnpl-laptop',
-        text: 'Tài trợ 450 đồng mở hạn mức Ví Trả Sau MoMo trả góp laptop mới 0% lãi suất',
-        costCoins: 450,
+        text: 'Tài trợ 450.000đ săn deal laptop mới qua MoMo nhận combo voucher học tập',
+        costCoins: 450000,
         btnTone: 'green',
         tags: [
-          { label: '-450 đồng', tone: 'red' },
+          { label: '-450.000đ', tone: 'red' },
           { label: 'đạt thủ khoa đồ án ++', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
+          { label: 'ưu đãi thành viên', tone: 'green' },
         ],
         effects: { grantService: 'BNPL', trust: 32, xp: 70, happiness: 12 },
         reply:
@@ -514,15 +514,15 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
       },
       {
         id: 'guide-student-bnpl',
-        text: 'Hướng dẫn Huy dùng Ví Trả Sau thanh toán trả góp chia nhỏ kỳ hạn 6 tháng',
+        text: 'Hướng dẫn Huy thanh toán bằng MoMo săn combo hoàn tiền và voucher',
         btnTone: 'blue',
         tags: [
           { label: 'giảm áp lực tài chính +', tone: 'green' },
-          { label: 'mở Ví Trả Sau', tone: 'green' },
+          { label: 'ưu đãi thành viên', tone: 'green' },
         ],
         effects: { grantService: 'BNPL', trust: 22, xp: 50, happiness: 6 },
         reply:
-          '“Mỗi tháng trả góp có vài trăm ngàn bằng tiền làm thêm gia sư, chiếc máy mới cứu nguy cả sự nghiệp của em!”',
+          '“Nhờ combo hoàn tiền và voucher MoMo giảm giá sâu, chiếc máy mới cứu nguy cả sự nghiệp của em!”',
       },
       {
         id: 'write-code-paper',
@@ -548,11 +548,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'sponsor-food-voucher',
-        text: 'Chi 300 đồng tung gói Voucher Ăn Trưa MoMo Food giảm 40% cho cả toà nhà',
-        costCoins: 300,
+        text: 'Chi 300.000đ tung gói Voucher Ăn Trưa MoMo Food giảm 40% cho cả toà nhà',
+        costCoins: 300000,
         btnTone: 'green',
         tags: [
-          { label: '-300 đồng', tone: 'red' },
+          { label: '-300.000đ', tone: 'red' },
           { label: 'hội chị em hoan hô ++', tone: 'green' },
           { label: 'mở Tiết Kiệm Số', tone: 'green' },
         ],
@@ -596,11 +596,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'fast-money-support',
-        text: 'Bảo lãnh gói Vay Nhanh MoMo FastMoney 500 đồng giải ngân trong 60 giây',
-        costCoins: 500,
+        text: 'Bảo lãnh gói Vay Nhanh MoMo FastMoney 500.000đ giải ngân trong 60 giây',
+        costCoins: 500000,
         btnTone: 'green',
         tags: [
-          { label: '-500 đồng', tone: 'red' },
+          { label: '-500.000đ', tone: 'red' },
           { label: 'cứu viện khẩn cấp ++', tone: 'green' },
           { label: 'mở Vay Vốn', tone: 'green' },
         ],
@@ -644,11 +644,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'business-credit-espresso',
-        text: 'Bảo lãnh gói Vốn Kinh Doanh Trả Góp MoMo 600 đồng rinh ngay máy pha xịn sò',
-        costCoins: 600,
+        text: 'Bảo lãnh gói Vốn Kinh Doanh Trả Góp MoMo 600.000đ rinh ngay máy pha xịn sò',
+        costCoins: 600000,
         btnTone: 'green',
         tags: [
-          { label: '-600 đồng', tone: 'red' },
+          { label: '-600.000đ', tone: 'red' },
           { label: 'doanh thu quán x3 ++', tone: 'green' },
           { label: 'mở Tín Dụng Số', tone: 'green' },
         ],
@@ -692,11 +692,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'digital-waste-fee',
-        text: 'Chi 280 đồng tích hợp thu phí Vệ Sinh Môi Trường trực tuyến qua MoMo cho toàn khu phố',
-        costCoins: 280,
+        text: 'Chi 280.000đ tích hợp thu phí Vệ Sinh Môi Trường trực tuyến qua MoMo cho toàn khu phố',
+        costCoins: 280000,
         btnTone: 'green',
         tags: [
-          { label: '-280 đồng', tone: 'red' },
+          { label: '-280.000đ', tone: 'red' },
           { label: 'bác Tư khỏe re ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -740,11 +740,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'sponsor-game-card',
-        text: 'Chi 250 đồng nạp thẻ game chiết khấu cao qua MoMo + nâng điểm uy tín cho Đạt',
-        costCoins: 250,
+        text: 'Chi 250.000đ nạp thẻ game chiết khấu cao qua MoMo + nâng điểm uy tín cho Đạt',
+        costCoins: 250000,
         btnTone: 'green',
         tags: [
-          { label: '-250 đồng', tone: 'red' },
+          { label: '-250.000đ', tone: 'red' },
           { label: 'đoạt cúp vô địch ++', tone: 'green' },
           { label: 'mở Điểm Tín Dụng', tone: 'green' },
         ],
@@ -788,11 +788,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'transfer-wedding-momo',
-        text: 'Tài trợ 320 đồng mở tính năng Chuyển Tiền Mừng Cưới MoMo kèm thiệp 3D độc quyền',
-        costCoins: 320,
+        text: 'Tài trợ 320.000đ mở tính năng Chuyển Tiền Mừng Cưới MoMo kèm thiệp 3D độc quyền',
+        costCoins: 320000,
         btnTone: 'green',
         tags: [
-          { label: '-320 đồng', tone: 'red' },
+          { label: '-320.000đ', tone: 'red' },
           { label: 'cô dâu chú rể thích mê ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -836,11 +836,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'gift-vietqr-pro-board',
-        text: 'Chi 280 đồng tặng Bảng Mica VietQR Pro MoMo chống nước, chống xước để bàn',
-        costCoins: 280,
+        text: 'Chi 280.000đ tặng Bảng Mica VietQR Pro MoMo chống nước, chống xước để bàn',
+        costCoins: 280000,
         btnTone: 'green',
         tags: [
-          { label: '-280 đồng', tone: 'red' },
+          { label: '-280.000đ', tone: 'red' },
           { label: 'xe xôi sáng loáng ++', tone: 'green' },
           { label: 'mở Loa QR cả tiệm', tone: 'green' },
         ],
@@ -884,11 +884,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'activate-hospital-insurance',
-        text: 'Tài trợ 480 đồng kích hoạt Bảo Hiểm Sức Khỏe & Trợ Cấp Viện Phí MoMo thanh toán trực tuyến',
-        costCoins: 480,
+        text: 'Tài trợ 480.000đ kích hoạt Bảo Hiểm Sức Khỏe & Trợ Cấp Viện Phí MoMo thanh toán trực tuyến',
+        costCoins: 480000,
         btnTone: 'green',
         tags: [
-          { label: '-480 đồng', tone: 'red' },
+          { label: '-480.000đ', tone: 'red' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
           { label: 'bé Bơ khỏe mạnh ++', tone: 'green' },
         ],
@@ -932,11 +932,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'claim-screen-insurance',
-        text: 'Chi 350 đồng bồi hoàn Bảo Hiểm Rơi Vỡ Màn Hình MoMo thay màn hình chính hãng ngay',
-        costCoins: 350,
+        text: 'Chi 350.000đ bồi hoàn Bảo Hiểm Rơi Vỡ Màn Hình MoMo thay màn hình chính hãng ngay',
+        costCoins: 350000,
         btnTone: 'green',
         tags: [
-          { label: '-350 đồng', tone: 'red' },
+          { label: '-350.000đ', tone: 'red' },
           { label: 'màn hình nét căng ++', tone: 'green' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
         ],

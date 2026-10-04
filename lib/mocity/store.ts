@@ -54,6 +54,10 @@ import { eligibleRequestFor } from './dialogue-engine';
 import { weekComparison, type WeekComparison } from './comparison';
 import { TUTORIAL_STEPS, currentTutorialStep, type TutorialStep } from './tutorial';
 import { ARCHETYPES, DIGITAL_TRUST_THRESHOLD, archetypeForBuilding, npcNameFor } from './npc-data';
+import { INITIAL_NPC_LEDGERS, grantNpcLoan, investNpcEquity } from './npc-micro-economy';
+import { INITIAL_MOMO_FINANCIAL_OS, depositTuiThanTai, withdrawTuiThanTai, borrowViTraSau, repayViTraSau } from './momo-financial-os';
+import { OPPORTUNITY_CARDS, BLACK_SWAN_EVENTS } from './opportunity-cards';
+import { calculateWealthMatrix, evaluateEndingProfile } from './wealth-matrix';
 import {
   emptyLedger,
   emptyPeriodLedger,
@@ -71,6 +75,13 @@ import {
   type StoreModuleId,
   type TimeOfDay,
   type WeatherType,
+  type GameAct,
+  type EndingEvaluation,
+  type NpcMicroLedger,
+  type OpportunityCardDef,
+  type BlackSwanEventDef,
+  type MomoFinancialOSState,
+  type WealthMatrixMetrics,
 } from './types';
 import {
   autoServeQueues,
@@ -281,6 +292,11 @@ function createInitialState(): CityState {
     investedAt: 0,
     insuranceActiveUntilMs: 0,
     activeIncidents: [],
+    currentAct: 'ACT_1_STARTER',
+    npcMicroLedgers: INITIAL_NPC_LEDGERS,
+    momoOSState: INITIAL_MOMO_FINANCIAL_OS,
+    activeOpportunityCardId: 'ACT1_STARTUP_CHOICE',
+    activeBlackSwanId: null,
   };
 }
 
@@ -702,11 +718,11 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
       : 0;
   merged.tutorialFlags = Array.isArray(migrated.tutorialFlags) ? migrated.tutorialFlags : [];
 
-  /* Save cu khong co no - mac dinh khong vay. */
-  merged.debt = Number.isFinite(migrated.debt) ? Math.max(0, migrated.debt) : 0;
-  merged.totalInterestPaid = Number.isFinite(migrated.totalInterestPaid)
-    ? Math.max(0, migrated.totalInterestPaid)
-    : 0;
+  /* Bảo toàn dữ liệu khi migrate, nhưng tính năng vay mới bị vô hiệu hóa trong gameplay. */
+  merged.debt = nonNeg(migrated.debt);
+  merged.loanDueDay = typeof migrated.loanDueDay === 'string' ? migrated.loanDueDay : '';
+  merged.loanLateFeeCount = nonNeg(migrated.loanLateFeeCount);
+  merged.totalInterestPaid = nonNeg(migrated.totalInterestPaid);
   merged.cityTierClaimed = Number.isFinite(migrated.cityTierClaimed)
     ? Math.max(1, Math.min(CITY_TIERS.length, migrated.cityTierClaimed))
     : 1;
@@ -1646,7 +1662,7 @@ function processLoanOverdue(now: number): void {
   const overdue = due && todayKey(now) > due && (state.debt ?? 0) > 0;
   if (!overdue) return;
 
-  const fee = Math.max(50, Math.round((state.debt ?? 0) * 0.05));
+  const fee = Math.max(50_000, Math.round((state.debt ?? 0) * 0.05));
   const actualFee = Math.min(state.coins, fee);
   if (actualFee <= 0) return;
 
@@ -1667,7 +1683,7 @@ function processLoanOverdue(now: number): void {
 function maybeTriggerHazardTick(): void {
   if (Math.random() >= 0.00008) return;
   if (state.coins <= 0) return;
-  const damage = Math.max(120, Math.round(state.coins * 0.08));
+  const damage = Math.min(3_000_000, Math.max(500_000, Math.round(state.coins * 0.05)));
   triggerHazardEvent(damage);
 }
 
@@ -2257,7 +2273,7 @@ export function hireStaff(col: number, row: number): HireStaffResult {
 
 export type LoanResult =
   | { ok: true; amount: number }
-  | { ok: false; reason: 'ceiling' | 'invalid' | 'noIncome' | 'needBank' };
+  | { ok: false; reason: 'ceiling' | 'invalid' | 'noIncome' | 'needBank' | 'disabled' };
 
 /**
  * Dung MOT bo tham so cho moi noi tinh dong tien.
@@ -2283,7 +2299,7 @@ function flowOptsFor(s: CityState): FlowOptions {
     happinessBoost: s.happinessBoost,
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
-    debt: s.debt ?? 0,
+    debt: 0,
     shopQueue: realShopQueueCounts(s.shopQueues ?? []),
   };
 }
@@ -2306,32 +2322,8 @@ export function hasBankAccess(s: CityState = state): boolean {
   return s.buildings.some((b) => b.defId === 'ngan-hang-so');
 }
 
-export function takeLoan(amount: number): LoanResult {
-  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, reason: 'invalid' };
-  if (!hasBankAccess(state)) return { ok: false, reason: 'needBank' };
-
-  const flow = flowFor(state.buildings, state.npcs, state.mayorLevel, state.coins, flowOptsFor(state));
-  if (flow.operatingIncome <= 0) return { ok: false, reason: 'noIncome' };
-
-  const conLai = Math.max(0, debtCeilingFor(flow.operatingIncome) - (state.debt ?? 0));
-  if (amount > conLai) return { ok: false, reason: 'ceiling' };
-
-  /*
-   * Tien vay KHONG phai doanh thu, cung khong phai tien thuong: no la mot
-   * khoan no. Nen cong thang vao `coins` chu khong qua `withCoins`.
-   * Gán chu kỳ đáo hạn 45 ngày cho khoản nợ.
-   */
-  const now = Date.now();
-  const dueDay = todayKey(now + 45 * 24 * 3600 * 1000);
-
-  setState({
-    ...state,
-    coins: state.coins + amount,
-    workingCapital: (state.workingCapital ?? state.coins) + amount,
-    debt: (state.debt ?? 0) + amount,
-    loanDueDay: state.loanDueDay || dueDay,
-  });
-  return { ok: true, amount };
+export function takeLoan(_amount: number): LoanResult {
+  return { ok: false, reason: 'disabled' };
 }
 
 export type RepayResult =
@@ -2435,16 +2427,9 @@ export function withdrawFromTuiThanTai(amount: number): boolean {
 /**
  * LUẬT 6: Mua Gói Bảo Hiểm Toàn Diện MoMo phòng vệ rủi ro thời tiết/thiên tai.
  */
-export function buyMoMoInsurance(costCoins = 2500): boolean {
-  if (state.hasInsurance) return false;
-  if (state.coins < costCoins) return false;
-
-  setState({
-    ...state,
-    coins: state.coins - costCoins,
-    hasInsurance: true,
-  });
-  return true;
+export function buyMoMoInsurance(costCoins = 2_000_000): boolean {
+  if (state.hasInsurance && (state.insuranceActiveUntilMs ?? 0) > Date.now()) return false;
+  return buyMoMoInsurancePackage(costCoins).ok;
 }
 
 /* ── HỆ THỐNG TĂNG TRƯỞNG & VÒNG LẶP DOPAMINE THỊ TRƯỞNG MOMO ── */
@@ -3314,7 +3299,7 @@ export interface CityDerived extends FlowBreakdown {
   hasInsurance: boolean;
   /** Số dư sinh lời Túi Thần Tài */
   tuiThanTaiBalance: number;
-  /** Ngày đáo hạn nợ Ví Trả Sau */
+  /** Ngày đáo hạn nợ (nếu có) */
   loanDueDay: string;
   /** Số lần chặn đứng bill giả */
   fraudBlockedCount: number;
@@ -3364,8 +3349,8 @@ export function toggleFlood(forceStatus?: boolean): {
   let damageResult: { coveredAmount: number; outOfPocket: number; hasInsurance: boolean } | undefined;
 
   if (nextFlooded) {
-    // Thiệt hại do triều cường / ngập lụt: 1.200 Xu
-    damageResult = triggerHazardEvent(1200);
+    // Thiệt hại do triều cường / ngập lụt cục bộ: 1.500.000đ
+    damageResult = triggerHazardEvent(1_500_000);
   }
 
   state = {
@@ -3682,3 +3667,124 @@ export function recordCitizenTalk(): boolean {
   });
   return true;
 }
+
+/* ==========================================================================
+ * NARRATIVE GAME STORY & WEALTH MATRIX STORE ACTIONS
+ * ========================================================================== */
+
+export function resolveOpportunityChoiceStore(choiceId: string): void {
+  const cardId = state.activeOpportunityCardId;
+  if (!cardId) return;
+  const card = OPPORTUNITY_CARDS.find((c) => c.id === cardId);
+  if (!card) return;
+  const choice = card.choices.find((c) => c.id === choiceId);
+  if (!choice) return;
+
+  const cost = choice.costCoins;
+  let nextCoins = state.coins;
+  let nextDebt = state.debt;
+
+  if (cost > 0) {
+    if (nextCoins < cost) return;
+    nextCoins -= cost;
+  } else if (cost < 0) {
+    nextCoins += Math.abs(cost);
+  }
+
+  if (choice.borrowAmountCoins) {
+    nextDebt += choice.borrowAmountCoins;
+    nextCoins += choice.borrowAmountCoins;
+  }
+
+  const nextHappiness = clampHappiness((state.happinessBoost ?? 0) + choice.financialImpact.happinessDelta);
+
+  let nextAct = state.currentAct ?? 'ACT_1_STARTER';
+  if (card.act === 'ACT_1_STARTER') nextAct = 'ACT_2_CASHFLOW';
+  else if (card.act === 'ACT_2_CASHFLOW') nextAct = 'ACT_3_LEVERAGE';
+  else if (card.act === 'ACT_3_LEVERAGE') nextAct = 'ACT_4_BLACK_SWAN';
+  else if (card.act === 'ACT_4_BLACK_SWAN') nextAct = 'ACT_5_ESTATE';
+
+  const nextCard = OPPORTUNITY_CARDS.find((c) => c.act === nextAct && c.id !== cardId);
+
+  setState({
+    ...state,
+    coins: nextCoins,
+    debt: nextDebt,
+    happinessBoost: nextHappiness,
+    currentAct: nextAct,
+    activeOpportunityCardId: nextCard ? nextCard.id : null,
+  });
+}
+
+export function grantNpcLoanStore(npcId: string, amount: number): void {
+  const ledgers = state.npcMicroLedgers ?? INITIAL_NPC_LEDGERS;
+  const targetIndex = ledgers.findIndex((n) => n.npcId === npcId);
+  if (targetIndex === -1 || state.coins < amount) return;
+
+  const updatedLedger = grantNpcLoan(ledgers[targetIndex], amount);
+  const nextLedgers = [...ledgers];
+  nextLedgers[targetIndex] = updatedLedger;
+
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    npcMicroLedgers: nextLedgers,
+  });
+}
+
+export function investNpcEquityStore(npcId: string, amount: number, pct: number): void {
+  const ledgers = state.npcMicroLedgers ?? INITIAL_NPC_LEDGERS;
+  const targetIndex = ledgers.findIndex((n) => n.npcId === npcId);
+  if (targetIndex === -1 || state.coins < amount) return;
+
+  const updatedLedger = investNpcEquity(ledgers[targetIndex], amount, pct);
+  const nextLedgers = [...ledgers];
+  nextLedgers[targetIndex] = updatedLedger;
+
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    npcMicroLedgers: nextLedgers,
+  });
+}
+
+export function depositTuiThanTaiStore(amount: number): void {
+  if (state.coins < amount || amount <= 0) return;
+  const currentOs = state.momoOSState ?? INITIAL_MOMO_FINANCIAL_OS;
+  const nextOs = depositTuiThanTai(currentOs, amount);
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    momoOSState: nextOs,
+  });
+}
+
+export function withdrawTuiThanTaiStore(amount: number): void {
+  const currentOs = state.momoOSState ?? INITIAL_MOMO_FINANCIAL_OS;
+  const { nextState: nextOs, withdrawnCoins } = withdrawTuiThanTai(currentOs, amount);
+  if (withdrawnCoins <= 0) return;
+  setState({
+    ...state,
+    coins: state.coins + withdrawnCoins,
+    momoOSState: nextOs,
+  });
+}
+
+export function getWealthMatrixMetricsStore(): WealthMatrixMetrics {
+  return calculateWealthMatrix({
+    playerCoins: state.coins,
+    totalDebtCoins: state.debt,
+    monthlyBuildingYieldCoins: 30_000_000,
+    monthlyBuildingOpexCoins: 10_000_000,
+    totalBuildingValuationCoins: state.buildings.reduce((acc, b) => acc + (b.level * 50_000_000), 0),
+    happinessIndex: happinessFor(state),
+    npcLedgers: state.npcMicroLedgers ?? INITIAL_NPC_LEDGERS,
+    momoOS: state.momoOSState ?? INITIAL_MOMO_FINANCIAL_OS,
+  });
+}
+
+export function getEndingEvaluationStore(): EndingEvaluation {
+  const metrics = getWealthMatrixMetricsStore();
+  return evaluateEndingProfile(metrics);
+}
+

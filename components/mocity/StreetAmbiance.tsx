@@ -51,9 +51,9 @@ export function useAutoWeather(onFloodTriggered?: (msg: string) => void) {
         const res = toggleFlood(true);
         if (res.damageResult) {
           if (res.damageResult.hasInsurance) {
-            onFloodTriggered?.(`🌊 TRIỀU CƯỜNG DÂNG CAO! Đã kích hoạt Bảo Hiểm MoMo bồi thường +${res.damageResult.coveredAmount} đồng!`);
+            onFloodTriggered?.(`🌊 TRIỀU CƯỜNG DÂNG CAO! Đã kích hoạt Bảo Hiểm MoMo bồi thường +${res.damageResult.coveredAmount.toLocaleString('vi-VN')}đ!`);
           } else {
-            onFloodTriggered?.(`🌊 CẢNH BÁO NGẬP LỤT! Triều cường tràn bờ kè gây thiệt hại -${res.damageResult.outOfPocket} đồng (Chưa có bảo hiểm)!`);
+            onFloodTriggered?.(`🌊 CẢNH BÁO NGẬP LỤT! Triều cường tràn bờ kè gây thiệt hại -${res.damageResult.outOfPocket.toLocaleString('vi-VN')}đ (Chưa có bảo hiểm)!`);
           }
         }
       } else {

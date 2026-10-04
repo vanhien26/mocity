@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Award,
   CheckCircle,
-  CreditCard,
   HelpCircle,
   Percent,
   PiggyBank,
@@ -24,9 +23,7 @@ import {
   buyMoMoInsurancePackage,
   depositSavings,
   investFund,
-  repayLoan,
   settleFund,
-  takeLoan,
   useCity,
   withdrawSavings,
 } from '@/lib/mocity/store';
@@ -35,7 +32,7 @@ import { playKaChing, playPop, playTing } from '@/lib/mocity/sound-engine';
 import { particles } from './ParticleEngine';
 import MicroQuizModal from './MicroQuizModal';
 
-export type FinanceTab = 'SAVINGS' | 'INVEST' | 'LOAN' | 'INSURANCE';
+export type FinanceTab = 'SAVINGS' | 'INVEST' | 'INSURANCE';
 
 export default function MoMoFinanceModal({
   isOpen,
@@ -46,7 +43,7 @@ export default function MoMoFinanceModal({
   onClose: () => void;
   initialTab?: FinanceTab;
 }) {
-  const [tab, setTab] = useState<FinanceTab>(initialTab);
+  const [tab, setTab] = useState<FinanceTab>(initialTab === ('LOAN' as any) ? 'SAVINGS' : initialTab);
   const [quizOpen, setQuizOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -72,19 +69,12 @@ export default function MoMoFinanceModal({
   const [selectedFund, setSelectedFund] = useState<'SAFE' | 'BALANCED' | 'AGGRESSIVE'>('BALANCED');
   const [fundInvestAmount, setFundInvestAmount] = useState<number>(200_000);
 
-  // Form states cho Vay
-  const [borrowAmount, setBorrowAmount] = useState<number>(500_000);
-
   if (!isOpen) return null;
 
   const showFeedback = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
   };
-
-  // Tính hạn mức vay dựa trên credit score
-  const maxCreditLimit = Math.round((creditScore / 850) * 50_000_000);
-  const remainingCreditLimit = Math.max(0, maxCreditLimit - debt);
 
   // Handler Tiết kiệm
   const handleDepositSavings = () => {
@@ -131,32 +121,6 @@ export default function MoMoFinanceModal({
       showFeedback(res.message);
     } else {
       showFeedback(res.message);
-    }
-  };
-
-  // Handler Vay / Trả
-  const handleTakeLoan = () => {
-    const res = takeLoan(borrowAmount);
-    if (res.ok) {
-      playKaChing();
-      showFeedback(`Đã giải ngân khoản vay +${formatVND(borrowAmount)} vào ví!`);
-    } else {
-      showFeedback(
-        res.reason === 'needBank'
-          ? 'Cần xây Ngân Hàng Số trên phố để kích hoạt tín dụng!'
-          : 'Vượt quá hạn mức tín dụng cho phép.'
-      );
-    }
-  };
-
-  const handleRepayLoan = (amount: number) => {
-    const res = repayLoan(amount);
-    if (res.ok) {
-      playKaChing();
-      particles.confetti(window.innerWidth / 2, window.innerHeight * 0.4);
-      showFeedback(`Đã thanh toán nợ -${formatVND(res.amount)}! Điểm tín dụng được cải thiện.`);
-    } else {
-      showFeedback('Không đủ tiền trong ví để trả nợ.');
     }
   };
 
@@ -265,7 +229,6 @@ export default function MoMoFinanceModal({
           {[
             { id: 'SAVINGS' as FinanceTab, label: 'Heo Đất Tiết Kiệm', icon: PiggyBank, color: '#A8246B' },
             { id: 'INVEST' as FinanceTab, label: 'Quỹ Dự Trữ & Lãi', icon: TrendingUp, color: '#2563EB' },
-            { id: 'LOAN' as FinanceTab, label: 'Vay Vốn Mở Rộng', icon: CreditCard, color: '#D97706' },
             { id: 'INSURANCE' as FinanceTab, label: 'Quỹ Bảo Vệ Phố', icon: Shield, color: '#059669' },
           ].map((t) => {
             const Icon = t.icon;
@@ -291,9 +254,6 @@ export default function MoMoFinanceModal({
                 )}
                 {t.id === 'INVEST' && investedAmount > 0 && (
                   <span className="h-2 w-2 rounded-full bg-blue-500" />
-                )}
-                {t.id === 'LOAN' && debt > 0 && (
-                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                 )}
               </button>
             );
@@ -658,128 +618,7 @@ export default function MoMoFinanceModal({
             </div>
           )}
 
-          {/* TAB 3: VÍ TRẢ SAU & VAY NỢ */}
-          {tab === 'LOAN' && (
-            <div className="space-y-4">
-              <div className="rounded-3xl border-2 border-[#E0D4C0] bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <div>
-                    <h4 className="font-pixel text-sm font-black text-[#3E2A1B]">
-                      VAY VỐN ĐẦU TƯ & MỞ RỘNG MẶT BẰNG
-                    </h4>
-                    <p className="text-xs text-gray-500">
-                      Hạn mức cấp tự động theo Điểm Tín Dụng & Uy Tín Thị Trưởng
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold text-gray-500">Điểm Uy Tín</span>
-                    <p className="font-pixel text-sm font-black text-emerald-600">
-                      {creditScore} / 850
-                    </p>
-                  </div>
-                </div>
 
-                {/* Đo tiến độ hạn mức */}
-                <div className="my-4 rounded-2xl bg-[#FAF7F0] p-4 border border-[#E5DAC6]">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-gray-700">Dư Nợ Hiện Tại:</span>
-                    <span className="font-pixel text-base font-black text-rose-600">
-                      {formatVND(debt)}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Hạn Mức Còn Lại Được Vay:</span>
-                    <span className="font-pixel font-bold text-emerald-700">
-                      {formatVND(remainingCreditLimit)}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-gray-200">
-                    <div
-                      className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                      style={{
-                        width: `${maxCreditLimit > 0 ? Math.min(100, (debt / maxCreditLimit) * 100) : 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* BÀI HỌC TÀI CHÍNH */}
-                <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
-                  <p className="font-bold">⭐ Quy Tắc Tín Dụng:</p>
-                  <p className="mt-0.5 text-[11px] leading-relaxed">
-                    Vay vốn để mở rộng tiệm sinh lời là đòn bẩy thông minh. Thanh toán nợ đúng hạn thưởng ngay <strong>+20 Điểm Tín Dụng</strong> và <strong>+20 MP</strong>!
-                  </p>
-                </div>
-
-                {/* Vay Thêm */}
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <label className="text-xs font-bold text-gray-700">Vay thêm vào ví (VNĐ):</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <input
-                      type="number"
-                      step={100_000}
-                      min={100_000}
-                      max={remainingCreditLimit}
-                      value={borrowAmount}
-                      onChange={(e) => setBorrowAmount(Math.max(0, Number(e.target.value)))}
-                      className="flex-1 rounded-xl border-2 border-[#D5CEBF] bg-[#FAF7F0] px-3 py-2 text-sm font-bold text-[#1C171A] focus:border-amber-600 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setBorrowAmount(Math.min(remainingCreditLimit, 1_000_000))}
-                      className="rounded-xl border border-gray-300 bg-gray-100 px-2.5 py-2 text-xs font-bold"
-                    >
-                      1.000K
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBorrowAmount(Math.min(remainingCreditLimit, 5_000_000))}
-                      className="rounded-xl border border-gray-300 bg-gray-100 px-2.5 py-2 text-xs font-bold"
-                    >
-                      5.000K
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleTakeLoan}
-                      disabled={borrowAmount <= 0 || remainingCreditLimit < borrowAmount}
-                      className="rounded-xl border-2 border-amber-700 bg-amber-500 px-4 py-2 text-xs font-black text-white hover:bg-amber-600 disabled:opacity-40"
-                    >
-                      Vay Ngay
-                    </button>
-                  </div>
-                </div>
-
-                {/* Trả Nợ */}
-                {debt > 0 && (
-                  <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
-                    <div>
-                      <span className="text-xs font-bold text-gray-700">Thanh toán nợ:</span>
-                      <p className="text-[11px] text-gray-500">Giảm trừ ngay dư nợ để nâng uy tín</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleRepayLoan(Math.min(coins, Math.round(debt / 2)))}
-                        disabled={coins <= 0}
-                        className="rounded-xl border border-gray-300 bg-gray-100 px-3 py-2 text-xs font-bold hover:bg-gray-200"
-                      >
-                        Trả 50%
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRepayLoan(Math.min(coins, debt))}
-                        disabled={coins <= 0}
-                        className="rounded-xl border-2 border-emerald-700 bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-700 disabled:opacity-40"
-                      >
-                        Trả Toàn Bộ
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* TAB 4: BẢO HIỂM PHỐ THỊ */}
           {tab === 'INSURANCE' && (

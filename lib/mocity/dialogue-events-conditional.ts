@@ -26,11 +26,11 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'hire-more-counter',
-        text: 'Chi 1.200 đồng thuê thêm quầy thu ngân & đào tạo nhân viên phục vụ song song',
-        costCoins: 1200,
+        text: 'Chi 1.200.000đ thuê thêm quầy thu ngân & đào tạo nhân viên phục vụ song song',
+        costCoins: 1_200_000,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 đồng', tone: 'red' },
+          { label: '-1.200.000đ', tone: 'red' },
           { label: 'thêm chỗ phục vụ', tone: 'green' },
           { label: 'khách bỏ hàng giảm', tone: 'green' },
         ],
@@ -66,49 +66,49 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
   },
   {
     id: 'ev-no-xau-vi-tra-sau-vuot',
-    title: 'Tỷ Lệ Nợ Xấu Vượt Ngưỡng & Bùng Nổ Quỹt Bill!',
-    subtitle: 'Ví Trả Sau quay xở nợ không thu hồi được, phố mình bắt đầu gọi là thành phố "ở nợ"...',
-    speaker: 'Bé Nam GenZ & Bác Tài',
-    body: 'Mấy hôm nay nhiều bạn sinh viên quẹt thẻ trả sau rồi quên trả, tiệm thì không dám mời lần hai vì ngại. Tỷ lệ nợ xấu thành phố đã vượt mốc an toàn, và mỗi khoản không thu hồi được đều đang cắn vào lợi nhuận của bạn. Bạn xử lý sao?',
+    title: 'Tỷ Lệ Công Nợ Khó Đòi Vượt Ngưỡng & Cảnh Báo Dòng Tiền!',
+    subtitle: 'Nhiều khách mua nợ ghi sổ chậm thanh toán, các tiệm bắt đầu hao hụt dòng tiền...',
+    speaker: 'Bác Lâm & Cô Tư',
+    body: 'Mấy hôm nay các tiệm kinh doanh cho khách quen mua nợ ghi sổ nhưng việc thu hồi tiền gặp khó khăn. Tỷ lệ nợ khó đòi (NPL) toàn phố vượt mốc an toàn 12%, trực tiếp ăn vào lợi nhuận kinh doanh. Là Thị Trưởng điều hành, bạn sẽ giải quyết ra sao?',
     minMayorLevel: 2,
     nplAbove: 0.12,
     choices: [
       {
         id: 'tighten-limit',
-        text: 'Siết hạn mức Trả Sau về mức cư dân thực sự trả nổi, niêm yết công khai hạn mức',
+        text: 'Siết chặt chính sách bán nợ, yêu cầu thanh toán quét mã MoMo nhận hàng ngay',
         btnTone: 'green',
         tags: [
-          { label: 'giảm nợ xấu', tone: 'green' },
-          { label: 'giảm chút doanh thu', tone: 'neutral' },
+          { label: 'giảm nợ khó đòi', tone: 'green' },
+          { label: 'thu tiền tươi', tone: 'green' },
         ],
         effects: { trustAll: 14, xp: 90, happiness: 12 },
         reply:
-          'Hạn mức nhỏ lại thì bán được ít hơn, nhưng tiệm nào cũng thu được tiền hết. Bác Tài bảo: "Bán được nhiều mà không thu được thì có cũng như không!"',
+          'Khách chuyển sang quét mã thanh toán ngay, tiệm nào cũng thu đủ tiền! Cô Tư bảo: "Bán được là tiền vào tài khoản liền, khỏi lo ghi sổ nợ đau đầu!"',
       },
       {
         id: 'repay-campaign',
-        text: 'Chi 900 đồng mở chiến dịch "Trả Hết Một Lần Nhận Món Quà", giảm phí phạt trễ hạn',
-        costCoins: 900,
+        text: 'Chi 900.000đ mở chiến dịch ưu đãi thanh toán sớm, hỗ trợ tiệm thu hồi công nợ',
+        costCoins: 900_000,
         btnTone: 'blue',
         tags: [
-          { label: '-900 đồng', tone: 'red' },
-          { label: 'nợ xấu giảm nhanh', tone: 'green' },
+          { label: '-900.000đ', tone: 'red' },
+          { label: 'thu hồi nợ nhanh', tone: 'green' },
         ],
         effects: { trustAll: 10, xp: 70, happiness: 6 },
         reply:
-          'Hết tháng mà 8 trong 10 đứa trả nợ trả đủ, tiệm ăn mừng ngày nào cũng thu được tiền. Số tiền 900 đồng chi vào khuyến mãi quay lại thành tiền trả nợ.',
+          'Khách hào hứng thanh toán nợ cũ để nhận voucher ưu đãi. Hầu hết công nợ đã được thu hồi, các tiệm thở phào nhẹ nhõm!',
       },
       {
         id: 'ban-anon',
-        text: 'Khóa luôn Ví Trả Sau lại tạm thời, không cho ai mượn thêm nữa',
+        text: 'Chấm dứt hoàn toàn việc bán chịu, bắt buộc 100% thanh toán trước',
         btnTone: 'red',
         tags: [
-          { label: 'thu hồi được nợ cũ', tone: 'neutral' },
-          { label: 'thu nhập thay thế mất', tone: 'red' },
+          { label: 'dứt điểm nợ', tone: 'neutral' },
+          { label: 'giảm chút khách quen', tone: 'red' },
         ],
         effects: { trustAll: -10, happiness: -8 },
         reply:
-          'Phố mình cấm Trả Sau thì tiểu thương buôn bán xong lại quay về đếm tiền mặt. Ông Lộc thở dài: "Không mấy khi phố nghe lời mình thế!"',
+          'Một số khách quen chưa quen với quy định mới nên tỏ ra tiếc nuối, nhưng sổ sách của các tiệm từ nay hoàn toàn sạch bóng công nợ!',
       },
     ],
   },
@@ -170,11 +170,11 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'heal-project',
-        text: 'Chi 1.000 đồng mở chuỗi trung tâm chăm sóc cư dân & đường phố vệ sinh sạch sẽ',
-        costCoins: 1000,
+        text: 'Chi 1.000.000đ mở chuỗi trung tâm chăm sóc cư dân & đường phố vệ sinh sạch sẽ',
+        costCoins: 1_000_000,
         btnTone: 'green',
         tags: [
-          { label: '-1.000 đồng', tone: 'red' },
+          { label: '-1.000.000đ', tone: 'red' },
           { label: 'hạnh phúc tăng mạnh', tone: 'green' },
           { label: 'hệ số nhân tăng lại', tone: 'green' },
         ],
@@ -278,11 +278,11 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
       },
       {
         id: 'reinforce-first',
-        text: 'Chi 1.100 đồng gia cố mái tôn, chằng dây trước, không mua bảo hiểm',
-        costCoins: 1100,
+        text: 'Chi 1.100.000đ gia cố mái tôn, chằng dây trước, không mua bảo hiểm',
+        costCoins: 1_100_000,
         btnTone: 'blue',
         tags: [
-          { label: '-1.100 đồng', tone: 'red' },
+          { label: '-1.100.000đ', tone: 'red' },
           { label: 'giảm thiệt hại', tone: 'green' },
           { label: 'vẫn không có bảo hiểm', tone: 'red' },
         ],

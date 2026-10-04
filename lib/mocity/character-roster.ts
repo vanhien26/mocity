@@ -126,7 +126,7 @@ export const CITIZEN_ROSTER: CitizenDef[] = [
     quotes: [
       'Ting! Lãi Túi Thần Tài sáng nay về đủ bù ly cà phê muối chữa lành!',
       'Thời tiết ẩm ương như deadline của sếp, sáng nắng chiều giông tối nồm!',
-      'Săn sale 0h xong sáng ra hoa mắt, may có Ví Trả Sau gánh còng lưng!',
+      'Săn sale 0h xong sáng ra hoa mắt, may có voucher MoMo gánh còng lưng!',
       'Camera ngã tư mới phạt nguội gắt lắm, đi đứng nghiêm chỉnh nha mấy ní!',
       'Drama trà xanh văn phòng bên tòa nhà đối diện hót hòn họt cả sáng!',
       'Vé máy bay Tết đắt quá, chắc gom voucher MoMo săn vé tàu hỏa thôi!',

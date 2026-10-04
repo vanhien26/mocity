@@ -45,16 +45,16 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     id: 'q3',
-    topic: 'Điểm Tín Dụng & Ví Trả Sau',
-    question: 'Hành động nào dưới đây giúp tăng Điểm Tin Cậy Tín Dụng (Credit Score) tốt nhất?',
+    topic: 'Quản Trị Dòng Tiền & Uy Tín Đô Thị',
+    question: 'Hành động nào dưới đây giúp tăng Điểm Tin Cậy & Tín Nhiệm Đô Thị tốt nhất?',
     options: [
-      'Vay kịch hạn mức rồi trễ hạn không thanh toán',
-      'Mở nhiều khoản vay cùng lúc mà không có kế hoạch',
-      'Thanh toán dư nợ đầy đủ và đúng hạn trước ngày đáo hạn',
-      'Xóa ứng dụng để trốn tránh nhắc nợ',
+      'Chi tiêu hoang phí không kiểm soát chi phí vận hành',
+      'Để tiệm ế ẩm và khách bỏ đi vì phục vụ chậm',
+      'Quản lý thu chi minh bạch, tối ưu giá vốn và chi phí vận hành',
+      'Tắt ứng dụng không thèm chăm sóc phố',
     ],
     correctIndex: 2,
-    explanation: 'Trả nợ đúng hạn chứng minh năng lực tài chính và uy tín, giúp bạn được nâng hạn mức và hưởng lãi suất ưu đãi!',
+    explanation: 'Quản lý tài chính minh bạch, tối ưu chi phí và duy trì dòng tiền dương giúp đô thị của bạn luôn phát triển bền vững!',
   },
   {
     id: 'q4',

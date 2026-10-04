@@ -13,11 +13,11 @@ const PROMOS = [
     color: '#A8246B',
   },
   {
-    id: 'bnpl-deal',
-    badge: 'VÍ TRẢ SAU',
-    title: 'Mua trước trả sau 0% lãi',
-    desc: 'Chia 3 kỳ không lãi suất, không cần thẻ ngân hàng.',
-    cta: 'Kích hoạt',
+    id: 'member-deal',
+    badge: 'THÀNH VIÊN',
+    title: 'Tích điểm đổi quà siêu hời',
+    desc: 'Ưu đãi dành riêng cho hội viên MoMo thân thiết mỗi ngày.',
+    cta: 'Săn deal',
     color: '#5C4A73',
   },
   {

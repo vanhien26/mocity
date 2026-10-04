@@ -617,13 +617,13 @@ export interface CityState extends Currencies {
   workingCapital?: number;
   /** Ví Tiêu Dùng Cá Nhân của Thị Trưởng (Personal Wealth) - rút từ lợi nhuận ròng để mua sắm cá nhân */
   personalWealth?: number;
-  /** Ngày đáo hạn khoản vay Ví Trả Sau 45 ngày (định dạng YYYY-M-D) */
+  /** Ngày đáo hạn khoản nợ cũ (nếu có) */
   loanDueDay?: string;
   /** Số lần bị phạt phí trễ hạn do không trả nợ đúng ngày */
   loanLateFeeCount?: number;
   /** Số lần Loa Thần Tài đã ngăn chặn thành công nạn bill photoshop giả */
   fraudBlockedCount?: number;
-  /** Tổng số Xu bị thất thoát do dính bill giả khi chưa có Loa Thần Tài */
+  /** Tổng số tiền bị thất thoát do dính bill giả khi chưa có Loa Thần Tài */
   fraudLossCoins?: number;
   /** Số dư đang gửi sinh lời mỗi ngày trong Túi Thần Tài */
   tuiThanTaiBalance?: number;
@@ -633,6 +633,13 @@ export interface CityState extends Currencies {
   hasInsurance?: boolean;
   /** Tổng số tiền bảo hiểm đã bồi thường khi gặp sự cố */
   insuranceClaimsPaid?: number;
+
+  /* ── Narrative Game Story & Wealth Matrix ("Từ tay trắng đến cơ đồ") ── */
+  currentAct?: GameAct;
+  npcMicroLedgers?: NpcMicroLedger[];
+  momoOSState?: MomoFinancialOSState;
+  activeOpportunityCardId?: string | null;
+  activeBlackSwanId?: string | null;
 
   /* ── Hệ Thống Dopamine & Tăng Trưởng: Thị Trưởng MoMo ── */
   /** Điểm Năng Lượng Hành Động (Action Points): 0 - 50. Dùng cho thu hoạch tức thì */
@@ -649,7 +656,7 @@ export interface CityState extends Currencies {
   savingsTier?: '1D' | '3D' | '7D' | 'NONE';
   /** Thời điểm bắt đầu gửi tiết kiệm */
   savingsStartedAt?: number;
-  /** Tiền đang vay từ Ví Trả Sau / Tiêu Dùng MoMo (VNĐ) */
+  /** Tiền nợ cũ nếu có (VNĐ) */
   loanPrincipal?: number;
   /** Thời điểm bắt đầu khoản vay */
   loanStartedAt?: number;
@@ -766,3 +773,157 @@ export interface ZoneMeta {
   ring: string;
   description: string;
 }
+
+/* ==========================================================================
+ * NARRATIVE GAME STORY & WEALTH MATRIX TYPES ("Từ tay trắng đến cơ đồ")
+ * ========================================================================== */
+
+export type GameAct = 
+  | 'ACT_1_STARTER'
+  | 'ACT_2_CASHFLOW'
+  | 'ACT_3_LEVERAGE'
+  | 'ACT_4_BLACK_SWAN'
+  | 'ACT_5_ESTATE';
+
+export type EndingProfileId =
+  | 'FRAGILE_EMPIRE'
+  | 'RESILIENT_ESTATE'
+  | 'OPTIMAL_INVESTOR'
+  | 'COMMUNITY_BUILDER';
+
+export interface WealthMatrixMetrics {
+  totalAssetsValuation: number;
+  monthlyNetCashflow: number;
+  liquidityRatio: number;
+  debtToAssetRatio: number;
+  portfolioRiskIndex: number;
+  citizenHappinessIndex: number;
+  legacyScore: number;
+}
+
+export interface EndingEvaluation {
+  id: EndingProfileId;
+  title: string;
+  subtitle: string;
+  description: string;
+  score: number;
+  badge: string;
+  keyStrengths: string[];
+  keyVulnerabilities: string[];
+}
+
+export interface NpcPlayerLoan {
+  amount: number;
+  interestRateMonthly: number;
+  termMonthsRemaining: number;
+  startMonth: number;
+}
+
+export interface NpcPlayerEquity {
+  ownershipPct: number;
+  investedCapital: number;
+  monthlyDividend: number;
+}
+
+export type NpcMood = 'HAPPY' | 'STRESSED' | 'ANXIOUS' | 'ECSTATIC' | 'DESPERATE';
+
+export type NpcPersonality =
+  | 'SAVER_CONSERVATIVE'
+  | 'RISK_TAKER_ENTREPRENEUR'
+  | 'IMPULSE_BUYER'
+  | 'BALANCED_PLANNER'
+  | 'COMMUNITY_HELPFUL';
+
+export type NpcActivity = 'WORKING' | 'SHOPPING' | 'RESTING' | 'COMMUTING';
+
+export interface NpcFamilyTie {
+  relatedNpcId: string;
+  relation: 'SPOUSE' | 'CHILD' | 'PARENT' | 'SIBLING';
+}
+
+export interface NpcBusinessRelation {
+  partnerNpcId: string;
+  relationType: 'SUPPLIER' | 'CLIENT' | 'LOGISTICS_PARTNER' | 'CO_OWNER';
+}
+
+export interface NpcMicroLedger {
+  npcId: string;
+  name: string;
+  roleTitle: string;
+  monthlyIncome: number;
+  monthlyExpense: number;
+  savings: number;
+  currentDebt: number;
+  riskTolerance: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
+  personality: NpcPersonality;
+  mood: NpcMood;
+  stressLevel: number; // 0..100
+  currentActivity: NpcActivity;
+  bioQuote: string;
+  financialGoal: string;
+  avatarHue: string;
+  familyTies: NpcFamilyTie[];
+  businessRelations: NpcBusinessRelation[];
+  playerLoan: NpcPlayerLoan | null;
+  playerEquity: NpcPlayerEquity | null;
+}
+
+export interface OpportunityChoice {
+  id: string;
+  label: string;
+  costCoins: number;
+  borrowAmountCoins?: number;
+  equityDilutionPct?: number;
+  summaryEffect: string;
+  financialImpact: {
+    cashDeltaCoins: number;
+    debtDeltaCoins: number;
+    equityDeltaPct?: number;
+    monthlyCashflowDeltaCoins: number;
+    happinessDelta: number;
+    riskDelta: number;
+  };
+}
+
+export interface OpportunityCardDef {
+  id: string;
+  act: GameAct;
+  title: string;
+  context: string;
+  description: string;
+  choices: OpportunityChoice[];
+}
+
+export interface BlackSwanEventDef {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  severity: 'MINOR' | 'MODERATE' | 'CRITICAL';
+  durationDays: number;
+  revenueMultiplier: number;
+  repairCostCoins?: number;
+  debtInterestMultiplier: number;
+  realEstateValuationMultiplier: number;
+  affectedNpcId?: string;
+  mitigationAdvice: string;
+}
+
+export interface MomoFinancialOSState {
+  tuiThanTaiBalanceCoins: number;
+  tuiThanTaiYieldRateDailyPct: number;
+  viTraSauLimitCoins: number;
+  viTraSauUsedCoins: number;
+  viTraSauInterestRateMonthlyPct: number;
+  activeInsurances: {
+    buildingId: string;
+    coverageType: 'BLACK_SWAN_SHOCK' | 'REPAIR_DAMAGE';
+    monthlyPremiumCoins: number;
+  }[];
+  npcStockPortfolio: {
+    npcId: string;
+    sharesOwned: number;
+    avgPurchasePriceCoins: number;
+  }[];
+}
+

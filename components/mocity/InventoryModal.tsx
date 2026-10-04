@@ -46,11 +46,11 @@ const STREET_HERO_DIALOGUES: Record<string, string[]> = {
   'advisor-khoa-shipper': [
     '“Đường phố MoCity quy hoạch vuông vức, anh em Shipper tụi tui giao 10 tô bún bò qua 4 ngã tư mà không sánh một giọt nước lèo!”',
     '“Khách đặt đơn qua MoMo thanh toán trước hết trơn, tụi tui chỉ việc nhận hàng rồi phóng vèo tới cửa!”',
-    '“Có Ví Trả Sau dự phòng, lỡ xe có mòn lốp giữa tháng cũng ghé tiệm sửa liền không lo đứt bữa chạy đơn!”',
+    '“Có MoMo thanh toán tiện lợi trong tay, lỡ xe có mòn lốp giữa tháng cũng ghé tiệm sửa liền không lo đứt bữa chạy đơn!”',
   ],
   'advisor-giao-su-khai': [
-    '“Dòng tiền trong Đô Thị MoCity đang luân chuyển cực kỳ khỏe! Mỗi đồng đồng nhàn rỗi trong Túi Thần Tài đều đang sinh lãi kép mỗi giây.”',
-    '“Bí quyết của các Siêu Đô Thị là giữ hệ số bao phủ lãi vay trên 1,5 — vay thông minh chứ không vay vô tội vạ!”',
+    '“Dòng tiền trong Đô Thị MoCity đang luân chuyển cực kỳ khỏe! Mỗi đồng nhàn rỗi trong Túi Thần Tài đều đang sinh lãi kép mỗi giây.”',
+    '“Bí quyết của các Siêu Đô Thị là kiểm soát chặt chẽ giá vốn và chi phí vận hành — kinh doanh bền vững mới sinh lời lớn!”',
     '“Khi Sàn Chứng Khoán đặt cạnh Tháp Tài Chính MoMo, hiệu ứng cộng hưởng tài chính sẽ đạt đỉnh cao!”',
   ],
   'advisor-mai': [

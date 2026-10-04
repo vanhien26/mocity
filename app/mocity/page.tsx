@@ -1188,11 +1188,11 @@ export default function MoCityPage() {
                 type="button"
                 onClick={() => setFinanceModalOpen(true)}
                 className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Quản Lý Ngân Khố: Heo Đất Tiết Kiệm, Quỹ Đầu Tư, Vốn Vay & Bảo Hiểm"
+                title="Quản Lý Ngân Khố: Heo Đất Tiết Kiệm, Quỹ Đầu Tư & Bảo Hiểm"
               >
                 <PiggyBank size={15} className="shrink-0 text-[#A8246B]" />
                 <span className="text-[11px] font-black leading-none">Ngân Khố</span>
-                {(savingsBalance > 0 || investedAmount > 0 || debt > 0) && (
+                {(savingsBalance > 0 || investedAmount > 0) && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white">
                     <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
                   </span>

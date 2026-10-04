@@ -1063,7 +1063,7 @@ export default function ExpressiveStreetCitizens({
 
       if (opt.rewardBonus) {
         claimTapReward('citizen', opt.rewardBonus.coins, { cooldownMs: 1500 });
-        onCitizenReward?.(`🎁 ${def.name}: ${opt.rewardBonus.reason} (+${opt.rewardBonus.coins} đồng)!`);
+        onCitizenReward?.(`🎁 ${def.name}: ${opt.rewardBonus.reason} (+${formatCompact(opt.rewardBonus.coins)} đồng)!`);
       }
 
       const nextEmotion = opt.emotionOnSelect ?? (isPaidGift ? 'STAR_EYES' : 'HAPPY');

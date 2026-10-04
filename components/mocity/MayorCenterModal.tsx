@@ -58,10 +58,9 @@ function BankTab({ onToast }: { onToast: (msg: string) => void }) {
           Ngân Khố Đô Thị & Quỹ Dự Trữ
         </p>
         <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
-          Vay vốn mở tiệm, gửi tiết kiệm Heo Đất và bảo vệ rủi ro phố thị - nguồn vốn dồi dào để xây dựng công trình mới.
+          Gửi tiết kiệm Heo Đất, quản trị quỹ vận hành và bảo vệ rủi ro phố thị - nguồn vốn dồi dào để phát triển kinh doanh.
         </p>
       </div>
-      <LoanPanel onToast={onToast} />
       <FinancialRulesPanel onToast={onToast} />
     </div>
   );
@@ -271,7 +270,7 @@ export default function MayorCenterModal({
             }
           >
             <CircleDollarSign size={14} className="shrink-0" />
-            <span className="truncate">Ngân Hàng</span>
+            <span className="truncate">Ngân Khố</span>
           </button>
 
           <button

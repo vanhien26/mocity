@@ -85,20 +85,16 @@ describe('dieu kien tung buoc', () => {
     assert.equal(b.done(st({ tutorialFlags: ['ledger'] })), true);
   });
 
-  it('han muc vay: moc rieng, khong dung chung voi So Cai', () => {
-    const b = buoc('han-muc-vay');
-    assert.equal(b.done(st({ tutorialFlags: ['ledger'] })), false);
-    assert.equal(b.done(st({ tutorialFlags: ['loan'] })), true);
+  it('xem tiem: chi xong khi co moc inspector tu UI', () => {
+    const b = buoc('xem-tiem');
+    assert.equal(b.done(st({ buildings: [node('quan-ca-phe', 1)] })), false);
+    assert.equal(b.done(st({ tutorialFlags: ['inspector'] })), true);
   });
 
-  it('chuyen pho: dem ca so ngay lan so tong', () => {
-    const b = buoc('chuyen-pho');
-    assert.equal(
-      b.done(st({ dailyLog: { day: '', built: 0, upgraded: 0, talked: 0, eventsResolved: 1, starEvolved: 0, idleXp: 0, claimed: [] } })),
-      true,
-    );
-    // Sang ngay moi bo dem ngay ve 0 nhung nguoi choi da hoc roi - khong bat lam lai.
-    assert.equal(b.done(st({ eventLog: { day: '', resolved: 3 } })), true);
+  it('thue nv: can it nhat 1 nhan vien dung quay', () => {
+    const b = buoc('thue-nv');
+    assert.equal(b.done(st({ buildings: [node('quan-ca-phe', 1)] })), false);
+    assert.equal(b.done(st({ buildings: [{ ...node('quan-ca-phe', 1), staffCount: 1 }] })), true);
   });
 });
 
