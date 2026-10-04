@@ -1230,7 +1230,18 @@ export default function MoCityPage() {
       </div>
 
       {isPlaying && (
-        <TutorialCoach hidden={drawerOpen || mayorModalOpen || inventoryOpen || Boolean(dialogueView)} />
+        <TutorialCoach
+          hidden={
+            drawerOpen ||
+            inspectorOpen ||
+            mayorModalOpen ||
+            inventoryOpen ||
+            shareOpen ||
+            financeModalOpen ||
+            quizModalOpen ||
+            Boolean(dialogueView)
+          }
+        />
       )}
 
       <BuildDrawer
