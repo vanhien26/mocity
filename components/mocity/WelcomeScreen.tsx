@@ -78,11 +78,23 @@ function MoCityLogo({ size = 64 }: { size?: number }) {
   );
 }
 
-/** Ba vi muc chinh cua vong choi - dung cho nguoi moi. */
+/** Ba trụ cột trải nghiệm cốt truyện "Từ tay trắng đến cơ đồ". */
 const HOW_TO_PLAY = [
-  { icon: Store, title: 'Mở tiệm & quản lý', body: 'Trả tiền mặt hay MoMo QR? Bà con tin bạn thì doanh thu lên.' },
-  { icon: Crown, title: 'Phân xử chuyện phố', body: 'Tốn đồng để mua uy tín, hoặc giữ túi tiền và bà con sẽ xa bạn.' },
-  { icon: Gift, title: 'Giữ phố vui', body: 'Bỏ bê bà con vài giờ thì hạnh phúc tụt, doanh thu giảm theo.' },
+  { 
+    icon: Store, 
+    title: '1. Quyết định chiến lược', 
+    body: 'Lựa chọn mở quán cà phê, mua nhà cũ, vay đòn bẩy hay gọi cổ đông góp vốn qua 5 Act nội dung.' 
+  },
+  { 
+    icon: Crown, 
+    title: '2. Sống với hậu quả tài chính', 
+    body: 'Tự chịu trách nhiệm cho quyết định: thiếu thanh khoản hoặc gánh nợ lớn sẽ sụp đổ khi mưa bão 3 tuần.' 
+  },
+  { 
+    icon: Gift, 
+    title: '3. Cơ đồ 7 chiều (WEALTH Matrix)', 
+    body: 'Chiến thắng không đo bằng tiền tích lũy, mà bằng Dòng tiền thặng dư, Thanh khoản và Hạnh phúc cư dân.' 
+  },
 ];
 
 export default function WelcomeScreen({
@@ -131,8 +143,8 @@ export default function WelcomeScreen({
               </h1>
               <p className="mt-1 text-pretty text-[12px] leading-relaxed text-[#6E4F3A] sm:text-[13px]">
                 {hasNamedCity
-                  ? `Thành phố ${cityName} đang chờ bạn. Cư dân trên phố nhớ mặt bạn đấy.`
-                  : 'Dựng phố phường Việt Nam, cho thuê mặt bằng, quyết định thuê người hay tiền mặt. Game hoá bài học quản lý tài chính mà bạn vẫn chơi như chơi.'}
+                  ? `Thành phố ${cityName} đang chờ bạn. Mỗi quyết định tài chính của bạn sẽ biến thị trấn thành một cơ đồ khác nhau.`
+                  : 'Bạn được giao một thị trấn đang đứng trước cơ hội đổi đời. Mỗi quyết định tài chính của bạn sẽ biến thị trấn thành một cơ đồ khác nhau.'}
               </p>
             </div>
             {hasNamedCity && (
