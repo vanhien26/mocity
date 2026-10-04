@@ -253,6 +253,7 @@ function createInitialState(): CityState {
     playerDebtPaid: 0,
     playerDebtNextDueDateStr: futureDateKey(now, PLAYER_DEBT_INTERVAL_DAYS),
     playerDebtMissed: 0,
+    gameEnding: null,
     dailyLog: emptyDailyLog(now),
     streak: { days: 0, lastDay: '', best: 0, shields: 0 },
     streakClaimed: 0,
@@ -747,6 +748,10 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     ? migrated.playerDebtNextDueDateStr
     : futureDateKey(Date.now(), PLAYER_DEBT_INTERVAL_DAYS);
   merged.playerDebtMissed = nonNeg(migrated.playerDebtMissed ?? 0);
+  const validEndings = ['survival', 'prosperity', 'empire'] as const;
+  merged.gameEnding = validEndings.includes(migrated.gameEnding as typeof validEndings[number])
+    ? (migrated.gameEnding as typeof validEndings[number])
+    : null;
   merged.cityTierClaimed = Number.isFinite(migrated.cityTierClaimed)
     ? Math.max(1, Math.min(CITY_TIERS.length, migrated.cityTierClaimed))
     : 1;
@@ -1661,6 +1666,21 @@ export function tickIdle(): void {
       playerDebtMissed: canPay ? 0 : (next.playerDebtMissed ?? 0) + 1,
       playerDebtNextDueDateStr: futureDateKey(now, PLAYER_DEBT_INTERVAL_DAYS),
     };
+  }
+
+  // Kiểm tra win condition: trả hết nợ gốc lần đầu
+  if (!next.gameEnding && Math.max(0, next.playerDebtPrincipal - next.playerDebtPaid) === 0) {
+    const monthlyFlow = next.buildings.reduce((sum, b) => {
+      const def = BUILDING_BY_ID[b.defId];
+      return sum + (def?.baseYieldPerSec ?? 0) * b.level * 30 * 86_400;
+    }, 0);
+    const ending =
+      next.buildings.length >= 10 && monthlyFlow >= 100_000_000
+        ? 'empire'
+        : monthlyFlow >= 50_000_000
+          ? 'prosperity'
+          : 'survival';
+    next = { ...next, gameEnding: ending };
   }
 
   next = maybeSpawnRequest(next, now);

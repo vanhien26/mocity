@@ -513,6 +513,8 @@ export interface CityState extends Currencies {
   playerDebtNextDueDateStr: string;
   /** Số kỳ lãi trễ liên tiếp (>= 2 = game over warning). */
   playerDebtMissed: number;
+  /** Kết thúc game khi trả hết nợ. null = chưa kết thúc. */
+  gameEnding: 'survival' | 'prosperity' | 'empire' | null;
   dailyLog: DailyLog;
   streak: StreakState;
   /**

@@ -33,6 +33,7 @@ import OfflineRewardModal from '@/components/mocity/OfflineRewardModal';
 import ShareCityCard from '@/components/mocity/ShareCityCard';
 import DialogueModal, { type DialogueView } from '@/components/mocity/DialogueModal';
 import WelcomeScreen from '@/components/mocity/WelcomeScreen';
+import EndingScreen from '@/components/mocity/EndingScreen';
 import StoreInspectorModal from '@/components/mocity/StoreInspectorModal';
 import MayorCenterModal from '@/components/mocity/MayorCenterModal';
 import TutorialCoach from '@/components/mocity/TutorialCoach';
@@ -289,6 +290,7 @@ export default function MoCityPage() {
   const playerDebtPaid = useCity((s) => s.playerDebtPaid ?? 0);
   const playerDebtNextDueDateStr = useCity((s) => s.playerDebtNextDueDateStr ?? '');
   const playerDebtMissed = useCity((s) => s.playerDebtMissed ?? 0);
+  const gameEnding = useCity((s) => s.gameEnding ?? null);
   const activeIncidents = useCity((s) => s.activeIncidents ?? []);
   const hasInsurance = useCity((s) => Boolean(s.hasInsurance && (s.insuranceActiveUntilMs ?? 0) > Date.now()));
 
@@ -1303,6 +1305,15 @@ export default function MoCityPage() {
         }}
         onToast={showToast}
       />
+
+      {gameEnding && (
+        <EndingScreen
+          ending={gameEnding}
+          mayorName={mayorName}
+          coins={coins}
+          buildingCount={buildings.length}
+        />
+      )}
 
       <MayorCenterModal
         open={mayorModalOpen}
