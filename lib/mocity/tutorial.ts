@@ -2,9 +2,12 @@ import { BUILDING_BY_ID } from './mock-city-data';
 import type { CityState } from './types';
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * HƯỚNG DẪN
+ * HƯỚNG DẪN — TỰ KINH DOANH 1 CỬA HÀNG TỪ A-Z
  *
  * Nguyên tắc: HỌC BẰNG CÁCH LÀM, không phải đọc slide.
+ *
+ * Flow: Mở tiệm → Bấm xem tiệm → Nâng cấp → Thuê nhân viên →
+ *       Xây khu dân cư → Đọc Sổ Cái
  *
  * Mỗi bước yêu cầu một thao tác thật, game đọc state để biết đã xong chưa,
  * rồi mới mở phần giải thích. Trình tự đó quan trọng: nói trước thì người
@@ -37,57 +40,70 @@ export function hasFlag(s: CityState, flag: string): boolean {
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
+  /* ─── BƯỚC 1: MỞ CỬA HÀNG ─────────────────────────────────────────────── */
   {
     id: 'mo-tiem',
-    title: 'Mở cửa hàng đầu tiên',
-    how: 'Bấm “Mở Tiệm Mới” rồi chọn một ô đất trống trên phố. Quán Cà Phê là rẻ nhất.',
+    title: '① Khai trương cửa hàng đầu tiên',
+    how: 'Bấm "Mở Tiệm Mới" bên dưới → chọn loại quán → bấm vào ô đất trống để đặt. Quán Cà Phê rẻ nhất — thử đó trước!',
     lesson:
-      'Quán vừa mở đã sinh doanh thu. Nhưng doanh thu KHÔNG phải tiền lời: mỗi ly bán ra còn phải trừ tiền nguyên liệu và tiền mặt bằng. Con số trên thanh HUD là lợi nhuận ròng, đã trừ hết rồi - thấp hơn doanh thu nhiều.',
+      'Tiệm vừa mở là bắt đầu sinh tiền mỗi giây. Con số trên biển hiệu là lợi nhuận ròng — đã trừ nguyên liệu và mặt bằng rồi, thấp hơn doanh thu nhiều. Mở tiệm = bắt đầu dòng tiền, chưa phải tiền lời ngay.',
     anchor: 'build',
     done: (s) => s.buildings.some((b) => BUILDING_BY_ID[b.defId]?.zone === 'COMMERCIAL'),
   },
+
+  /* ─── BƯỚC 2: BẤM VÀO TIỆM ĐỂ XEM CHI TIẾT ───────────────────────────── */
+  {
+    id: 'xem-tiem',
+    title: '② Bấm vào tiệm để xem sổ sách',
+    how: 'Bấm trực tiếp vào cửa hàng trên phố (hoặc nút "Quản Lý" ở thanh dưới). Xem tab Chi Tiết — có doanh thu, tốc độ phục vụ và sức chứa hàng đợi.',
+    lesson:
+      'Doanh thu/giây là sức khỏe của tiệm. Ba con số cần nhớ: doanh thu (tiền vào), tốc độ phục vụ (đơn/giây) và sức chứa (hàng đợi tối đa). Tiệm đông mà phục vụ chậm thì mất khách — không khác gì quán ngon mà thiếu nhân viên.',
+    anchor: 'manage',
+    done: (s) => hasFlag(s, 'inspector'),
+  },
+
+  /* ─── BƯỚC 3: NÂNG CẤP TIỆM ─────────────────────────────────────────── */
+  {
+    id: 'nang-cap',
+    title: '③ Nâng cấp tiệm lên cấp 2',
+    how: 'Trong bảng quản lý tiệm, bấm tab "Nâng Cấp" → bấm nút "Nâng +1 Cấp". Doanh thu tăng ngay lập tức.',
+    lesson:
+      'Nâng cấp là đầu tư vốn để tăng lợi nhuận. Trước khi bấm, nhìn gợi ý "Mẹo Thu Hồi Vốn" — biết bao lâu thu lại đủ tiền nâng cấp. Đó chính là cách đọc một khoản đầu tư: hỏi thời gian hoàn vốn trước, rồi mới tính lời.',
+    anchor: 'shop-tab-upgrade',
+    done: (s) => s.buildings.some((b) => b.level >= 2),
+  },
+
+  /* ─── BƯỚC 4: THUÊ NHÂN VIÊN ────────────────────────────────────────── */
+  {
+    id: 'thue-nv',
+    title: '④ Thuê nhân viên — phục vụ nhanh hơn',
+    how: 'Vẫn trong bảng tiệm, bấm tab "Nhân Lực" → bấm "Thuê Nhân Viên thứ 1". Tốc độ phục vụ tăng, khách được xử lý nhanh hơn.',
+    lesson:
+      'Nhân viên là chi phí một lần, tăng năng suất vĩnh viễn. Thuê thêm khi hàng đợi thường xuyên đầy — đó là dấu hiệu tiệm đang "nghẽn cổ chai" ở khâu phục vụ. Ngoài đời: đúng người đúng chỗ mới sinh lời, sai chỗ thì lãng phí.',
+    anchor: 'shop-tab-staff',
+    done: (s) => s.buildings.some((b) => (b.staffCount ?? 0) >= 1),
+  },
+
+  /* ─── BƯỚC 5: XÂY KHU DÂN CƯ ─────────────────────────────────────────── */
   {
     id: 'xay-nha',
-    title: 'Xây chỗ ở cho cư dân',
-    how: 'Mở “Mở Tiệm Mới” lần nữa, chọn nhóm Dân Cư và đặt một Khu Nhà Phố.',
+    title: '⑤ Xây khu nhà ở để có khách',
+    how: 'Bấm "Mở Tiệm Mới" → chọn nhóm "Dân Cư" → đặt một Khu Nhà Phố lên ô đất trống. Tiệm cần người mua mới hoạt động hết công suất.',
     lesson:
-      'Không có người ở thì không ai mua. Mở nhiều quán mà thiếu dân thì hàng ế, doanh thu mỗi quán tụt xuống. Trong game gọi là hệ số lấp đầy, ngoài đời gọi là chọn sai mặt bằng - mở quán ở nơi không có khách.',
+      'Không có người ở = không có khách = tiệm ế. Mở nhiều quán mà thiếu dân thì doanh thu mỗi quán thấp hơn tối đa. Trong game gọi là "hệ số lấp đầy" — ngoài đời là chọn mặt bằng sai: mở quán ở nơi không có khách qua lại.',
     anchor: 'build',
     done: (s) => s.buildings.some((b) => (BUILDING_BY_ID[b.defId]?.population ?? 0) > 0),
   },
-  {
-    id: 'nang-cap',
-    title: 'Nâng cấp một công trình',
-    how: 'Bấm vào một cửa hàng trên phố rồi chọn nâng cấp.',
-    lesson:
-      'Chi phí nâng cấp neo vào doanh thu của chính công trình đó, nên thời gian hoàn vốn ở mọi công trình gần như nhau. Trước khi bỏ tiền, câu hỏi luôn là: bao lâu thì thu lại đủ. Đó là cách đọc một khoản đầu tư, dù là nâng cấp quán hay mua máy mới.',
-    done: (s) => s.buildings.some((b) => b.level >= 2),
-  },
+
+  /* ─── BƯỚC 6: ĐỌC SỔ CÁI ─────────────────────────────────────────────── */
   {
     id: 'doc-so-cai',
-    title: 'Mở Sổ Cái và đọc báo cáo',
-    how: 'Bấm “Thị Chính” trên thanh dưới, rồi chọn tab “Sổ Cái”.',
+    title: '⑥ Mở Sổ Cái — đọc báo cáo lãi lỗ',
+    how: 'Bấm "Thị Chính" ở thanh dưới → chọn tab "Sổ Cái". Đây là báo cáo kết quả kinh doanh toàn thành phố.',
     lesson:
-      'Đây là báo cáo kết quả kinh doanh của cả thành phố. Đọc từ trên xuống: doanh thu gộp, trừ giá vốn ra lợi nhuận gộp, trừ chi phí vận hành ra lợi nhuận hoạt động, trừ thuế ra lợi nhuận ròng. Biên gộp thấp nghĩa là bán nhiều mà không giữ lại được bao nhiêu.',
+      'Đọc từ trên xuống: Doanh thu gộp → trừ giá vốn = Lợi nhuận gộp → trừ vận hành = Lợi nhuận hoạt động → trừ thuế = Lợi nhuận ròng. Biên gộp thấp: bán nhiều mà không giữ lại được bao nhiêu. Nắm con số này là nắm sức khỏe thật của cả chuỗi kinh doanh.',
     anchor: 'cityhall',
     done: (s) => hasFlag(s, 'ledger'),
-  },
-  {
-    id: 'han-muc-vay',
-    title: 'Xem hạn mức vay của bạn',
-    how: 'Vẫn trong tab “Sổ Cái”, nhìn khối “Khoản vay Ngân Hàng Số” ở trên cùng.',
-    lesson:
-      'Hạn mức tính theo khả năng trả nợ, không theo doanh thu: biên lợi nhuận mỏng thì vay được ít hơn dù bán bằng nhau. Và lãi phải trả đều đặn dù tháng đó buôn bán ra sao - vay được không có nghĩa là nên vay.',
-    anchor: 'cityhall',
-    done: (s) => hasFlag(s, 'loan'),
-  },
-  {
-    id: 'chuyen-pho',
-    title: 'Phân xử một Chuyện Phố',
-    how: 'Bấm nút “Chuyện Phố” trên thanh trên cùng và chọn một phương án.',
-    lesson:
-      'Cách bạn xử chuyện ảnh hưởng tới mức hài lòng của cư dân, mà mức hài lòng lại nhân vào doanh thu toàn phố. Bỏ mặc khu phố thì doanh thu tụt dần - chi phí chăm sóc khách hàng không nằm trên hóa đơn nào nhưng vẫn có thật.',
-    done: (s) => (s.dailyLog?.eventsResolved ?? 0) > 0 || (s.eventLog?.resolved ?? 0) > 0,
   },
 ];
 

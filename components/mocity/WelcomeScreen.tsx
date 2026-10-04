@@ -2,10 +2,10 @@
 
 import { ArrowRight, Crown, Gift, Store, X } from 'lucide-react';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
+import { STARTING_COINS } from '@/lib/mocity/store';
 
-/** Hàng số thưởng nhậm chức, phải khớp `LOGIN_BONUS_COINS` trong page. */
-export const WELCOME_FIRST_TIME_BONUS = 1_000;
-const STARTING_COINS = 600;
+/** Hằng số thưởng nhậm chức, phải khớp `LOGIN_BONUS_COINS` trong page (10.000.000 VNĐ). */
+export const WELCOME_FIRST_TIME_BONUS = 10_000_000;
 
 export interface WelcomeScreenProps {
   /** Ten hien thi tu tai khoan da dang nhap. */
@@ -261,8 +261,8 @@ export default function WelcomeScreen({
                 </p>
                 <p className="text-pretty text-[13px] font-bold text-[#92400E]">
                   {hasNamedCity
-                    ? `Vốn sẵn có ${formatNumber(coins)}`
-                    : `Vốn sẵn có ${formatNumber(STARTING_COINS)} · Tặng thêm +${formatNumber(firstTimeBonus)}`}
+                    ? `Vốn sẵn có ${formatCompact(coins)} đồng`
+                    : `Vốn sẵn có ${formatCompact(STARTING_COINS)} đồng · Tặng thêm +${formatCompact(firstTimeBonus)} đồng`}
                   {offlineBonus > 0 ? ` · +${formatCompact(offlineBonus)} doanh thu vắng mặt` : ''}
                 </p>
               </div>

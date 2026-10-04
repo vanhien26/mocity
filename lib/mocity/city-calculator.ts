@@ -587,7 +587,7 @@ export const NPL_MAX_RATE = 0.4;
  * Vuot nguong nay la dau hieu tap trung tin dung: cap qua nhieu han muc cho
  * qua it nguoi, dung co che lam ho so tin dung xau di trong thuc te.
  */
-export const HEALTHY_CREDIT_PER_CAPITA = 200;
+export const HEALTHY_CREDIT_PER_CAPITA = 1100;
 /** Nguong canh bao ty le no xau. */
 export const NPL_WARNING_AT = 0.1;
 

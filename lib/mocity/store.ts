@@ -267,6 +267,20 @@ function createInitialState(): CityState {
     insuranceClaimsPaid: 0,
     weather: 'SUNNY',
     isFlooded: false,
+    ap: 50,
+    maxAp: 50,
+    lastApRegenMs: now,
+    mayorPoints: 100,
+    savingsBalance: 0,
+    savingsTier: 'NONE',
+    savingsStartedAt: 0,
+    loanPrincipal: 0,
+    loanStartedAt: 0,
+    investedFundId: 'NONE',
+    investedAmount: 0,
+    investedAt: 0,
+    insuranceActiveUntilMs: 0,
+    activeIncidents: [],
   };
 }
 
@@ -794,6 +808,20 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.insuranceClaimsPaid = typeof migrated.insuranceClaimsPaid === 'number' ? Math.max(0, migrated.insuranceClaimsPaid) : 0;
   merged.weather = (['SUNNY', 'RAIN', 'FLOOD', 'STORM'].includes(migrated.weather as string) ? migrated.weather : 'SUNNY') as WeatherType;
   merged.isFlooded = typeof migrated.isFlooded === 'boolean' ? migrated.isFlooded : merged.weather === 'FLOOD';
+  merged.ap = typeof migrated.ap === 'number' ? Math.max(0, Math.min(50, migrated.ap)) : 50;
+  merged.maxAp = 50;
+  merged.lastApRegenMs = typeof migrated.lastApRegenMs === 'number' ? migrated.lastApRegenMs : now;
+  merged.mayorPoints = typeof migrated.mayorPoints === 'number' ? Math.max(0, migrated.mayorPoints) : 100;
+  merged.savingsBalance = typeof migrated.savingsBalance === 'number' ? Math.max(0, migrated.savingsBalance) : 0;
+  merged.savingsTier = (['1D', '3D', '7D', 'NONE'].includes(migrated.savingsTier as string) ? migrated.savingsTier : 'NONE') as '1D' | '3D' | '7D' | 'NONE';
+  merged.savingsStartedAt = typeof migrated.savingsStartedAt === 'number' ? migrated.savingsStartedAt : 0;
+  merged.loanPrincipal = typeof migrated.loanPrincipal === 'number' ? Math.max(0, migrated.loanPrincipal) : 0;
+  merged.loanStartedAt = typeof migrated.loanStartedAt === 'number' ? migrated.loanStartedAt : 0;
+  merged.investedFundId = (['SAFE', 'BALANCED', 'AGGRESSIVE', 'NONE'].includes(migrated.investedFundId as string) ? migrated.investedFundId : 'NONE') as 'SAFE' | 'BALANCED' | 'AGGRESSIVE' | 'NONE';
+  merged.investedAmount = typeof migrated.investedAmount === 'number' ? Math.max(0, migrated.investedAmount) : 0;
+  merged.investedAt = typeof migrated.investedAt === 'number' ? migrated.investedAt : 0;
+  merged.insuranceActiveUntilMs = typeof migrated.insuranceActiveUntilMs === 'number' ? migrated.insuranceActiveUntilMs : 0;
+  merged.activeIncidents = Array.isArray(migrated.activeIncidents) ? migrated.activeIncidents : [];
 
   const elapsed = now - (Number.isFinite(merged.lastSeenAt) ? merged.lastSeenAt : now);
   if (elapsed >= OFFLINE_MIN_MS) {
@@ -1587,6 +1615,24 @@ export function tickIdle(): void {
     next.ledgerMonth.netIncome = Math.max(0, next.ledgerMonth.netIncome + tuiGain);
     void day;
     void month;
+  }
+
+  // 1. Hồi Action Points (AP): 1 AP mỗi 5 phút (300.000ms), trần 50 AP
+  const currentAp = next.ap ?? 50;
+  const maxAp = next.maxAp ?? 50;
+  const lastApRegen = next.lastApRegenMs ?? now;
+  if (currentAp < maxAp && now - lastApRegen >= 300_000) {
+    const regained = Math.floor((now - lastApRegen) / 300_000);
+    next = {
+      ...next,
+      ap: Math.min(maxAp, currentAp + regained),
+      lastApRegenMs: lastApRegen + regained * 300_000,
+    };
+  }
+
+  // 2. Kiểm tra hiệu lực Bảo Hiểm MoMo
+  if (next.hasInsurance && next.insuranceActiveUntilMs && next.insuranceActiveUntilMs < now) {
+    next = { ...next, hasInsurance: false, insuranceActiveUntilMs: 0 };
   }
 
   setState(next);
@@ -2396,10 +2442,335 @@ export function buyMoMoInsurance(costCoins = 2500): boolean {
   setState({
     ...state,
     coins: state.coins - costCoins,
-    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - costCoins),
     hasInsurance: true,
   });
   return true;
+}
+
+/* ── HỆ THỐNG TĂNG TRƯỞNG & VÒNG LẶP DOPAMINE THỊ TRƯỞNG MOMO ── */
+
+export interface HarvestResult {
+  ok: boolean;
+  earned: number;
+  bonus: number;
+  isJackpot: boolean;
+  apRemaining: number;
+  message: string;
+}
+
+/**
+ * Thu hoạch tức thì bằng Điểm Năng Lượng (AP):
+ * - Tiêu 1 AP
+ * - Nhận 45s doanh thu + 10% Bonus VNĐ
+ * - 5% cơ hội nổ Siêu Lợi Nhuận x10 (Jackpot)
+ * - Tự động phục vụ mọi khách chờ trên phố
+ */
+export function harvestManual(): HarvestResult {
+  const currentAp = state.ap ?? 50;
+  if (currentAp < 1) {
+    return {
+      ok: false,
+      earned: 0,
+      bonus: 0,
+      isJackpot: false,
+      apRemaining: 0,
+      message: 'Hết Năng Lượng (AP)! Đang hồi 1 AP mỗi 5 phút.',
+    };
+  }
+
+  const now = Date.now();
+  const flow = flowFor(state.buildings, state.npcs, state.mayorLevel, state.coins, flowOptsFor(state));
+  const baseYield = Math.max(15_000, Math.round(flow.operatingIncome * 45));
+  const bonus = Math.round(baseYield * 0.10);
+  let totalEarned = baseYield + bonus;
+
+  const isJackpot = Math.random() < 0.05;
+  if (isJackpot) {
+    totalEarned *= 10;
+  }
+
+  const autoServed = autoServeQueues(
+    state.buildings,
+    state.shopQueues ?? [],
+    txCtxFor(state, now),
+    (state.ordersClosed ?? 0) + 1,
+  );
+
+  let nextState: CityState = {
+    ...state,
+    ap: currentAp - 1,
+    lastApRegenMs: state.lastApRegenMs || now,
+    buildings: autoServed.buildings,
+    shopQueues: [],
+    mayorPoints: (state.mayorPoints ?? 100) + 5,
+  };
+
+  if (autoServed.txns.length > 0) {
+    nextState = recordTransactions(nextState, autoServed.txns);
+  }
+
+  nextState = withCoins(nextState, totalEarned, 'OPERATING');
+  setState(nextState);
+
+  return {
+    ok: true,
+    earned: totalEarned,
+    bonus,
+    isJackpot,
+    apRemaining: currentAp - 1,
+    message: isJackpot
+      ? `💥 SIÊU LỢI NHUẬN x10! Nhận +${totalEarned.toLocaleString('vi-VN')}đ VNĐ!`
+      : `⚡ Thu hoạch tức thì: +${totalEarned.toLocaleString('vi-VN')}đ VNĐ (+10% Bonus)!`,
+  };
+}
+
+/**
+ * Mở sổ Tiết Kiệm MoMo sinh lời có kỳ hạn
+ */
+export function depositSavings(amount: number, tier: '1D' | '3D' | '7D'): { ok: boolean; message: string } {
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, message: 'Số tiền không hợp lệ.' };
+  if (state.coins < amount) return { ok: false, message: 'Không đủ số dư VNĐ trong ví.' };
+
+  if ((state.savingsBalance ?? 0) > 0) {
+    return { ok: false, message: 'Bạn đang có một sổ tiết kiệm chưa tất toán.' };
+  }
+
+  const now = Date.now();
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - amount),
+    savingsBalance: amount,
+    savingsTier: tier,
+    savingsStartedAt: now,
+  });
+
+  return { ok: true, message: `Đã mở sổ tiết kiệm kỳ hạn ${tier} với ${amount.toLocaleString('vi-VN')}đ!` };
+}
+
+/**
+ * Tất toán sổ Tiết Kiệm MoMo
+ */
+export function withdrawSavings(): { ok: boolean; principal: number; interest: number; isEarly: boolean; message: string } {
+  const bal = state.savingsBalance ?? 0;
+  if (bal <= 0) return { ok: false, principal: 0, interest: 0, isEarly: false, message: 'Không có sổ tiết kiệm nào.' };
+
+  const tier = state.savingsTier ?? '1D';
+  const startedAt = state.savingsStartedAt ?? 0;
+  const now = Date.now();
+  const elapsedDays = (now - startedAt) / (24 * 3600 * 1000);
+
+  const reqDays = tier === '1D' ? 1 : tier === '3D' ? 3 : 7;
+  const ratePerDay = tier === '1D' ? 0.02 : tier === '3D' ? 0.03 : 0.05;
+
+  const isMatured = elapsedDays >= reqDays;
+  const interest = isMatured ? Math.round(bal * ratePerDay * reqDays) : 0;
+  const totalPayout = bal + interest;
+
+  const next = withCoins(
+    {
+      ...state,
+      savingsBalance: 0,
+      savingsTier: 'NONE',
+      savingsStartedAt: 0,
+      mayorPoints: (state.mayorPoints ?? 100) + (isMatured ? 25 : 0),
+    },
+    totalPayout,
+    'GRANT',
+  );
+
+  setState(next);
+
+  return {
+    ok: true,
+    principal: bal,
+    interest,
+    isEarly: !isMatured,
+    message: isMatured
+      ? `Đáo hạn thành công! Nhận gốc ${bal.toLocaleString('vi-VN')}đ + Lãi ${interest.toLocaleString('vi-VN')}đ (+25 MP)!`
+      : `Tất toán trước hạn: Chỉ nhận lại tiền gốc ${bal.toLocaleString('vi-VN')}đ (Lãi 0%).`,
+  };
+}
+
+/**
+ * Rót vốn vào Quỹ Đầu Tư MoMo
+ */
+export function investFund(fundId: 'SAFE' | 'BALANCED' | 'AGGRESSIVE', amount: number): { ok: boolean; message: string } {
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, message: 'Số tiền không hợp lệ.' };
+  if (state.coins < amount) return { ok: false, message: 'Không đủ số dư VNĐ trong ví.' };
+  if ((state.investedAmount ?? 0) > 0) return { ok: false, message: 'Đang có danh mục đầu tư đang hoạt động.' };
+
+  setState({
+    ...state,
+    coins: state.coins - amount,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - amount),
+    investedFundId: fundId,
+    investedAmount: amount,
+    investedAt: Date.now(),
+  });
+
+  return { ok: true, message: `Đã rót vốn ${amount.toLocaleString('vi-VN')}đ vào Quỹ Đầu Tư!` };
+}
+
+/**
+ * Chốt danh mục đầu tư Quỹ
+ */
+export function settleFund(): { ok: boolean; invested: number; returned: number; profit: number; yieldPct: number; message: string } {
+  const amount = state.investedAmount ?? 0;
+  const fundId = state.investedFundId ?? 'NONE';
+  if (amount <= 0 || fundId === 'NONE') {
+    return { ok: false, invested: 0, returned: 0, profit: 0, yieldPct: 0, message: 'Không có danh mục nào.' };
+  }
+
+  let yieldRate = 0;
+  if (fundId === 'SAFE') {
+    yieldRate = 0.04 + Math.random() * 0.02; // +4% đến +6%
+  } else if (fundId === 'BALANCED') {
+    yieldRate = -0.05 + Math.random() * 0.25; // -5% đến +20%
+  } else {
+    yieldRate = -0.25 + Math.random() * 0.60; // -25% đến +35%
+  }
+
+  const returned = Math.max(0, Math.round(amount * (1 + yieldRate)));
+  const profit = returned - amount;
+  const yieldPct = Math.round(yieldRate * 100);
+
+  const next = withCoins(
+    {
+      ...state,
+      investedAmount: 0,
+      investedFundId: 'NONE',
+      investedAt: 0,
+      mayorPoints: (state.mayorPoints ?? 100) + (profit > 0 ? 30 : 5),
+    },
+    returned,
+    'GRANT',
+  );
+
+  setState(next);
+
+  return {
+    ok: true,
+    invested: amount,
+    returned,
+    profit,
+    yieldPct,
+    message: profit >= 0
+      ? `Chốt lời thành công! Lãi +${profit.toLocaleString('vi-VN')}đ (${yieldPct >= 0 ? '+' : ''}${yieldPct}%)`
+      : `Cắt lỗ danh mục: ${profit.toLocaleString('vi-VN')}đ (${yieldPct}%)`,
+  };
+}
+
+/**
+ * Mua Gói Bảo Hiểm Phố Thị MoMo
+ */
+export function buyMoMoInsurancePackage(costCoins = 2_000_000): { ok: boolean; message: string } {
+  if (state.coins < costCoins) return { ok: false, message: 'Không đủ số dư VNĐ trong ví.' };
+  const durationMs = 7 * 24 * 3600 * 1000; // 7 ngày
+  const now = Date.now();
+
+  setState({
+    ...state,
+    coins: state.coins - costCoins,
+    workingCapital: Math.max(0, (state.workingCapital ?? state.coins) - costCoins),
+    hasInsurance: true,
+    insuranceActiveUntilMs: (state.insuranceActiveUntilMs && state.insuranceActiveUntilMs > now ? state.insuranceActiveUntilMs : now) + durationMs,
+  });
+
+  return { ok: true, message: 'Đã kích hoạt Gói Bảo Hiểm Phố Thị MoMo (Hiệu lực 7 ngày)!' };
+}
+
+/**
+ * Sinh sự cố đường phố ngẫu nhiên
+ */
+export function spawnRandomIncident(): import('./types').CityIncident | null {
+  if (state.buildings.length === 0) return null;
+  const active = state.activeIncidents ?? [];
+  if (active.length >= 2) return null;
+
+  const targetBuilding = state.buildings[Math.floor(Math.random() * state.buildings.length)];
+  const def = BUILDING_BY_ID[targetBuilding.defId];
+  const types: import('./types').IncidentType[] = ['FIRE', 'THEFT', 'COMPLAINT', 'STOCKOUT'];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  const incidentDesc: Record<import('./types').IncidentType, string> = {
+    FIRE: `Chập biến áp tại ${def?.name ?? 'tiệm'}, nguy cơ gián đoạn kinh doanh!`,
+    THEFT: `Kẻ gian đột nhập trộm két sắt tại ${def?.name ?? 'tiệm'}!`,
+    COMPLAINT: `Khách phàn nàn đồ uống nguội và thái độ phục vụ tại ${def?.name ?? 'tiệm'}!`,
+    STOCKOUT: `Đứt gãy chuỗi cung ứng nguyên vật liệu tại ${def?.name ?? 'tiệm'}!`,
+  };
+
+  const incident: import('./types').CityIncident = {
+    id: `inc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    type,
+    buildingId: targetBuilding.id,
+    buildingName: def?.name ?? 'Cửa hàng',
+    description: incidentDesc[type],
+    penaltyPct: 0.30,
+    startedAt: Date.now(),
+    resolved: false,
+  };
+
+  setState({
+    ...state,
+    activeIncidents: [...active, incident],
+  });
+
+  return incident;
+}
+
+/**
+ * Xử lý sự cố đường phố
+ */
+export function resolveIncident(incidentId: string): { ok: boolean; cost: number; coveredByInsurance: boolean; message: string } {
+  const active = state.activeIncidents ?? [];
+  const incident = active.find((i) => i.id === incidentId);
+  if (!incident) return { ok: false, cost: 0, coveredByInsurance: false, message: 'Sự cố không tồn tại.' };
+
+  const hasIns = Boolean(state.hasInsurance && (state.insuranceActiveUntilMs ?? 0) > Date.now());
+  const normalCost = 500_000;
+  const actualCost = hasIns ? 0 : Math.min(state.coins, normalCost);
+
+  const remainingIncidents = active.filter((i) => i.id !== incidentId);
+  const next = {
+    ...state,
+    coins: Math.max(0, state.coins - actualCost),
+    activeIncidents: remainingIncidents,
+    mayorPoints: (state.mayorPoints ?? 100) + 15,
+    insuranceClaimsPaid: (state.insuranceClaimsPaid ?? 0) + (hasIns ? normalCost : 0),
+  };
+
+  setState(next);
+
+  return {
+    ok: true,
+    cost: actualCost,
+    coveredByInsurance: hasIns,
+    message: hasIns
+      ? `Bảo Hiểm MoMo chi trả 100% thiệt hại (+15 MP)!`
+      : `Đã xử lý sự cố. Phí khắc phục: ${actualCost.toLocaleString('vi-VN')}đ (+15 MP).`,
+  };
+}
+
+/**
+ * Trả lời Micro-Quiz tài chính
+ */
+export function answerMicroQuiz(correct: boolean, rewardVND: number, rewardMP: number): { ok: boolean; earnedCoins: number; earnedMP: number } {
+  if (!correct) {
+    return { ok: false, earnedCoins: 0, earnedMP: 0 };
+  }
+
+  const next = withCoins(
+    {
+      ...state,
+      mayorPoints: (state.mayorPoints ?? 100) + rewardMP,
+    },
+    rewardVND,
+    'GRANT',
+  );
+
+  setState(next);
+  return { ok: true, earnedCoins: rewardVND, earnedMP: rewardMP };
 }
 
 /**

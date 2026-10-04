@@ -18,9 +18,11 @@ import {
   X,
   GraduationCap,
 } from 'lucide-react';
-import { MAYOR_QUESTS, CITY_TIERS, nextCityTier, xpForLevel } from '@/lib/mocity/mock-city-data';
+import { MAYOR_QUESTS, CITY_TIERS, nextCityTier, xpForLevel, BUILDING_BY_ID } from '@/lib/mocity/mock-city-data';
 import { populationFor } from '@/lib/mocity/city-calculator';
 import { ARCHETYPES, CITY_ADVISORS, SERVICE_LABEL } from '@/lib/mocity/npc-data';
+import { ChibiBody } from './ChibiRenderer';
+import { ADVISOR_APPEARANCES } from '@/lib/mocity/character-roster';
 import { EVENT_BY_ID } from '@/lib/mocity/dialogue-data';
 import {
   claimQuestReward,
@@ -53,10 +55,10 @@ function BankTab({ onToast }: { onToast: (msg: string) => void }) {
     <div className="space-y-3">
       <div className="rounded-2xl border-2 p-3" style={{ background: '#FFFBEB', borderColor: '#C9A22766' }}>
         <p className="text-[11px] font-black uppercase tracking-wide text-[#8B6318]">
-          Ngân Hàng Số & Đầu Tư MoMo
+          Ngân Khố Đô Thị & Quỹ Dự Trữ
         </p>
         <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
-          Vay vốn, gửi tiết kiệm Túi Thần Tài và bảo hiểm rủi ro thành phố - tất cả trong một nơi.
+          Vay vốn mở tiệm, gửi tiết kiệm Heo Đất và bảo vệ rủi ro phố thị - nguồn vốn dồi dào để xây dựng công trình mới.
         </p>
       </div>
       <LoanPanel onToast={onToast} />
@@ -368,28 +370,43 @@ export default function MayorCenterModal({
                 <h2 className="text-xs font-black uppercase" style={{ color: '#4A3018' }}>
                   Ban Cố Vấn Đô Thị MoCity
                 </h2>
-                {CITY_ADVISORS.map((adv) => (
-                  <div
-                    key={adv.id}
-                    className="rounded-2xl border-2 p-3"
-                    style={{ background: '#FFFDF7', borderColor: '#C9A22755' }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="rounded-md px-2 py-0.5 text-[12px] font-black text-white"
-                        style={{ background: adv.hue }}
-                      >
-                        {adv.roleTitle}
-                      </span>
-                      <p className="truncate text-xs font-black" style={{ color: '#3E2A1B' }}>
-                        {adv.name}
-                      </p>
+                {CITY_ADVISORS.map((adv) => {
+                  const app = ADVISOR_APPEARANCES[adv.id];
+                  return (
+                    <div
+                      key={adv.id}
+                      className="flex items-start gap-3 rounded-2xl border-2 p-3"
+                      style={{ background: '#FFFDF7', borderColor: '#C9A22755' }}
+                    >
+                      {app && (
+                        <div
+                          className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2"
+                          style={{ borderColor: adv.hue, background: '#FAF3E3' }}
+                        >
+                          <svg width="32" height="42" viewBox="0 0 56 72" className="overflow-visible" aria-hidden>
+                            <ChibiBody def={app} emotion="HAPPY" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="rounded-md px-2 py-0.5 text-[12px] font-black text-white"
+                            style={{ background: adv.hue }}
+                          >
+                            {adv.roleTitle}
+                          </span>
+                          <p className="truncate text-xs font-black" style={{ color: '#3E2A1B' }}>
+                            {adv.name}
+                          </p>
+                        </div>
+                        <p className="mt-1.5 text-[13px] font-semibold" style={{ color: '#5B3D22' }}>
+                          “{adv.tip}”
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-1.5 text-[13px] font-semibold" style={{ color: '#5B3D22' }}>
-                      “{adv.tip}”
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
@@ -423,16 +440,27 @@ export default function MayorCenterModal({
                           {' · '}{sau.minBuildings} công trình (đang {nha})
                         </p>
                         {sau.unlocks && (
-                          <div className="mt-2.5 rounded-xl border-2 border-dashed p-2.5" style={{ borderColor: '#D82D8B66', background: '#FDF2F8' }}>
-                            <p className="flex items-center gap-1.5 text-[12px] font-black uppercase tracking-wide text-[#BE185D]">
-                              🔓 Mở khóa khi lên bậc
+                          <div className="mt-2.5 rounded-2xl border-2 border-[#E5DAC6] bg-[#FAF7F0] p-3 shadow-inner">
+                            <p className="flex items-center gap-1.5 text-[12px] font-black uppercase tracking-wide text-[#A8246B]">
+                              🏗️ Công trình mở khóa khi lên bậc
                             </p>
                             <p className="mt-1 text-[13px] font-black text-[#3E2A1B]">{sau.unlocks.headline}</p>
                             <p className="mt-0.5 text-[12px] leading-relaxed text-[#6E4F3A]">{sau.unlocks.detail}</p>
-                            {sau.unlocks.productTag && (
-                              <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-black text-white" style={{ background: '#D82D8B' }}>
-                                {sau.unlocks.productTag}
-                              </span>
+                            {sau.unlocks.buildingIds && sau.unlocks.buildingIds.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {sau.unlocks.buildingIds.map((bId) => {
+                                  const bDef = BUILDING_BY_ID[bId];
+                                  if (!bDef) return null;
+                                  return (
+                                    <span
+                                      key={bId}
+                                      className="inline-flex items-center gap-1 rounded-xl border border-[#D5CEBF] bg-white px-2 py-1 text-[11px] font-bold text-[#3E2A1B] shadow-sm"
+                                    >
+                                      <span>{bDef.name}</span>
+                                    </span>
+                                  );
+                                })}
+                              </div>
                             )}
                           </div>
                         )}
@@ -714,7 +742,7 @@ export default function MayorCenterModal({
                           ))
                         ) : (
                           <span className="text-[12px] font-semibold" style={{ color: '#A0916F' }}>
-                            Chưa mở dịch vụ số — hãy gắn MoMo QR hoặc xử lý hội thoại `!`
+                            Chưa mở dịch vụ số — hãy nâng cấp quầy thu ngân hoặc xử lý hội thoại `!`
                           </span>
                         )}
                       </div>

@@ -356,7 +356,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-[12px] font-black uppercase tracking-wide text-[#8A7355]">
-              Điểm Tin Cậy Thị Trưởng MoMo
+              Điểm Tin Cậy & Tín Nhiệm Đô Thị
             </p>
             <div className="mt-0.5 flex items-baseline gap-2">
               <span className="text-2xl font-black tabular-nums" style={{ color: trustColor }}>
@@ -441,7 +441,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
           style={{ background: '#FFFBEB', borderColor: '#F59E0B88' }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-black uppercase text-[#B45309]">Túi Thần Tài MoMo</p>
+            <p className="text-[11px] font-black uppercase text-[#B45309]">Heo Đất Tích Lũy</p>
             <span className="rounded bg-amber-200 px-1 py-0.5 text-[10px] font-bold text-amber-900">
               {(TUI_THAN_TAI_RATE_YEAR * 100).toFixed(1)}%/năm
             </span>
@@ -497,7 +497,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
                 className="text-[11px] font-black uppercase"
                 style={{ color: derived.hasInsurance ? '#15803D' : '#991B1B' }}
               >
-                Bảo Hiểm MoMo
+                Quỹ Bảo Vệ Phố
               </p>
               <span
                 className="rounded px-1.5 py-0.5 text-[9.5px] font-bold text-white"
@@ -530,7 +530,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
       {/* Cảnh báo Chặn gian lận Bill giả */}
       {(derived.fraudBlockedCount > 0 || derived.fraudLossCoins > 0) && (
         <div className="rounded-xl border px-3 py-2 text-[11px]" style={{ background: '#FFF1F2', borderColor: '#FDA4AF' }}>
-          <span className="font-bold text-[#9F1239]">🛡️ Giám Sát Chống Gian Lận MoMo: </span>
+          <span className="font-bold text-[#9F1239]">🛡️ Giám Sát Quản Trị Rủi Ro: </span>
           <span className="text-[#881337]">
             Đã chặn đứng <b>{derived.fraudBlockedCount}</b> vụ bill giả nhờ Loa Thần Tài.
             {derived.fraudLossCoins > 0 && ` Thất thoát do tiền mặt/chưa có loa: ${formatNumber(derived.fraudLossCoins)} đồng.`}
@@ -782,7 +782,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
             🙈 <b>Dự phòng nợ xấu</b>: Cho khách quẹt Ví Trả Sau thì phải trừ hao có người trễ hạn hoặc xù nợ. <i>Cho vay chưa bao giờ là cho không!</i>
           </li>
           <li>
-            💳 <b>Tiền vay không phải tiền trên trời rơi xuống</b>: Vay tiền ngân hàng số MoMo vào ví liền tay nhưng là cục nợ phải trả. Dùng vốn để mở rộng quán sinh lời, cấm lấy đi ăn nhậu!
+            💳 <b>Tiền vay không phải tiền trên trời rơi xuống</b>: Vay vốn vào ví liền tay nhưng là cục nợ phải trả. Dùng vốn để mở rộng quán sinh lời, cấm lấy đi tiêu hoang!
           </li>
           <li>
             🛠️ <b>Chi tiêu vốn (CAPEX)</b>: Mua máy pha cà phê, đóng quầy bar là sắm &quot;cần câu cơm&quot; lâu dài, không trừ hết vào chi phí tháng mà tính vào tài sản của tiệm.

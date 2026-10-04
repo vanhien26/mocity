@@ -62,7 +62,14 @@ export type FinanceTag =
    * hỏi "để dành bao nhiêu", thanh khoản hỏi "rút ra kịp lúc nào" - hai câu
    * khác nhau và câu thứ hai mới là thứ làm người ta vỡ nợ.
    */
-  | 'THANH_KHOAN';
+  | 'THANH_KHOAN'
+  /**
+   * Bảo trì và khấu hao tài sản công cộng / hạ tầng vỉa hè.
+   *
+   * Thêm riêng cho Cô Sáu Lao Công: cơ sở vật chất bị hao mòn qua thời gian,
+   * nếu không trích quỹ bảo trì định kỳ thì chi phí thay mới sẽ đắt gấp bội.
+   */
+  | 'BAO_TRI';
 
 /** Nhãn hiển thị + màu cho từng chỉ số. */
 export const FINANCE_TAG_META: Record<FinanceTag, { label: string; tone: 'good' | 'bad' | 'neutral' }> = {
@@ -80,6 +87,7 @@ export const FINANCE_TAG_META: Record<FinanceTag, { label: string; tone: 'good' 
   THUONG: { label: 'Tiền thưởng', tone: 'neutral' },
   AN_SINH: { label: 'An sinh & dự phòng', tone: 'bad' },
   THANH_KHOAN: { label: 'Thanh khoản', tone: 'neutral' },
+  BAO_TRI: { label: 'Bảo trì & Khấu hao', tone: 'bad' },
 };
 
 export interface CitizenScriptData {
@@ -943,8 +951,8 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
   // 12. CÔ LINH DẠY THÊM
   'cit-co-linh': {
     id: 'cit-co-linh',
-    name: 'Cô Linh Dạy Thêm',
-    role: 'Giáo Viên',
+    name: 'Cô Linh Áo Dài',
+    role: 'Cô Giáo Duyên Dáng',
     financeTheme: {
       tag: 'LOI_NHUAN',
       title: 'Lợi nhuận ròng',
@@ -1207,6 +1215,75 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         particles: 'coin',
         reply:
           'Trời ơi cảm ơn Thị Trưởng! Cô xin 6 đồng lon nước lại đây, đi gánh cả ngày khát lắm. Tiền cô cũng quay vòng cả ngày rồi - nhận của người ta rồi lại trả cho người ta, phố mình nó vậy. (+6 đồng)',
+      },
+    ],
+  },
+  'cit-co-lao-cong': {
+    id: 'cit-co-lao-cong',
+    name: 'Cô Sáu Lao Công',
+    role: 'Vệ Sinh Môi Trường',
+    financeTheme: {
+      tag: 'BAO_TRI',
+      title: 'Bảo trì & Khấu hao',
+      lesson:
+        'Cơ sở vật chất vỉa hè, nắp cống, thùng rác đô thị qua thời gian đều bị hao mòn và xuống cấp. Nếu không trích quỹ bảo trì và giữ gìn vệ sinh định kỳ, chi phí thay mới toàn bộ sẽ đắt gấp bội phần.',
+    },
+    greetings: [
+      {
+        text: 'Dạ chào Thị Trưởng! Sáng nào cô cũng quét từ đầu hẻm tới bờ kênh, phố sạch là lòng nhẹ nhõm.',
+        emotion: 'HAPPY',
+      },
+      {
+        text: 'Trời nắng 40 độ quét vỉa hè mồ hôi ướt đẫm lưng, nhưng thấy bà con buôn bán tấp nập là vui!',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Mưa triều cường rác nghẹt miệng cống, cô vừa khơi thông xong nước mới chịu rút đấy chú ơi.',
+        emotion: 'SURPRISED',
+      },
+      {
+        text: 'Bà con dạo này có ý thức phân loại rác hơn rồi, quét dọn đỡ cực hẳn một nửa!',
+        emotion: 'STAR_EYES',
+      },
+    ],
+    options: [
+      {
+        id: 'laocong-ask',
+        financeTags: ['BAO_TRI'],
+        label: '🧹 Quét dọn cả phố mỗi ngày có vất vả lắm không cô?',
+        emotionOnSelect: 'HAPPY',
+        reply:
+          'Vất vả chứ chú, nhưng đường phố không quét một ngày là rác ngập, cống tắc, hàng quán mất khách liền. Giữ gìn vệ sinh chính là bảo vệ tài sản công cộng của cả đô thị mình đó!',
+      },
+      {
+        id: 'laocong-water',
+        financeTags: ['THUONG'],
+        label: '🥤 Biếu cô 20 đồng mua nước mía giải nhiệt',
+        cost: 20,
+        emotionOnSelect: 'STAR_EYES',
+        rewardBonus: {
+          coins: 5,
+          reason: 'Cô Sáu tặng nụ cười phúc hậu',
+        },
+        particles: 'stars',
+        reply:
+          'Trời ơi cảm ơn Thị Trưởng quý hóa quá! Có ly nước mía mát lạnh này là cô đủ sức quét nốt đoạn phố ẩm thực chiều nay rồi. Chúc phố mình buôn may bán đắt nghen! (+5 đồng)',
+      },
+      {
+        id: 'laocong-drain',
+        financeTags: ['BAO_TRI'],
+        label: '🕳️ Nắp cống với thùng rác dạo này hay bị hỏng hóc quá cô nhỉ?',
+        emotionOnSelect: 'TIRED',
+        reply:
+          'Đúng rồi chú, đồ công cộng nắng mưa dãi dầu mau rỉ sét lắm. Nếu tuần nào cũng kiểm tra bảo trì tra dầu thì xài được năm mười năm, chứ để gãy nát rồi mới thay mới thì tốn kém ngân sách gấp mấy lần.',
+      },
+      {
+        id: 'laocong-sort',
+        financeTags: ['OPEX'],
+        label: '♻️ Phân loại rác tại nguồn giúp giảm chi phí gì vậy cô?',
+        emotionOnSelect: 'SMUG',
+        reply:
+          'Bà con tách chai nhựa giấy vụn riêng cho cô Ve Chai, rác hữu cơ bỏ đúng thùng thì xe gom chỉ cần chạy một chuyến. Vừa giảm xăng xe vận chuyển, vừa hạ chi phí vận hành xử lý rác cho cả thành phố!',
       },
     ],
   },

@@ -44,29 +44,22 @@ export function formatVND(n: number): string {
 }
 
 /**
- * Định dạng rút gọn theo dạng K tiêu chuẩn (K, M, B, T):
- *   999 / 1.5K / 15K / 100K / 999K / 1M / 1.5M / 22M / 1B / 1.2B / 1T
+ * Định dạng rút gọn: dừng lại ở đơn vị K (không dùng M, B, T).
+ * Người dùng yêu cầu hiển thị tiền quy đổi ra đơn vị K với dấu chấm phân cách hàng nghìn,
+ * ví dụ: 60.000K, 15.000K, 1.500K, 50K, 1.000.000K.
  */
 export function formatVNDCompact(n: number): string {
   if (!Number.isFinite(n) || n === 0) return '0';
   const sign = n < 0 ? '-' : '';
   const abs = Math.abs(n);
 
-  if (abs >= 999_500_000_000) {
-    const s = Number((abs / 1e12).toFixed(1));
-    return `${sign}${s}T`;
-  }
-  if (abs >= 999_500_000) {
-    const s = abs >= 1e11 ? Math.round(abs / 1e9) : Number((abs / 1e9).toFixed(1));
-    return `${sign}${s}B`;
-  }
-  if (abs >= 999_500) {
-    const s = abs >= 1e8 ? Math.round(abs / 1e6) : Number((abs / 1e6).toFixed(1));
-    return `${sign}${s}M`;
-  }
-  if (abs >= 999.5) {
-    const s = abs >= 1e5 ? Math.round(abs / 1e3) : Number((abs / 1e3).toFixed(1));
-    return `${sign}${s}K`;
+  if (abs >= 1000) {
+    if (abs < 10_000 && abs % 1000 !== 0) {
+      const s = Number((abs / 1000).toFixed(1));
+      return `${sign}${s}K`;
+    }
+    const kValue = Math.round(abs / 1000);
+    return `${sign}${kValue.toLocaleString('vi-VN')}K`;
   }
 
   return `${sign}${Math.round(abs)}`;

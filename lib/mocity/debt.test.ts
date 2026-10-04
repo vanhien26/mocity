@@ -106,7 +106,7 @@ describe('P&L co lai vay', () => {
   it('vay nhieu thi loi nhuan rong giam, co the am', () => {
     const b = pho();
     const nhe = flowFor(b, [], 10, 0, { debt: 10_000 });
-    const nang = flowFor(b, [], 10, 0, { debt: 10_000_000_000 });
+    const nang = flowFor(b, [], 10, 0, { debt: 50_000_000_000 });
     assert.ok(nang.netIncome < nhe.netIncome);
     assert.ok(nang.netIncome < 0, 'vay qua suc thi phai lo');
   });

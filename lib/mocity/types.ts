@@ -633,6 +633,49 @@ export interface CityState extends Currencies {
   hasInsurance?: boolean;
   /** Tổng số tiền bảo hiểm đã bồi thường khi gặp sự cố */
   insuranceClaimsPaid?: number;
+
+  /* ── Hệ Thống Dopamine & Tăng Trưởng: Thị Trưởng MoMo ── */
+  /** Điểm Năng Lượng Hành Động (Action Points): 0 - 50. Dùng cho thu hoạch tức thì */
+  ap?: number;
+  /** Mốc tối đa Action Points (mặc định 50) */
+  maxAp?: number;
+  /** Thời điểm gần nhất hồi 1 AP (hồi 1 AP mỗi 5 phút = 300.000ms) */
+  lastApRegenMs?: number;
+  /** Điểm Uy Tín Thị Trưởng (Mayor Points - MP) tích lũy qua quyết định tài chính đúng đắn */
+  mayorPoints?: number;
+  /** Số tiền gửi Tiết Kiệm MoMo sinh lãi có kỳ hạn (VNĐ) */
+  savingsBalance?: number;
+  /** Kỳ hạn gửi tiết kiệm hiện tại */
+  savingsTier?: '1D' | '3D' | '7D' | 'NONE';
+  /** Thời điểm bắt đầu gửi tiết kiệm */
+  savingsStartedAt?: number;
+  /** Tiền đang vay từ Ví Trả Sau / Tiêu Dùng MoMo (VNĐ) */
+  loanPrincipal?: number;
+  /** Thời điểm bắt đầu khoản vay */
+  loanStartedAt?: number;
+  /** Quỹ Đầu Tư đang tham gia */
+  investedFundId?: 'SAFE' | 'BALANCED' | 'AGGRESSIVE' | 'NONE';
+  /** Số vốn đang rót vào Quỹ Đầu Tư (VNĐ) */
+  investedAmount?: number;
+  /** Thời điểm bắt đầu rót vốn vào Quỹ */
+  investedAt?: number;
+  /** Hạn hiệu lực của Gói Bảo Hiểm (timestamp ms) */
+  insuranceActiveUntilMs?: number;
+  /** Danh sách sự cố đô thị đang diễn ra cần Thị Trưởng giải quyết */
+  activeIncidents?: CityIncident[];
+}
+
+export type IncidentType = 'FIRE' | 'THEFT' | 'COMPLAINT' | 'STOCKOUT';
+
+export interface CityIncident {
+  id: string;
+  type: IncidentType;
+  buildingId: string;
+  buildingName: string;
+  description: string;
+  penaltyPct: number;
+  startedAt: number;
+  resolved: boolean;
 }
 
 export type TimeOfDay = 'DAWN' | 'DAY' | 'SUNSET' | 'NIGHT';

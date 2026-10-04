@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { SERVICE_LABEL, SERVICE_TOOL } from '@/lib/mocity/npc-data';
 import { formatCompact } from '@/lib/mocity/format';
+import { SERVICE_LABEL, SERVICE_TOOL } from '@/lib/mocity/npc-data';
 import type { ConsequenceTag, DialogueChoice } from '@/lib/mocity/types';
-import { appearanceFromSeed } from '@/lib/mocity/character-appearance-gen';
+import { resolveCharacterAppearance } from '@/lib/mocity/character-roster';
 import CharacterPanel from '@/components/mocity/CharacterPanel';
 import { ChibiBody } from '@/components/mocity/ChibiRenderer';
 
@@ -22,14 +22,12 @@ export interface DialogueView {
 /**
  * Avatar NPC trong hội thoại - DÙNG CHUNG `ChibiBody` với cư dân trên phố.
  *
- * Trước đây hàm này tự vẽ riêng một bộ mặt (vòng cung mắt, tóc búi/mũ lưỡi
- * trai net vẽ tay) không khớp phong cách nón lá/mắt tròn/má hồng đã chốt làm
- * chuẩn cho TOÀN BỘ người trong game. Giờ chỉ còn việc chọn diện mạo xác định
- * theo tên (`appearanceFromSeed`) rồi giao `ChibiBody` vẽ - cùng một nhân vật
- * tên "Cô Tư" mở hội thoại 10 lần vẫn ra đúng một khuôn mặt.
+ * Tự động đối soát `resolveCharacterAppearance(speaker)` để mọi nhân vật
+ * canonical (Cô Tư, Ông Lộc, Bác Tài, Bảo Ngọc...) luôn hiển thị đúng
+ * 100% diện mạo chuẩn thay vì bị hash ngẫu nhiên.
  */
 function ChibiNpcAvatar({ speaker }: { speaker: string }) {
-  const appearance = appearanceFromSeed(speaker);
+  const appearance = resolveCharacterAppearance(speaker);
   return (
     <div
       className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2"
