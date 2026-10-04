@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { ArrowRight, Crown, Gift, Store, X } from 'lucide-react';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { STARTING_COINS } from '@/lib/mocity/store';
+import IntroStory from './IntroStory';
 
 /** Hằng số thưởng nhậm chức, phải khớp `LOGIN_BONUS_COINS` trong page (10.000.000 VNĐ). */
 export const WELCOME_FIRST_TIME_BONUS = 10_000_000;
@@ -116,6 +118,12 @@ export default function WelcomeScreen({
   const firstTimeBonus = hasNamedCity ? 0 : WELCOME_FIRST_TIME_BONUS;
   const loginBonus = firstTimeBonus + offlineBonus;
   const greeting = displayName?.trim() || 'bạn';
+
+  const [introDone, setIntroDone] = useState(hasNamedCity);
+
+  if (!introDone) {
+    return <IntroStory onFinish={() => setIntroDone(true)} />;
+  }
 
   return (
     <div
