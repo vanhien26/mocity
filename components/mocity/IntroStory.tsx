@@ -3,9 +3,139 @@
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
+// Pixel-art style SVG icons
+function IconVillage() {
+  return (
+    <svg viewBox="0 0 48 48" width="72" height="72" style={{ imageRendering: 'pixelated' }}>
+      {/* Sky */}
+      <rect x="0" y="0" width="48" height="28" fill="#87CEEB" />
+      {/* Sun */}
+      <rect x="36" y="4" width="6" height="6" fill="#FFD700" />
+      {/* Ground */}
+      <rect x="0" y="28" width="48" height="20" fill="#8B6914" />
+      <rect x="0" y="28" width="48" height="4" fill="#5A8A00" />
+      {/* House left */}
+      <rect x="4" y="18" width="14" height="14" fill="#D4A44C" />
+      <rect x="4" y="12" width="14" height="8" fill="#C0392B" />
+      <polygon points="4,18 11,8 18,18" fill="#E74C3C" />
+      <rect x="8" y="22" width="4" height="6" fill="#5D4037" />
+      {/* House right */}
+      <rect x="30" y="20" width="14" height="12" fill="#D4A44C" />
+      <polygon points="30,20 37,12 44,20" fill="#E74C3C" />
+      <rect x="34" y="23" width="4" height="6" fill="#5D4037" />
+      {/* Rice field */}
+      <rect x="18" y="30" width="12" height="4" fill="#4CAF50" />
+      <rect x="19" y="29" width="2" height="3" fill="#66BB6A" />
+      <rect x="22" y="29" width="2" height="3" fill="#66BB6A" />
+      <rect x="25" y="29" width="2" height="3" fill="#66BB6A" />
+    </svg>
+  );
+}
+
+function IconDebt() {
+  return (
+    <svg viewBox="0 0 48 48" width="72" height="72" style={{ imageRendering: 'pixelated' }}>
+      {/* Paper */}
+      <rect x="10" y="6" width="28" height="36" fill="#FFF9C4" />
+      <rect x="10" y="6" width="28" height="4" fill="#F9A825" />
+      {/* Lines of text */}
+      <rect x="14" y="14" width="20" height="2" fill="#795548" />
+      <rect x="14" y="18" width="16" height="2" fill="#795548" />
+      <rect x="14" y="22" width="18" height="2" fill="#795548" />
+      {/* Red amount */}
+      <rect x="14" y="28" width="20" height="4" fill="#E53935" />
+      <rect x="15" y="29" width="18" height="2" fill="#FFCDD2" />
+      {/* Seal / stamp */}
+      <rect x="28" y="34" width="8" height="6" fill="#E53935" rx="1" />
+      <rect x="29" y="35" width="6" height="4" fill="#C62828" />
+      {/* Pen */}
+      <rect x="6" y="28" width="2" height="14" fill="#795548" transform="rotate(-30 6 28)" />
+      <rect x="6" y="38" width="2" height="4" fill="#FFC107" transform="rotate(-30 6 28)" />
+    </svg>
+  );
+}
+
+function IconBus() {
+  return (
+    <svg viewBox="0 0 48 48" width="72" height="72" style={{ imageRendering: 'pixelated' }}>
+      {/* Night sky */}
+      <rect x="0" y="0" width="48" height="48" fill="#1A237E" />
+      {/* Stars */}
+      <rect x="6" y="4" width="2" height="2" fill="#FFF9C4" />
+      <rect x="20" y="8" width="2" height="2" fill="#FFF9C4" />
+      <rect x="38" y="5" width="2" height="2" fill="#FFF9C4" />
+      <rect x="32" y="12" width="2" height="2" fill="#FFF9C4" />
+      {/* Road */}
+      <rect x="0" y="36" width="48" height="12" fill="#424242" />
+      <rect x="0" y="40" width="48" height="2" fill="#616161" />
+      <rect x="6" y="42" width="8" height="2" fill="#FFD700" />
+      <rect x="20" y="42" width="8" height="2" fill="#FFD700" />
+      <rect x="34" y="42" width="8" height="2" fill="#FFD700" />
+      {/* Bus body */}
+      <rect x="4" y="20" width="40" height="18" fill="#1565C0" />
+      <rect x="4" y="20" width="40" height="4" fill="#0D47A1" />
+      {/* Windows */}
+      <rect x="8" y="22" width="6" height="4" fill="#B3E5FC" />
+      <rect x="16" y="22" width="6" height="4" fill="#B3E5FC" />
+      <rect x="24" y="22" width="6" height="4" fill="#FFF9C4" />
+      <rect x="32" y="22" width="6" height="4" fill="#B3E5FC" />
+      {/* Door */}
+      <rect x="36" y="28" width="6" height="10" fill="#0D47A1" />
+      {/* Wheels */}
+      <rect x="8" y="36" width="8" height="6" fill="#212121" rx="3" />
+      <rect x="32" y="36" width="8" height="6" fill="#212121" rx="3" />
+      <rect x="11" y="37" width="2" height="2" fill="#616161" />
+      <rect x="35" y="37" width="2" height="2" fill="#616161" />
+      {/* Headlight */}
+      <rect x="42" y="28" width="4" height="4" fill="#FFD700" />
+    </svg>
+  );
+}
+
+function IconCity() {
+  return (
+    <svg viewBox="0 0 48 48" width="72" height="72" style={{ imageRendering: 'pixelated' }}>
+      {/* Sky dawn */}
+      <rect x="0" y="0" width="48" height="32" fill="#FF8F00" />
+      <rect x="0" y="0" width="48" height="16" fill="#E65100" />
+      {/* Sun rising */}
+      <rect x="20" y="22" width="8" height="4" fill="#FFD600" />
+      {/* Ground */}
+      <rect x="0" y="32" width="48" height="16" fill="#37474F" />
+      {/* Building tall center */}
+      <rect x="18" y="8" width="12" height="28" fill="#546E7A" />
+      <rect x="20" y="10" width="3" height="3" fill="#FFF176" />
+      <rect x="25" y="10" width="3" height="3" fill="#90CAF9" />
+      <rect x="20" y="16" width="3" height="3" fill="#90CAF9" />
+      <rect x="25" y="16" width="3" height="3" fill="#FFF176" />
+      <rect x="20" y="22" width="3" height="3" fill="#FFF176" />
+      <rect x="25" y="22" width="3" height="3" fill="#90CAF9" />
+      {/* Antenna */}
+      <rect x="23" y="4" width="2" height="6" fill="#B0BEC5" />
+      <rect x="22" y="5" width="4" height="1" fill="#EF5350" />
+      {/* Building left */}
+      <rect x="4" y="18" width="12" height="18" fill="#455A64" />
+      <rect x="6" y="20" width="3" height="3" fill="#FFF176" />
+      <rect x="11" y="20" width="3" height="3" fill="#90CAF9" />
+      <rect x="6" y="26" width="3" height="3" fill="#90CAF9" />
+      {/* Building right */}
+      <rect x="32" y="14" width="12" height="22" fill="#455A64" />
+      <rect x="34" y="16" width="3" height="3" fill="#FFF176" />
+      <rect x="39" y="16" width="3" height="3" fill="#FFF176" />
+      <rect x="34" y="22" width="3" height="3" fill="#90CAF9" />
+      <rect x="39" y="22" width="3" height="3" fill="#90CAF9" />
+      {/* Road */}
+      <rect x="0" y="40" width="48" height="4" fill="#263238" />
+      <rect x="6" y="41" width="6" height="2" fill="#FFD600" />
+      <rect x="22" y="41" width="6" height="2" fill="#FFD600" />
+      <rect x="36" y="41" width="6" height="2" fill="#FFD600" />
+    </svg>
+  );
+}
+
 interface Slide {
   bg: string;
-  scene: string;
+  SceneIcon: () => JSX.Element;
   speaker?: string;
   speakerEmoji?: string;
   dialogue?: string;
@@ -15,20 +145,20 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     bg: '#FDF6E3',
-    scene: '🌾',
+    SceneIcon: IconVillage,
     narration: 'Ba tháng trước, bạn vẫn còn ở quê. Ruộng không đủ ăn, bố mẹ già, em út đang tuổi học.',
   },
   {
     bg: '#FDF2EC',
-    scene: '📄',
+    SceneIcon: IconDebt,
     speaker: 'Ông Chín - Chủ nợ',
     speakerEmoji: '👴',
     dialogue: '"200 triệu. Lãi 5 triệu mỗi tháng. Không trả đúng hạn, tao lấy đất."',
     narration: 'Bạn ký vào tờ giấy. Mực chưa khô, tay đã run. Đó là toàn bộ hy vọng của cả gia đình.',
   },
   {
-    bg: '#F9F3FD',
-    scene: '🏙️',
+    bg: '#EEF2FD',
+    SceneIcon: IconBus,
     speaker: 'Anh Tư - Hàng xóm cũ',
     speakerEmoji: '👨',
     dialogue: '"Lên thành phố đi. Dưới đó nhiều cơ hội lắm. Tao bắt đầu từ hai bàn tay trắng, giờ có hai mặt bằng rồi."',
@@ -36,7 +166,7 @@ const SLIDES: Slide[] = [
   },
   {
     bg: '#F3F9ED',
-    scene: '🔑',
+    SceneIcon: IconCity,
     narration: 'Thành phố MoCity. Đây là nơi bạn sẽ xây dựng — hoặc sụp đổ.',
     speaker: 'Thị Trưởng',
     speakerEmoji: '🏛️',
@@ -51,6 +181,7 @@ interface IntroStoryProps {
 export default function IntroStory({ onFinish }: IntroStoryProps) {
   const [step, setStep] = useState(0);
   const slide = SLIDES[step];
+  const { SceneIcon } = slide;
   const isLast = step === SLIDES.length - 1;
 
   return (
@@ -79,9 +210,9 @@ export default function IntroStory({ onFinish }: IntroStoryProps) {
             ))}
           </div>
 
-          {/* Scene emoji */}
+          {/* Scene icon */}
           <div className="flex justify-center py-6">
-            <span className="text-7xl select-none">{slide.scene}</span>
+            <SceneIcon />
           </div>
 
           {/* Narration */}

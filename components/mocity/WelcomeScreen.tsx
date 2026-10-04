@@ -220,51 +220,31 @@ export default function WelcomeScreen({
             </div>
           )}
 
-          {/* Đặt tên thành phố (người mới) */}
+          {/* Nhập tên nhân vật (người mới) */}
           {!hasNamedCity && (
             <div className="border-b-2 border-[#C9A22733] px-5 py-4">
               <h2 className="text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]">
-                Đặt tên cho thành phố
+                Bạn là ai?
               </h2>
               <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
-                Để trống ô tên để dùng tên tài khoản. Đổi tên miễn phí trước khi vào chơi.
+                Người ta sẽ gọi bạn bằng cái tên này trên phố.
               </p>
-
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <label
-                    htmlFor="mocity-mayor-name"
-                    className="mb-1 block text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]"
-                  >
-                    Tên của bạn
-                  </label>
-                  <input
-                    id="mocity-mayor-name"
-                    type="text"
-                    maxLength={28}
-                    value={mayorInput}
-                    onChange={(e) => onMayorInputChange(e.target.value)}
-                    placeholder={displayName?.trim() || 'Tên của bạn'}
-                    className="w-full rounded-xl border-2 border-[#D5CEBF] bg-white px-3.5 py-2.5 text-xs font-extrabold text-[#3E2A1B] focus:border-[#D82D8B] focus:outline-none sm:text-sm"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <label
-                    htmlFor="mocity-city-name"
-                    className="mb-1 block text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]"
-                  >
-                    Tên Khu Phố
-                  </label>
-                  <input
-                    id="mocity-city-name"
-                    type="text"
-                    maxLength={32}
-                    value={cityInput}
-                    onChange={(e) => onCityInputChange(e.target.value)}
-                    placeholder="Đô Thị MoCity"
-                    className="w-full rounded-xl border-2 border-[#D5CEBF] bg-white px-3.5 py-2.5 text-xs font-extrabold text-[#3E2A1B] focus:border-[#D82D8B] focus:outline-none sm:text-sm"
-                  />
-                </div>
+              <div className="mt-3">
+                <label
+                  htmlFor="mocity-mayor-name"
+                  className="mb-1 block text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]"
+                >
+                  Tên của bạn
+                </label>
+                <input
+                  id="mocity-mayor-name"
+                  type="text"
+                  maxLength={28}
+                  value={mayorInput}
+                  onChange={(e) => onMayorInputChange(e.target.value)}
+                  placeholder={displayName?.trim() || 'Tên của bạn'}
+                  className="w-full rounded-xl border-2 border-[#D5CEBF] bg-white px-3.5 py-2.5 text-xs font-extrabold text-[#3E2A1B] focus:border-[#D82D8B] focus:outline-none sm:text-sm"
+                />
               </div>
             </div>
           )}
