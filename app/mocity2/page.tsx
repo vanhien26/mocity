@@ -7,6 +7,10 @@ import StreetView from '@/components/mocity2/StreetView'
 import BusinessModal from '@/components/mocity2/BusinessModal'
 import EventModal from '@/components/mocity2/EventModal'
 import IntroScreen from '@/components/mocity2/IntroScreen'
+import LedgerModal from '@/components/mocity2/LedgerModal'
+import DebtModal from '@/components/mocity2/DebtModal'
+import EndingScreen from '@/components/mocity2/EndingScreen'
+import NPCDialogue from '@/components/mocity2/NPCDialogue'
 
 export default function MoCity2Page() {
   const { phase, isPaused, pendingEvent, realTickMs, tick, openModal } = useGameStore()
@@ -78,6 +82,14 @@ export default function MoCity2Page() {
       {/* Modals */}
       <BusinessModal />
       <EventModal />
+      <LedgerModal />
+      <DebtModal />
+
+      {/* NPC floating dialogue */}
+      {phase !== 'intro' && phase !== 'ending' && <NPCDialogue />}
+
+      {/* Ending overlay */}
+      <EndingScreen />
 
     </div>
   )
