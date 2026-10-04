@@ -2,12 +2,13 @@ import { BUILDING_BY_ID } from './mock-city-data';
 import type { CityState } from './types';
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * HƯỚNG DẪN — TỰ KINH DOANH 1 CỬA HÀNG TỪ A-Z
+ * HƯỚNG DẪN — NGƯỜI LẬP NGHIỆP MỚI LÊN PHỐ
  *
  * Nguyên tắc: HỌC BẰNG CÁCH LÀM, không phải đọc slide.
+ * Context: Bạn có 50M vốn, nợ 200M, lãi 5M/tháng. Thị Trưởng là NPC.
  *
- * Flow: Mở tiệm → Bấm xem tiệm → Nâng cấp → Thuê nhân viên →
- *       Xây khu dân cư → Đọc Sổ Cái
+ * Flow: Mở tiệm → Xem sổ sách → Nâng cấp → Thuê nhân viên →
+ *       Xây khu dân cư → Đọc Sổ Cái (biết có đủ trả nợ không)
  *
  * Mỗi bước yêu cầu một thao tác thật, game đọc state để biết đã xong chưa,
  * rồi mới mở phần giải thích. Trình tự đó quan trọng: nói trước thì người
@@ -43,10 +44,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   /* ─── BƯỚC 1: MỞ CỬA HÀNG ─────────────────────────────────────────────── */
   {
     id: 'mo-tiem',
-    title: '① Act 1: Khởi nghiệp & Dòng tiền đầu tiên',
-    how: 'Bấm "Mở Tiệm Mới" bên dưới → chọn loại quán → bấm vào ô đất trống để đặt. Quán Cà Phê rẻ nhất — thử đó trước!',
+    title: '① Mở tiệm đầu tiên — tạo dòng tiền trả nợ',
+    how: 'Bấm "Mở Tiệm Mới" bên dưới → chọn loại quán → bấm vào ô đất trống để đặt. Quán Cà Phê rẻ nhất — thử đó trước! Lãi 5 triệu/tháng đang chạy đồng hồ.',
     lesson:
-      'Bài học Act 1 - Có tiền chưa chắc đã giàu: Mở tiệm = khởi tạo dòng tiền (Cashflow). Tiền nằm chết trong đất không đẻ ra lãi, chỉ có mô hình kinh doanh tạo dòng tiền thuần thặng dư mới giúp thị trấn tự vận hành bền vững.',
+      'Tiền nằm trong túi không trả được nợ. Chỉ có tiệm đang chạy mới tạo ra dòng tiền (Cashflow) — đó là đồng tiền duy nhất có thể trả lãi cho ông Chín.',
     anchor: 'build',
     done: (s) => s.buildings.some((b) => BUILDING_BY_ID[b.defId]?.zone === 'COMMERCIAL'),
   },
@@ -54,10 +55,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   /* ─── BƯỚC 2: BẤM VÀO TIỆM ĐỂ XEM CHI TIẾT ───────────────────────────── */
   {
     id: 'xem-tiem',
-    title: '② Bấm vào tiệm để xem sổ sách',
-    how: 'Bấm trực tiếp vào cửa hàng trên phố (hoặc nút "Quản Lý" ở thanh dưới). Xem tab Chi Tiết — có doanh thu, tốc độ phục vụ và sức chứa hàng đợi.',
+    title: '② Kiểm tra sổ sách tiệm',
+    how: 'Bấm trực tiếp vào cửa hàng trên phố (hoặc nút "Quản Lý" ở thanh dưới). Xem tab Chi Tiết — có doanh thu, chi phí và tốc độ phục vụ.',
     lesson:
-      'Bài học Act 2 - Tiền đẻ ra tiền: Doanh thu cao không đồng nghĩa với business tốt nếu Chi phí thuê & vận hành quá lớn. Doanh thu 10M, Chi phí 12M ➔ Cashflow -2M. Phải luôn quản trị biên lợi nhuận ròng!',
+      'Doanh thu cao không có nghĩa là lãi. Doanh thu 10M, chi phí thuê + vận hành 12M = bạn đang lỗ 2M mỗi tháng, cộng thêm 5M lãi nợ. Quản lý biên lợi nhuận trước khi mở rộng.',
     anchor: 'manage',
     done: (s) => hasFlag(s, 'inspector'),
   },
@@ -65,10 +66,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   /* ─── BƯỚC 3: NÂNG CẤP TIỆM ─────────────────────────────────────────── */
   {
     id: 'nang-cap',
-    title: '③ Nâng cấp tiệm & Thu hồi vốn',
+    title: '③ Nâng cấp tiệm — tăng doanh thu',
     how: 'Trong bảng quản lý tiệm, bấm tab "Nâng Cấp" → bấm nút "Nâng +1 Cấp". Doanh thu tăng ngay lập tức.',
     lesson:
-      'Bài học Nguồn vốn & Thu hồi (ROIC): Nâng cấp là tái đầu tư lợi nhuận. Luôn tính thời gian hoàn vốn (Payback Period) trước khi quyết định dồn vốn mở rộng.',
+      'Tái đầu tư lợi nhuận vào tiệm đang chạy tốt = đòn bẩy nhanh nhất. Luôn tính thời gian hoàn vốn (số tháng để thu lại chi phí nâng cấp) trước khi quyết định dồn tiền.',
     anchor: 'shop-tab-upgrade',
     done: (s) => s.buildings.some((b) => b.level >= 2),
   },
@@ -76,10 +77,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   /* ─── BƯỚC 4: THUÊ NHÂN VIÊN ────────────────────────────────────────── */
   {
     id: 'thue-nv',
-    title: '④ Thuê nhân viên — Tối ưu năng suất',
-    how: 'Vẫn trong bảng tiệm, bấm tab "Nhân Lực" → bấm "Thuê Nhân Viên thứ 1". Tốc độ phục vụ tăng, khách được xử lý nhanh hơn.',
+    title: '④ Thuê nhân viên — không thể tự làm hết',
+    how: 'Vẫn trong bảng tiệm, bấm tab "Nhân Lực" → bấm "Thuê Nhân Viên thứ 1". Tốc độ phục vụ tăng, khách không phải chờ.',
     lesson:
-      'Năng suất lao động là chìa khóa giải quyết "nghẽn cổ chai". Thuê thêm nhân sự đúng lúc giúp tự động hóa khâu phục vụ và tối đa hóa sản lượng bán.',
+      'Một mình bạn là nghẽn cổ chai. Nhân viên tốt giúp tiệm chạy khi bạn không có mặt — đó là lúc tiền thực sự "đẻ ra tiền" mà không cần bạn ngồi đó.',
     anchor: 'shop-tab-staff',
     done: (s) => s.buildings.some((b) => (b.staffCount ?? 0) >= 1),
   },
@@ -87,10 +88,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   /* ─── BƯỚC 5: XÂY KHU DÂN CƯ ─────────────────────────────────────────── */
   {
     id: 'xay-nha',
-    title: '⑤ Xây khu nhà ở — Tạo sức mua cư dân',
-    how: 'Bấm "Mở Tiệm Mới" → chọn nhóm "Dân Cư" → đặt một Khu Nhà Phố lên ô đất trống. Tiệm cần người mua mới hoạt động hết công suất.',
+    title: '⑤ Xây khu nhà ở — kéo khách đến phố',
+    how: 'Bấm "Mở Tiệm Mới" → chọn nhóm "Dân Cư" → đặt một Khu Nhà Phố lên ô đất trống. Tiệm trống khách thì doanh thu = 0.',
     lesson:
-      'Bài học Kinh tế vĩ mô: Tiện ích an sinh và nhà ở tạo ra cư dân. Cư dân có việc làm và thu nhập tốt sẽ là nguồn cầu tiêu dùng bền vững cho các cửa hàng trong phố.',
+      'Không có người ở thì không có người mua. Nhà ở tạo ra cư dân — cư dân là nguồn khách hàng bền vững. Đây là lý do thị trưởng cho bạn thuê đất: ông ta muốn phố có người.',
     anchor: 'build',
     done: (s) => s.buildings.some((b) => (BUILDING_BY_ID[b.defId]?.population ?? 0) > 0),
   },
@@ -98,10 +99,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   /* ─── BƯỚC 6: ĐỌC SỔ CÁI ─────────────────────────────────────────────── */
   {
     id: 'doc-so-cai',
-    title: '⑥ Đọc Sổ Cái — Đánh giá WEALTH MATRIX',
-    how: 'Bấm "Thị Chính" ở thanh dưới → chọn tab "Sổ Cái". Đây là báo cáo kết quả kinh doanh toàn thành phố.',
+    title: '⑥ Đọc Sổ Cái — biết mình đang lời hay lỗ',
+    how: 'Bấm "Thị Chính" ở thanh dưới → chọn tab "Sổ Cái". Đây là báo cáo P&L toàn bộ hoạt động của bạn trên phố.',
     lesson:
-      'Bài học Act 5 - Xây dựng Cơ Đồ Bền Vững: Đọc P&L từ Doanh thu gộp ➔ Giá vốn ➔ Chi phí vận hành ➔ Lãi vay ➔ Lợi nhuận ròng. Thị trấn bền vững là thị trấn có thanh khoản an toàn, dòng tiền dương và cư dân hạnh phúc!',
+      'Mục tiêu của bạn: dòng tiền ròng đủ trả 5M lãi/tháng và dần trả gốc 200M. Doanh thu gộp - Chi phí vận hành - Lãi nợ = Lợi nhuận thực. Con số đó quyết định bạn về quê hay ở lại.',
     anchor: 'cityhall',
     done: (s) => hasFlag(s, 'ledger'),
   },
