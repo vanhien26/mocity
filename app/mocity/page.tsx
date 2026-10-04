@@ -643,7 +643,7 @@ export default function MoCityPage() {
       }
       if (!target) {
         setDrawerOpen(false);
-        showToast('Tất cả lô đất đã có tiệm! Hãy bấm Mở Rộng Phố để thêm mặt tiền mới.');
+        showToast('Tất cả lô đất đã có tiệm! Hãy bấm Thuê Thêm Lô để xin thêm mặt bằng từ Thị Trưởng.');
         return;
       }
       const result = placeBuilding(target.col, target.row, def.id);
@@ -665,7 +665,7 @@ export default function MoCityPage() {
     if (buyLand()) {
       particles.confetti(window.innerWidth / 2, window.innerHeight * 0.6);
       floatNumber(window.innerWidth / 2, window.innerHeight * 0.6, '+1 Mặt Tiền Đất! 🏗️', '#A8701F');
-      showToast('Đã mở rộng thêm lô đất mặt tiền mới trên Đại lộ MoCity!');
+      showToast('Thị Trưởng đã chấp thuận! Bạn có thêm lô đất mới để khai trương.');
     } else {
         showToast('Chưa đủ đồng để mở rộng thêm mặt tiền mới.');
     }
@@ -1119,7 +1119,7 @@ export default function MoCityPage() {
                 className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#73164A] bg-[#A8246B] px-4 text-xs font-black text-white shadow transition-transform hover:bg-[#B8307A] active:scale-95"
               >
                 <Hammer size={15} className="shrink-0" />
-                <span>Mở Tiệm Mới</span>
+                <span>Thuê & Khai Trương</span>
               </button>
 
               <div className="h-9 w-px shrink-0 bg-[#D5CEBF]" />
@@ -1158,10 +1158,10 @@ export default function MoCityPage() {
                     ? 'border-[#C9A227] bg-[#FFFBEB] text-[#3E2A1B] hover:bg-[#FEF3C7]'
                     : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400',
                 )}
-                title={canExpand ? `Mở Rộng Phố - ${formatCompact(derived.landCost)}` : 'Mở Rộng Phố (chưa đủ tiền)'}
+                title={canExpand ? `Thuê Thêm Lô - ${formatCompact(derived.landCost)}` : 'Thuê Thêm Lô (chưa đủ tiền)'}
               >
                 <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#A8701F]' : 'text-gray-400')} />
-                <span className="text-[11px] font-black leading-none">Mở Rộng</span>
+                <span className="text-[11px] font-black leading-none">Thuê Thêm Lô</span>
                 {canExpand && (
                   <span className="absolute -top-1.5 -right-1 rounded bg-amber-400 px-1 text-[8px] font-black text-[#92400E] leading-tight">
                     {formatCompact(derived.landCost)}

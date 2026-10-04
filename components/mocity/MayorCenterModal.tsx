@@ -582,7 +582,7 @@ export default function MayorCenterModal({
               </div>
 
               <h3 className="text-[13px] font-black uppercase tracking-wider text-[#5B3D22]">
-                Nhiệm Vụ Kiến Thiết Đô Thị ({claimed.length}/{MAYOR_QUESTS.length})
+                Nhiệm Vụ Lập Nghiệp ({claimed.length}/{MAYOR_QUESTS.length})
               </h3>
 
               {/*
@@ -707,7 +707,7 @@ export default function MayorCenterModal({
                     Thành phố chưa có cư dân hoặc chủ tiệm nào.
                   </p>
                   <p className="mt-1 text-[13px]" style={{ color: '#7A6449' }}>
-                    Hãy bấm “Xây dựng” để đặt Khu Nhà Phố, Ký Túc Xá hoặc Cửa Hàng đầu tiên!
+                    Hãy bấm “Thuê &amp; Khai Trương” để mở tiệm hoặc khu nhà trọ đầu tiên!
                   </p>
                 </div>
               ) : (

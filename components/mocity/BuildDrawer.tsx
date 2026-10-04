@@ -67,7 +67,7 @@ export default function BuildDrawer({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Danh mục xây dựng"
+        aria-label="Danh mục thuê & khai trương"
         className={`fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-lg rounded-t-3xl border-t-2 shadow-2xl transition-transform duration-300 ease-out ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
@@ -78,7 +78,7 @@ export default function BuildDrawer({
       >
         <div className="flex items-center justify-between border-b-2 px-4 py-3" style={{ borderColor: '#C9A22755' }}>
           <h2 className="text-sm font-black uppercase tracking-wide" style={{ color: '#4A3018' }}>
-            Xây dựng công trình
+            Thuê lô & Khai trương
           </h2>
           <button
             ref={closeRef}

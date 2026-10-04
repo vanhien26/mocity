@@ -80,7 +80,7 @@ export const BUILDINGS: BuildingDef[] = [
     icon: 'home',
     zone: 'RESIDENTIAL',
     momoServiceTag: 'Cư Dân Đô Thị',
-    description: 'Xây dựng tổ ấm cho 90 cư dân mới đến sinh sống và chi tiêu tại các cửa hàng.',
+    description: 'Đầu tư nhà trọ cho 90 người thuê phòng — tiền trọ thu hàng tháng, khách hàng cho các tiệm của bạn.',
     baseYieldPerSec: 100000,
     baseHappiness: 5,
     population: 90,
@@ -734,7 +734,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-first-home',
     title: 'Xây khu dân cư đầu tiên',
-    description: 'Xây dựng ít nhất 1 công trình Dân Cư (Khu Nhà Phố hoặc Ký Túc Xá Sinh Viên) để bà con có chỗ che mưa che nắng.',
+    description: 'Thuê ít nhất 1 lô Nhà Trọ (Khu Nhà Phố hoặc Ký Túc Xá) để kéo người đến phố. Không có dân thì tiệm ế.',
     rewardCoins: 15_000_000,
     rewardGems: 3,
     stage: 1,
@@ -743,7 +743,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-first-store',
     title: 'Mở cửa hàng đầu tiên',
-    description: 'Xây dựng 1 Cửa Hàng thương mại đầu tiên để dân tình có chỗ “chữa lành” và tạo dòng đồng/giây tự động.',
+    description: 'Khai trương 1 cửa hàng thương mại để tạo dòng tiền đầu tiên — đồng tiền duy nhất có thể trả nợ ông Chín.',
     rewardCoins: 10_000_000,
     rewardGems: 4,
     stage: 1,
@@ -770,7 +770,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-cinema-tui-than-tai',
     title: 'Xây Rạp hoặc Túi Thần Tài',
-    description: 'Xây dựng Rạp Chiếu Phim Phố Thị (cho các cặp đôi khỏi ra công viên đếm muỗi) hoặc Trạm Túi Thần Tài (sinh lãi kép).',
+    description: 'Thuê lô giải trí cao cấp: Rạp Chiếu Phim hoặc Trạm Túi Thần Tài. Biên lợi nhuận cao hơn tiệm cà phê.',
     rewardCoins: 25_000_000,
     rewardGems: 8,
     stage: 1,

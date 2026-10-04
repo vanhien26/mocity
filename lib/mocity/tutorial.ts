@@ -45,7 +45,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'mo-tiem',
     title: '① Mở tiệm đầu tiên — tạo dòng tiền trả nợ',
-    how: 'Bấm "Mở Tiệm Mới" bên dưới → chọn loại quán → bấm vào ô đất trống để đặt. Quán Cà Phê rẻ nhất — thử đó trước! Lãi 5 triệu/tháng đang chạy đồng hồ.',
+    how: 'Bấm "Thuê & Khai Trương" bên dưới → chọn loại quán → bấm vào lô đất trống để khai trương. Quán Cà Phê rẻ nhất — thử đó trước! Lãi 5 triệu/tháng đang chạy đồng hồ.',
     lesson:
       'Tiền nằm trong túi không trả được nợ. Chỉ có tiệm đang chạy mới tạo ra dòng tiền (Cashflow) — đó là đồng tiền duy nhất có thể trả lãi cho ông Chín.',
     anchor: 'build',
@@ -89,7 +89,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'xay-nha',
     title: '⑤ Xây khu nhà ở — kéo khách đến phố',
-    how: 'Bấm "Mở Tiệm Mới" → chọn nhóm "Dân Cư" → đặt một Khu Nhà Phố lên ô đất trống. Tiệm trống khách thì doanh thu = 0.',
+    how: 'Bấm "Thuê & Khai Trương" → chọn nhóm "Dân Cư" → đặt một Khu Nhà Trọ lên lô đất trống. Không có dân thì tiệm ế, doanh thu = 0.',
     lesson:
       'Không có người ở thì không có người mua. Nhà ở tạo ra cư dân — cư dân là nguồn khách hàng bền vững. Đây là lý do thị trưởng cho bạn thuê đất: ông ta muốn phố có người.',
     anchor: 'build',
