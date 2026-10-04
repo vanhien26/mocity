@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Crown, Gift, Store, X } from 'lucide-react';
-import { formatCompact, formatNumber } from '@/lib/mocity/format';
+import { ArrowRight, Gift, X } from 'lucide-react';
+import { formatCompact } from '@/lib/mocity/format';
 import { STARTING_COINS } from '@/lib/mocity/store';
 import IntroStory from './IntroStory';
 
@@ -79,25 +79,6 @@ function MoCityLogo({ size = 64 }: { size?: number }) {
     </svg>
   );
 }
-
-/** Ba trụ cột trải nghiệm cốt truyện "Từ tay trắng đến cơ đồ". */
-const HOW_TO_PLAY = [
-  {
-    icon: Store,
-    title: '1. Kinh doanh trên phố',
-    body: 'Mở tiệm cà phê, thuê người, nhập hàng trên 3 lô đất trống. Thị trưởng quản lý đô thị - bạn lo kinh doanh.'
-  },
-  {
-    icon: Crown,
-    title: '2. Trả nợ 200 triệu',
-    body: 'Lãi 5 triệu/tháng. Trễ hạn 2 kỳ liên tiếp là bị cưỡng chế. Cashflow âm là con đường ngắn nhất về quê.'
-  },
-  {
-    icon: Gift,
-    title: '3. Xây dựng cơ đồ',
-    body: 'Trả sạch nợ, dòng tiền dương ổn định, đạo đức kinh doanh - 3 yếu tố quyết định kết thúc câu chuyện.'
-  },
-];
 
 export default function WelcomeScreen({
   displayName,
@@ -195,30 +176,6 @@ export default function WelcomeScreen({
             </div>
           )}
 
-          {/* Hướng dẫn cho người mới */}
-          {!hasNamedCity && (
-            <div className="border-b-2 border-[#C9A22733] px-5 py-4">
-              <h2 className="text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]">
-                Chơi thế nào
-              </h2>
-              <ul className="mt-2.5 grid gap-2 sm:grid-cols-3">
-                {HOW_TO_PLAY.map((step) => (
-                  <li
-                    key={step.title}
-                    className="min-w-0 rounded-xl border-2 border-[#D5CEBF] bg-white p-3"
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D82D8B]">
-                      <step.icon size={16} className="shrink-0 text-white" />
-                    </span>
-                    <p className="mt-2 truncate text-xs font-black text-[#3E2A1B]">{step.title}</p>
-                    <p className="mt-0.5 text-pretty text-[13px] leading-relaxed text-[#6E4F3A]">
-                      {step.body}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {/* Nhập tên nhân vật (người mới) */}
           {!hasNamedCity && (
