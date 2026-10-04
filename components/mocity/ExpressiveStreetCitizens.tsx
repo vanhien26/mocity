@@ -35,6 +35,7 @@ export type CitizenBehavior =
   | 'QUEUEING';
 
 import { CITIZEN_ROSTER, type CitizenDef } from '@/lib/mocity/character-roster';
+import { deriveMood } from '@/lib/mocity/npc-data';
 
 export type { CitizenDef };
 
@@ -302,6 +303,8 @@ export default function ExpressiveStreetCitizens({
   streetWidth = 2400,
   shops = [],
   realQueue = EMPTY_REAL_QUEUE,
+  happinessIndex = 70,
+  timeOfDay = 'DAY',
 }: {
   onCitizenReward?: (msg: string) => void;
   /**
@@ -325,12 +328,22 @@ export default function ExpressiveStreetCitizens({
    * không kém.
    */
   realQueue?: ShopQueue[];
+  /** Hanh phuc hien tai (0-100) de override mood cua cu dan. */
+  happinessIndex?: number;
+  /** Khung gio hien tai de override mood theo lich trinh. */
+  timeOfDay?: 'DAWN' | 'DAY' | 'SUNSET' | 'NIGHT';
 }) {
   /** Bien di lai, doc trong vong RAF nen giu o ref de khong resubscribe. */
   const walkBoundRef = useRef(Math.max(360, streetWidth - 140));
   useEffect(() => {
     walkBoundRef.current = Math.max(360, streetWidth - 140);
   }, [streetWidth]);
+
+  /** City mood context - sync vao ref de RAF loop doc duoc. */
+  const cityMoodRef = useRef({ happinessIndex, timeOfDay });
+  useEffect(() => {
+    cityMoodRef.current = { happinessIndex, timeOfDay };
+  }, [happinessIndex, timeOfDay]);
 
   /*
    * `floatNumber` tao tu hook nen phai luu vao ref de goi trong vong RAF -
@@ -733,13 +746,21 @@ export default function ExpressiveStreetCitizens({
               if (sim.behavior === 'ADMIRING_SHOP' && tiemGan) {
                 sim.dir = tiemGan.x > sim.x ? 1 : -1;
               }
-              const emo = sim.behavior === 'ADMIRING_SHOP' ? 'STAR_EYES' : (Math.random() < 0.5 ? 'HAPPY' : 'STAR_EYES');
+              const cityEmo = deriveMood(
+                { archetype: 'SALARIED', role: 'CITIZEN' } as Parameters<typeof deriveMood>[0],
+                { happinessIndex: cityMoodRef.current.happinessIndex, timeOfDay: cityMoodRef.current.timeOfDay },
+              );
+              const emo = sim.behavior === 'ADMIRING_SHOP' ? 'STAR_EYES' : cityEmo;
               pendingUpdates.current.set(i, { emotion: emo });
             } else {
               sim.behavior = 'WALKING';
               sim.behaviorTimer = 8 + Math.random() * 10; // Đi bộ 8s - 18s
               if (Math.random() < 0.3) sim.dir = (sim.dir * -1) as 1 | -1;
-              const emo = Math.random() < 0.6 ? def.emotion : (Math.random() < 0.5 ? 'HAPPY' : 'TIRED');
+              const cityEmo = deriveMood(
+                { archetype: def.id?.includes('merchant') ? 'MERCHANT_CASH' : 'SALARIED', role: 'CITIZEN' } as Parameters<typeof deriveMood>[0],
+                { happinessIndex: cityMoodRef.current.happinessIndex, timeOfDay: cityMoodRef.current.timeOfDay },
+              );
+              const emo = Math.random() < 0.6 ? cityEmo : def.emotion;
               pendingUpdates.current.set(i, { emotion: emo });
             }
           }

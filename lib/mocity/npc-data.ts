@@ -1,4 +1,4 @@
-import type { ArchetypeId, NpcRole, ServiceId, ZoneType } from './types';
+import type { ArchetypeId, FacialEmotion, FamilyTie, NpcRole, NpcState, ScheduleSlot, ServiceId, ZoneType } from './types';
 
 export interface ArchetypeDef {
   id: ArchetypeId;
@@ -305,3 +305,199 @@ export const SERVICE_SPEND_BONUS: Record<ServiceId, number> = {
   CREDIT_SCORE: 0.1,
   INSURANCE: 0.06,
 };
+
+/* ── Lich trinh & Cam xuc ────────────────────────────────────────── */
+
+/**
+ * Lich trinh mac dinh theo archetype: 4 slot DAWN/DAY/SUNSET/NIGHT.
+ * Zone la noi NPC thuong xuat hien, defaultMood la cam xuc truoc khi
+ * city state override.
+ */
+export const ARCHETYPE_SCHEDULE: Record<ArchetypeId, ScheduleSlot[]> = {
+  MERCHANT_CASH: [
+    { timeSlot: 'DAWN',   zone: 'COMMERCIAL', defaultMood: 'TIRED'     },
+    { timeSlot: 'DAY',    zone: 'COMMERCIAL', defaultMood: 'HAPPY'     },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL', defaultMood: 'MONEY_EYES'},
+    { timeSlot: 'NIGHT',  zone: 'HOME',       defaultMood: 'SLEEPY'    },
+  ],
+  MERCHANT_ESTABLISHED: [
+    { timeSlot: 'DAWN',   zone: 'COMMERCIAL', defaultMood: 'TIRED'     },
+    { timeSlot: 'DAY',    zone: 'COMMERCIAL', defaultMood: 'HAPPY'     },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL', defaultMood: 'SMUG'      },
+    { timeSlot: 'NIGHT',  zone: 'HOME',       defaultMood: 'SLEEPY'    },
+  ],
+  GIG_WORKER: [
+    { timeSlot: 'DAWN',   zone: 'RESIDENTIAL', defaultMood: 'TIRED'    },
+    { timeSlot: 'DAY',    zone: 'COMMERCIAL',  defaultMood: 'HAPPY'    },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL',  defaultMood: 'HAPPY'    },
+    { timeSlot: 'NIGHT',  zone: 'RESIDENTIAL', defaultMood: 'TIRED'    },
+  ],
+  SALARIED: [
+    { timeSlot: 'DAWN',   zone: 'HOME',       defaultMood: 'TIRED'     },
+    { timeSlot: 'DAY',    zone: 'FINTECH',    defaultMood: 'HAPPY'     },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL', defaultMood: 'HAPPY'     },
+    { timeSlot: 'NIGHT',  zone: 'HOME',       defaultMood: 'SLEEPY'    },
+  ],
+  STUDENT: [
+    { timeSlot: 'DAWN',   zone: 'HOME',       defaultMood: 'SLEEPY'    },
+    { timeSlot: 'DAY',    zone: 'LANDMARK',   defaultMood: 'HAPPY'     },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL', defaultMood: 'STAR_EYES' },
+    { timeSlot: 'NIGHT',  zone: 'COMMERCIAL', defaultMood: 'HAPPY'     },
+  ],
+  FAMILY: [
+    { timeSlot: 'DAWN',   zone: 'HOME',        defaultMood: 'HAPPY'    },
+    { timeSlot: 'DAY',    zone: 'RESIDENTIAL', defaultMood: 'HAPPY'    },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL',  defaultMood: 'HAPPY'    },
+    { timeSlot: 'NIGHT',  zone: 'HOME',        defaultMood: 'SLEEPY'   },
+  ],
+  CINEPHILE: [
+    { timeSlot: 'DAWN',   zone: 'HOME',       defaultMood: 'SLEEPY'    },
+    { timeSlot: 'DAY',    zone: 'COMMERCIAL', defaultMood: 'HAPPY'     },
+    { timeSlot: 'SUNSET', zone: 'LANDMARK',   defaultMood: 'STAR_EYES' },
+    { timeSlot: 'NIGHT',  zone: 'LANDMARK',   defaultMood: 'SMUG'      },
+  ],
+  TRAVELER: [
+    { timeSlot: 'DAWN',   zone: 'LANDMARK',   defaultMood: 'SURPRISED' },
+    { timeSlot: 'DAY',    zone: 'LANDMARK',   defaultMood: 'HAPPY'     },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL', defaultMood: 'HAPPY'     },
+    { timeSlot: 'NIGHT',  zone: 'HOME',       defaultMood: 'TIRED'     },
+  ],
+  INVESTOR: [
+    { timeSlot: 'DAWN',   zone: 'FINTECH',    defaultMood: 'HAPPY'     },
+    { timeSlot: 'DAY',    zone: 'FINTECH',    defaultMood: 'MONEY_EYES'},
+    { timeSlot: 'SUNSET', zone: 'FINTECH',    defaultMood: 'SMUG'      },
+    { timeSlot: 'NIGHT',  zone: 'HOME',       defaultMood: 'SLEEPY'    },
+  ],
+  ELDER: [
+    { timeSlot: 'DAWN',   zone: 'RESIDENTIAL', defaultMood: 'HAPPY'   },
+    { timeSlot: 'DAY',    zone: 'RESIDENTIAL', defaultMood: 'HAPPY'   },
+    { timeSlot: 'SUNSET', zone: 'COMMERCIAL',  defaultMood: 'HAPPY'   },
+    { timeSlot: 'NIGHT',  zone: 'HOME',        defaultMood: 'SLEEPY'  },
+  ],
+};
+
+/**
+ * Cam xuc override theo trang thai thanh pho.
+ * Thu tu uu tien: city crisis > stockout > nighttime > schedule default.
+ */
+export function deriveMood(
+  npc: NpcState,
+  opts: {
+    happinessIndex: number;
+    timeOfDay: 'DAWN' | 'DAY' | 'SUNSET' | 'NIGHT';
+    stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+    recentReward?: boolean;
+  },
+): FacialEmotion {
+  const { happinessIndex, timeOfDay, stockStatus, recentReward } = opts;
+
+  if (recentReward) return 'STAR_EYES';
+  if (happinessIndex < 25) return 'ANGRY';
+  if (happinessIndex < 45 && npc.role === 'CITIZEN') return 'CRYING';
+  if (stockStatus === 'OUT_OF_STOCK') return 'CRYING';
+  if (stockStatus === 'LOW_STOCK') return 'TIRED';
+  if (timeOfDay === 'NIGHT') return 'SLEEPY';
+
+  const slot = ARCHETYPE_SCHEDULE[npc.archetype]?.find((s) => s.timeSlot === timeOfDay);
+  return slot?.defaultMood ?? 'HAPPY';
+}
+
+/* ── Family generation ───────────────────────────────────────────── */
+
+/**
+ * ARCHETYPE co the la partner voi nhau (chung song + cung archetype role).
+ * Partner gap nhau giup +happiness bonus khi cung zone.
+ */
+const PARTNER_COMPATIBLE: Partial<Record<ArchetypeId, ArchetypeId[]>> = {
+  MERCHANT_CASH:        ['MERCHANT_ESTABLISHED', 'SALARIED'],
+  MERCHANT_ESTABLISHED: ['MERCHANT_CASH', 'SALARIED', 'GIG_WORKER'],
+  GIG_WORKER:           ['SALARIED', 'STUDENT'],
+  SALARIED:             ['GIG_WORKER', 'MERCHANT_ESTABLISHED', 'INVESTOR'],
+  STUDENT:              ['STUDENT', 'GIG_WORKER'],
+  FAMILY:               ['FAMILY'],
+  CINEPHILE:            ['STUDENT', 'TRAVELER'],
+  TRAVELER:             ['CINEPHILE', 'GIG_WORKER'],
+  INVESTOR:             ['SALARIED', 'INVESTOR'],
+  ELDER:                ['ELDER', 'MERCHANT_CASH'],
+};
+
+/**
+ * Archetype co the co con nho (them happiness bonus khi co RESIDENTIAL + truong).
+ */
+export const ARCHETYPE_HAS_CHILDREN: Set<ArchetypeId> = new Set(['FAMILY', 'SALARIED', 'ELDER']);
+
+/**
+ * Gan familyId + ties cho danh sach NPC vua duoc tao.
+ * Goi mot lan khi build xong - khong goi lai moi tick.
+ *
+ * Thuat toan don gian: quet tung NPC chua co gia dinh, tim ban cung compatible,
+ * ghep thanh mot don vi. FAMILY archetype luon la hat nhan (familyId = id cua ho).
+ */
+export function assignFamilies(npcs: NpcState[]): NpcState[] {
+  const result = npcs.map((n) => ({ ...n }));
+  const unassigned = new Set(result.map((n) => n.id));
+
+  for (const npc of result) {
+    if (!unassigned.has(npc.id)) continue;
+    unassigned.delete(npc.id);
+
+    const compatibles = PARTNER_COMPATIBLE[npc.archetype] ?? [];
+    const partner = result.find(
+      (other) =>
+        unassigned.has(other.id) &&
+        compatibles.includes(other.archetype) &&
+        !other.familyId,
+    );
+
+    const familyId = npc.id;
+    npc.familyId = familyId;
+    npc.schedule = ARCHETYPE_SCHEDULE[npc.archetype];
+
+    if (partner) {
+      unassigned.delete(partner.id);
+      partner.familyId = familyId;
+      partner.schedule = ARCHETYPE_SCHEDULE[partner.archetype];
+      npc.ties = [{ npcId: partner.id, relation: 'PARTNER' }];
+      partner.ties = [{ npcId: npc.id, relation: 'PARTNER' }];
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Bonus hanh phuc khi gia dinh co con nho va co RESIDENTIAL building.
+ * Goi trong city-calculator de cong vao happinessFor().
+ */
+export function familyHappinessBonus(npcs: NpcState[]): number {
+  const familiesWithChildren = new Set(
+    npcs
+      .filter((n) => ARCHETYPE_HAS_CHILDREN.has(n.archetype))
+      .map((n) => n.familyId)
+      .filter(Boolean),
+  );
+  // Moi don vi gia dinh co con: +2 diem hanh phuc (toi da +10)
+  return Math.min(familiesWithChildren.size * 2, 10);
+}
+
+/**
+ * Bonus yield khi hai partner cung archetype MERCHANT dang hoat dong.
+ * Goi trong flowFor() de nhan vao commercial yield.
+ */
+export function merchantPartnerYieldBonus(npcs: NpcState[]): number {
+  let pairs = 0;
+  const counted = new Set<string>();
+  for (const npc of npcs) {
+    if (npc.role !== 'MERCHANT' || !npc.ties || counted.has(npc.id)) continue;
+    const partnerTie = npc.ties.find((t) => t.relation === 'PARTNER');
+    if (!partnerTie) continue;
+    const partner = npcs.find((n) => n.id === partnerTie.npcId);
+    if (partner?.role === 'MERCHANT') {
+      pairs++;
+      counted.add(npc.id);
+      counted.add(partner.id);
+    }
+  }
+  // Moi cap merchant partner: +5% yield, toi da +15%
+  return Math.min(pairs * 0.05, 0.15);
+}

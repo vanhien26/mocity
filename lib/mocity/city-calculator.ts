@@ -4,7 +4,7 @@ import {
   milestoneMultiplierFor,
   MODULE_BY_ID,
 } from './mock-city-data';
-import { SERVICE_SPEND_BONUS } from './npc-data';
+import { SERVICE_SPEND_BONUS, familyHappinessBonus, merchantPartnerYieldBonus } from './npc-data';
 import type { BuildingNode, NpcState } from './types';
 
 function clamp(value: number, min: number, max: number): number {
@@ -71,7 +71,7 @@ export function taxMultiplierFromHappiness(happinessIndex: number): number {
  * @param boost     Diem cong don tu phuong an dialogue (nguoi choi xu ly
  *                  chuyen pho la cach nhan lai diem nay).
  */
-export function happinessFor(buildings: BuildingNode[], idleMs = 0, boost = 0): number {
+export function happinessFor(buildings: BuildingNode[], idleMs = 0, boost = 0, npcs: NpcState[] = []): number {
   let raw = 25;
   for (const node of buildings) {
     const def = BUILDING_BY_ID[node.defId];
@@ -83,7 +83,8 @@ export function happinessFor(buildings: BuildingNode[], idleMs = 0, boost = 0): 
   }
   const overdue = Math.max(0, idleMs - HAPPINESS_DECAY_GRACE_MS);
   const decay = Math.min(HAPPINESS_DECAY_CAP, (overdue / 3_600_000) * HAPPINESS_DECAY_PER_HOUR);
-  return clampHappiness(raw + boost - decay);
+  const familyBonus = familyHappinessBonus(npcs);
+  return clampHappiness(raw + boost + familyBonus - decay);
 }
 
 export function populationFor(buildings: BuildingNode[]): number {
@@ -684,12 +685,13 @@ export function flowFor(
   const crowdingFactor = crowdingFactorFor(buildings, opts.shopQueue ?? {});
 
   const happinessMult = taxMultiplierFromHappiness(
-    happinessFor(buildings, opts.idleMs ?? 0, opts.happinessBoost ?? 0) +
+    happinessFor(buildings, opts.idleMs ?? 0, opts.happinessBoost ?? 0, npcs) +
       (opts.relicHappinessBonus ?? 0),
   );
   const levelBonus = 1 + (mayorLevel - 1) * 0.12;
   const feverMult = opts.isFever ? 2 : 1;
   const relicMult = 1 + (opts.relicBonus ?? 0);
+  const merchantPartnerMult = 1 + merchantPartnerYieldBonus(npcs);
 
   /*
    * Ba nguồn thu phải tách riêng - đúng thứ tự ví cộng tiền trong `tickIdle`:
@@ -730,7 +732,7 @@ export function flowFor(
    * `storeYield + networkFee + savingsYield` = gross. Phân bổ chi phí bên
    * dưới vẫn tách từng dòng nên gộp ở đây không làm sai COGS/OPEX.
    */
-  const storeYield = shopYield + passiveYield;
+  const storeYield = (shopYield + passiveYield) * merchantPartnerMult;
 
 /* ── P&L: cong doanh thu gross truoc khi tru bat ky dong chi nao ── */
   const revenueCu = (storeYield + networkFeeRevenue + savingsYield) * feverMult * relicMult;
