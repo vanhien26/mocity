@@ -509,9 +509,9 @@ export interface CityState extends Currencies {
   playerDebtPrincipal: number;
   /** Tổng nợ gốc cá nhân đã trả được. */
   playerDebtPaid: number;
-  /** Ngày trong game phải trả lãi kỳ tiếp (cứ mỗi 30 ngày). */
-  playerDebtNextDueDay: number;
-  /** Số kỳ lãi trễ liên tiếp (>= 2 = cảnh báo). */
+  /** Ngày đến hạn lãi kỳ tiếp, dạng "YYYY-M-D" (cùng format loanDueDay). */
+  playerDebtNextDueDateStr: string;
+  /** Số kỳ lãi trễ liên tiếp (>= 2 = game over warning). */
   playerDebtMissed: number;
   dailyLog: DailyLog;
   streak: StreakState;

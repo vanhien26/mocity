@@ -285,6 +285,10 @@ export default function MoCityPage() {
   const savingsBalance = useCity((s) => s.savingsBalance ?? 0);
   const investedAmount = useCity((s) => s.investedAmount ?? 0);
   const debt = useCity((s) => s.debt ?? 0);
+  const playerDebtPrincipal = useCity((s) => s.playerDebtPrincipal ?? 200_000_000);
+  const playerDebtPaid = useCity((s) => s.playerDebtPaid ?? 0);
+  const playerDebtNextDueDateStr = useCity((s) => s.playerDebtNextDueDateStr ?? '');
+  const playerDebtMissed = useCity((s) => s.playerDebtMissed ?? 0);
   const activeIncidents = useCity((s) => s.activeIncidents ?? []);
   const hasInsurance = useCity((s) => Boolean(s.hasInsurance && (s.insuranceActiveUntilMs ?? 0) > Date.now()));
 
@@ -947,6 +951,40 @@ export default function MoCityPage() {
               {ap}<span className="text-[10px] opacity-70">/50</span>
             </span>
           </div>
+
+          {/* Nợ cá nhân badge */}
+          {(() => {
+            const debtRemaining = Math.max(0, playerDebtPrincipal - playerDebtPaid);
+            if (debtRemaining <= 0) return null;
+            const isWarning = playerDebtMissed >= 1;
+            const dueParts = playerDebtNextDueDateStr?.split('-') ?? [];
+            const dueLabel = dueParts.length === 3 ? `${dueParts[2]}/${dueParts[1]}` : '';
+            return (
+              <div
+                className="flex items-center gap-1 rounded-xl border px-2 py-1.5"
+                style={{
+                  background: isWarning ? 'linear-gradient(135deg, #3B0000, #7F1D1D)' : 'linear-gradient(135deg, #1C1008, #3B1F06)',
+                  borderColor: isWarning ? '#EF4444' : '#D97706',
+                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+                }}
+                title={`Nợ gốc còn: ${formatCompact(debtRemaining)}đ | Lãi 5M/30 ngày | Hạn: ${dueLabel}`}
+              >
+                <span className="text-[11px] leading-none" style={{ color: isWarning ? '#FCA5A5' : '#FCD34D' }}>
+                  {isWarning ? '⚠' : '💳'}
+                </span>
+                <div className="leading-none">
+                  <span className="font-pixel text-[11px]" style={{ color: isWarning ? '#FCA5A5' : '#FCD34D' }}>
+                    {formatCompact(debtRemaining)}
+                  </span>
+                  {dueLabel && (
+                    <p className="text-[9px] opacity-70" style={{ color: isWarning ? '#FCA5A5' : '#FCD34D' }}>
+                      hạn {dueLabel}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/*
            * Chuỗi ngày chơi + thanh cấp Thị Trưởng ĐÃ CHUYỂN ra khỏi header.

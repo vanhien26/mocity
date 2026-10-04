@@ -165,6 +165,20 @@ function todayKey(ts: number): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+/** Ngày due date +N ngày từ ts, cùng format todayKey. */
+function futureDateKey(ts: number, days: number): string {
+  return todayKey(ts + days * 86_400_000);
+}
+
+/** true nếu today >= dueDateStr. */
+function isOverdue(dueDateStr: string, now: number): boolean {
+  if (!dueDateStr) return false;
+  return todayKey(now) >= dueDateStr;
+}
+
+const PLAYER_DEBT_MONTHLY_INTEREST = 5_000_000;
+const PLAYER_DEBT_INTERVAL_DAYS = 30;
+
 /**
  * Khoa thang cho so cai thang. Khac `todayKey`: quy doi 1 ngay 0h cua thang
  * sau se xoa so thang - day la ky bao cao ma nguoi choi can xem lai de
@@ -237,7 +251,7 @@ function createInitialState(): CityState {
     totalInterestPaid: 0,
     playerDebtPrincipal: 200_000_000,
     playerDebtPaid: 0,
-    playerDebtNextDueDay: 30,
+    playerDebtNextDueDateStr: futureDateKey(now, PLAYER_DEBT_INTERVAL_DAYS),
     playerDebtMissed: 0,
     dailyLog: emptyDailyLog(now),
     streak: { days: 0, lastDay: '', best: 0, shields: 0 },
@@ -729,7 +743,9 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.totalInterestPaid = nonNeg(migrated.totalInterestPaid);
   merged.playerDebtPrincipal = nonNeg(migrated.playerDebtPrincipal ?? 200_000_000);
   merged.playerDebtPaid = nonNeg(migrated.playerDebtPaid ?? 0);
-  merged.playerDebtNextDueDay = nonNeg(migrated.playerDebtNextDueDay ?? 30);
+  merged.playerDebtNextDueDateStr = typeof migrated.playerDebtNextDueDateStr === 'string' && migrated.playerDebtNextDueDateStr
+    ? migrated.playerDebtNextDueDateStr
+    : futureDateKey(Date.now(), PLAYER_DEBT_INTERVAL_DAYS);
   merged.playerDebtMissed = nonNeg(migrated.playerDebtMissed ?? 0);
   merged.cityTierClaimed = Number.isFinite(migrated.cityTierClaimed)
     ? Math.max(1, Math.min(CITY_TIERS.length, migrated.cityTierClaimed))
@@ -1051,6 +1067,21 @@ export function dismissOffline(): void {
 }
 
 export const RENAME_COST_GEMS = 5;
+
+/** Trả một phần nợ gốc cá nhân. Trả lỗi nếu không đủ tiền hoặc nợ đã hết. */
+export function payPlayerDebt(amount: number): 'ok' | 'insufficient_funds' | 'no_debt' {
+  const remaining = Math.max(0, state.playerDebtPrincipal - state.playerDebtPaid);
+  if (remaining <= 0) return 'no_debt';
+  if (state.coins < amount) return 'insufficient_funds';
+  const pay = Math.min(amount, remaining);
+  setState({
+    ...state,
+    coins: Math.max(0, state.coins - pay),
+    playerDebtPaid: state.playerDebtPaid + pay,
+    playerDebtMissed: 0,
+  });
+  return 'ok';
+}
 
 export function renameCityAndMayor(mayorName: string, cityName: string, mayorGender?: import('./types').MayorGender): 'ok' | 'funds' {
   const cleanMayor = mayorName.trim() || state.mayorName || 'Người Lập Nghiệp';
@@ -1615,6 +1646,21 @@ export function tickIdle(): void {
       badDebt: badDebtOut,
       netIncome: -out,
     });
+  }
+
+  /*
+   * LÃI NỢ CÁ NHÂN (story debt) - charge mỗi 30 ngày thực.
+   * Khác với `debt` (vay kinh doanh per-second), khoản này thu lần/kỳ.
+   */
+  const debtRemaining = Math.max(0, next.playerDebtPrincipal - next.playerDebtPaid);
+  if (debtRemaining > 0 && isOverdue(next.playerDebtNextDueDateStr, now)) {
+    const canPay = next.coins >= PLAYER_DEBT_MONTHLY_INTEREST;
+    next = {
+      ...next,
+      coins: canPay ? Math.max(0, next.coins - PLAYER_DEBT_MONTHLY_INTEREST) : next.coins,
+      playerDebtMissed: canPay ? 0 : (next.playerDebtMissed ?? 0) + 1,
+      playerDebtNextDueDateStr: futureDateKey(now, PLAYER_DEBT_INTERVAL_DAYS),
+    };
   }
 
   next = maybeSpawnRequest(next, now);

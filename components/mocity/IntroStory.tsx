@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 // Pixel-art style SVG icons
@@ -135,7 +136,7 @@ function IconCity() {
 
 interface Slide {
   bg: string;
-  SceneIcon: () => JSX.Element;
+  SceneIcon: () => ReactElement;
   speaker?: string;
   speakerEmoji?: string;
   dialogue?: string;
