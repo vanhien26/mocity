@@ -27,6 +27,9 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
       'Con Mực mới cắn rách trang sổ nợ tiền bia của chú Bảy rồi trời ơi!',
       'Bán tô bún lời có mấy ngàn, chuyển khoản nhầm cái là khóc tiếng Mán!',
       'Nóng muốn xỉu! Ai uống trà tắc khổng lồ giải nhiệt hôn?',
+      'Trời đất ơi! Mới nắng chang chang xong đùng đùng đổ mưa, dẹp bàn ghế không kịp!',
+      'Nước triều cường lên ngập nửa vỉa hè rồi, kê mấy thùng nước ngọt lên cao mau!',
+      'Hóng hớt được drama tiệm chè bên kia xài nguyên liệu dỏm bị bóc phốt kìa!',
     ],
     digital: [
       'Ting ting! Nghe tiếng Loa Thần Tài báo tiền về êm tai hơn nhạc Bolero!',
@@ -34,6 +37,8 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
       'Loa đọc tiền về to quá hàng xóm tưởng nhà cô mới trúng đất!',
       'Khỏi đếm tiền lẻ mỏi tay, khỏi lo con Mực gặm rách sổ nợ nữa!',
       'Mấy đứa sinh viên quét mã cái rẹt, tặng luôn thêm miếng chả lụa!',
+      'Mưa gió ngập đường ngồi trong nhà mở MoMo nhận tiền hàng vẫn êm ru!',
+      'Đóng bảo hiểm rồi nên bão lũ dột mái cũng được công ty bảo hiểm bồi thường!',
     ],
   },
   MERCHANT_ESTABLISHED: {
@@ -42,11 +47,14 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
       'Nhập phụ tùng cận Tết mà nhìn cọc tiền mặt đếm tới 2 giờ sáng.',
       'Khách hỏi trả góp qua ví mà tiệm chưa biết đăng ký chỗ nào!',
       'Trời ơi đầu hẻm mới có người trúng độc đắc 2 tờ kìa!',
+      'Nước ngập lút ống pô xe rồi, xe chết máy xếp hàng chờ sửa cả dãy phố!',
+      'Trời nồm ẩm ướt bu-gi gỉ sét, khách réo sửa từ tờ mờ sáng.',
     ],
     digital: [
       'Cuối ngày mở MoMo đối soát 3 giây là xong, đi ngủ sớm khỏe re!',
       'Có lịch sử giao dịch số rõ ràng, vay vốn nhập hàng Tết duyệt cái rụp!',
       'Tiệm sửa xe giờ hiện đại không kém showroom, quét QR trả góp luôn!',
+      'Cứ mùa mưa lụt là cứu hộ xe ngập nước liên tục, thu tiền qua mã QR tài khoản nổ ting ting!',
     ],
   },
   GIG_WORKER: {
@@ -55,11 +63,15 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
       'Nắng 39 độ C, chạy cuốc xe xong nhìn mặt đen hơn cục than tổ ong!',
       'Khách đưa tờ 500k mua đơn 18k lúc 6 giờ sáng... cứu em Thị Trưởng ơi!',
       'Cuối tháng xe lại kêu lọc cọc, chưa tới ngày nhận lương nữa!',
+      'Đường ngập sâu quá bánh xe quay tít mù, nước tràn vào lọc gió chết máy rồi!',
+      'Trời giông gió giật suýt bay luôn cái dù che điện thoại gắn trên tay lái!',
+      'Vừa lội nước vừa hóng vụ drama đánh ghen ở quán cà phê đầu ngõ kìa!',
     ],
     served: [
       'Khách chuyển khoản thẳng vô MoMo, khỏi chạy khắp phố đổi tiền lẻ!',
       'Bể lốp giữa đường có Ví Trả Sau ứng trước sửa liền, không mất ngày công!',
       'Đường phố MoCity quy hoạch mượt quá, giao đơn 5 phút là tới tận cửa!',
+      'Mưa bão có phụ cấp thời tiết xấu của app cộng thẳng vô ví, ấm cả lòng!',
     ],
   },
   SALARIED: {
@@ -84,7 +96,7 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
     ],
     served: [
       'Bấm “Chia Tiền Nhóm” trên MoMo, đứa nào trốn trong WC cũng phải ting ting trả nợ!',
-      'Săn được voucher trà sữa 1 XU, cảm giác mình như nhà kinh tế học đại tài!',
+      'Săn được voucher trà sữa 1 đồng, cảm giác mình như nhà kinh tế học đại tài!',
       'Đặt vé MoMo Cinema đi coi phim với crush được giảm hẳn 50k, uy tín luôn!',
     ],
   },
@@ -169,7 +181,7 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
         costCoins: 240,
         btnTone: 'green',
         tags: [
-          { label: '-240 XU', tone: 'red' },
+          { label: '-240 đồng', tone: 'red' },
           { label: 'cô Tư khoái chí ++', tone: 'green' },
           { label: 'mở Loa QR cả tiệm', tone: 'green' },
         ],
@@ -213,11 +225,11 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'guarantee',
-        text: 'Tài trợ 300 XU & kích hoạt “Chia Tiền Nhóm MoMo” réo nợ tự động',
+        text: 'Tài trợ 300 đồng & kích hoạt “Chia Tiền Nhóm MoMo” réo nợ tự động',
         costCoins: 300,
         btnTone: 'green',
         tags: [
-          { label: '-300 XU', tone: 'red' },
+          { label: '-300 đồng', tone: 'red' },
           { label: 'bé Nam đội ơn ++', tone: 'green' },
           { label: 'mở Điểm Tín Dụng', tone: 'green' },
         ],
@@ -261,11 +273,11 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'auto',
-        text: 'Mở Túi Thần Tài tự động trích 30% lương + thưởng nóng 350 XU',
+        text: 'Mở Túi Thần Tài tự động trích 30% lương + thưởng nóng 350 đồng',
         costCoins: 350,
         btnTone: 'green',
         tags: [
-          { label: '-350 XU', tone: 'red' },
+          { label: '-350 đồng', tone: 'red' },
           { label: 'chị Thảo ++', tone: 'green' },
           { label: '+Lãi kép mỗi ngày', tone: 'green' },
         ],
@@ -309,11 +321,11 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'auto-bill',
-        text: 'Chi 380 XU thanh toán điện khẩn cấp & bật “Thanh Toán Hóa Đơn Tự Động”',
+        text: 'Chi 380 đồng thanh toán điện khẩn cấp & bật “Thanh Toán Hóa Đơn Tự Động”',
         costCoins: 380,
         btnTone: 'green',
         tags: [
-          { label: '-380 XU', tone: 'red' },
+          { label: '-380 đồng', tone: 'red' },
           { label: 'cả họ vỗ tay ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -353,15 +365,15 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     missingService: 'BNPL',
     title: 'Shipper bể lốp giữa trưa nắng 39 độ',
     subtitle: 'Trước cửa tiệm Sửa Xe đầu ngã tư...',
-    body: 'Anh Tài chạy xe giao đồ ăn bị cán đinh bể lốp kèm đứt sên trước tiệm Sửa Xe, tốn 400 XU mà trên xe còn đang treo 4 ly trà sữa kem trứng nướng sợ chảy mất. Bạn sẽ:',
+    body: 'Anh Tài chạy xe giao đồ ăn bị cán đinh bể lốp kèm đứt sên trước tiệm Sửa Xe, tốn 400 đồng mà trên xe còn đang treo 4 ly trà sữa kem trứng nướng sợ chảy mất. Bạn sẽ:',
     choices: [
       {
         id: 'grant',
-        text: 'Trả giúp 400 XU thay lốp xịn & điều xe hỗ trợ giao luôn 4 ly trà sữa',
+        text: 'Trả giúp 400 đồng thay lốp xịn & điều xe hỗ trợ giao luôn 4 ly trà sữa',
         costCoins: 400,
         btnTone: 'green',
         tags: [
-          { label: '-400 XU', tone: 'red' },
+          { label: '-400 đồng', tone: 'red' },
           { label: 'anh Tài cảm kích ++', tone: 'green' },
           { label: 'giữ chuẩn 5 sao', tone: 'green' },
         ],
@@ -402,15 +414,15 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     missingService: 'CREDIT',
     title: 'Đơn hàng 500 chiếc lốp xe & Cuộc đua vốn cuối năm',
     subtitle: 'Anh Lâm chủ tiệm Sửa Xe đang cầm bảng báo giá vò đầu bứt tai...',
-    body: 'Đại lý vừa báo có lô lốp xe chống đinh giảm giá 40% nếu chốt đơn trong hôm nay, nhưng anh Lâm thiếu 800 XU vốn lưu động. Ngân hàng truyền thống đòi thẩm định sổ đất 2 tuần lễ. Bạn sẽ:',
+    body: 'Đại lý vừa báo có lô lốp xe chống đinh giảm giá 40% nếu chốt đơn trong hôm nay, nhưng anh Lâm thiếu 800 đồng vốn lưu động. Ngân hàng truyền thống đòi thẩm định sổ đất 2 tuần lễ. Bạn sẽ:',
     choices: [
       {
         id: 'guarantee',
-        text: 'Bảo lãnh gói Vốn Kinh Doanh MoMo 800 XU giải ngân trong 60 giây',
+        text: 'Bảo lãnh gói Vốn Kinh Doanh MoMo 800 đồng giải ngân trong 60 giây',
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-800 XU', tone: 'red' },
+          { label: '-800 đồng', tone: 'red' },
           { label: 'anh Lâm ++', tone: 'green' },
           { label: 'doanh thu bùng nổ', tone: 'green' },
         ],
@@ -453,11 +465,11 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'vip-popcorn-truck',
-        text: 'Chi 950 XU điều ngay 3 xe Bắp Rang Phô Mai & Trà Sữa tới sảnh rạp đãi khách',
+        text: 'Chi 950 đồng điều ngay 3 xe Bắp Rang Phô Mai & Trà Sữa tới sảnh rạp đãi khách',
         costCoins: 950,
         btnTone: 'green',
         tags: [
-          { label: '-950 XU', tone: 'red' },
+          { label: '-950 đồng', tone: 'red' },
           { label: '+1 Ly Trà Sữa Kho Đồ', tone: 'green' },
           { label: 'Hoàng Cine ++', tone: 'green' },
         ],
@@ -500,11 +512,11 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'sponsor-speaker-loc',
-        text: 'Chi 500 XU gắn Loa Thần Tài đọc số tiền tự động ngay cạnh bàn cờ cho Ông Lộc',
+        text: 'Chi 500 đồng gắn Loa Thần Tài đọc số tiền tự động ngay cạnh bàn cờ cho Ông Lộc',
         costCoins: 500,
         btnTone: 'green',
         tags: [
-          { label: '-500 XU', tone: 'red' },
+          { label: '-500 đồng', tone: 'red' },
           { label: '+1 Bao Lì Xì 68 vào Kho Đồ', tone: 'green' },
           { label: 'Ông Lộc ++', tone: 'green' },
         ],
@@ -547,11 +559,11 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'sponsor-summit',
-        text: 'Chi 1.200 XU tài trợ Sân Khấu Lớn & tặng voucher mở Túi Thần Tài cho toàn phố',
+        text: 'Chi 1.200 đồng tài trợ Sân Khấu Lớn & tặng voucher mở Túi Thần Tài cho toàn phố',
         costCoins: 1200,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 XU', tone: 'red' },
+          { label: '-1.200 đồng', tone: 'red' },
           { label: '+1 Loa Phường Vàng vào Kho Đồ', tone: 'green' },
           { label: 'toàn dân gửi tiết kiệm ++', tone: 'green' },
         ],
@@ -606,11 +618,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'marathon-festival',
-        text: 'Chi 650 XU mở “Đại Nhạc Hội Đi Bộ Heo Vàng” vào 6h sáng kèm trà tắc miễn phí',
+        text: 'Chi 650 đồng mở “Đại Nhạc Hội Đi Bộ Heo Vàng” vào 6h sáng kèm trà tắc miễn phí',
         costCoins: 650,
         btnTone: 'green',
         tags: [
-          { label: '-650 XU', tone: 'red' },
+          { label: '-650 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'toàn dân phấn khích ++', tone: 'green' },
         ],
@@ -654,11 +666,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'upgrade-road-cup',
-        text: 'Chi 800 XU trải nhựa phẳng lì toàn đại lộ & trao Cúp “Thùng Giữ Nhiệt Chống Sóng Sánh”',
+        text: 'Chi 800 đồng trải nhựa phẳng lì toàn đại lộ & trao Cúp “Thùng Giữ Nhiệt Chống Sóng Sánh”',
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-800 XU', tone: 'red' },
+          { label: '-800 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'biệt đội Shipper ++', tone: 'green' },
         ],
@@ -702,11 +714,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'workshop',
-        text: 'Chi 600 XU trang bị “Loa Thần Tài MoMo Đọc Tên Chính Chủ” cho toàn bộ cửa hàng',
+        text: 'Chi 600 đồng trang bị “Loa Thần Tài MoMo Đọc Tên Chính Chủ” cho toàn bộ cửa hàng',
         costCoins: 600,
         btnTone: 'green',
         tags: [
-          { label: '-600 XU', tone: 'red' },
+          { label: '-600 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'bắt sống kẻ gian', tone: 'green' },
         ],
@@ -745,16 +757,16 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     title: 'Tờ vé số độc đắc bay vô chuồng gà nhà chú Bảy',
     subtitle: 'Chuyện hy hữu nhất lịch sử xổ số kiến thiết MoCity...',
     speaker: 'Ông Lộc bán vé số',
-    body: 'Ông Lộc vừa dò trúng giải khuyến khích 800 XU thì một cơn gió lốc thổi tờ vé số bay thẳng vô chuồng gà trống nhà chú Bảy. Con gà trống chiến đang mổ tờ vé số rách mất một góc! Bạn sẽ:',
+    body: 'Ông Lộc vừa dò trúng giải khuyến khích 800 đồng thì một cơn gió lốc thổi tờ vé số bay thẳng vô chuồng gà trống nhà chú Bảy. Con gà trống chiến đang mổ tờ vé số rách mất một góc! Bạn sẽ:',
     minMayorLevel: 1,
     choices: [
       {
         id: 'compensate-loc',
-        text: 'Chi 800 XU đổi thưởng ngay cho ông Lộc & mở tính năng “Lưu Vé Số An Toàn” trên app',
+        text: 'Chi 800 đồng đổi thưởng ngay cho ông Lộc & mở tính năng “Lưu Vé Số An Toàn” trên app',
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-800 XU', tone: 'red' },
+          { label: '-800 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'ông Lộc mừng rơi nước mắt ++', tone: 'green' },
         ],
@@ -798,11 +810,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'boost-livestream',
-        text: 'Chi 1.500 XU tung gói “Freeship & Voucher Giờ Vàng” tiếp sức toàn bộ tiểu thương',
+        text: 'Chi 1.500 đồng tung gói “Freeship & Voucher Giờ Vàng” tiếp sức toàn bộ tiểu thương',
         costCoins: 1500,
         btnTone: 'green',
         tags: [
-          { label: '-1.500 XU', tone: 'red' },
+          { label: '-1.500 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
         ],
         effects: { trustAll: 22, xp: 120, happiness: 12 },
@@ -811,11 +823,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
       },
       {
         id: 'mobilize-shippers',
-        text: 'Huy động toàn bộ đội xe Shipper tăng ca đêm, chi thưởng nóng 900 XU/đơn cho cả đội',
+        text: 'Huy động toàn bộ đội xe Shipper tăng ca đêm, chi thưởng nóng 900 đồng/đơn cho cả đội',
         costCoins: 900,
         btnTone: 'blue',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'thưởng nóng cho đội xe', tone: 'neutral' },
           { label: 'uy tín toàn phố +', tone: 'green' },
         ],
@@ -847,11 +859,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'the-voice-via-he',
-        text: 'Chi 700 XU tổ chức "The Voice Vỉa Hè" tối Thứ 7 có phòng cách âm & Cúp Micro Vàng',
+        text: 'Chi 700 đồng tổ chức "The Voice Vỉa Hè" tối Thứ 7 có phòng cách âm & Cúp Micro Vàng',
         costCoins: 700,
         btnTone: 'green',
         tags: [
-          { label: '-700 XU', tone: 'red' },
+          { label: '-700 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'cả xóm hoan hô ++', tone: 'green' },
         ],
@@ -895,11 +907,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'treat-tra-tac',
-        text: 'Chi 500 XU khao toàn bộ bà con 1 chùm Trà Tắc MoMo khổng lồ để chúc mừng',
+        text: 'Chi 500 đồng khao toàn bộ bà con 1 chùm Trà Tắc MoMo khổng lồ để chúc mừng',
         costCoins: 500,
         btnTone: 'green',
         tags: [
-          { label: '-500 XU', tone: 'red' },
+          { label: '-500 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'tiểu thương vui vẻ ++', tone: 'green' },
         ],
@@ -943,11 +955,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'upgrade-drain-hero',
-        text: 'Chi 900 XU thông cống thoát nước tức thì & trao Huân Chương “Anh Hùng Cứu Hộ” cho anh Ba',
+        text: 'Chi 900 đồng thông cống thoát nước tức thì & trao Huân Chương “Anh Hùng Cứu Hộ” cho anh Ba',
         costCoins: 900,
         btnTone: 'green',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'nước rút sạch bóng ++', tone: 'green' },
         ],
@@ -991,11 +1003,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'adopt-mascot-cat',
-        text: 'Chi 600 XU sắc phong Đại Ca làm “Mascot Giữ Vía Tài Lộc” & mua sắm đệm êm',
+        text: 'Chi 600 đồng sắc phong Đại Ca làm “Mascot Giữ Vía Tài Lộc” & mua sắm đệm êm',
         costCoins: 600,
         btnTone: 'green',
         tags: [
-          { label: '-600 XU', tone: 'red' },
+          { label: '-600 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'khách kéo đến gấp đôi ++', tone: 'green' },
         ],
@@ -1039,11 +1051,11 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'boost-5g-station',
-        text: 'Chi 1.200 XU kích hoạt trạm phát 5G Siêu Tốc & phát thêm 200 voucher dự phòng',
+        text: 'Chi 1.200 đồng kích hoạt trạm phát 5G Siêu Tốc & phát thêm 200 voucher dự phòng',
         costCoins: 1200,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 XU', tone: 'red' },
+          { label: '-1.200 đồng', tone: 'red' },
           { label: 'hy sinh ngân khách', tone: 'red' },
           { label: 'toàn dân săn sale thành công ++', tone: 'green' },
         ],

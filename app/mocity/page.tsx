@@ -8,8 +8,6 @@ import {
   ArrowUpCircle,
   CircleDollarSign,
   Crown,
-  Flame,
-  Gift,
   Hammer,
   MapPin,
   MessageSquareHeart,
@@ -19,7 +17,6 @@ import {
   Share2,
   SlidersHorizontal,
   Star,
-  Store,
   Users,
   X,
 } from 'lucide-react';
@@ -27,8 +24,8 @@ import ViaHeStreetBoard from '@/components/mocity/ViaHeStreetBoard';
 import BuildDrawer from '@/components/mocity/BuildDrawer';
 import CoinBubble from '@/components/mocity/CoinBubble';
 import ParticleEngine, { particles } from '@/components/mocity/ParticleEngine';
-import { FloatingNumbers, GameJuiceStyles, useBouncyCounter, useGameJuice } from '@/lib/mocity/useGameJuice';
-import { TimeOfDaySwitcher } from '@/components/mocity/StreetAmbiance';
+import { FloatingNumbers, GameJuiceStyles, useGameJuice } from '@/lib/mocity/useGameJuice';
+import { useAutoTimeOfDay, useAutoWeather } from '@/components/mocity/StreetAmbiance';
 import OfflineRewardModal from '@/components/mocity/OfflineRewardModal';
 import ShareCityCard from '@/components/mocity/ShareCityCard';
 import DialogueModal, { type DialogueView } from '@/components/mocity/DialogueModal';
@@ -48,23 +45,22 @@ import {
   dismissEvent,
   hydrateCity,
   isQuestCompleted,
-  OFFLINE_CAP_MS,
   placeBuilding,
   resolveEvent,
   resolveRequest,
   triggerNextEvent,
   claimCityTierRewards,
-  IDLE_XP_DAILY_CAP,
   claimStreakMilestones,
   upgradeBuilding,
+  effectiveMaxLevel,
   getCityState,
   useCity,
   useCityDerived,
   useCityHydrated,
-  MAX_MAYOR_LEVEL,
   type PlaceResult,
   type UpgradeResult,
 } from '@/lib/mocity/store';
+import { totalBacklog } from '@/lib/mocity/transactions';
 import { useIdleTick } from '@/lib/mocity/useIdleTick';
 import {
   MAYOR_QUESTS,
@@ -72,7 +68,6 @@ import {
   MANAGER_BY_ID,
   ZONES,
   upgradeCostCoins,
-  xpForLevel,
   nextCityTier,
   cityTierFor,
   CITY_TIERS,
@@ -89,26 +84,27 @@ import { cn } from '@/lib/cn';
  * khop voi thuc te.
  */
 /*
- * Thưởng nhậm chức. Bản cũ là 50.000 Xu, trong khi TỔNG giá mua hết cả 19
- * công trình chỉ 33.090 Xu - thưởng xong là mua được tất cả và hết mục tiêu.
- * 1.000 Xu mua được 5 công trình rẻ nhất, đủ để bắt đầu mà vẫn phải chờ tiền
+ * Thưởng nhậm chức. Bản cũ là 50.000 đồng, trong khi TỔNG giá mua hết cả 19
+ * công trình chỉ 33.090 đồng - thưởng xong là mua được tất cả và hết mục tiêu.
+ * 1.000 đồng mua được 5 công trình rẻ nhất, đủ để bắt đầu mà vẫn phải chờ tiền
  * về mới đi tiếp.
  */
-const LOGIN_BONUS_COINS = 1_000;
+const LOGIN_BONUS_COINS = 10_000_000;
 
 const ERROR_MESSAGE: Record<PlaceResult, string> = {
   ok: '',
   locked: 'Ô đất này chưa được quy hoạch. Mở rộng đất trước đã.',
   occupied: 'Ô này đã có công trình.',
   level: 'Cấp Thị Trưởng chưa đủ để xây công trình này.',
-  funds: 'Chưa đủ Xu. Đợi thu thêm hoặc thu bong bóng Xu nhé.',
+  funds: 'Chưa đủ đồng. Đợi thu thêm hoặc thu bong bóng đồng nhé.',
 };
 
 const UPGRADE_MESSAGE: Record<UpgradeResult, string> = {
   ok: '',
   missing: 'Ô này chưa có công trình để nâng cấp.',
   max: 'Công trình đã đạt cấp tối đa.',
-  funds: 'Chưa đủ Xu để nâng cấp công trình này.',
+  funds: 'Chưa đủ đồng để nâng cấp công trình này.',
+  mayor: 'Lên cấp Thị Trưởng để mở khóa nâng cấp cao hơn.',
 };
 
 /**
@@ -125,7 +121,11 @@ export default function MoCityPage() {
    * khung ~843px, nhan 1.14 se thanh ~938px va day day nha ong tran khoi
    * dinh khung (overflow-y bi hidden nen khong cuon lai duoc).
    */
-  const [cityScale, setCityScale] = useState(1.0);
+  /**
+   * Ty le phong to ban do pho. Khong con `setCityScale` - nut dieu khien
+   * zoom da khong con, ty le co dinh 1.0.
+   */
+  const [cityScale] = useState(1.0);
   const [selected, setSelected] = useState<{ col: number; row: number } | null>(null);
   /** Hang pho dang xem tren board. */
   const [activeRow, setActiveRow] = useState(0);
@@ -144,7 +144,6 @@ export default function MoCityPage() {
 
   const [tab, setTab] = useState('ALL');
   const [toast, setToast] = useState<string | null>(null);
-  const [newBuildKey, setNewBuildKey] = useState<string | null>(null);
 
   // Giu "" de "ban co sua khong" va suy ten mac dinh luc render tu tai khoan.
   const [mayorInput, setMayorInput] = useState('');
@@ -169,29 +168,38 @@ export default function MoCityPage() {
 
   const boardHostRef = useRef<HTMLDivElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const buildAnimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleFloodTriggered = useCallback((msg: string) => {
+    setToast(msg);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 5000);
+  }, []);
+
+  useAutoTimeOfDay();
+  useAutoWeather(handleFloodTriggered);
 
   const coins = useCity((s) => s.coins);
   const totalCoinsEarned = useCity((s) => s.totalCoinsEarned);
   const totalRevenue = useCity((s) => s.totalRevenue ?? 0);
   /** So ngay choi lien tiep - chi doc, `registerStreak` lo phan ghi. */
   const streakDays = useCity((s) => s.streak?.days ?? 0);
-  const streakBest = useCity((s) => s.streak?.best ?? 0);
   const gems = useCity((s) => s.gems);
   const level = useCity((s) => s.mayorLevel);
-  const mayorXp = useCity((s) => s.mayorXp);
   const cityName = useCity((s) => s.cityName);
   const mayorName = useCity((s) => s.mayorName);
   const hasNamedCity = useCity((s) => s.hasNamedCity);
   const buildings = useCity((s) => s.buildings);
-  /*
-   * XP nhan roi da nhan hom nay. Doc qua selector de HUD canh bao ngay khi
-   * cham tran, thay vi de nguoi choi tu hoi sao cot XP dung yen.
-   */
-  const idleXpToday = useCity((s) => s.dailyLog?.idleXp ?? 0);
   const offline = useCity((s) => s.pendingOffline);
   const npcs = useCity((s) => s.npcs);
   const activeRequests = useCity((s) => s.activeRequests);
+  /**
+   * HÀNG CHỜ KHÁCH - nguồn sinh tiền duy nhất của thành phố.
+   *
+   * Mảng này rỗng thì ví không tăng đồng nào. Mọi con số trên HUD, mọi dòng
+   * trong P&L đều bắt đầu từ đây.
+   */
+  const orderQueues = useCity((s) => s.shopQueues ?? []);
+  const backlog = useMemo(() => totalBacklog(orderQueues), [orderQueues]);
   const pendingEvent = useCity((s) => s.pendingEvent);
   const claimedQuests = useCity((s) => s.claimedQuests ?? []);
   const unlockedCols = useCity((s) => s.unlockedCols);
@@ -199,30 +207,13 @@ export default function MoCityPage() {
   const inventory = useCity((s) => s.inventory);
 
   /**
-   * So Xu nguoi choi SE nhan duoc khi bam "Nhan Qua & Vao Pho".
-   * Phai khop chinh xac voi `completeMayorLogin`: thuong 50.000 Xu chi tra
+   * So đồng nguoi choi SE nhan duoc khi bam "Nhan Qua & Vao Pho".
+   * Phai khop chinh xac voi `completeMayorLogin`: thuong 50.000 đồng chi tra
    * lan dau (`hasNamedCity`), cac lan sau chi nhan thuong AFK. Truoc day UI
-   * in cung `+50K XU` va `Vốn sẵn có 1.000.000 Xu` cho ca nguoi choi quay
+   * in cung `+50K đồng` va `Vốn sẵn có 1.000.000 đồng` cho ca nguoi choi quay
    * lai - con số ma thuc te la 0.
    */
-  /**
- * Thanh tien do cap Thị Truong.
- *
- * TRUOC day toan bo he XP vô hình: grep toan repo khong co UI nao doc
- * `mayorXp`, nen nguoi choi thay "Cấp 7" ma khong biet can bao nhieu de len
- * 8. Con so `xpForLevel` bay gio la nguon su that cho HUD, nen phai dung
- * chung ham tinh mau cot.
- */
-const isMaxLevel = level >= MAX_MAYOR_LEVEL;
-const idleXpCapped = idleXpToday >= IDLE_XP_DAILY_CAP;
-const xpNeeded = xpForLevel(level);
-
-const xpPct = isMaxLevel ? 100 : Math.min(100, Math.round((mayorXp / xpNeeded) * 100));
-
-const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   const offlineBonus = offline?.coins ?? 0;
-  const loginBonus = firstTimeBonus + offlineBonus;
-  const treasuryAfterLogin = coins + loginBonus;
   const totalInventoryCount = useMemo(
     () => Object.values(inventory ?? {}).reduce((acc, qty) => acc + (qty || 0), 0),
     [inventory],
@@ -254,7 +245,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   const { shake, floatNumber } = useGameJuice();
   /** Cấp đã mừng lần gần nhất. `null` = chưa mừng lần nào, xem effect lên cấp. */
   const levelDaQuanLy = useRef<number | null>(null);
-  const { isAnimating: isCoinBouncing } = useBouncyCounter(coins);
 
   const [openRequestId, setOpenRequestId] = useState<string | null>(null);
   const [heldView, setHeldView] = useState<DialogueView | null>(null);
@@ -299,8 +289,11 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
    */
   useEffect(() => {
     if (!hasNamedCity) return;
-    setMayorInput((prev) => prev || mayorName);
-    if (cityName) setCityInput(cityName);
+    const id = requestAnimationFrame(() => {
+      setMayorInput((prev) => prev || mayorName);
+      if (cityName) setCityInput(cityName);
+    });
+    return () => cancelAnimationFrame(id);
   }, [hasNamedCity, mayorName, cityName]);
 
 
@@ -313,7 +306,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
   useEffect(
     () => () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
-      if (buildAnimTimer.current) clearTimeout(buildAnimTimer.current);
     },
     [],
   );
@@ -325,10 +317,10 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     setIsPlaying(true);
     if (bonus > 0) {
       showToast(
-        `Chào mừng ${cleanMayor}! Đã nhận +${formatNumber(bonus)} Xu (Ngân khố: ${formatNumber(coins + bonus)} Xu).`,
+        `Chào mừng ${cleanMayor}! Đã nhận +${formatNumber(bonus)} đồng (Ngân khố: ${formatNumber(coins + bonus)} đồng).`,
       );
     } else {
-      showToast(`Chào mừng trở lại ${cleanMayor}! Ngân khố hiện có ${formatNumber(coins)} Xu.`);
+      showToast(`Chào mừng trở lại ${cleanMayor}! Ngân khố hiện có ${formatNumber(coins)} đồng.`);
     }
   }, [cityInput, coins, effectiveMayorName, showToast]);
 
@@ -351,8 +343,14 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     ? MANAGER_BY_ID[selectedBuilding.managerId]
     : undefined;
 
+  const upgradeCap = selectedDef ? effectiveMaxLevel(selectedDef.maxLevel, level) : 0;
   const atMaxLevel =
-    !!selectedDef && !!selectedBuilding && selectedBuilding.level >= selectedDef.maxLevel;
+    !!selectedDef && !!selectedBuilding && selectedBuilding.level >= upgradeCap;
+  const gatedByMayor =
+    !!selectedDef &&
+    !!selectedBuilding &&
+    selectedBuilding.level < selectedDef.maxLevel &&
+    selectedBuilding.level >= upgradeCap;
   const upgradeCost =
     selectedDef && selectedBuilding ? upgradeCostCoins(selectedDef, selectedBuilding.level) : 0;
   const canAffordUpgrade = coins >= upgradeCost;
@@ -361,7 +359,9 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     setSelected((prev) => (prev?.col === col && prev?.row === row ? null : { col, row }));
   }, []);
 
-  modalDangMoRef.current = drawerOpen || inspectorOpen || mayorModalOpen || inventoryOpen;
+  useEffect(() => {
+    modalDangMoRef.current = drawerOpen || inspectorOpen || mayorModalOpen || inventoryOpen;
+  }, [drawerOpen, inspectorOpen, mayorModalOpen, inventoryOpen]);
 
   const handleOpenRequest = useCallback(
     (col: number, row: number) => {
@@ -384,7 +384,12 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
    * `subtitle` nhung duong nay bo qua, nen nguoi choi LUON thay fallback thay
    * vi cau viet cua tac gia - mat sach 70 doan narrative dang nam trong code.
    *
-   * `speakerTag` chua duoc render nen bo trong ma de khong nham la dang dung.
+   * `speakerTag` = badge tren `CharacterPanel` luc mo hop thoai, de nguoi choi
+   * biet ai dang noi. Khop badge vai tro o pannel cu dan ben duoi duong.
+   *
+   * Request: dung `ARCHETYPES[].label` - nhan nay da duoc viet ro cho chuc
+   * nang nay ("Dân văn phòng", "Tiểu thương chợ") nhung lau nay khong ai goi.
+   * Event: khong co NPC nao ke, day la su kien thanh pho.
    */
   const liveView = useMemo<DialogueView | null>(() => {
     if (pendingEvent) {
@@ -394,8 +399,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           title: script.title,
           subtitle: script.subtitle,
           speaker: script.speaker,
+          speakerTag: 'Sự Kiện',
           body: script.body,
-          hue: '#C9A227',
           choices: script.choices,
         };
       }
@@ -409,8 +414,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           title: script.title,
           subtitle: script.subtitle,
           speaker: npc.name,
+          speakerTag: ARCHETYPES[npc.archetype].label,
           body: script.body,
-          hue: ARCHETYPES[npc.archetype].hue,
           choices: script.choices,
         };
       }
@@ -429,7 +434,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           : 'missing';
 
       if (result === 'funds') {
-        showToast('Chưa đủ Xu cho phương án này.');
+        showToast('Chưa đủ đồng cho phương án này.');
         return false;
       }
       if (result !== 'ok') return false;
@@ -499,27 +504,30 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
    */
   useEffect(() => {
     if (!isPlaying) return;
-    const moi = claimCityTierRewards();
-    if (moi.length === 0) return;
-    const cao = moi[moi.length - 1];
-    particles.confetti(window.innerWidth / 2, window.innerHeight * 0.35);
-    /*
-     * Lên bậc thành phố nay đã gấp hiệu ứng chuỗi ngày.
-     *
-     * Trước đây chuỗi ngày có 3 lớp (confetti + vòng sáng + rung màn hình +
-     * số bay) còn lên bậc chỉ có 1 lớp. Người chơi chơi 40 ngày liên tiếp
-     * không thấy gì, xây tiệm lên bậc mới thấy náy - đảo ngược thứ tự ưu tiên
-     * của khoảnh khắc này.
-     */
-    particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.42);
-    shake(5);
-    floatNumber(
-      window.innerWidth / 2,
-      window.innerHeight * 0.32,
-      `🏙️ Rank ${cao.rank}/8 · ${cao.name}`,
-      '#A8246B',
-    );
-    showToast(`Thành phố lên Rank ${cao.rank}: ${cao.name}! ${cao.tagline}`);
+    const id = requestAnimationFrame(() => {
+      const moi = claimCityTierRewards();
+      if (moi.length === 0) return;
+      const cao = moi[moi.length - 1];
+      particles.confetti(window.innerWidth / 2, window.innerHeight * 0.35);
+      /*
+       * Lên bậc thành phố nay đã gấp hiệu ứng chuỗi ngày.
+       *
+       * Trước đây chuỗi ngày có 3 lớp (confetti + vòng sáng + rung màn hình +
+       * số bay) còn lên bậc chỉ có 1 lớp. Người chơi chơi 40 ngày liên tiếp
+       * không thấy gì, xây tiệm lên bậc mới thấy náy - đảo ngược thứ tự ưu tiên
+       * của khoảnh khắc này.
+       */
+      particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.42);
+      shake(5);
+      floatNumber(
+        window.innerWidth / 2,
+        window.innerHeight * 0.32,
+        `🏙️ Rank ${cao.rank}/8 · ${cao.name}`,
+        '#A8246B',
+      );
+      showToast(`Thành phố lên Rank ${cao.rank}: ${cao.name}! ${cao.tagline}`);
+    });
+    return () => cancelAnimationFrame(id);
   }, [buildings, isPlaying, showToast, shake, floatNumber]);
 
   /*
@@ -564,23 +572,25 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
    */
   useEffect(() => {
     if (!isPlaying) return;
-    const earned = claimStreakMilestones();
-    if (earned.length === 0) return;
-    const cao = earned[earned.length - 1];
-    particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
-    particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.42);
-    shake(5);
-    floatNumber(
-      window.innerWidth / 2,
-      window.innerHeight * 0.3,
-      `🔥 ${earned.length} chuỗi ngày vừa mở khoá!`,
-      '#B33A2B',
-    );
-    showToast(`${cao.title} · +${formatCompact(cao.rewardCoins)} Xu +${cao.rewardGems} KC`);
+    const id = requestAnimationFrame(() => {
+      const earned = claimStreakMilestones();
+      if (earned.length === 0) return;
+      const cao = earned[earned.length - 1];
+      particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
+      particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.42);
+      shake(5);
+      floatNumber(
+        window.innerWidth / 2,
+        window.innerHeight * 0.3,
+        `🔥 ${earned.length} chuỗi ngày vừa mở khoá!`,
+        '#B33A2B',
+      );
+      showToast(`${cao.title} · +${formatCompact(cao.rewardCoins)} đồng +${cao.rewardGems} KC`);
+    });
+    return () => cancelAnimationFrame(id);
   }, [streakDays, isPlaying, showToast, shake, floatNumber]);
 
   const hasPendingEventOrRequest = Boolean(pendingEvent || activeRequests.length > 0);
-  const pendingEventScript = pendingEvent ? EVENT_BY_ID[pendingEvent.scriptId] : null;
 
   const canAfford = useCallback(
     (def: BuildingDef) => coins >= def.costCoins && gems >= def.costGems,
@@ -618,10 +628,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
         setDrawerOpen(false);
         particles.buildCelebration(window.innerWidth / 2, window.innerHeight * 0.45);
         floatNumber(window.innerWidth / 2, window.innerHeight * 0.45, `+${def.name}! 🎉`, '#A8246B');
-        const key = `${target.col}:${target.row}`;
-        setNewBuildKey(key);
-        if (buildAnimTimer.current) clearTimeout(buildAnimTimer.current);
-        buildAnimTimer.current = setTimeout(() => setNewBuildKey(null), 900);
         showToast(`Đã khai trương ${def.name}! Bắt đầu thu ${formatRate(def.baseYieldPerSec)}.`);
       } else {
         showToast(ERROR_MESSAGE[result]);
@@ -636,7 +642,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     if (result === 'ok') {
       particles.levelUpRing(window.innerWidth / 2, window.innerHeight * 0.5);
       floatNumber(window.innerWidth / 2, window.innerHeight * 0.5, '+45% Doanh Thu! 📈', '#10B981');
-      showToast('Nâng cấp tiệm thành công! Doanh thu Xu mỗi giây tăng 45%.');
+      showToast('Nâng cấp tiệm thành công! Tiềm năng doanh thu tăng 45%.');
     } else {
       showToast(UPGRADE_MESSAGE[result]);
     }
@@ -648,7 +654,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
       floatNumber(window.innerWidth / 2, window.innerHeight * 0.6, '+1 Mặt Tiền Đất! 🏗️', '#A8701F');
       showToast('Đã mở rộng thêm lô đất mặt tiền mới trên Đại lộ MoCity!');
     } else {
-      showToast('Chưa đủ Xu để mở rộng thêm mặt tiền mới.');
+        showToast('Chưa đủ đồng để mở rộng thêm mặt tiền mới.');
     }
   }, [floatNumber, showToast]);
 
@@ -656,6 +662,16 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
     particles.coinShower(window.innerWidth / 2, window.innerHeight * 0.5, 25);
     claimOffline();
   }, []);
+
+  /*
+   * ĐÓNG ĐƠN KHÔNG CÒN LÀ HÀNH ĐỘNG CỦA NGƯỜI CHƠI.
+   *
+   * Trước đây 2 handler ở đây (`handleCloseOrder`/`handleClearQueue`) là
+   * toàn bộ vòng tiền - bấm tay mới ra tiền. Giờ `tickIdle` tự đóng đơn qua
+   * `autoServeQueues` (xem `lib/mocity/store.ts`), tốc độ do số Nhân Viên
+   * quyết định, không có nút nào ở đây nữa. Khách tăng tốc phục vụ qua tab
+   * "Quản Lý Nhân Viên" trong `StoreInspectorModal`, không phải qua HUD.
+   */
 
   const canExpand = derived.capacity < 100;
 
@@ -687,8 +703,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           mayorName={mayorName}
           cityName={cityName}
           coins={coins}
-          buildingCount={buildings.length}
           npcCount={npcs.length}
+          buildingCount={buildings.length}
           mayorLevel={level}
           offlineBonus={offlineBonus}
           mayorInput={mayorInput}
@@ -800,7 +816,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
 
         {/* CENTER: resource chips */}
         <div className="flex items-center gap-1.5">
-          {/* Xu */}
+          {/* đồng */}
           <div
             className="flex items-center gap-1.5 rounded-xl border px-2.5 py-1 shadow-inner"
             style={{
@@ -811,11 +827,26 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           >
             <CircleDollarSign size={17} className="shrink-0 text-amber-400" />
             <div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-pixel text-base leading-none text-amber-200">{formatNumber(coins)}</span>
-                <span className="text-[12px] font-black text-amber-500">XU</span>
-              </div>
-              <p className="text-[10.5px] font-black text-emerald-400 leading-none">+{formatRate(derived.rate)}</p>
+                <span className="font-pixel text-base leading-none text-amber-200" title={formatNumber(coins)}>
+                  {formatCompact(coins)}
+                </span>
+              {/*
+                KHÔNG còn "+đồng/s" dưới ví nữa - dòng tiền tự sinh đã bị gỡ.
+                Khi có đơn chờ thì việc cần làm là bấm; khi chưa có thì con số
+                còn lại là TIỀM NĂNG, không phải tiền đang vào tài khoản.
+              */}
+              <p
+                className={`text-[10.5px] font-black leading-none ${
+                  backlog > 0 ? 'text-emerald-400' : 'text-amber-500/70'
+                }`}
+                title={
+                  backlog > 0
+                    ? 'Khách đang chờ. Bấm badge trên bảng hiệu để bán từng đơn.'
+                    : 'Sản lượng tối đa nếu bạn liên tục bán hết khách.'
+                }
+              >
+                {backlog > 0 ? `${backlog} đơn chờ · bấm để bán` : `tiềm năng ${formatRate(derived.rate)}`}
+              </p>
             </div>
           </div>
 
@@ -832,75 +863,16 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             <span className="font-pixel text-sm leading-none text-sky-200">{gems}</span>
           </div>
 
-          {/* Chuỗi ngày chơi liên tiếp */}
           {/*
-           * Chi hien khi chuoi >= 2. Ngay 1 la chua phai chuoi - hien "1 ngày"
-           * chi nham gam o chuc nang. Khi chuoi bi ngat, so ngay da vong van
-           * hien (do la ly do người choi quay lai).
+           * Chuỗi ngày chơi + thanh cấp Thị Trưởng ĐÃ CHUYỂN ra khỏi header.
+           *
+           * Header gốc nhồi 5 ô viền-màu-riêng (rank xanh lá, xu đen-vàng, kim
+           * cương xanh dương, chuỗi cam, XP tím) sát nhau không theo hệ thống
+           * nào - rối mắt. Giữ lại đúng thứ cần quyết định NGAY (Xu, Kim
+           * Cương) trên header; Cấp Thị Trưởng + Chuỗi ngày xem trong Hồ Sơ
+           * Thị Trưởng (nút Crown bên phải) - đã có đủ cả 2 (tab PROFILE và
+           * tab Chuỗi), không mất thông tin, chỉ bớt nhồi nhét.
            */}
-          {streakDays >= 2 && (
-            <div
-              className="flex shrink-0 items-center gap-1 rounded-xl border px-2 py-1.5"
-              style={{
-                background: 'linear-gradient(135deg, #3B0A05, #7C2D12)',
-                borderColor: '#FB923C',
-                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
-              }}
-              title={`Chuỗi ${streakDays} ngày liên tiếp · Kỷ lục ${streakBest} ngày`}
-            >
-              <Flame size={14} className="shrink-0 fill-orange-400 text-orange-400" />
-              <span className="text-xs font-black text-orange-100">{streakDays}</span>
-              <span className="hidden text-[12px] font-black uppercase text-orange-300/80 lg:inline">
-                ngày
-              </span>
-            </div>
-          )}
-
-          {/* Thanh cấp Thị Trưởng */}
-          {/*
-           * Ba dong deu `whitespace-nowrap`: ban cu rong 112px nen "THỊ TRƯỞNG"
-           * xuong hai dong, dong "% XP nữa" cung xuong dong, the cao len 69px va
-           * day cao ca thanh HUD. Chot 150px la du cho muc XP 6 chu so.
-           */}
-          <div
-            className="flex w-[155px] shrink-0 flex-col justify-center gap-[3px] rounded-xl border px-2.5 py-1"
-            style={{
-              background: 'linear-gradient(135deg, #1A0B2E, #3B1E5F)',
-              borderColor: '#8C7FA8',
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
-            }}
-            title={
-              isMaxLevel
-                ? 'Đã đạt cấp Thị Trưởng tối đa'
-                : `${formatNumber(mayorXp)} / ${formatNumber(xpNeeded)} XP để lên cấp ${level + 1}\n` +
-                  `XP nhàn rỗi hôm nay: ${formatNumber(Math.round(idleXpToday))} / ${formatNumber(IDLE_XP_DAILY_CAP)}` +
-                  (idleXpCapped
-                    ? '\nĐã chạm trần ngày. Xây, nâng cấp và làm nhiệm vụ để tiếp tục lên cấp.'
-                    : '')
-            }
-          >
-            <div className="flex items-baseline justify-between gap-1.5">
-              <span className="whitespace-nowrap text-[12px] font-black uppercase leading-none tracking-wide text-violet-300">
-                Thị Trưởng
-              </span>
-              <span className="whitespace-nowrap font-pixel text-sm leading-none text-violet-100">
-                Lv.{level}
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: '#2A1A45' }}>
-              <div
-                className="h-full rounded-full transition-[width] duration-500"
-                style={{ width: `${xpPct}%`, background: 'linear-gradient(90deg,#8C7FA8,#B8307A)' }}
-              />
-            </div>
-            <p className="whitespace-nowrap text-[12px] font-black leading-none text-violet-300/80 tabular-nums">
-              {isMaxLevel
-                ? 'Cấp tối đa'
-                : idleXpCapped
-                  ? `${xpPct}% · hết XP nhàn rỗi`
-                  : `${xpPct}% · còn ${formatCompact(xpNeeded - mayorXp)} XP`}
-            </p>
-          </div>
         </div>
 
         {/* RIGHT: action buttons */}
@@ -940,10 +912,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             <Share2 size={14} />
           </button>
 
-          {/* Time of Day */}
-          <TimeOfDaySwitcher />
 
-          {/* Mayor profile */}
+          {/* Mayor profile - "Lv.X" nhỏ thay cho thanh XP tím đã bỏ khỏi header */}
           <button
             type="button"
             onClick={() => {
@@ -951,9 +921,10 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
               else { setIsPlaying(false); }
             }}
             className="flex h-9 items-center gap-1 rounded-lg border border-[#8B5E1A] bg-[#2A1305]/80 px-2 text-[12px] font-black text-amber-300 hover:border-[#C9A227]"
-            title={hasNamedCity ? 'Hồ Sơ Thị Trưởng' : 'Đăng Nhập'}
+            title={hasNamedCity ? `Hồ Sơ Thị Trưởng · Cấp ${level}` : 'Đăng Nhập'}
           >
             <Crown size={13} className="shrink-0 text-[#C9A227]" />
+            {hasNamedCity && <span className="text-violet-300">Lv.{level}</span>}
             <span className="hidden lg:inline">{hasNamedCity ? mayorName : 'Login'}</span>
           </button>
         </div>
@@ -965,11 +936,9 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           selected={selected}
           onSelect={handleSelect}
           onOpenRequest={handleOpenRequest}
-          onOpenEvent={handleOpenDialogue}
           onOpenBuildDrawer={() => setDrawerOpen(true)}
-          onOpenInspector={() => setInspectorOpen(true)}
+          orderQueues={orderQueues}
           cityScale={cityScale}
-          onChangeScale={setCityScale}
           onActiveRowChange={setActiveRow}
         />
         <ParticleEngine />
@@ -983,7 +952,16 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
             className="absolute inset-x-3 bottom-20 z-30 mx-auto max-w-2xl rounded-2xl border-2 border-[#78533D] bg-[#FFFDF7] p-3.5 sm:p-4 shadow-[0_16px_40px_rgba(20,12,8,0.45)]"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+              {/*
+                BUG: ten tiem vo thanh moi chu mot dong.
+                `min-w-0 flex-1` cho phep khoi nay co ve 0px vi `flex-wrap`
+                chi day khoi ben phai (`shrink-0`) xuong dong moi khi khoi nay
+                KHONG CON CHO CO - voi min-w-0 thi luon "con cho" (0px van hop
+                le), nen flex-wrap khong bao gio kich hoat va ten bi bop thanh
+                cot 1 tu/dong. Dat san mot be rong toi thieu de flex-wrap co
+                co so that su day khoi nut xuong dong khi khong du cho.
+              */}
+              <div className="flex min-w-[180px] flex-1 items-center gap-3">
                 <span
                   aria-hidden
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-[#78533D]"
@@ -1042,24 +1020,30 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
                 {selectedDef && selectedBuilding ? (
                   <>
-                    {!atMaxLevel && (
-                      <button
-                        type="button"
-                        onClick={handleUpgrade}
-                        disabled={!canAffordUpgrade}
-                        className={cn(
-                          'flex h-10 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black transition-all active:scale-95',
-                          canAffordUpgrade
-                            ? 'border-[#78533D] bg-[#D9A441] text-[#1C171A] hover:bg-[#FDE047]'
-                            : 'cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400',
-                        )}
-                      >
-                        <ArrowUpCircle size={15} className="shrink-0" />
-                        <span>+1 Cấp ({formatCompact(upgradeCost)} Xu)</span>
-                      </button>
+                    {gatedByMayor ? (
+                      <span className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-3 text-xs font-bold text-gray-500">
+                        🔒 Cần cấp Thị Trưởng {upgradeCap + 1} để nâng tiếp
+                      </span>
+                    ) : (
+                      !atMaxLevel && (
+                        <button
+                          type="button"
+                          onClick={handleUpgrade}
+                          disabled={!canAffordUpgrade}
+                          className={cn(
+                            'flex h-10 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black transition-all active:scale-95',
+                            canAffordUpgrade
+                              ? 'border-[#78533D] bg-[#D9A441] text-[#1C171A] hover:bg-[#FDE047]'
+                              : 'cursor-not-allowed border-gray-300 bg-gray-100 text-gray-400',
+                          )}
+                        >
+                          <ArrowUpCircle size={15} className="shrink-0" />
+                          <span>+1 Cấp ({formatCompact(upgradeCost)})</span>
+                        </button>
+                      )
                     )}
 
                     <button
@@ -1147,7 +1131,7 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
                     ? 'border-[#C9A227] bg-[#FFFBEB] text-[#3E2A1B] hover:bg-[#FEF3C7]'
                     : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400',
                 )}
-                title={canExpand ? `Mở Rộng Phố - ${formatCompact(derived.landCost)} Xu` : 'Mở Rộng Phố (chưa đủ Xu)'}
+                title={canExpand ? `Mở Rộng Phố - ${formatCompact(derived.landCost)}` : 'Mở Rộng Phố (chưa đủ tiền)'}
               >
                 <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#A8701F]' : 'text-gray-400')} />
                 <span className="text-[11px] font-black leading-none">Mở Rộng</span>
@@ -1286,7 +1270,8 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
         open={isPlaying && offline !== null}
         coins={offline?.coins ?? 0}
         elapsedMs={offline?.elapsedMs ?? 0}
-        capped={(offline?.elapsedMs ?? 0) > OFFLINE_CAP_MS}
+        orders={offline?.orders ?? 0}
+        capped={offline?.capped ?? false}
         onClaim={handleClaimOffline}
         onClose={handleClaimOffline}
       />
@@ -1298,7 +1283,6 @@ const firstTimeBonus = hasNamedCity ? 0 : LOGIN_BONUS_COINS;
           totalRevenue={totalRevenue ?? 0}
           totalCoinsEarned={totalCoinsEarned ?? coins}
           coinsPerSec={derived.rate}
-          buildingCount={buildings.length}
           mayorLevel={level}
           onClose={() => setShareOpen(false)}
         />

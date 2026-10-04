@@ -8,17 +8,6 @@ import {
   calculateTuiThanTaiInterest,
   calculateInsuranceCoverage,
 } from './city-calculator';
-import {
-  takeLoan,
-  repayLoan,
-  transferToPersonalWealth,
-  depositToWorkingCapital,
-  depositToTuiThanTai,
-  withdrawFromTuiThanTai,
-  buyMoMoInsurance,
-  triggerHazardEvent,
-  processFraudCheckForBuilding,
-} from './store';
 import type { BuildingNode } from './types';
 
 describe('Luật Chơi Tài Chính MoCity (Financial Game Rules)', () => {

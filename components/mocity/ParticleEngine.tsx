@@ -20,7 +20,7 @@ interface Particle {
   targetY?: number;
 }
 
-let activeParticles: Particle[] = [];
+const activeParticles: Particle[] = [];
 const MAX_PARTICLES = 200;
 
 function addParticle(p: Partial<Particle>) {
@@ -190,7 +190,7 @@ export default function ParticleEngine() {
       let rot = Math.PI / 2 * 3;
       let x = cx;
       let y = cy;
-      let step = Math.PI / spikes;
+      const step = Math.PI / spikes;
 
       ctx.beginPath();
       ctx.moveTo(cx, cy - outerRadius);

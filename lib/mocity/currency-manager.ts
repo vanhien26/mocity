@@ -1,7 +1,7 @@
 import type { Currencies, CurrencyKey } from './types';
 
 export function canAfford(wallet: Currencies, cost: Partial<Currencies>): boolean {
-  return (Object.keys(cost) as CurrencyKey[]).every((key) => wallet[key] >= (cost[key] ?? 0));
+  return (Object.keys(cost) as CurrencyKey[]).every((key) => (wallet[key] ?? 0) >= (cost[key] ?? 0));
 }
 
 /**
@@ -13,7 +13,7 @@ export function spend(wallet: Currencies, cost: Partial<Currencies>): Currencies
 
   const next = { ...wallet };
   for (const key of Object.keys(cost) as CurrencyKey[]) {
-    next[key] -= cost[key] ?? 0;
+    next[key] = (next[key] ?? 0) - (cost[key] ?? 0);
   }
   return next;
 }
@@ -21,7 +21,7 @@ export function spend(wallet: Currencies, cost: Partial<Currencies>): Currencies
 export function earn(wallet: Currencies, gain: Partial<Currencies>): Currencies {
   const next = { ...wallet };
   for (const key of Object.keys(gain) as CurrencyKey[]) {
-    next[key] += gain[key] ?? 0;
+    next[key] = (next[key] ?? 0) + (gain[key] ?? 0);
   }
   return next;
 }

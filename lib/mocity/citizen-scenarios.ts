@@ -5,12 +5,14 @@
  * công nghệ 5G, không dùng tiền mặt) cho 12 cư dân đường phố MoCity.
  */
 
-export type FacialEmotion = 'HAPPY' | 'STAR_EYES' | 'SURPRISED' | 'TIRED';
+import type { FacialEmotion } from './character-appearance';
+
+export type { FacialEmotion };
 
 export interface CitizenDialogueOption {
   id: string;
   label: string;
-  cost?: number; // Số Xu Thị Trưởng biếu/tặng, mặc định 0 (miễn phí)
+  cost?: number; // Số đồng Thị Trưởng biếu/tặng, mặc định 0 (miễn phí)
   emotionOnSelect?: FacialEmotion;
   reply: string;
   /** Lộc may mắn NPC tặng lại cho Thị Trưởng nếu có */
@@ -41,7 +43,26 @@ export type FinanceTag =
   | 'TIET_KIEM'
   | 'LANH_VAY'
   | 'CHI_TIEU_VON'
-  | 'THUONG';
+  | 'THUONG'
+  /**
+   * An sinh và quỹ dự phòng.
+   *
+   * Thêm riêng cho Anh Ba: 12 tag cũ đã bị 12 cư dân gốc chiếm hết và test
+   * `chu de phu kin toan mot khai niem chinh` bắt mỗi cư dân một tag riêng.
+   * Đây cũng thật sự là khái niệm RIÊNG, không phải đổi tên của TIET_KIEM:
+   * tiết kiệm nói "để dành tiền sinh lời", an sinh nói "để dành tiền không
+   * để bản thân rơi xuống" - hai động cơ dùng cùng một con số.
+   */
+  | 'AN_SINH'
+  /**
+   * Thanh khoản - mức độ đổi ra tiền mặt được nhanh mà không mất giá.
+   *
+   * Thêm cho Cô Hai gánh ve chai: cô bán là có tiền trong ngày, nên đây là
+   * khái niệm của CHÍNH cô chứ không phải mượn tạm của TIET_KIEM. Tiết kiệm
+   * hỏi "để dành bao nhiêu", thanh khoản hỏi "rút ra kịp lúc nào" - hai câu
+   * khác nhau và câu thứ hai mới là thứ làm người ta vỡ nợ.
+   */
+  | 'THANH_KHOAN';
 
 /** Nhãn hiển thị + màu cho từng chỉ số. */
 export const FINANCE_TAG_META: Record<FinanceTag, { label: string; tone: 'good' | 'bad' | 'neutral' }> = {
@@ -57,6 +78,8 @@ export const FINANCE_TAG_META: Record<FinanceTag, { label: string; tone: 'good' 
   LANH_VAY: { label: 'Lãi vay', tone: 'bad' },
   CHI_TIEU_VON: { label: 'Chi tiêu vốn', tone: 'neutral' },
   THUONG: { label: 'Tiền thưởng', tone: 'neutral' },
+  AN_SINH: { label: 'An sinh & dự phòng', tone: 'bad' },
+  THANH_KHOAN: { label: 'Thanh khoản', tone: 'neutral' },
 };
 
 export interface CitizenScriptData {
@@ -148,7 +171,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'asst-coffee',
         financeTags: ['THUONG'],
-        label: '☕ Mời đồng chí ly cà phê 30 Xu bồi dưỡng',
+        label: '☕ Mời đồng chí ly cà phê 30 đồng bồi dưỡng',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -222,12 +245,12 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
           reason: 'Cô Tư biếu đĩa chả giò giòn rụm lót dạ',
         },
         particles: 'stars',
-        reply: 'Tối nay cô làm lẩu cá kèo lá giang với chả giò! Cô biếu Thị Trưởng đĩa chả giò ăn lấy thảo (+20 Xu), bữa nào rảnh ghé cô đãi ăn cơm nghen!',
+        reply: 'Tối nay cô làm lẩu cá kèo lá giang với chả giò! Cô biếu Thị Trưởng đĩa chả giò ăn lấy thảo (+20 đồng), bữa nào rảnh ghé cô đãi ăn cơm nghen!',
       },
       {
         id: 'cotu-gift',
         financeTags: ['THUONG'],
-        label: '🧧 Biếu cô 50 Xu mua thêm hoa quả tráng miệng',
+        label: '🧧 Biếu cô 50 đồng mua thêm hoa quả tráng miệng',
         cost: 50,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -296,11 +319,11 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         label: '🧋 Ly trà sữa hôm nay thế nào rồi em?',
         emotionOnSelect: 'HAPPY',
         financeTags: ['NPL'],
-        reply: 'Full topping trân châu phô mai nướng mà săn deal MoMo có 1 Xu, ngon nhức nách luôn Thị Trưởng ơi! Nhưng mà tháng nào em cũng trả sau hết, lãi quay về cắn vào ví á!',
+        reply: 'Full topping trân châu phô mai nướng mà săn deal MoMo có 1 đồng, ngon nhức nách luôn Thị Trưởng ơi! Nhưng mà tháng nào em cũng trả sau hết, lãi quay về cắn vào ví á!',
       },
       {
         id: 'benam-hotpot',
-        label: '🍕 Tặng em 40 Xu rủ nhóm bạn liên hoan lẩu',
+        label: '🍕 Tặng em 40 đồng rủ nhóm bạn liên hoan lẩu',
         cost: 40,
         emotionOnSelect: 'STAR_EYES',
         financeTags: ['NPL', 'OPEX'],
@@ -375,7 +398,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'thao-coffee',
         financeTags: ['THUONG'],
-        label: '☕ Mời chị ly cà phê muối 30 Xu chống buồn ngủ',
+        label: '☕ Mời chị ly cà phê muối 30 đồng chống buồn ngủ',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -450,7 +473,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'ongloc-tea',
         financeTags: ['THUONG'],
-        label: '🍵 Biếu ông 30 Xu uống ly trà đá nghỉ chân',
+        label: '🍵 Biếu ông 30 đồng uống ly trà đá nghỉ chân',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -517,7 +540,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'hoang-coffee',
         financeTags: ['THUONG'],
-        label: '☕ Mời ly cà phê đen đá 30 Xu cho tỉnh táo',
+        label: '☕ Mời ly cà phê đen đá 30 đồng cho tỉnh táo',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -527,7 +550,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         id: 'hoang-finance',
         financeTags: ['TIET_KIEM','LOI_NHUAN'],
         label: '💸 Dân IT quản lý tài chính thế nào để không cháy túi?',
-        emotionOnSelect: 'HAPPY',
+        emotionOnSelect: 'SMUG',
         reply: 'Lương về là em bắn 50% vào Chứng Chỉ Quỹ và Túi Thần Tài để sinh lời kép, còn tiền ăn uống thì quét QR phân loại chi tiêu tự động!',
       },
     ],
@@ -592,18 +615,18 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         id: 'baongoc-promo',
         financeTags: ['DOANH_THU','OPEX'],
         label: '🌟 Lên video quảng bá cho khu phố mình nha em!',
-        emotionOnSelect: 'STAR_EYES',
+        emotionOnSelect: 'MONEY_EYES',
         rewardBonus: {
           coins: 20,
           reason: 'Bảo Ngọc trích hoa hồng video tài trợ phố',
         },
         particles: 'stars',
-        reply: 'Nhận kèo liền Thị Trưởng ơi! Em sẽ làm series "MoCity đi là mê" giật tít triệu view, tặng Thị Trưởng 20 Xu tiền hoa hồng lan tỏa (+20 Xu)!',
+        reply: 'Nhận kèo liền Thị Trưởng ơi! Em sẽ làm series "MoCity đi là mê" giật tít triệu view, tặng Thị Trưởng 20 đồng tiền hoa hồng lan tỏa (+20 đồng)!',
       },
       {
         id: 'baongoc-tea',
         financeTags: ['THUONG'],
-        label: '🧋 Tặng em 30 Xu mua ly trà sữa bồi dưỡng quay clip',
+        label: '🧋 Tặng em 30 đồng mua ly trà sữa bồi dưỡng quay clip',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -650,7 +673,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         id: 'chubay-karaoke',
         financeTags: ['OPEX'],
         label: '🎤 Vụ loa kéo karaoke nửa đêm chú xử lý êm đẹp không?',
-        emotionOnSelect: 'HAPPY',
+        emotionOnSelect: 'SLEEPY',
         reply: 'Chú tới vận động tình cảm: "Mấy chú hát hay nhưng để dành giọng mai thi Vietnam Idol, giờ cho bà con ngủ!". Thế là họ tắt loa, chuyển sang mở app MoMo nghe nhạc êm dịu, xóm làng lại yên bình!',
       },
       {
@@ -664,13 +687,13 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         id: 'chubay-traffic',
         financeTags: ['OPEX'],
         label: '🚗 Bà con khu mình chấp hành phạt nguội qua camera ra sao chú?',
-        emotionOnSelect: 'STAR_EYES',
+        emotionOnSelect: 'ANGRY',
         reply: 'Từ ngày có đèn tín hiệu giao thông đếm số ở ngã tư, không ai dám vượt đèn đỏ nữa! Ai bị phạt là tra cứu nộp phạt trực tuyến trên MoMo luôn, tiện lợi minh bạch!',
       },
       {
         id: 'chubay-fund',
         financeTags: ['THUONG'],
-        label: '🤝 Biếu chú 50 Xu đóng góp quỹ khuyến học của tổ',
+        label: '🤝 Biếu chú 50 đồng đóng góp quỹ khuyến học của tổ',
         cost: 50,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -731,7 +754,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         id: 'bactai-gasoline',
         financeTags: ['OPEX'],
         label: '⛽ Giá xăng dầu biến động vầy bác tiết kiệm chi phí kiểu gì?',
-        emotionOnSelect: 'HAPPY',
+        emotionOnSelect: 'CRYING',
         reply: 'Bác dùng tính năng đổ xăng thanh toán PVOIL/Petrolimex trên MoMo tích điểm đổi voucher giảm 20.000đ mỗi bình! Tích tiểu thành đại, tháng cũng đỡ được cả triệu bạc đó Thị Trưởng!',
       },
       {
@@ -744,7 +767,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'bactai-gas',
         financeTags: ['OPEX'],
-        label: '⛽ Biếu bác 40 Xu hỗ trợ bình xăng chạy xe',
+        label: '⛽ Biếu bác 40 đồng hỗ trợ bình xăng chạy xe',
         cost: 40,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -818,15 +841,15 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'xoi-buy',
         financeTags: ['CHI_TIEU_VON'],
-        label: '🎁 Mua ủng hộ chị gói xôi 30 Xu ăn sáng',
+        label: '🎁 Mua ủng hộ chị gói xôi 30 đồng ăn sáng',
         cost: 30,
-        emotionOnSelect: 'STAR_EYES',
+        emotionOnSelect: 'MONEY_EYES',
         rewardBonus: {
           coins: 15,
           reason: 'Chị Hàng Rong thối lại tiền lộc đầu ngày',
         },
         particles: 'coin',
-        reply: 'Dạ em gói lá chuối nóng hổi, rắc thêm muối mè hành phi giòn rụm cho Thị Trưởng đây! Em gửi lại Thị Trưởng 15 Xu tiền lộc đầu ngày (+15 Xu) chúc may mắn!',
+        reply: 'Dạ em gói lá chuối nóng hổi, rắc thêm muối mè hành phi giòn rụm cho Thị Trưởng đây! Em gửi lại Thị Trưởng 15 đồng tiền lộc đầu ngày (+15 đồng) chúc may mắn!',
       },
       {
         id: 'xoi-dream',
@@ -896,7 +919,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'bean-milk',
         financeTags: ['GIA_VON'],
-        label: '🧃 Cho con 20 Xu mua hộp sữa tươi uống ra chơi nè',
+        label: '🧃 Cho con 20 đồng mua hộp sữa tươi uống ra chơi nè',
         cost: 20,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -906,13 +929,13 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         id: 'bean-heodat',
         financeTags: ['THUONG','TIET_KIEM'],
         label: '🚲 Tiền tiêu vặt con để dành trong Heo Đất được bao nhiêu rồi?',
-        emotionOnSelect: 'STAR_EYES',
+        emotionOnSelect: 'MONEY_EYES',
         rewardBonus: {
           coins: 10,
           reason: 'Bé An chia sẻ lộc Heo Đất mập mạp',
         },
         particles: 'stars',
-        reply: 'Dạ con để dành được hơn nửa chiếc xe đạp mới rồi chú! Con tặng chú 10 Xu lộc Heo Đất may mắn (+10 Xu), chúc chú luôn vui vẻ nha!',
+        reply: 'Dạ con để dành được hơn nửa chiếc xe đạp mới rồi chú! Con tặng chú 10 đồng lộc Heo Đất may mắn (+10 đồng), chúc chú luôn vui vẻ nha!',
       },
     ],
   },
@@ -946,7 +969,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         emotion: 'HAPPY',
       },
       {
-        text: 'Tin vui thời sự: Trường học quanh khu phố mình vừa nhận chứng nhận Chuyển Đổi Số Xuất Sắc, 100% học phí không dùng tiền mặt!',
+        text: 'Tin vui thời sự: Trường học quanh khu phố mình vừa nhận chứng nhận Chuyển Đổi Số đồngất Sắc, 100% học phí không dùng tiền mặt!',
         emotion: 'STAR_EYES',
       },
     ],
@@ -975,7 +998,7 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
       {
         id: 'colinh-tea',
         financeTags: ['THUONG'],
-        label: '🍵 Mời cô ly trà hoa cúc 30 Xu thanh nhiệt nhuận giọng',
+        label: '🍵 Mời cô ly trà hoa cúc 30 đồng thanh nhiệt nhuận giọng',
         cost: 30,
         emotionOnSelect: 'STAR_EYES',
         particles: 'coin',
@@ -987,6 +1010,203 @@ export const CITIZEN_SCRIPTS: Record<string, CitizenScriptData> = {
         label: '🏫 Khu phố mình cần thêm tiện ích gì cho giáo dục không cô?',
         emotionOnSelect: 'STAR_EYES',
         reply: 'Nếu có thể, em mong khu phố mở thêm một "Tủ Sách Cộng Đồng" ở vỉa hè để các em nhỏ có chỗ đọc sách miễn phí mỗi buổi chiều!',
+      },
+    ],
+  },
+  // 13. ANH BA - NGƯỜI NGỒI VỈA HÈ
+  /*
+   * Nhan vat duy nhat khong phai khach hang. Khong co tiem, khong co hang,
+   * khong co doanh thu - chi co cau chuyen ve cai khong co duoc quy du phong.
+   *
+   * `financeTheme` van la TIET_KIEM vi do bai hoc that cua nhan vat nay: khong
+   * phai "lam sao tien sinh loi" ma "khong co tien du thi mot bien co nho cung
+   * dua ban ra duong". Day la mat xoay nguoc cua cung mot quy tuyen, va no
+   * giup hai ben cua quyen doc la mot.
+   *
+   * `rewardBonus` la VI: anh Ba dua lai mot dong loc trong bat - tien ba con
+   * thuong cho anh, anh chia mot it cho thi truong. Noi qua `claimTapReward`
+   * (chay vao `totalTapIncome`), KHONG qua `recordTransactions`: cho tien la
+   * chi tieu ca nhan cua thi truong, khong phai doanh thu cua khoi.
+   */
+  'cit-an-xin': {
+    id: 'cit-an-xin',
+    name: 'Anh Ba',
+    role: 'Ngồi Vỉa Hè',
+    financeTheme: {
+      tag: 'AN_SINH',
+      title: 'Quỹ dự phòng',
+      lesson:
+        'Anh Ba từng có tiệm. Một trận ốm, một khoản nợ không trả kịp, và chỗ ngồi trên vỉa hè thay cho quầy thu ngân. Trích 10-20% thu nhập vào quỹ khẩn cấp TRƯỚC khi nghĩ tới đầu tư: quỹ đó không sinh lời, nhưng nó giữ bạn khỏi rơi xuống đây.',
+    },
+    greetings: [
+      {
+        text: 'Thị Trưởng sáng sớm đã đi kiểm phố rồi à? Tui ngồi đây suốt đêm, phố mình sáng lên từng ngày thật.',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Bát tui giờ không nặng như hôm qua nữa, được mấy cháu trong xóm để vào mấy đồng lộc.',
+        emotion: 'HAPPY',
+      },
+      {
+        text: 'Trời nắng gắt quá, ngồi đây cả đêm người rã rời, Thị Trưởng có thừa ngụm nước nào không?',
+        emotion: 'CRYING',
+      },
+      {
+        text: 'Ngày trước tui cũng đứng bán sau quầy y như mấy anh chị kia. Giờ thì chỉ còn biết nhìn.',
+        emotion: 'SLEEPY',
+      },
+    ],
+    options: [
+      {
+        id: 'anxin-ask',
+        financeTags: ['AN_SINH'],
+        label: '🗣️ Sáng nay anh đã ăn gì chưa ạ?',
+        emotionOnSelect: 'CRYING',
+        reply:
+          'Từ tối qua tới giờ chưa có gì vào bụng. Bà cụ bán bánh mì đầu chợ thấy tui thì dúi cho một ổ, tui bẻ đôi chia lại cho ông cụ cũng đang chờ ở bên kia. Xã hội chẳng giàu, nhưng cái ổ bánh thì chia được.',
+      },
+      {
+        id: 'anxin-bread',
+        financeTags: ['AN_SINH'],
+        label: '🥖 Biếu anh 20 đồng mua ổ bánh mì',
+        cost: 20,
+        emotionOnSelect: 'MONEY_EYES',
+        rewardBonus: {
+          coins: 5,
+          reason: 'Anh Ba chia lại đồng lộc trong bát',
+        },
+        particles: 'coin',
+        reply:
+          'Trời ơi cảm ơn Thị Trưởng! 20 đồng mua được hai ổ, tui ăn một ổ, ổ kia để dành trưa. Bát tui có vài đồng ba con thương, tui để lại 5 đồng lộc cho Thị Trưởng, cầu chúc làm ăn thuận buồm xuôi gió! (+5 đồng)',
+      },
+      {
+        id: 'anxin-coin',
+        financeTags: ['THUONG'],
+        label: '🪙 Bố thí 10 đồng thẳng vào bát',
+        cost: 10,
+        emotionOnSelect: 'HAPPY',
+        rewardBonus: {
+          coins: 3,
+          reason: 'Đồng lộc tí hon từ bát xin',
+        },
+        particles: 'coin',
+        reply:
+          'Được 10 đồng tui mừng lắm rồi Thị Trưởng ơi. Đủ mua nắm cơm tấm bên chợ. Tui lật bát lấy lại 3 đồng lộc - của ít lòng nhiều, nhận lộc rồi làm ăn mau phát đấy! (+3 đồng)',
+      },
+      {
+        id: 'anxin-why',
+        financeTags: ['NPL'],
+        label: '😟 Vì sao anh lại ra nông nỗi này?',
+        emotionOnSelect: 'TIRED',
+        reply:
+          'Hồi đó tui có tiệm tạp hoá nho nhỏ. Ổn tới khi mẹ ốm nặng, tiền thuốc bay hết, tui vay nóng để xoay, rồi lãi mẹ đẻ lãi con. Bán tiệm vẫn không đủ trả. Bài học của tui đắt lắm: giữ sẵn vài tháng chi tiêu phòng thân, đừng bao giờ để mạng sống của mình phụ thuộc vào một khoản vay.',
+      },
+      {
+        id: 'anxin-job',
+        financeTags: ['AN_SINH'],
+        label: '🌿 Biết chỗ nào cần người nhặt ve chai không anh?',
+        emotionOnSelect: 'STAR_EYES',
+        reply:
+          'Có! Đầu chợ mỗi sáng có cô gánh ve chai, quét sạch ve chai chai lọ khu mình rồi chở đi bán. Tui tính xin vào phụ khi nào khoẻ lại. Sức vẫn còn thì vẫn còn cách, Thị Trưởng nhỉ?',
+      },
+    ],
+  },
+
+  /**
+   * CO GANH VE CHAI - khach hang NHUNG khong phai khach hang cua tiem.
+   *
+   * Anh Ba ngoi xin thi khong doi xuc gi. Co Hai la nguoi DI VE: mang phelieu
+   * ban lay tien mat ngay trong ngay, van co the vao tiem mua duoc, nen van
+   * di bo va van xep hang duoc. `speed: 0.17` - cham nhat pho vi dang GANH,
+   * khong phai dang di dao.
+   *
+   * Chu de RIENG `THANH_KHOAN`, khong dung lai tren TIET_KIEM: tiet kiem hoi
+   * "de danh bao nhieu", thanh khoan hoi "rut ra duoc luc nao". Ca thu hai
+   * chinh la cau lam nguoi ta vo no, va co Hai la nguoi minh hoa cho no.
+   *
+   * `rewardBonus` hop le o day: THANH_KHOAN khong nam trong nhom rui ro lon
+   * (NPL/FRAUD/BAO_HIEM/LANH_VAY) nen khong bi cam tra tien thuong.
+   */
+  'cit-co-ve-chai': {
+    id: 'cit-co-ve-chai',
+    name: 'Cô Hai',
+    role: 'Gánh Ve Chai',
+    financeTheme: {
+      tag: 'THANH_KHOAN',
+      title: 'Thanh khoản',
+      lesson:
+        'Ve chai bán trong ngày là có tiền liền, không ai chịu để hàng ứ trong kho chờ lên giá. Thanh khoản - mức độ đổi ra tiền mặt nhanh mà không mất giá - quan trọng ngang lãi suất: tiền gắn chặt trong hàng hoá, bất động sản hay kỳ hạn dài thì lúc cần chi tiêu sẽ không rút ra kịp, và đó chính là lúc người ta phải vay nóng với lãi cắt cổ.',
+    },
+    greetings: [
+      {
+        text: 'Chào Thị Trưởng! Sáng nay gánh nặng hơn mọi ngày, mấy thùng carton đầu chợ đầy ắp.',
+        emotion: 'HAPPY',
+      },
+      {
+        text: 'Giá phế liệu giờ niêm yết đàng hoàng đấy, thế giới lên thì bà con mình sống theo.',
+        emotion: 'SMUG',
+      },
+      {
+        text: 'Đi cả buổi mới gom được một gánh. Tiền vào túi là còn tiền, bỏ trong kho thì chưa.',
+        emotion: 'TIRED',
+      },
+      {
+        text: 'Nghề này trông nhếch nhác mà tiền quay vòng nhanh lắm, chốt mối là có ngay.',
+        emotion: 'STAR_EYES',
+      },
+    ],
+    options: [
+      {
+        id: 'vechai-ask',
+        financeTags: ['THANH_KHOAN'],
+        label: '🌿 Hôm nay gánh được gì rồi cô?',
+        emotionOnSelect: 'HAPPY',
+        reply:
+          'Đủ một gánh chai nhựa, nửa gánh sắt vụn với mấy thùng carton. Đem cân đầu chợ là ra tiền liền, không chờ ai duyệt, không chờ kỳ tất toán. Nghề cô nghèo nhưng không bao giờ mắc nợ vì tiền nằm ứ trong kho.',
+      },
+      {
+        id: 'vechai-buy',
+        financeTags: ['THANH_KHOAN'],
+        label: '📦 Mua một bọc giấy vụn 15 đồng',
+        cost: 15,
+        emotionOnSelect: 'MONEY_EYES',
+        rewardBonus: {
+          coins: 4,
+          reason: 'Cô Hai cho thêm mẩu sắt nhẹ',
+        },
+        particles: 'coin',
+        reply:
+          'Cô lấy 15 đồng thôi, thêm cái mẩu sắt này nữa coi như lộc. Giấy cô cân bán đầu chợ là có tiền ngay, không ứ lại đồng nào. (+4 đồng)',
+      },
+      {
+        id: 'vechai-price',
+        financeTags: ['DOANH_THU'],
+        label: '📉 Vì sao hôm nay giá giấy lại thấp vậy cô?',
+        emotionOnSelect: 'TIRED',
+        reply:
+          'Giá phế liệu bám theo giá thế giới, có tuần lên có tuần tụt không lý do. Cả đời cô bán theo giá người ta niêm yết, không bao giờ đặt được giá của mình. Bài học của dân làm nghề này: doanh thu phụ thuộc thị trường thì phải tính cả tuần ế, chứ không được chỉ tính ngày đẹp trời.',
+      },
+      {
+        id: 'vechai-hold',
+        financeTags: ['THANH_KHOAN'],
+        label: '🏦 Sao cô không để dành chờ giá lên rồi mới bán?',
+        emotionOnSelect: 'SMUG',
+        reply:
+          'Có người khuyên cô như vậy đấy. Nhưng để thêm tháng nữa thì gánh đầy nhà, ẩm mốc mối mọt đi hết giá, còn tiền thuốc cho cháu thì không chờ được. Bán lỗ còn hơn ứ hàng: tiền cầm tay mới là tiền, hàng để trong kho chỉ là niềm tin.',
+      },
+      {
+        id: 'vechai-tip',
+        financeTags: ['THUONG'],
+        label: '💛 Bo cô 25 đồng cho đỡ nặng gánh',
+        cost: 25,
+        emotionOnSelect: 'STAR_EYES',
+        rewardBonus: {
+          coins: 6,
+          reason: 'Cô Hai mời lại lon nước',
+        },
+        particles: 'coin',
+        reply:
+          'Trời ơi cảm ơn Thị Trưởng! Cô xin 6 đồng lon nước lại đây, đi gánh cả ngày khát lắm. Tiền cô cũng quay vòng cả ngày rồi - nhận của người ta rồi lại trả cho người ta, phố mình nó vậy. (+6 đồng)',
       },
     ],
   },

@@ -55,9 +55,12 @@ export function useTrafficController(timeOfDay: TimeOfDay): TrafficState {
 
   // Cập nhật thời gian đếm ngược khi pha thay đổi
   useEffect(() => {
-    if (phase === 'GREEN') setCountdown(GREEN_DURATION);
-    else if (phase === 'YELLOW') setCountdown(YELLOW_DURATION);
-    else if (phase === 'RED') setCountdown(RED_DURATION);
+    const id = requestAnimationFrame(() => {
+      if (phase === 'GREEN') setCountdown(GREEN_DURATION);
+      else if (phase === 'YELLOW') setCountdown(YELLOW_DURATION);
+      else if (phase === 'RED') setCountdown(RED_DURATION);
+    });
+    return () => cancelAnimationFrame(id);
   }, [phase]);
 
   // Đổi đèn thủ công khi người chơi click vào cột đèn

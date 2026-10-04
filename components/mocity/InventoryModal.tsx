@@ -8,7 +8,6 @@ import {
   MessageCircleHeart,
   ShoppingBag,
   Sparkles,
-  Star,
   Users,
   X,
 } from 'lucide-react';
@@ -18,13 +17,13 @@ import {
   buyInventoryItem,
   claimTapReward,
   useCity,
-  useInventoryItem,
+  applyInventoryItem,
 } from '@/lib/mocity/store';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import type { InventoryItemDef } from '@/lib/mocity/types';
 import { cn } from '@/lib/cn';
 
-/** Xu moi luoi chuyen voi 1 co van. Han 60s nen khong farm duoc. */
+/** đồng moi luoi chuyen voi 1 co van. Han 60s nen khong farm duoc. */
 const ADVISOR_TAP_COINS = 300;
 const ADVISOR_TAP_COOLDOWN_MS = 60_000;
 
@@ -50,7 +49,7 @@ const STREET_HERO_DIALOGUES: Record<string, string[]> = {
     '“Có Ví Trả Sau dự phòng, lỡ xe có mòn lốp giữa tháng cũng ghé tiệm sửa liền không lo đứt bữa chạy đơn!”',
   ],
   'advisor-giao-su-khai': [
-    '“Dòng tiền trong Đô Thị MoCity đang luân chuyển cực kỳ khỏe! Mỗi đồng Xu nhàn rỗi trong Túi Thần Tài đều đang sinh lãi kép mỗi giây.”',
+    '“Dòng tiền trong Đô Thị MoCity đang luân chuyển cực kỳ khỏe! Mỗi đồng đồng nhàn rỗi trong Túi Thần Tài đều đang sinh lãi kép mỗi giây.”',
     '“Bí quyết của các Siêu Đô Thị là giữ hệ số bao phủ lãi vay trên 1,5 — vay thông minh chứ không vay vô tội vạ!”',
     '“Khi Sàn Chứng Khoán đặt cạnh Tháp Tài Chính MoMo, hiệu ứng cộng hưởng tài chính sẽ đạt đỉnh cao!”',
   ],
@@ -59,8 +58,8 @@ const STREET_HERO_DIALOGUES: Record<string, string[]> = {
     '“Một thành phố kiểu mẫu luôn có Công Viên Sinh Thái nằm giữa Khu Dân Cư và Khu Thương Mại.”',
   ],
   'advisor-hung': [
-    '“Đừng để Xu nằm im! Hãy dùng Bản Vẽ Quy Hoạch Cấp Tốc trong Kho Đồ để đồng loạt nâng tầng các cửa tiệm chủ lực.”',
-    '“Mỗi khi tiệm đạt mốc Cấp 5 và Cấp 10, sản lượng Xu mỗi giây sẽ được nhân đột phá!”',
+    '“Đừng để đồng nằm im! Hãy dùng Bản Vẽ Quy Hoạch Cấp Tốc trong Kho Đồ để đồng loạt nâng tầng các cửa tiệm chủ lực.”',
+    '“Mỗi khi tiệm đạt mốc Cấp 5 và Cấp 10, sản lượng đồng mỗi giây sẽ được nhân đột phá!”',
   ],
   'advisor-heo-vang': [
     '“Ủn ỉn! Bấm mở Bao Lì Xì Lộc Phát 68 trong Kho Đồ để rước ngay 18 Kim Cương lộc lá nào Thị Trưởng ơi!”',
@@ -101,7 +100,7 @@ export default function InventoryModal({
   );
 
   const handleUse = (item: InventoryItemDef) => {
-    const res = useInventoryItem(item.id);
+    const res = applyInventoryItem(item.id);
     onToast(res.message);
   };
 
@@ -117,7 +116,7 @@ export default function InventoryModal({
     const nextLine = pool[Math.floor(Math.random() * pool.length)];
     setActiveHeroSpeech((prev) => ({ ...prev, [advisorId]: nextLine }));
 
-    // Han 60s: 8 co van x 2.500 Xu + 35% ro do la 20.000 Xu/phut vo han.
+    // Han 60s: 8 co van x 2.500 đồng + 35% ro do la 20.000 đồng/phut vo han.
     const result = claimTapReward('advisor', ADVISOR_TAP_COINS, {
       cooldownMs: ADVISOR_TAP_COOLDOWN_MS,
       itemChance: 0.1,
@@ -130,10 +129,10 @@ export default function InventoryModal({
 
     if (result.itemId) {
       onToast(
-        `${advisorName} vừa trò chuyện, tặng Thị Trưởng +${formatCompact(ADVISOR_TAP_COINS)} Xu & 1 Ly Trà Sữa vào Kho Đồ!`,
+        `${advisorName} vừa trò chuyện, tặng Thị Trưởng +${formatCompact(ADVISOR_TAP_COINS)} đồng & 1 Ly Trà Sữa vào Kho Đồ!`,
       );
     } else {
-      onToast(`${advisorName}: Đã trò chuyện & nhận +${formatCompact(ADVISOR_TAP_COINS)} Xu Lộc Phố Phường!`);
+      onToast(`${advisorName}: Đã trò chuyện & nhận +${formatCompact(ADVISOR_TAP_COINS)} đồng Lộc Phố Phường!`);
     }
   };
 
@@ -172,7 +171,7 @@ export default function InventoryModal({
                 Kho Đồ Thị Trưởng & Nhân Vật Phố Thị
               </h2>
               <p className="truncate text-xs font-bold text-[#E6D5B8]">
-                Ngân khố: {formatNumber(state.coins)} Xu · {state.gems} Kim Cương
+                Ngân khố: {formatNumber(state.coins)} · {state.gems} Kim Cương
               </p>
             </div>
           </div>
@@ -328,7 +327,7 @@ export default function InventoryModal({
                         >
                           <CircleDollarSign size={12} className="shrink-0 text-[#D97706]" />
                           <span>
-                            Mua thêm ({formatCompact(item.costCoins)} Xu
+                            Mua thêm ({formatCompact(item.costCoins)} đồng
                             {item.costGems > 0 ? ` + ${item.costGems} KC` : ''})
                           </span>
                         </button>
@@ -352,7 +351,7 @@ export default function InventoryModal({
                   8 Nhân Vật Tiêu Biểu & Cố Vấn Khu Phố MoCity
                 </p>
                 <p className="mt-0.5 text-[13px] font-bold text-[#92400E] break-words">
-                  Bấm “Trò Chuyện & Nhận Lộc” để nghe chuyện đời thường vui nhộn quanh phố, nhận ngay +{formatCompact(ADVISOR_TAP_COINS)} Xu và cơ hội rơi Vật Phẩm vào Kho Đồ (mỗi Cố vấn nghỉ 60 giây giữa hai lượt)!
+                  Bấm “Trò Chuyện & Nhận Lộc” để nghe chuyện đời thường vui nhộn quanh phố, nhận ngay +{formatCompact(ADVISOR_TAP_COINS)} đồng và cơ hội rơi Vật Phẩm vào Kho Đồ (mỗi Cố vấn nghỉ 60 giây giữa hai lượt)!
                 </p>
               </div>
 
@@ -389,7 +388,7 @@ export default function InventoryModal({
                           className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl border-2 border-[#9D174D] bg-[#D82D8B] px-3.5 text-xs font-black text-white shadow hover:bg-[#EB2F96] active:scale-95"
                         >
                           <MessageCircleHeart size={14} className="shrink-0" />
-                          <span>Trò Chuyện (+{formatCompact(ADVISOR_TAP_COINS)} Xu)</span>
+                          <span>Trò Chuyện (+{formatCompact(ADVISOR_TAP_COINS)})</span>
                         </button>
                       </div>
 

@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { SERVICE_LABEL, SERVICE_TOOL } from '@/lib/mocity/npc-data';
 import { formatCompact } from '@/lib/mocity/format';
 import type { ConsequenceTag, DialogueChoice } from '@/lib/mocity/types';
+import { appearanceFromSeed } from '@/lib/mocity/character-appearance-gen';
+import CharacterPanel from '@/components/mocity/CharacterPanel';
+import { ChibiBody } from '@/components/mocity/ChibiRenderer';
 
 export interface DialogueView {
   title: string;
@@ -13,91 +16,27 @@ export interface DialogueView {
   speaker: string;
   speakerTag?: string;
   body: string;
-  hue: string;
   choices: DialogueChoice[];
 }
 
-/** Ve Avatar Chibi net ve tay theo ten nhan vat (Ong Loc, Co Tu, Anh Lam, Chi Mai...) */
+/**
+ * Avatar NPC trong hội thoại - DÙNG CHUNG `ChibiBody` với cư dân trên phố.
+ *
+ * Trước đây hàm này tự vẽ riêng một bộ mặt (vòng cung mắt, tóc búi/mũ lưỡi
+ * trai net vẽ tay) không khớp phong cách nón lá/mắt tròn/má hồng đã chốt làm
+ * chuẩn cho TOÀN BỘ người trong game. Giờ chỉ còn việc chọn diện mạo xác định
+ * theo tên (`appearanceFromSeed`) rồi giao `ChibiBody` vẽ - cùng một nhân vật
+ * tên "Cô Tư" mở hội thoại 10 lần vẫn ra đúng một khuôn mặt.
+ */
 function ChibiNpcAvatar({ speaker }: { speaker: string }) {
-  const lower = speaker.toLowerCase();
-  const isElder = lower.includes('lộc') || lower.includes('bảy') || lower.includes('tổ');
-  const isWoman = lower.includes('tư') || lower.includes('ba') || lower.includes('thảo') || lower.includes('mai');
-
+  const appearance = appearanceFromSeed(speaker);
   return (
     <div
-      className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2"
+      className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2"
       style={{ borderColor: '#6E5A47', background: '#FAF3E3' }}
     >
-      <svg viewBox="0 0 48 48" className="h-11 w-11">
-        {/* Co & Vai ao */}
-        <path
-          d="M10 46 C10 37, 38 37, 38 46 Z"
-          fill={isElder ? '#D8C3A5' : isWoman ? '#E07A5F' : '#457B9D'}
-          stroke="#3D2C1E"
-          strokeWidth="1.8"
-        />
-        {/* Khuon mat tron chibi */}
-        <circle
-          cx="24"
-          cy="24"
-          r="12.5"
-          fill="#FCE4C8"
-          stroke="#3D2C1E"
-          strokeWidth="1.8"
-        />
-        {/* Ma hong */}
-        <ellipse cx="17.5" cy="26.5" rx="2.4" ry="1.3" fill="#F4A28C" opacity="0.75" />
-        <ellipse cx="30.5" cy="26.5" rx="2.4" ry="1.3" fill="#F4A28C" opacity="0.75" />
-
-        {/* Toc theo nhan vat */}
-        {isElder ? (
-          /* Toc bac xoan cua Ong Loc */
-          <path
-            d="M11.5 22 C10 14, 17 10, 24 10 C31 10, 38 14, 36.5 22 C34 17, 29 15, 24 15 C19 15, 14 17, 11.5 22 Z"
-            fill="#EFECE6"
-            stroke="#3D2C1E"
-            strokeWidth="1.7"
-          />
-        ) : isWoman ? (
-          /* Toc bui co Tu / chi Mai */
-          <>
-            <circle cx="24" cy="9.5" r="4.5" fill="#3D2C1E" />
-            <path
-              d="M11.5 23 C11 13, 17 11, 24 11 C31 11, 37 13, 36.5 23 C33 17, 15 17, 11.5 23 Z"
-              fill="#3D2C1E"
-            />
-          </>
-        ) : (
-          /* Toc gon / mu luoi trai Anh Lam */
-          <path
-            d="M11.5 21 C12 12, 18 10.5, 24 10.5 C30 10.5, 36 12, 36.5 21 C32 16, 16 16, 11.5 21 Z"
-            fill="#2C221E"
-          />
-        )}
-
-        {/* Mat cuoi hinh vong cung net ve tay */}
-        <path
-          d="M18 23.5 Q20 21.5 22 23.5"
-          fill="none"
-          stroke="#3D2C1E"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-        <path
-          d="M26 23.5 Q28 21.5 30 23.5"
-          fill="none"
-          stroke="#3D2C1E"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
-        {/* Mieng cuoi */}
-        <path
-          d="M21 28.2 Q24 30.8 27 28.2"
-          fill="none"
-          stroke="#3D2C1E"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-        />
+      <svg width="42" height="54" viewBox="0 0 56 72" className="overflow-visible" aria-hidden>
+        <ChibiBody def={appearance} emotion="HAPPY" />
       </svg>
     </div>
   );
@@ -161,7 +100,8 @@ export default function DialogueModal({
   const [picked, setPicked] = useState<DialogueChoice | null>(null);
 
   useEffect(() => {
-    setPicked(null);
+    const id = requestAnimationFrame(() => setPicked(null));
+    return () => cancelAnimationFrame(id);
   }, [view?.title, view?.body]);
 
   if (!view) return null;
@@ -174,80 +114,17 @@ export default function DialogueModal({
   const tool = picked?.effects.grantService ? SERVICE_TOOL[picked.effects.grantService] : null;
 
   return (
-    <>
-      {/* Backdrop lam mo nhe */}
-      <div
-        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[2px]"
-        onClick={onClose}
-      />
-
-      {/* Khung The Tinh Huong Giay Kem (Chuan Quan Hang Pho) */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={view.title}
-        className="fixed inset-x-3 top-1/2 z-[61] mx-auto max-w-[460px] -translate-y-1/2 rounded-[22px] p-1.5 shadow-2xl sm:inset-x-6 max-h-[92dvh] overflow-hidden flex flex-col"
-        style={{
-          background: '#FAF6E9',
-          border: '3px solid #7A6855',
-          boxShadow: '0 20px 50px rgba(34, 24, 16, 0.45)',
-        }}
-      >
-        <div
-          className="rounded-[16px] border-2 px-4 py-4 sm:px-5 sm:py-5 overflow-y-auto flex-1 min-h-0"
-          style={{
-            borderColor: '#DFD5C0',
-            background: '#FBF8EE',
-          }}
-        >
-          {/* Tieu de lon + Dong phu nghieng */}
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p
-                className="text-[20px] font-black leading-tight tracking-tight sm:text-[23px]"
-                style={{ color: '#4A3525' }}
-              >
-                {view.title}
-              </p>
-              <p
-                className="mt-0.5 text-sm font-semibold italic"
-                style={{ color: '#7A6855' }}
-              >
-                {view.subtitle ?? 'Chuyện này chỉ mình bạn biết...'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/5"
-              style={{ color: '#7A6855' }}
-              aria-label="Đóng tình huống"
-            >
-              <X size={16} className="shrink-0" />
-            </button>
-          </div>
-
-          {/* Hang Avatar Chibi + Khung loi ke chuyen */}
-          <div className="mb-4 flex items-center gap-3">
-            <ChibiNpcAvatar speaker={view.speaker} />
-            <div
-              className="min-w-0 flex-1 rounded-2xl border px-3.5 py-2.5"
-              style={{
-                borderColor: '#DFD5C0',
-                background: '#F2ECE1',
-              }}
-            >
-              <p
-                className="text-[14.5px] font-semibold leading-relaxed"
-                style={{ color: '#5A4634' }}
-              >
-                {reply ?? view.body}
-              </p>
-            </div>
-          </div>
-
-          {/* Danh sach 3 Phuong an hoac Ket qua */}
-          <div className="flex flex-col gap-2.5">
+    <CharacterPanel
+      variant="dialogue"
+      title={view.title}
+      subtitle={view.subtitle ?? 'Chuyện này chỉ mình bạn biết...'}
+      badge={view.speakerTag}
+      avatar={<ChibiNpcAvatar speaker={view.speaker} />}
+      speech={reply ?? view.body}
+      onClose={onClose}
+    >
+      {/* Danh sach 3 Phuong an hoac Ket qua */}
+      <div className="flex flex-col gap-2.5">
             {reply ? (
               <>
                 {tool && (
@@ -348,9 +225,7 @@ export default function DialogueModal({
                 );
               })
             )}
-          </div>
-        </div>
       </div>
-    </>
+    </CharacterPanel>
   );
 }

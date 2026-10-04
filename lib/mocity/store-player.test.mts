@@ -39,7 +39,7 @@ describe('gan save theo tai khoan', () => {
     mocity.placeBuilding(0, 0, 'quan-ca-phe');
     await flush();
 
-    const savedA = ls.get('momo_city_v9_alice@momo.vn');
+    const savedA = ls.get('momo_city_v10_alice@momo.vn');
     assert.ok(savedA, 'save cua tai khoan A phai ton tai');
     assert.equal(JSON.parse(savedA).buildings.length, 1);
 
@@ -72,11 +72,11 @@ describe('gan save theo tai khoan', () => {
     await flush();
 
     assert.ok(
-      !ls.has('momo_city_v9_dave@momo.vn') || JSON.parse(ls.get('momo_city_v9_dave@momo.vn')!).buildings.length === 0,
+      !ls.has('momo_city_v10_dave@momo.vn') || JSON.parse(ls.get('momo_city_v10_dave@momo.vn')!).buildings.length === 0,
       'save cua tai khoan dang xoa phai sach',
     );
     assert.equal(
-      JSON.parse(ls.get('momo_city_v9_carol@momo.vn')!).buildings.length,
+      JSON.parse(ls.get('momo_city_v10_carol@momo.vn')!).buildings.length,
       1,
       'save cua tai khoan khac khong bi dong vao',
     );
@@ -98,7 +98,7 @@ describe('sao luu / khoi phuc', () => {
     ls.clear();
     hydrateCity('frank@momo.vn');
     const parsed = JSON.parse(exportCitySave());
-    assert.equal(parsed.version, 9);
+    assert.equal(parsed.version, 10);
     assert.equal(parsed.pendingOffline, null, 'thue nghi khong duoc ghi ra file sao luu');
   });
 
@@ -106,7 +106,7 @@ describe('sao luu / khoi phuc', () => {
     ls.clear();
     hydrateCity('grace@momo.vn');
     mocity.placeBuilding(0, 0, 'quan-ca-phe');
-    mocity.placeBuilding(1, 0, 'sieu-thi');
+    mocity.placeBuilding(1, 0, 'quan-ca-phe');
 
     const backup = exportCitySave();
     resetCity();
@@ -167,7 +167,7 @@ describe('sao luu / khoi phuc', () => {
     });
 
     assert.equal(importCitySave(legacy), 'ok');
-    assert.equal(getCityState().version, 9);
+    assert.equal(getCityState().version, 10);
     assert.equal(getCityState().buildings.length, 1, 'giu nguyen tiem da xay');
     assert.equal(getCityState().coins, 9_999);
     assert.equal(getCityState().feverEverUsed, false, 'save v3 chua co field nay nen mac dinh false');
@@ -195,9 +195,9 @@ describe('phieu bao vui chuoi ngay - HANH VI THAT', () => {
     ls.clear();
     const pid = `shield-${seq++}@momo.vn`;
     ls.set(
-      `momo_city_v9_${pid}`,
+      `momo_city_v10_${pid}`,
       JSON.stringify({
-        version: 9,
+        version: 10,
         streak: { days, lastDay: ngayChoi, best: days, shields },
       }),
     );

@@ -30,8 +30,8 @@ function Spotlight({ anchor }: { anchor?: string }) {
 
   useEffect(() => {
     if (!anchor) {
-      setHop(null);
-      return;
+      const id = requestAnimationFrame(() => setHop(null));
+      return () => cancelAnimationFrame(id);
     }
     /*
      * Do lai theo nhip: thanh dock co the doi kich thuoc khi so lieu thay doi
@@ -42,10 +42,11 @@ function Spotlight({ anchor }: { anchor?: string }) {
       const el = document.querySelector<HTMLElement>(`[data-tour="${anchor}"]`);
       setHop(el ? el.getBoundingClientRect() : null);
     };
-    do_();
+    const id = requestAnimationFrame(do_);
     const t = setInterval(do_, 500);
     window.addEventListener('resize', do_);
     return () => {
+      cancelAnimationFrame(id);
       clearInterval(t);
       window.removeEventListener('resize', do_);
     };
@@ -97,8 +98,11 @@ export default function TutorialCoach({ hidden = false }: { hidden?: boolean }) 
 
   // Sang bước mới thì xoá trạng thái đã đọc của bước trước.
   useEffect(() => {
-    setDaDoc(false);
-    setHoiBoQua(false);
+    const id = requestAnimationFrame(() => {
+      setDaDoc(false);
+      setHoiBoQua(false);
+    });
+    return () => cancelAnimationFrame(id);
   }, [stepIndex]);
 
   /*

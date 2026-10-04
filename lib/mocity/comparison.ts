@@ -130,12 +130,12 @@ export function weekComparison(
   const danSoHomNay = homNay.danSo ?? 0;
   const lines: ComparisonLine[] = [
     {
-      label: 'Doanh thu vận hành',
+      label: 'Doanh thu gộp',
       homNay: homNay.revenue,
       kyTruoc: kyTruoc.revenue,
       chenhLech: percentChange(homNay.revenue, kyTruoc.revenue),
       trend: trendOf(percentChange(homNay.revenue, kyTruoc.revenue)),
-      donVi: 'Xu',
+      donVi: 'đồng',
     },
     {
       label: 'Lợi nhuận ròng',
@@ -143,7 +143,7 @@ export function weekComparison(
       kyTruoc: kyTruoc.netIncome,
       chenhLech: percentChange(homNay.netIncome, kyTruoc.netIncome),
       trend: trendOf(percentChange(homNay.netIncome, kyTruoc.netIncome)),
-      donVi: 'Xu',
+      donVi: 'đồng',
     },
   ];
 

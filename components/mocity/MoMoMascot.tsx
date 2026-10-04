@@ -56,7 +56,6 @@ const MASCOT_CSS = `
 
 function MascotSvg({ isWalking, holdingSign }: { isWalking: boolean; holdingSign: boolean }) {
   const bodyClass = isWalking ? 'momo-walk' : 'momo-idle';
-  const legClass = isWalking ? '' : 'hidden';
 
   return (
     <>
@@ -219,7 +218,9 @@ export default function MoMoMascot({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const boundRef = useRef(Math.max(420, streetWidth - 180));
-  boundRef.current = Math.max(420, streetWidth - 180);
+  useEffect(() => {
+    boundRef.current = Math.max(420, streetWidth - 180);
+  }, [streetWidth]);
   // Animation state in refs - không trigger re-render
   const simRef = useRef({
     x: Math.min(900, Math.max(420, streetWidth - 180)),

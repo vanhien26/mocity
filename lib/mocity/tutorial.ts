@@ -75,7 +75,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'han-muc-vay',
     title: 'Xem hạn mức vay của bạn',
-    how: 'Vẫn trong tab “Sổ Cái”, nhìn khối “Khoản vay Ngân Hàng Số MoMo” ở trên cùng.',
+    how: 'Vẫn trong tab “Sổ Cái”, nhìn khối “Khoản vay Ngân Hàng Số” ở trên cùng.',
     lesson:
       'Hạn mức tính theo khả năng trả nợ, không theo doanh thu: biên lợi nhuận mỏng thì vay được ít hơn dù bán bằng nhau. Và lãi phải trả đều đặn dù tháng đó buôn bán ra sao - vay được không có nghĩa là nên vay.',
     anchor: 'cityhall',

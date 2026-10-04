@@ -5,7 +5,7 @@ import type { CityEventScript } from './types';
  * Phạt nguội Cổng Dịch Vụ Công, Marathon Heo Vàng 1 triệu bước chân,
  * Sốt vé tàu Tết, Tổng kiểm tra bảo hiểm xe máy, Nắng nóng 40 độ sập điện,
  * Cơn sốt trả góp iPhone 0%, Giải vô địch lãi kép Thần Tài, Bô lão dưỡng sinh vs Gen Z hiphop,
- * Đại hồng thủy trà sữa 1 Xu, Sự cố trạm BOT không dừng, Hội chợ nông sản số,
+ * Đại hồng thủy trà sữa 1 đồng, Sự cố trạm BOT không dừng, Hội chợ nông sản số,
  * Trận mưa đá vỡ màn hình, Đêm hội hoa đăng từ thiện Trái Tim MoMo, Giải đấu Mobile Esports vỉa hè,
  * Bí kíp chi tiêu 50/30/20 bàn trà, Phượt thủ xuyên Việt 0 đồng tiền mặt,
  * Bảng điện tử chứng khoán tím ngắt, Bão biển bồi thường MoMo Travel, Tiệm vàng quét QR chỉ vàng,
@@ -23,11 +23,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'guide-national-portal',
-        text: 'Chi 600 XU mở điểm hướng dẫn nộp phạt giao thông online qua MoMo tại Tòa Thị Chính',
+        text: 'Chi 600 đồng mở điểm hướng dẫn nộp phạt giao thông online qua MoMo tại Tòa Thị Chính',
         costCoins: 600,
         btnTone: 'green',
         tags: [
-          { label: '-600 XU', tone: 'red' },
+          { label: '-600 đồng', tone: 'red' },
           { label: 'nộp phạt 1 chạm ++', tone: 'green' },
           { label: 'bà con yên lòng', tone: 'green' },
         ],
@@ -71,11 +71,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'sponsor-gold-pig-run',
-        text: 'Chi 900 XU lập 10 trạm tiếp nước điện giải & nhân đôi số bước chân quyên góp toàn phố',
+        text: 'Chi 900 đồng lập 10 trạm tiếp nước điện giải & nhân đôi số bước chân quyên góp toàn phố',
         costCoins: 900,
         btnTone: 'green',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'quyên góp 2 ngôi trường ++', tone: 'green' },
           { label: 'toàn dân tự hào', tone: 'green' },
         ],
@@ -113,17 +113,17 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     id: 'ev-sot-ve-tau-hoa-tet',
     title: 'Cơn Sốt Vé Tàu Hỏa Bắc Nam & Đêm Trắng Săn Vé Trên MoMo!',
     subtitle: 'Hàng ngàn lao động ngóng chờ tấm vé về quê sum vầy cùng gia đình...',
-    speaker: 'Bác Quý Cà Phê & Công Nhân Khu Chế Xuất',
+    speaker: 'Bác Quý Cà Phê & Công Nhân Khu Chế đồngất',
     body: 'Hệ thống đường sắt mở bán đợt vé tàu Tết cuối cùng. Rất nhiều cô chú công nhân không rành công nghệ sợ lỡ chuyến tàu về quê ăn Tết cùng con cháu. Thị Trưởng quyết định hỗ trợ thế nào?',
     minMayorLevel: 1,
     choices: [
       {
         id: 'support-train-tickets',
-        text: 'Chi 1.100 XU lập bàn hỗ trợ săn vé tàu MoMo Travel xuyên đêm kèm trợ giá 20%',
+        text: 'Chi 1.100 đồng lập bàn hỗ trợ săn vé tàu MoMo Travel xuyên đêm kèm trợ giá 20%',
         costCoins: 1100,
         btnTone: 'green',
         tags: [
-          { label: '-1.100 XU', tone: 'red' },
+          { label: '-1.100 đồng', tone: 'red' },
           { label: '100% công nhân có vé ++', tone: 'green' },
           { label: 'nước mắt sum vầy', tone: 'green' },
         ],
@@ -167,11 +167,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'grant-digital-insurance-kiosk',
-        text: 'Chi 750 XU mở quầy cấp Bảo Hiểm Xe Máy MoMo Điện Tử lưu ví tức thì cho toàn dân',
+        text: 'Chi 750 đồng mở quầy cấp Bảo Hiểm Xe Máy MoMo Điện Tử lưu ví tức thì cho toàn dân',
         costCoins: 750,
         btnTone: 'green',
         tags: [
-          { label: '-750 XU', tone: 'red' },
+          { label: '-750 đồng', tone: 'red' },
           { label: 'chứng nhận số chuẩn bộ ++', tone: 'green' },
           { label: 'giao thông thông suốt', tone: 'green' },
         ],
@@ -215,11 +215,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'upgrade-grid-power',
-        text: 'Chi 1.200 XU nâng cấp biến áp thông minh & kích hoạt Thanh Toán Hóa Đơn Tự Động toàn phố',
+        text: 'Chi 1.200 đồng nâng cấp biến áp thông minh & kích hoạt Thanh Toán Hóa Đơn Tự Động toàn phố',
         costCoins: 1200,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 XU', tone: 'red' },
+          { label: '-1.200 đồng', tone: 'red' },
           { label: 'điện lưới mát rượi ++', tone: 'green' },
           { label: 'bà con thở phào', tone: 'green' },
         ],
@@ -263,11 +263,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'sponsor-installment-festival',
-        text: 'Chi 850 XU mở ngày hội “Trả Góp 0% Lãi Suất qua Ví Trả Sau MoMo” chia nhỏ 12 tháng',
+        text: 'Chi 850 đồng mở ngày hội “Trả Góp 0% Lãi Suất qua Ví Trả Sau MoMo” chia nhỏ 12 tháng',
         costCoins: 850,
         btnTone: 'green',
         tags: [
-          { label: '-850 XU', tone: 'red' },
+          { label: '-850 đồng', tone: 'red' },
           { label: 'rước máy xịn sò ++', tone: 'green' },
           { label: 'quản lý tài chính tốt', tone: 'green' },
         ],
@@ -311,11 +311,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'host-financial-award',
-        text: 'Chi 800 XU trao Cúp “Bàn Tay Vàng Tích Lũy” & tặng thêm quà may mắn vào Túi Thần Tài toàn dân',
+        text: 'Chi 800 đồng trao Cúp “Bàn Tay Vàng Tích Lũy” & tặng thêm quà may mắn vào Túi Thần Tài toàn dân',
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-800 XU', tone: 'red' },
+          { label: '-800 đồng', tone: 'red' },
           { label: 'toàn dân tích lũy ++', tone: 'green' },
           { label: 'tài chính xanh mướt', tone: 'green' },
         ],
@@ -359,11 +359,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'build-dual-arena',
-        text: 'Chi 950 XU mở rộng sân khấu đa năng có sàn gỗ dưỡng sinh và sân bóng rổ tiêu chuẩn riêng',
+        text: 'Chi 950 đồng mở rộng sân khấu đa năng có sàn gỗ dưỡng sinh và sân bóng rổ tiêu chuẩn riêng',
         costCoins: 950,
         btnTone: 'green',
         tags: [
-          { label: '-950 XU', tone: 'red' },
+          { label: '-950 đồng', tone: 'red' },
           { label: 'già trẻ hòa thuận ++', tone: 'green' },
           { label: 'không gian rực rỡ', tone: 'green' },
         ],
@@ -399,19 +399,19 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
   },
   {
     id: 'ev-con-sot-tra-sua-1-xu',
-    title: 'Đại Hồng Thủy Trà Sữa 1 Xu & Biệt Đội Shipper Giải Cứu!',
+    title: 'Đại Hồng Thủy Trà Sữa 1 đồng & Biệt Đội Shipper Giải Cứu!',
     subtitle: '50.000 ly trà sữa bốc khói ordered cùng một khung giờ vàng...',
     speaker: 'Bảo Ngọc KOC & Anh Phát Shipper',
-    body: 'Chiến dịch siêu voucher 1 Xu của MoMo Food bùng nổ, đơn trà sữa trân chú đổ về dồn dập làm máy in hóa đơn của các quán chạy cháy cả giấy! Hàng trăm shipper áo hồng chạy thục mạng qua từng con phố. Bạn sẽ:',
+    body: 'Chiến dịch siêu voucher 1 đồng của MoMo Food bùng nổ, đơn trà sữa trân chú đổ về dồn dập làm máy in hóa đơn của các quán chạy cháy cả giấy! Hàng trăm shipper áo hồng chạy thục mạng qua từng con phố. Bạn sẽ:',
     minMayorLevel: 2,
     choices: [
       {
         id: 'support-shipper-fleet',
-        text: 'Chi 1.000 XU lập Trạm Nghỉ Chân Shipper miễn phí nước mát & thưởng nóng 50 XU mỗi đơn giao nhanh',
+        text: 'Chi 1.000 đồng lập Trạm Nghỉ Chân Shipper miễn phí nước mát & thưởng nóng 50 đồng mỗi đơn giao nhanh',
         costCoins: 1000,
         btnTone: 'green',
         tags: [
-          { label: '-1.000 XU', tone: 'red' },
+          { label: '-1.000 đồng', tone: 'red' },
           { label: 'giao sạch 50k ly ++', tone: 'green' },
           { label: 'shipper tôn vinh', tone: 'green' },
         ],
@@ -455,11 +455,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'instant-etc-topup-booth',
-        text: 'Chi 700 XU lập Trạm Hỗ Trợ Nạp VETC Tức Thì qua MoMo ngay làn khẩn cấp',
+        text: 'Chi 700 đồng lập Trạm Hỗ Trợ Nạp VETC Tức Thì qua MoMo ngay làn khẩn cấp',
         costCoins: 700,
         btnTone: 'green',
         tags: [
-          { label: '-700 XU', tone: 'red' },
+          { label: '-700 đồng', tone: 'red' },
           { label: 'thông xe 5 phút ++', tone: 'green' },
           { label: 'tài xế nhẹ nhõm', tone: 'green' },
         ],
@@ -503,11 +503,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'sponsor-digital-expo',
-        text: 'Chi 900 XU tài trợ Sân Khấu Livestream & hoàn tiền 15% cho khách quét MoMo mua nông sản',
+        text: 'Chi 900 đồng tài trợ Sân Khấu Livestream & hoàn tiền 15% cho khách quét MoMo mua nông sản',
         costCoins: 900,
         btnTone: 'green',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'cháy sạch 20 tấn quả ++', tone: 'green' },
           { label: 'nông dân phấn khởi', tone: 'green' },
         ],
@@ -551,11 +551,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'emergency-screen-relief',
-        text: 'Chi 1.100 XU kích hoạt Quỹ Hỗ Trợ Bảo Hiểm Rơi Vỡ Màn Hình MoMo thay màn hình chính hãng 50%',
+        text: 'Chi 1.100 đồng kích hoạt Quỹ Hỗ Trợ Bảo Hiểm Rơi Vỡ Màn Hình MoMo thay màn hình chính hãng 50%',
         costCoins: 1100,
         btnTone: 'green',
         tags: [
-          { label: '-1.100 XU', tone: 'red' },
+          { label: '-1.100 đồng', tone: 'red' },
           { label: 'màn hình mới tinh ++', tone: 'green' },
           { label: 'toàn dân cảm kích', tone: 'green' },
         ],
@@ -599,11 +599,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'light-lantern-charity',
-        text: 'Chi 900 XU tài trợ 5.000 ngọn hoa đăng sinh học & góp 5 ca mổ tim cho các em nhỏ',
+        text: 'Chi 900 đồng tài trợ 5.000 ngọn hoa đăng sinh học & góp 5 ca mổ tim cho các em nhỏ',
         costCoins: 900,
         btnTone: 'green',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'cứu sống 5 trái tim thơ ++', tone: 'green' },
           { label: 'hồ nước lung linh', tone: 'green' },
         ],
@@ -647,11 +647,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'sponsor-esports-league',
-        text: 'Chi 800 XU tài trợ đường truyền mạng 5G riêng & mở cổng Nạp Thẻ Game Hoàn Tiền trên MoMo',
+        text: 'Chi 800 đồng tài trợ đường truyền mạng 5G riêng & mở cổng Nạp Thẻ Game Hoàn Tiền trên MoMo',
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-800 XU', tone: 'red' },
+          { label: '-800 đồng', tone: 'red' },
           { label: 'trận đấu đỉnh cao ++', tone: 'green' },
           { label: 'Gen Z reo hò', tone: 'green' },
         ],
@@ -695,11 +695,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'upgrade-finance-seminar',
-        text: 'Chi 650 XU tài trợ bảng tương tác thông minh & tặng 100 cuốn cẩm nang tài chính cho học viên',
+        text: 'Chi 650 đồng tài trợ bảng tương tác thông minh & tặng 100 cuốn cẩm nang tài chính cho học viên',
         costCoins: 650,
         btnTone: 'green',
         tags: [
-          { label: '-650 XU', tone: 'red' },
+          { label: '-650 đồng', tone: 'red' },
           { label: 'toàn dân biết tiết kiệm ++', tone: 'green' },
           { label: 'cô Chín mát lòng', tone: 'green' },
         ],
@@ -743,11 +743,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'welcome-cashless-tour',
-        text: 'Chi 850 XU trang bị bản đồ QR Du Lịch Thông Minh & tích hợp thanh toán mọi dịch vụ',
+        text: 'Chi 850 đồng trang bị bản đồ QR Du Lịch Thông Minh & tích hợp thanh toán mọi dịch vụ',
         costCoins: 850,
         btnTone: 'green',
         tags: [
-          { label: '-850 XU', tone: 'red' },
+          { label: '-850 đồng', tone: 'red' },
           { label: 'đạt chuẩn 5 sao đô thị ++', tone: 'green' },
           { label: 'du lịch bùng nổ', tone: 'green' },
         ],
@@ -791,11 +791,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'organize-investor-festival',
-        text: 'Chi 950 XU tổ chức Ngày Hội Đầu Tư Bền Vững & khuyến cáo chốt lời hợp lý bỏ vào Túi Thần Tài',
+        text: 'Chi 950 đồng tổ chức Ngày Hội Đầu Tư Bền Vững & khuyến cáo chốt lời hợp lý bỏ vào Túi Thần Tài',
         costCoins: 950,
         btnTone: 'green',
         tags: [
-          { label: '-950 XU', tone: 'red' },
+          { label: '-950 đồng', tone: 'red' },
           { label: 'bảo toàn lợi nhuận ++', tone: 'green' },
           { label: 'tài chính vững vàng', tone: 'green' },
         ],
@@ -839,11 +839,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'expedite-insurance-payout',
-        text: 'Chi 1.000 XU điều phối bồi hoàn viện trợ khẩn cấp & bố trí khách sạn 4 sao an toàn',
+        text: 'Chi 1.000 đồng điều phối bồi hoàn viện trợ khẩn cấp & bố trí khách sạn 4 sao an toàn',
         costCoins: 1000,
         btnTone: 'green',
         tags: [
-          { label: '-1.000 XU', tone: 'red' },
+          { label: '-1.000 đồng', tone: 'red' },
           { label: 'toàn đoàn an toàn ++', tone: 'green' },
           { label: 'bảo hiểm chi trả 100%', tone: 'green' },
         ],
@@ -887,11 +887,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'deploy-secure-gold-qr',
-        text: 'Chi 800 XU trang bị hệ thống VietQR Pro hạn mức cao chống giả mạo cho Tiệm Vàng',
+        text: 'Chi 800 đồng trang bị hệ thống VietQR Pro hạn mức cao chống giả mạo cho Tiệm Vàng',
         costCoins: 800,
         btnTone: 'green',
         tags: [
-          { label: '-800 XU', tone: 'red' },
+          { label: '-800 đồng', tone: 'red' },
           { label: 'quét mã mua vàng 3 giây ++', tone: 'green' },
           { label: 'tiệm vàng hiện đại', tone: 'green' },
         ],
@@ -935,11 +935,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'fund-food-cashback',
-        text: 'Chi 900 XU tài trợ gói “Hoàn Tiền 20% Vào Túi Thần Tài” cho mọi đơn quét MoMo tại phố đêm',
+        text: 'Chi 900 đồng tài trợ gói “Hoàn Tiền 20% Vào Túi Thần Tài” cho mọi đơn quét MoMo tại phố đêm',
         costCoins: 900,
         btnTone: 'green',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'phố đêm rực sáng ++', tone: 'green' },
           { label: 'doanh số kỷ lục', tone: 'green' },
         ],
@@ -983,11 +983,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'gift-smart-speaker-bi',
-        text: 'Chi 500 XU tặng Bé Bi Loa Thần Tài Mini MoMo kèm học bổng khuyến học 500k',
+        text: 'Chi 500 đồng tặng Bé Bi Loa Thần Tài Mini MoMo kèm học bổng khuyến học 500k',
         costCoins: 500,
         btnTone: 'green',
         tags: [
-          { label: '-500 XU', tone: 'red' },
+          { label: '-500 đồng', tone: 'red' },
           { label: 'tiếp sức em đến trường ++', tone: 'green' },
           { label: 'cả phố xúc động', tone: 'green' },
         ],
@@ -1031,11 +1031,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'upgrade-pet-hotel',
-        text: 'Chi 750 XU tiếp tế thức ăn hạt nhập khẩu & mở rộng khu vui chơi đệm êm cho thú cưng',
+        text: 'Chi 750 đồng tiếp tế thức ăn hạt nhập khẩu & mở rộng khu vui chơi đệm êm cho thú cưng',
         costCoins: 750,
         btnTone: 'green',
         tags: [
-          { label: '-750 XU', tone: 'red' },
+          { label: '-750 đồng', tone: 'red' },
           { label: 'các boss vui vẻ ++', tone: 'green' },
           { label: 'chủ nhân an tâm', tone: 'green' },
         ],
@@ -1079,11 +1079,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'expand-ar-treasure-hunt',
-        text: 'Chi 1.000 XU mở rộng mạng lưới AR toàn thành phố & rải thêm 5.000 bao lì xì may mắn',
+        text: 'Chi 1.000 đồng mở rộng mạng lưới AR toàn thành phố & rải thêm 5.000 bao lì xì may mắn',
         costCoins: 1000,
         btnTone: 'green',
         tags: [
-          { label: '-1.000 XU', tone: 'red' },
+          { label: '-1.000 đồng', tone: 'red' },
           { label: 'săn quà ngập tràn ++', tone: 'green' },
           { label: 'đô thị tương lai', tone: 'green' },
         ],
@@ -1127,11 +1127,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'cyber-safety-shield',
-        text: 'Chi 850 XU mở lớp tập huấn “Bảo Vệ Tài Sản Số & Không Chia Sẻ OTP” + kích hoạt Bảo Hiểm An Ninh Mạng MoMo',
+        text: 'Chi 850 đồng mở lớp tập huấn “Bảo Vệ Tài Sản Số & Không Chia Sẻ OTP” + kích hoạt Bảo Hiểm An Ninh Mạng MoMo',
         costCoins: 850,
         btnTone: 'green',
         tags: [
-          { label: '-850 XU', tone: 'red' },
+          { label: '-850 đồng', tone: 'red' },
           { label: 'an toàn tuyệt đối ++', tone: 'green' },
           { label: 'tài khoản bất khả xâm phạm', tone: 'green' },
         ],
@@ -1175,11 +1175,11 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'fireworks-and-lixi',
-        text: 'Chi 1.500 XU bắn pháo hoa nghệ thuật & phát Cơn Mưa Lì Xì MoMo Tài Lộc cho toàn thể cư dân',
+        text: 'Chi 1.500 đồng bắn pháo hoa nghệ thuật & phát Cơn Mưa Lì Xì MoMo Tài Lộc cho toàn thể cư dân',
         costCoins: 1500,
         btnTone: 'green',
         tags: [
-          { label: '-1.500 XU', tone: 'red' },
+          { label: '-1.500 đồng', tone: 'red' },
           { label: 'vạn sự như ý ++', tone: 'green' },
           { label: 'năm mới thịnh vượng', tone: 'green' },
         ],

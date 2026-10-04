@@ -1,35 +1,31 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  Crown,
-  Info,
-  Layers,
   MessageSquareWarning,
-  Plus,
-  Star,
-  Store,
-  X,
+  Zap,
 } from 'lucide-react';
 import { BUILDING_BY_ID } from '@/lib/mocity/mock-city-data';
 import { nodeYieldBreakdown, queueCapacityFor } from '@/lib/mocity/city-calculator';
-import { formatRate } from '@/lib/mocity/format';
-import { claimTapReward, publishShopQueue, useCity, useCityDerived } from '@/lib/mocity/store';
-import { EVENT_BY_ID } from '@/lib/mocity/dialogue-data';
-import { cityMood } from '@/lib/mocity/dialogue-engine';
-import { particles } from './ParticleEngine';
-import { useAmbientChatter } from './SpeechBubble';
+import { queueHardCap } from '@/lib/mocity/transactions';
+import { claimTapReward, useCity, useCityDerived } from '@/lib/mocity/store';
+import type { ShopQueue } from '@/lib/mocity/types';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
 import MoMoMascot from './MoMoMascot';
 import StreetTraffic from './StreetTraffic';
 import ShophouseFacade, { EmptyLot, ShophouseRoofCap, THOAI_CUA_SO } from './ShophouseFacade';
-import { SkyAtmosphere, StreetLamp, TimeOfDaySwitcher, TIME_OF_DAY_META } from './StreetAmbiance';
+import { SHOPHOUSE_THEMES, THEME_BY_BUILDING, THEME_FALLBACK, type ShophouseTheme } from '@/lib/mocity/facade-theme';
+import { FloodWaterLayer, RainOverlay, SkyAtmosphere, StreetLamp, TIME_OF_DAY_META } from './StreetAmbiance';
 import { useTrafficController } from './useTrafficController';
 import TrafficLightPole from './TrafficLightPole';
 import StreetPets from './StreetPets';
+import StreetVendorStalls from './StreetVendorStalls';
+import StreetPassersby from './StreetPassersby';
 import { RETRO_BOARD_FILTER } from './RetroFilm';
+import { cityMood } from '@/lib/mocity/dialogue-engine';
+import { useAmbientChatter } from './SpeechBubble';
 
 /**
  * Do rong mot lot dat tren pho. Moi lot rong 236px. Dung chung giua tinh be
@@ -38,15 +34,59 @@ import { RETRO_BOARD_FILTER } from './RetroFilm';
 const PLOT_WIDTH = 236;
 /** Khoang dem hai ben duong pho. */
 const STREET_PADDING = 420;
+/** Be rong ngan ngang tai ngat tu - dung chung giua JSX va tinh `streetWidth`. */
+const CROSSROAD_WIDTH = 168;
 
-/** Xu luong "di tuan" cua Thị Trưởng. Han 5 phut. */
+/** đồng luong "di tuan" cua Thị Trưởng. Han 5 phut. */
 /*
- * Thưởng đi tuần. Ba câu thoại từng ghi "+180 XU" trong khi hằng số là 120 -
+ * Thưởng đi tuần. Ba câu thoại từng ghi "+180 đồng" trong khi hằng số là 120 -
  * game nói một đằng trả một nẻo. Trong một sản phẩm dạy tài chính thì sai
  * lệch giữa con số hứa và con số nhận là lỗi nặng, không phải lỗi chính tả.
  */
 const PATROL_BONUS_COINS = 120;
 const PATROL_COOLDOWN_MS = 5 * 60 * 1000;
+
+/**
+ * NGÃ TƯ NỐI SANG KHU PHỐ 2 - đường ngang CẮT QUA thật, không phải hẻm cụt
+ * lùi phối cảnh (xem lịch sử ở `streetPlots` phía trên).
+ *
+ * Tự chứa toàn bộ chiều cao vỉa hè + lòng đường (196+128=324px) để chèn
+ * thẳng vào giữa dải nhà ống (`streetPlots.map`) mà không phải đụng tới toạ
+ * độ tuyệt đối của ngã tư Đ. Hoa Sữa gốc ở đầu phố - nơi `StreetTraffic` đã
+ * hiệu chỉnh sẵn điểm dừng xe theo đúng vị trí đó.
+ */
+function CrossroadGap() {
+  return (
+    <div
+      className="relative shrink-0 overflow-hidden"
+      style={{ width: CROSSROAD_WIDTH, height: 324, backgroundColor: '#B9B4A8' }}
+    >
+      {/* Mặt đường cắt ngang - phẳng, đúng màu lòng đường chính */}
+      <div className="absolute inset-x-0 bottom-0 h-[128px]" style={{ backgroundColor: '#B5B0A4' }} />
+      {/* Vỉa hè cắt ngang phía trên lòng đường */}
+      <div className="absolute inset-x-0 top-0 bottom-[128px]" style={{ backgroundColor: '#D9BE8C' }} />
+
+      {/* Vạch qua đường - 5 sọc zebra nằm ngang qua bề rộng ngã tư */}
+      <div className="absolute inset-x-3 bottom-[20px] flex h-[88px] flex-col justify-between">
+        {Array.from({ length: 5 }).map((_, zi) => (
+          <div key={zi} className="h-[9px] w-full" style={{ backgroundColor: '#E8E4DC' }} />
+        ))}
+      </div>
+
+      {/* Tim đường vàng dọc ngã tư */}
+      <div className="absolute bottom-0 left-1/2 h-[128px] w-[3px] -translate-x-1/2" style={{ backgroundColor: '#D9B93C' }} />
+
+      {/* Biển tên đường khu phố mới */}
+      <div className="pointer-events-none absolute top-[36px] left-1/2 -translate-x-1/2">
+        <div className="px-[3px] py-[2px]" style={{ backgroundColor: '#0E2F6E' }}>
+          <div className="px-1.5 py-0.5" style={{ backgroundColor: '#1848A8' }}>
+            <span className="whitespace-nowrap text-[9px] font-bold leading-tight tracking-wide text-white">Đ. Mai Vàng</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Giao diện "ĐẾ CHẾ VỈA HÈ — Từ gánh vé số góc ngã tư"
@@ -57,93 +97,29 @@ const PATROL_COOLDOWN_MS = 5 * 60 * 1000;
  * - Bảng hiệu mái hiên sọc đỏ-trắng "ĐẾ CHẾ VỈA HÈ ✦ Từ gánh vé số góc ngã tư"
  */
 
-interface ShophouseTheme {
-  wallBg: string;
-  wallHatch: string;
-  signBg: string;
-  signText: string;
-  defaultLabel: string;
-  shopType: 'TIRE_SHOP' | 'GROCERY' | 'STATIONERY' | 'RICE_SHOP' | 'CINEMA' | 'FINTECH' | 'CAFE';
-}
-
-const SHOPHOUSE_THEMES: ShophouseTheme[] = [
-  {
-    wallBg: '#EFE8D5',
-    wallHatch: '#E2D9C0',
-    signBg: '#E6B84F',
-    signText: '#FFFFFF',
-    defaultLabel: 'SỬA XE',
-    shopType: 'TIRE_SHOP',
-  },
-  {
-    wallBg: '#C8D9EC',
-    wallHatch: '#B5CBE3',
-    signBg: '#D9534F',
-    signText: '#FFFFFF',
-    defaultLabel: 'TẠP HOÁ',
-    shopType: 'GROCERY',
-  },
-  {
-    wallBg: '#EEC7C2',
-    wallHatch: '#E2B4AE',
-    signBg: '#669977',
-    signText: '#FFFFFF',
-    defaultLabel: 'VĂN PHÒNG PHẨM',
-    shopType: 'STATIONERY',
-  },
-  {
-    wallBg: '#DFC6E8',
-    wallHatch: '#D0B2DC',
-    signBg: '#D82D8B',
-    signText: '#FFFFFF',
-    defaultLabel: 'TRÀ SỮA MOMO',
-    shopType: 'CAFE',
-  },
-  {
-    wallBg: '#F6E299',
-    wallHatch: '#EBD37E',
-    signBg: '#7C4DFF',
-    signText: '#FFFFFF',
-    defaultLabel: 'MOMO CINEMA',
-    shopType: 'CINEMA',
-  },
-  {
-    wallBg: '#EFE8D5',
-    wallHatch: '#E2D9C0',
-    signBg: '#A46A3E',
-    signText: '#FFFFFF',
-    defaultLabel: 'GẠO TÁM THƠM',
-    shopType: 'RICE_SHOP',
-  },
-  {
-    wallBg: '#C9E8D9',
-    wallHatch: '#B4DEC9',
-    signBg: '#0EA5E9',
-    signText: '#FFFFFF',
-    defaultLabel: 'TÚI THẦN TÀI',
-    shopType: 'FINTECH',
-  },
-];
-
 export default function ViaHeStreetBoard({
   selected,
   onSelect,
   onOpenRequest,
-  onOpenEvent,
   onOpenBuildDrawer,
-  onOpenInspector,
+  orderQueues = [],
   cityScale = 1.12,
-  onChangeScale,
   onActiveRowChange,
 }: {
   selected: { col: number; row: number } | null;
   onSelect: (col: number, row: number) => void;
   onOpenRequest: (col: number, row: number) => void;
-  onOpenEvent?: () => void;
   onOpenBuildDrawer?: () => void;
-  onOpenInspector?: () => void;
+  /**
+   * HÀNG CHỜ THẬT từ store - nguồn của mọi con số hiển thị trên bảng hiệu.
+   *
+   * Trước đây badge đọc từ state cục bộ do `ExpressiveStreetCitizens` tự
+   * bịa ra để vẽ. Giờ nó chỉ còn vai trò HIỂN THỊ - tiệm tự bán qua
+   * `autoServeQueues` trong `tickIdle`, không còn nút bấm nào ở đây nữa.
+   * Muốn bán nhanh hơn thì thuê Nhân Viên trong `StoreInspectorModal`.
+   */
+  orderQueues?: ShopQueue[];
   cityScale?: number;
-  onChangeScale?: (next: number) => void;
   /** Hang pho dang xem, de parent uu tien dung o dat trong hang do. */
   onActiveRowChange?: (row: number) => void;
 }) {
@@ -152,8 +128,9 @@ export default function ViaHeStreetBoard({
   const buildings = useCity((s) => s.buildings);
   const npcs = useCity((s) => s.npcs);
   const activeRequests = useCity((s) => s.activeRequests);
-  const pendingEvent = useCity((s) => s.pendingEvent);
   const timeOfDay = useCity((s) => s.timeOfDay ?? 'DAY');
+  const weather = useCity((s) => s.weather ?? 'SUNNY');
+  const isFlooded = useCity((s) => s.isFlooded ?? false);
   const traffic = useTrafficController(timeOfDay);
   const derivedCity = useCityDerived();
 
@@ -166,17 +143,29 @@ export default function ViaHeStreetBoard({
    * thi 6 tiem khong thay. Bay gio moi hien MOT hang pho tai mot thoi diem:
    * van du `unlockedCols` o (<= 10) nen DOM khong phong to so voi truoc, va
    * moi o dat deu tim thay duoc.
+   *
+   * Khong con `setActiveRow`: nut chuyen hang, chip dieu huong va 3 nut cuon
+   * "Dau Pho / Giua Pho / Cuoi Pho" deu da khong con trong JSX, khong con noi
+   * nao doi hang. Giu hang 0 de `onActiveRowChange` van tra mot gia tri hop le.
    */
-  const [activeRow, setActiveRow] = useState(0);
+  const activeRow = 0;
 
   /**
-   * Số khách đang xếp ở mỗi tiệm, do `ExpressiveStreetCitizens` báo lên.
+   * Số khách chờ THẬT, đọc thẳng từ store - MỘT nguồn duy nhất cho cả bảng
+   * hiệu (badge), ví (click đóng đơn), và cư dân đứng xếp hàng trên phố.
    *
-   * Vừa để vẽ con số trên bảng hiệu, vừa là dữ liệu kinh tế: `setShopQueue`
-   * đẩy vào store để `flowFor` biết tiệm nào quá tải. Người chơi nhìn thấy
-   * hàng dài và doanh thu giảm cùng lúc - đó là một thông điệp.
+   * Trước đây có HAI con số: cái này (thật) và một bản `ExpressiveStreetCitizens`
+   * tự mô phỏng riêng để "còn biết vẽ bao nhiêu bóng người" - hai mô phỏng
+   * chạy song song, không liên quan tới nhau, nên người chơi thấy 3 người
+   * đứng xếp hàng nhưng badge báo 1, hoặc ngược lại. Giờ cư dân đọc thẳng
+   * `orderQueues` (truyền xuống `ExpressiveStreetCitizens` qua prop `realQueue`)
+   * để biết CHÍNH XÁC ai đang chờ - không còn tự đoán.
    */
-  const [shopQueues, setShopQueues] = useState<Record<string, number>>({});
+  const realQueueById = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const q of orderQueues) map[q.shopId] = q.arrivedAt.length;
+    return map;
+  }, [orderQueues]);
 
   /*
    * Trạng thái khủng hoảng của thành phố, đổi câu thoại của bà con.
@@ -185,31 +174,6 @@ export default function ViaHeStreetBoard({
    * hạnh phúc, hệ số dòng tiền, tỷ lệ nợ xấu, hàng đợi. Nếu bà con kể chuyện
    * "khách bỏ hàng" thì người chơi phải thấy hàng đợi thật sự quá tải ở đâu đó.
    */
-  const streetMood = useMemo(
-    () =>
-      cityMood({
-        happiness: derivedCity.happiness,
-        cashflowRatio: derivedCity.cashflowRatio,
-        nplRate: derivedCity.nplRate,
-        debt: derivedCity.debt,
-        shopsOverloaded: derivedCity.lostSales > 0 ? 1 : 0,
-        netIncomePerSec: derivedCity.netIncome,
-      }),
-    [derivedCity.happiness, derivedCity.cashflowRatio, derivedCity.nplRate, derivedCity.debt, derivedCity.lostSales, derivedCity.netIncome],
-  );
-
-  const chatter = useAmbientChatter(npcs, streetMood);
-
-
-
-  /**
-   * Hàng đợi là trạng thái tức thời của hiệu ứng phố, không phải dữ liệu vĩnh
-   * viễn. Không đưa vào `CityState` để tránh ghi đè save liên tục mỗi 500ms;
-   * giữ ở đây rồi đẩy vào một kho riêng mà `flowFor` đọc qua tham số.
-   */
-  useEffect(() => {
-    publishShopQueue(shopQueues);
-  }, [shopQueues]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
@@ -221,7 +185,12 @@ export default function ViaHeStreetBoard({
    * 4 cot thi con 1.800px trong voichua - tho khong an gi.
    */
   const plotCount = Math.max(4, unlockedCols);
-  const streetWidth = plotCount * PLOT_WIDTH + STREET_PADDING;
+  /**
+   * 2 hàng phố nối liền ngang qua ngã tư trong CÙNG MỘT dải cuộn (xem
+   * `streetPlots`) - không phải xếp chồng, nên bề rộng gấp đôi + khoảng ngã
+   * tư chen giữa.
+   */
+  const streetWidth = plotCount * PLOT_WIDTH * 2 + CROSSROAD_WIDTH + STREET_PADDING;
   const rowCount = Math.max(1, unlockedRows);
 
   /**
@@ -237,49 +206,9 @@ export default function ViaHeStreetBoard({
     onActiveRowChange?.(safeRow);
   }, [safeRow, onActiveRowChange]);
 
-  /**
-   * Toa do cuon cua 3 nut: chia deu be rong pho that.
-   * Ban cu hardcode 0 / 720 / 1440 cho layout 10 o, nen chi mo 4 cot thi nut
-   * "Cuoi Pho" cuon vao khoang trong khong noi gi.
-   */
-  const [scrollLeft, scrollLabels] = useMemo(() => {
-    const seg = plotCount * PLOT_WIDTH;
-    return [
-      [0, Math.round(seg * 0.4), seg],
-      ['Đầu Phố', 'Giữa Phố', 'Cuối Phố'],
-    ] as const;
-  }, [plotCount]);
-
-  /**
-   * Hang nao dang co nguoi dan len giong noi (`!`).
-   * Chi tiet chay theo hang trong khi moi hien MOT hang, nen phai danh dau
-   * de nguoi choi biet con "Chuyen pho!" o kia duong.
-   */
-  const rowsWithRequests = useMemo(() => {
-    const npcById = new Map(npcs.map((n) => [n.id, n]));
-    const buildingById = new Map(buildings.map((b) => [b.id, b]));
-    const rows = new Set<number>();
-    for (const req of activeRequests) {
-      const npc = npcById.get(req.npcId);
-      const building = npc ? buildingById.get(npc.buildingId) : undefined;
-      if (building) rows.add(building.row);
-    }
-    return rows;
-  }, [activeRequests, npcs, buildings]);
-
-  /** So tiem da xay tren tung hang, hien tren chip dieu huong. */
-  const buildingCountByRow = useMemo(() => {
-    const counts = new Array<number>(rowCount).fill(0);
-    for (const b of buildings) {
-      if (b.row >= 0 && b.row < rowCount) counts[b.row] += 1;
-    }
-    return counts;
-  }, [buildings, rowCount]);
-
   // Chuyển danh sách các ô đất thành một Dãy Nhà Ống Mặt Tiền Phố (Số 2, Số 4, Số 6, Số 8...)
   const streetPlots = useMemo(() => {
     const bMap = new Map(buildings.map((b) => [`${b.col}:${b.row}`, b]));
-    const chatterByNpc = new Map(chatter.map((c) => [c.npcId, c.text]));
     const requested = new Set(activeRequests.map((r) => r.npcId));
 
     const list: Array<{
@@ -294,25 +223,36 @@ export default function ViaHeStreetBoard({
       yieldPerSec: number;
       synergyBonus: number;
       hasRequest: boolean;
-      chatterText: string | null;
       npcName: string | null;
       cashOnly: boolean;
     }> = [];
 
     /**
-     * Chi lay MOT hang pho.
+     * HAI HÀNG PHỐ, NỐI QUA MỘT NGÃ TƯ - không còn chỉ một hàng ẩn các hàng
+     * khác sau nút chuyển đã bị gỡ.
      *
-     * Khong sap xep lai theo `hasBuilding` nua: truoc day pho duoc xep "tkiem da
-     * xay len dau" nen ngay ca 10 o hien thi cung khong dung thu tu khong gian -
-     * nha o phai nam dung cho so nha cua o dat. Gio giu nguyen thu tu cot de
-     * so nha chay dung chieu ngang.
+     * `unlockedRows` vốn đã là cơ chế thật trong `buyLand` (land cost tính
+     * theo cả cột lẫn hàng), nhưng trước đây màn hình luôn hardcode hàng 0 -
+     * nghĩa là người chơi có thể đã trả tiền mở hàng 2 mà không bao giờ thấy
+     * được nó. Giờ hàng 1 (KHU PHỐ MỚI, bên kia ngã tư) luôn hiện SONG SONG
+     * với hàng 0, không cần bấm chuyển gì cả - chỉ cần cuộn ngang qua khỏi
+     * ngã tư ở cuối phố.
      *
-     * `colCount` toi da 10 nen DOM khong phong to so voi ban cu: 10 o x 178 node.
+     * Ô chưa mở (`unlocked: false`) tái dùng ĐÚNG visual "PHỐ CHƯA MỞ" sẵn có
+     * cho cột chưa mua - không cần trạng thái mới cho hàng chưa mua.
+     *
+     * Thứ tự render: HÀNG 0 TRƯỚC (giữ nguyên vị trí cũ - ngã tư Đ. Hoa Sữa ở
+     * đầu phố, cùng hệ thống đèn/vạch/điểm dừng xe đã hiệu chỉnh sẵn KHÔNG
+     * đổi), rồi một ngã tư MỚI, rồi hàng 1 (khu phố bên kia đường).
      */
     const colCount = Math.max(4, unlockedCols);
     const coords: Array<{ col: number; row: number; unlocked: boolean }> = [];
-    for (let c = 0; c < colCount; c++) {
-      coords.push({ col: c, row: safeRow, unlocked: c < unlockedCols });
+    // Luon tease ca hang 1 (khoa neu chua mua) - dung "PHO CHUA MO" co san.
+    const rowsToShow = 2;
+    for (let r = 0; r < rowsToShow; r++) {
+      for (let c = 0; c < colCount; c++) {
+        coords.push({ col: c, row: r, unlocked: c < unlockedCols && r < unlockedRows });
+      }
     }
 
     coords.forEach((coord, idx) => {
@@ -321,13 +261,21 @@ export default function ViaHeStreetBoard({
       const npc = node ? npcs.find((n) => n.buildingId === node.id) : undefined;
       const yInfo = node ? nodeYieldBreakdown(node, buildings) : null;
 
-      let theme = SHOPHOUSE_THEMES[idx % SHOPHOUSE_THEMES.length];
-      if (def) {
-        if (def.id.includes('rap-phim')) theme = SHOPHOUSE_THEMES[4];
-        else if (def.zone === 'FINTECH') theme = SHOPHOUSE_THEMES[6];
-        else if (def.id.includes('ca-phe') || def.id.includes('tra-sua')) theme = SHOPHOUSE_THEMES[3];
-        else if (def.id.includes('sieu-thi') || def.id.includes('tap-hoa')) theme = SHOPHOUSE_THEMES[1];
-      }
+      /*
+       * MẶT TIỀN PHẢI KHỚP LOẠI CÔNG TRÌNH, không phải khớp vị trí ô đất.
+       *
+       * Bản cũ: `SHOPHOUSE_THEMES[idx % 7]` với `idx` là SỐ THỨ TỰ Ô ĐẤT, chỉ
+       * có 4 nhánh ghi đè riêng. Hậu quả đo được: 9/19 công trình lấy mặt tiền
+       * theo chỗ đứng - công viên treo biển "MENU · CÀ PHÊ MUỐI", nhà phố in
+       * "PHOTOCOPY · ĐÓNG SÁCH", và cùng một công viên xây ở hai ô khác nhau
+       * lại ra hai mặt tiền khác nhau.
+       *
+       * Giờ tra thẳng theo `def.id`. Thiếu một id nào là test bắt ngay
+       * (`facade-theme.test.ts`), không im lặng rơi về theme ngẫu nhiên nữa.
+       */
+      const theme = def
+        ? (THEME_BY_BUILDING[def.id] ?? SHOPHOUSE_THEMES[THEME_FALLBACK])
+        : SHOPHOUSE_THEMES[idx % SHOPHOUSE_THEMES.length];
 
       list.push({
         index: idx,
@@ -349,14 +297,13 @@ export default function ViaHeStreetBoard({
         yieldPerSec: yInfo?.totalPerSec ?? 0,
         synergyBonus: yInfo?.synergyBonus ?? 0,
         hasRequest: npc ? requested.has(npc.id) : false,
-        chatterText: npc ? (chatterByNpc.get(npc.id) ?? null) : null,
         npcName: npc ? npc.name : null,
         cashOnly: npc ? npc.role === 'MERCHANT' && !npc.acceptsDigital : false,
       });
     });
 
     return list;
-  }, [activeRequests, safeRow, buildings, chatter, npcs, unlockedCols]);
+  }, [activeRequests, buildings, npcs, unlockedCols, unlockedRows]);
 
   /*
    * NGƯỜI TRONG NHÀ NÓI CHUYỆN.
@@ -407,14 +354,19 @@ export default function ViaHeStreetBoard({
       streetPlots.flatMap((plot, idx) => {
         if (!plot.node || !plot.def) return [];
         if (plot.def.zone !== 'COMMERCIAL') return [];
+        /*
+         * Hàng 1 (khu phố bên kia đường) nằm SAU `CrossroadGap` trong DOM -
+         * mọi ô ở hàng > 0 phải cộng thêm bề rộng ngã tư mới, nếu không điểm
+         * neo khách xếp hàng sẽ lệch 168px về bên trái so với mặt tiền thật.
+         */
+        const crossroadOffset = plot.row > 0 ? CROSSROAD_WIDTH : 0;
         return [
           {
             id: plot.node.id,
-            x: 132 + 16 + idx * 236 + 118,
+            defId: plot.def.id,
+            x: 132 + 16 + idx * 236 + crossroadOffset + 118,
             label: plot.def.shortName,
             capacity: queueCapacityFor(plot.node),
-            // Dung cho hien thi "+X Xu" khi khach roi quay - xem chu thich ShopAnchor.
-            yieldPerSec: nodeYieldBreakdown(plot.node, buildings).totalPerSec,
           },
         ];
       }),
@@ -423,10 +375,6 @@ export default function ViaHeStreetBoard({
 
   const handleScrollBy = (delta: number) => {
     scrollContainerRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
-  };
-
-  const handleScrollTo = (left: number) => {
-    scrollContainerRef.current?.scrollTo({ left, behavior: 'smooth' });
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -446,26 +394,6 @@ export default function ViaHeStreetBoard({
     isDraggingRef.current = false;
   };
 
-  /**
-   * Chuyen sang hang pho khac.
-   *
-   * Tach ra `useCallback` de khong phai truy cap ref ben trong callback inline
-   * cua `.map()` - lint React Compiler bao loi do.
-   */
-  const handleChangeRow = useCallback(
-    (row: number) => {
-      setActiveRow(row);
-      scrollContainerRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
-      /*
-       * O dang chon thuoc hang khac se khong con nhin thay, nhung `page.tsx` van
-       * dung `selected` de dat cong trinh - se dan den xay nham tren o dat khong
-       * ai thay. Chon lai o dau tien cua hang moi cho khop man hinh.
-       */
-      if (selected && selected.row !== row) onSelect(0, row);
-    },
-    [selected, onSelect],
-  );
-
   const handleClaimPatrolBonus = useCallback(() => {
     // Han 5 phut: day la "di tuan", khong phai nut spam.
     const result = claimTapReward('patrol', PATROL_BONUS_COINS, { cooldownMs: PATROL_COOLDOWN_MS });
@@ -475,9 +403,9 @@ export default function ViaHeStreetBoard({
       return;
     }
     const funnyLines = [
-      'Trạm Heo Vàng MoCity: “Thị Trưởng vừa đi tuần khích lệ bà con tiểu thương! Nhận ngay +120 XU Lộc Đô Thị!”',
-      'Ông Lộc Đầu Tư: “Dòng tiền thanh toán số trên Đại lộ MoMo hôm nay tăng trưởng vượt bậc!” (+120 XU)',
-      'Cô Tư Tạp Hóa: “Cả dãy phố quét QR ting ting vui như Tết! Mời Thị Trưởng ly trà tắc!” (+120 XU)',
+      'Trạm Heo Vàng MoCity: “Thị Trưởng vừa đi tuần khích lệ bà con tiểu thương! Nhận ngay +120 đồng Lộc Đô Thị!”',
+      'Ông Lộc Đầu Tư: “Dòng tiền thanh toán số trên Đại lộ MoMo hôm nay tăng trưởng vượt bậc!” (+120 đồng)',
+      'Cô Tư Tạp Hóa: “Cả dãy phố quét QR ting ting vui như Tết! Mời Thị Trưởng ly trà tắc!” (+120 đồng)',
     ];
     const msg = funnyLines[Math.floor(Math.random() * funnyLines.length)];
     setStreetToast(msg);
@@ -594,9 +522,18 @@ export default function ViaHeStreetBoard({
         >
           {/* LỚP BẦU TRỜI & KHÍ QUYỂN (MÂY TRỜI BAN NGÀY / TRĂNG SAO BAN ĐÊM) */}
           <SkyAtmosphere timeOfDay={timeOfDay} />
+          {/* LỚP MƯA RÀO & GIÔNG BÃO */}
+          <RainOverlay weather={weather} />
 
-          {/* LỚP 1: CHUNG CƯ CAO TẦNG MỜ XA (SKYLINE PARALLAX LỚN) */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 bottom-[235px] overflow-hidden">
+          {/*
+           * LỚP 1: CHUNG CƯ CAO TẦNG MỜ XA (SKYLINE PARALLAX LỚN)
+           *
+           * `bottom` neo day duong chan cua chung cu voi CHAN NHA. Nha dung
+           * len mat via he, nen khi via he cao hon bao nhieu thi day phoi len
+           * toan nhieu bay nhieu - de nguyen 235px thi chung cu se bi liet
+           * sau mat via he va phan duoi lon hon thua ra khoi khung.
+           */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 bottom-[281px] overflow-hidden">
             <div className="absolute inset-x-0 bottom-0 flex items-end gap-4 px-8 opacity-80">
               {[
                 { w: 96, h: 360, bg: '#CED8E2' },
@@ -645,73 +582,23 @@ export default function ViaHeStreetBoard({
             </div>
           </div>
 
-          {/* LỚP 2 & 3: CON HẺM "ĐẠI LỘ MOCITY" BÊN TRÁI + DÃY NHÀ ỐNG MẶT TIỀN 3 TẦNG CỠ LỚN */}
+          {/* LỚP 2 & 3: DÃY NHÀ ỐNG MẶT TIỀN 3 TẦNG CỠ LỚN (2 HÀNG PHỐ NỐI QUA NGÃ TƯ) */}
           {/*
            * Khong con marginBottom: 226. Con so do la bu tru thu cong tu hoi
            * via he va long duong bi flex co lai con 34/31px; gio hai lop da
            * shrink-0 va giu dung chieu cao nen margin chi lam day day nha
            * tran khoi dinh khung va tach khoi via he.
            */}
-          <div className="relative z-10 flex items-end pl-0 pr-24">
+          <div className="relative z-25 flex items-end pl-0 pr-24">
             {/*
-             * NGA TU "D. HOA SUA" BEN TRAI.
+             * Ngã tư Đ. Hoa Sữa gốc (đèn giao thông, vạch qua đường, điểm
+             * dừng xe) GIỮ NGUYÊN vị trí ở lớp vỉa hè/lòng đường bên dưới -
+             * không đụng vào toạ độ đã hiệu chỉnh cho `StreetTraffic`.
              *
-             * Truoc day khoi nay la "goc nga tu & con hem" - gop hai thu khac
-             * nhau. Hem thi ke duoc giua hai nha, con nga tu phai la KHOANG HO
-             * de duong nhanh chay lui vao. Ket qua la nha dung chan ngang 108/132px
-             * mat cat duong nhanh, trong khi duoi chan van ke vach sang duong va
-             * dung den giao thong kieu nga tu.
-             *
-             * Gio khoang ho rong dung 132px va bat dau tu x=0, trung khit voi
-             * dai duong nhanh o lop via he va long duong. Nha lui sang phai
-             * thanh nha goc dung canh duong nhanh.
+             * Ngã tư THỨ HAI (`CrossroadGap`) được chèn tự động bên trong
+             * `streetPlots.map` ngay chỗ đổi từ hàng 0 sang hàng 1 - đường
+             * cắt ngang thật, không phải ngõ cụt lùi phối cảnh như bản cũ.
              */}
-            <div className="relative mr-4 flex shrink-0 items-end">
-              {/* Duong nhanh lui dan vao trong - cac khung long nhau */}
-              <div className="relative h-[232px] w-[132px] shrink-0 overflow-hidden" style={{ backgroundColor: '#B9B4A8' }}>
-                <div className="absolute inset-x-[9%] bottom-0 top-[16%]" style={{ backgroundColor: '#A49F93' }} />
-                <div className="absolute inset-x-[20%] bottom-0 top-[30%]" style={{ backgroundColor: '#8D887D' }} />
-                <div className="absolute inset-x-[31%] bottom-0 top-[42%]" style={{ backgroundColor: '#767168' }} />
-                <div className="absolute inset-x-[41%] bottom-0 top-[53%]" style={{ backgroundColor: '#605C54' }} />
-
-                {/* Tuong hoi hai ben duong nhanh */}
-                <div className="absolute left-0 top-0 h-full w-[9%]" style={{ backgroundColor: '#C9B9A6' }} />
-                <div className="absolute right-0 top-0 h-full w-[9%]" style={{ backgroundColor: '#B8A794' }} />
-
-                {/* Tim duong nhanh chay lui */}
-                <div className="absolute bottom-2 left-1/2 h-[46%] w-[3px] -translate-x-1/2" style={{ backgroundColor: '#D9B93C' }} />
-
-                {/* Vai nguoi deo khau trang dung dau duong nhanh */}
-                <div className="absolute inset-x-0 bottom-2 flex items-end justify-center -space-x-[3px]">
-                  {[
-                    { body: '#64748B', h: 26 },
-                    { body: '#B45309', h: 31 },
-                    { body: '#334155', h: 26 },
-                  ].map((pr, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div className="relative h-[14px] w-[14px] rounded-full" style={{ backgroundColor: '#FDE6D2' }}>
-                        <div
-                          className="absolute inset-x-[12%] bottom-[14%] h-[6px] rounded-[2px]"
-                          style={{ backgroundColor: '#7FD4E8' }}
-                        />
-                      </div>
-                      <div className="rounded-t" style={{ height: pr.h, width: 14, backgroundColor: pr.body }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nha goc dung sat duong nhanh */}
-              <div
-                className="relative h-[340px] w-[72px] shrink-0 rounded-t p-2 flex flex-col justify-between"
-                style={{ backgroundColor: '#E8C2BA' }}
-              >
-                <div className="absolute inset-y-0 left-0 w-[9px]" style={{ backgroundColor: '#CFA29A' }} />
-                <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
-                <div className="relative h-10 w-full" style={{ backgroundColor: '#FBF5F2' }} />
-                <div className="relative h-8 w-full" style={{ backgroundColor: '#E6B84F' }} />
-              </div>
-            </div>
 
             {/* DÃY NHÀ ỐNG MẶT TIỀN CỠ LỚN (SỐ 2, SỐ 4, SỐ 6, SỐ 8, SỐ 10...) */}
             <div className="flex items-end">
@@ -724,10 +611,17 @@ export default function ViaHeStreetBoard({
                   : plot.unlocked
                     ? 'ĐANG CHO THUÊ'
                     : 'CHƯA MỞ PHỐ';
+                /*
+                 * Doi hang (1 -> 0) la diem bang qua NGA TU. `streetPlots`
+                 * xep hang 1 (ben kia duong) truoc, hang 0 (pho quen) sau -
+                 * xem comment trong useMemo phia tren.
+                 */
+                const isCrossroadHere = idx > 0 && streetPlots[idx - 1].row !== plot.row;
 
                 return (
+                  <Fragment key={`${plot.col}:${plot.row}`}>
+                  {isCrossroadHere && <CrossroadGap />}
                   <div
-                    key={`${plot.col}:${plot.row}`}
                     className="relative flex flex-col items-center shrink-0"
                     style={{ width: 236 }}
                   >
@@ -773,47 +667,47 @@ export default function ViaHeStreetBoard({
                       )}
                     </svg>
 
-                    {/* Đếm khách xếp hàng. Chỉ hiện ở tiệm thương mại có quầu. */}
+                    {/*
+                      HÀNG CHỜ - chỉ còn vai trò HIỂN THỊ.
+                      Tiệm tự bán qua `autoServeQueues` trong `tickIdle`, tốc
+                      độ do số Nhân Viên quyết định (xem tab "Quản Lý Nhân
+                      Viên" khi bấm vào tiệm) - không còn nút bấm nào ở đây.
+                    */}
                     {(() => {
-                      const hangDoi = plot.node ? shopQueues[plot.node.id] ?? 0 : 0;
-                      if (hangDoi <= 0) return null;
-                      const sucChua = plot.node ? queueCapacityFor(plot.node) : 1;
-                      const quaTai = hangDoi > sucChua;
-                      const satChan = hangDoi === sucChua;
-                      /*
-                       * NEAR-MISS HAI BƯỚC.
-                       *
-                       * Trước đây chỉ có đỏ (đã mất khách) và vàng. Giờ thêm
-                       * trạng thái "SÁT CHÂN": hàng đúng bằng sức chứa, tức là
-                       * thêm đúng một người nữa là mất khách. Đây là near-miss
-                       * theo nghĩa có ích: người chơi biết chính xác mình đang
-                       * ở cách ngưỡng bao xa và biết sửa bằng cách nào.
-                       */
+                      const hangDoi = plot.node ? realQueueById[plot.node.id] ?? 0 : 0;
+                      if (hangDoi <= 0 || !plot.node) return null;
+                      const node = plot.node;
+                      const sucChua = queueHardCap(node);
+                      const quaTai = hangDoi >= sucChua;
+                      const satChan = hangDoi >= sucChua - 1;
                       const mau = quaTai
                         ? { bg: '#FECACA', bd: '#B91C1C', fg: '#7F1D1D' }
                         : satChan
                           ? { bg: '#FED7AA', bd: '#C2410C', fg: '#7C2D12' }
                           : { bg: '#FFE9A8', bd: '#78533D', fg: '#7A4A00' };
                       const canhBao = quaTai
-                        ? `hàng ${hangDoi} người nhưng chỉ phục vụ được ${sucChua} — đang mất khách!`
+                        ? `hàng ${hangDoi} người nhưng chỉ chờ được ${sucChua} - đã có khách bỏ đi!`
                         : satChan
-                          ? `hàng ${hangDoi} người, vừa đủ ${sucChua} chỗ — thêm 1 người là mất khách`
-                          : `${hangDoi} khách xếp, phục vụ được ${sucChua}`;
+                          ? `hàng ${hangDoi} người, vừa đủ ${sucChua} chỗ - thêm 1 nữa là mất khách`
+                          : `${hangDoi} khách chờ, sức chứa ${sucChua}`;
+                      const hasLoaMoMo = (node.modules ?? []).includes('QR_LOA_THAN_TAI');
+                      const staffCount = Math.min(3, Math.max(0, node.staffCount ?? 0));
                       return (
-                        <span
+                        <div
                           className="z-20 mb-1 flex items-center gap-1 rounded-full border-2 px-2 py-[1px] text-[10px] font-black shadow-sm"
                           style={{ background: mau.bg, borderColor: mau.bd, color: mau.fg }}
-                          title={`${plot.def?.shortName ?? 'Tiệm'}: ${canhBao}`}
+                          title={`${plot.def?.shortName ?? 'Tiệm'}: ${canhBao} - tự bán ${hasLoaMoMo ? '(Loa MoMo Ting Ting)' : '(Tiền mặt)'}${staffCount > 0 ? `, ${staffCount} Nhân Viên đang phụ bán` : ', chủ quán tự bán (chậm)'}`}
                         >
-                          {quaTai ? '⚠️' : satChan ? '🔔' : '🧍'} {hangDoi} xếp
-                          <span className="opacity-70">/ chỗ {sucChua}</span>
-                        </span>
+                          {hasLoaMoMo ? '📢' : quaTai ? '⚠️' : satChan ? '🔔' : '🧍'} {hangDoi} chờ
+                          <span className="opacity-70">/ {sucChua}</span>
+                          {staffCount > 0 && <span className="opacity-80">· 👤×{staffCount}</span>}
+                        </div>
                       );
                     })()}
 
-                    {/* Bong bóng Chuyện Phố (!) hoặc Thoại Tám Chuyện Vỉa Hè trên nóc tiệm */}
-                    <div className="mb-2 flex min-h-[36px] flex-col items-center justify-end z-20">
-                      {plot.hasRequest ? (
+                    {/* Nút Chuyện Phố (!) khi có sự kiện yêu cầu */}
+                    {plot.hasRequest && (
+                      <div className="mb-2 flex min-h-[36px] flex-col items-center justify-end z-20">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -825,12 +719,8 @@ export default function ViaHeStreetBoard({
                           <MessageSquareWarning size={14} className="shrink-0" />
                           <span>Chuyện phố!</span>
                         </button>
-                      ) : plot.chatterText ? (
-                        <div className="w-max max-w-[260px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#5A4A3F] bg-white px-3.5 py-1.5 text-xs font-bold text-[#3E2A1B] shadow">
-                          “{plot.chatterText}”
-                        </div>
-                      ) : null}
-                    </div>
+                      </div>
+                    )}
 
                     {/*
                      * Ô TRỐNG thì chỉ có bãi đất cắm cọc, KHÔNG dựng nhà.
@@ -934,7 +824,7 @@ export default function ViaHeStreetBoard({
                           type="button"
                           onClick={handleClaimPatrolBonus}
                           className="absolute -bottom-6 left-2 z-20 flex items-end gap-1.5 group"
-                          title="Bấm để nhận Lộc Đi Tuần MoCity (+120 XU)"
+                          title="Bấm để nhận Lộc Đi Tuần MoCity (+120đ)"
                         >
                           {/* Nhân vật Thị Trưởng mặc vest xanh vẫy tay */}
                           <div
@@ -950,7 +840,7 @@ export default function ViaHeStreetBoard({
                           {/* Quầy "TRẠM LỘC MOMO" */}
                           <div className="flex flex-col items-center">
                             <span className="mb-0.5 rounded bg-white/90 px-1 text-[8px] font-black text-[#D82D8B] shadow">
-                              +120 XU
+                              +120đ
                             </span>
                             <div className="h-4 w-12 border-2 border-[#3E2A1B] bg-[#FDF2F8] flex justify-around items-center px-0.5">
                               <span className="h-2.5 w-2 bg-[#D82D8B]" />
@@ -1001,6 +891,7 @@ export default function ViaHeStreetBoard({
                       )}
                     </div>
                   </div>
+                  </Fragment>
                 );
               })}
             </div>
@@ -1011,9 +902,14 @@ export default function ViaHeStreetBoard({
            * Khong dung gradient/luoi ke: mat via he la MOT mang phang, cac vien
            * gach la nhung dai giay phang chong len nhau.
            * Xe co KHONG chay o lop nay, tat ca nam duoi LOP 5 long duong.
+           *
+           * `VIA_HE_HEIGHT` chu dung chieu cao de tro 9 hang sau (xem
+           * `LANES` trong ExpressiveStreetCitizens). Doi chieu cao o day thi
+           * phai doi kem `bottom-[...]` cua skyliner o LOP 1, khong thi chung
+           * se liet xuong sau mat via he va mat dat thay doi ti le.
            */}
           <div
-            className="relative z-20 h-[150px] w-full shrink-0"
+            className="relative z-20 h-[196px] w-full shrink-0"
             style={{
               backgroundColor: '#D9BE8C',
               backgroundImage: `
@@ -1134,11 +1030,33 @@ export default function ViaHeStreetBoard({
               }}
             />
 
+            {/*
+              SẠP VỈA HÈ - gánh xôi, hủ tiếu gõ, cà phê cóc. Thuần trang trí,
+              không gắn thương hiệu, để chống bội thực MoMo (xem ghi chú đầu
+              file StreetVendorStalls.tsx).
+            */}
+            <StreetVendorStalls
+              streetWidth={streetWidth}
+              onStallReward={(msg) => {
+                setStreetToast(msg);
+                setTimeout(() => setStreetToast(null), 4000);
+              }}
+            />
+
+            {/*
+              KHACH HANG DI DUONG - 4 nguoi qua lai vo tri, rieng mot bo gag
+              (selfie / roi nguoi / nhon got / mu bay). Khong xep hang, khong
+              noi chuyen, khong nhan reward - xem ghi chu dau file
+              StreetPassersby.tsx. Dat TRUOC cu dan de cu dan (nhan vat chinh)
+              luon nam tren cung.
+            */}
+            <StreetPassersby streetWidth={streetWidth} />
+
             {/* HỆ THỐNG CƯ DÂN ĐI BỘ */}
             <ExpressiveStreetCitizens
               streetWidth={streetWidth}
               shops={shopAnchors}
-              onQueueChange={setShopQueues}
+              realQueue={orderQueues}
               onCitizenReward={(msg) => {
                 setStreetToast(msg);
                 setTimeout(() => setStreetToast(null), 4000);
@@ -1154,6 +1072,8 @@ export default function ViaHeStreetBoard({
               }}
             />
 
+            {/* LỚP NƯỚC TRIỀU CƯỜNG NGẬP LỤT VỈA HÈ */}
+            <FloodWaterLayer isFlooded={isFlooded} />
           </div>
 
           {/*
@@ -1182,6 +1102,9 @@ export default function ViaHeStreetBoard({
               ))}
             </div>
 
+            {/* LỚP NƯỚC TRIỀU CƯỜNG NGẬP LỤT LÒNG ĐƯỜNG */}
+            <FloodWaterLayer isFlooded={isFlooded} />
+
             <StreetTraffic
               timeOfDay={timeOfDay}
               trafficPhase={traffic.phase}
@@ -1190,7 +1113,7 @@ export default function ViaHeStreetBoard({
               onPoliceClick={() => {
                 const result = claimTapReward('patrol', 100, { cooldownMs: 1500 });
                 if (result.ok) {
-                  setStreetToast('🚓 Xe Cảnh Sát MoCity: “Tình hình trật tự 10/10! Bà con yên tâm quét mã buôn bán!” (+100 Xu)');
+                  setStreetToast('🚓 Xe Cảnh Sát MoCity: “Tình hình trật tự 10/10! Bà con yên tâm quét mã buôn bán!” (+100 đồng)');
                 } else {
                   setStreetToast('🚓 Xe Cảnh Sát MoCity: “Xe đang tuần tra ngã tư trung tâm, chúc Thị Trưởng một ngày bình an!”');
                 }

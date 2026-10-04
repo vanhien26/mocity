@@ -466,16 +466,16 @@ describe('vat pham khong duoc tro thanh may in tien', () => {
    * `buyInventoryItem` khong chan so luong mua nen chi can vong lap mua-ban
    * la pha het do kinh te - dung thu may in tien da gap o `hydrateCity`.
    */
-  it('useInventoryItem khong con goi withCoins (tra Xu tho)', () => {
+  it('applyInventoryItem khong con goi withCoins (tra Xu tho)', () => {
     const src = readFileSync(new URL('./store.ts', import.meta.url), 'utf8');
-    const start = src.indexOf('export function useInventoryItem');
+    const start = src.indexOf('export function applyInventoryItem');
     const end = src.indexOf('export function buyInventoryItem');
     assert.ok(start > 0 && end > start, 'khong tim thay khoi xu ly vat pham trong store.ts');
     const body = src.slice(start, end);
     assert.equal(
       (body.match(/withCoins\(/g) ?? []).length,
       0,
-      'useInventoryItem van con goi withCoins - van bang lo trao Xu tho',
+      'applyInventoryItem van con goi withCoins - van bang lo trao Xu tho',
     );
   });
 

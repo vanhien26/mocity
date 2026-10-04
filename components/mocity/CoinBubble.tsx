@@ -21,7 +21,7 @@ interface Bubble {
 }
 
 /**
- Bong bong Xu bay len tren man hinh. Vi tri lay tu boundingClientRect cua mot o
+ Bong bong đồng bay len tren man hinh. Vi tri lay tu boundingClientRect cua mot o
  * de browser tu tinh phep chieu camera - khong can tu tinh ma tran iso.
  */
 export default function CoinBubble({ hostRef }: { hostRef: RefObject<HTMLElement | null> }) {
@@ -90,7 +90,7 @@ export default function CoinBubble({ hostRef }: { hostRef: RefObject<HTMLElement
             const result = claimTapReward('bubble', bubble.amount, { cooldownMs: 500 });
             if (!result.ok) return;
             particles.coinShower(px, py, 14);
-            floatNumber(px, py, `+${formatCompact(bubble.amount)} Xu`, '#FACC15');
+            floatNumber(px, py, `+${formatCompact(bubble.amount)}`, '#FACC15');
           }}
           className="mc-bubble pointer-events-auto absolute flex h-11 w-11 flex-col items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-amber-300 to-amber-500 font-black text-white shadow-lg active:scale-90 transition-transform hover:scale-110"
           style={{
@@ -100,7 +100,7 @@ export default function CoinBubble({ hostRef }: { hostRef: RefObject<HTMLElement
             // drift ngang de khong bia mat chuyen dong
             ['--mc-drift' as string]: `${bubble.drift}px`,
           }}
-          aria-label={`Thu hoạch ${bubble.amount} Xu`}
+          aria-label={`Thu hoạch ${bubble.amount} đồng`}
         >
           <CircleDollarSign size={14} className="shrink-0" />
           <span className="text-[9px] leading-none">{formatCompact(bubble.amount)}</span>

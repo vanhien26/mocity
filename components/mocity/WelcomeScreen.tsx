@@ -81,7 +81,7 @@ function MoCityLogo({ size = 64 }: { size?: number }) {
 /** Ba vi muc chinh cua vong choi - dung cho nguoi moi. */
 const HOW_TO_PLAY = [
   { icon: Store, title: 'Mở tiệm & quản lý', body: 'Trả tiền mặt hay MoMo QR? Bà con tin bạn thì doanh thu lên.' },
-  { icon: Crown, title: 'Phân xử chuyện phố', body: 'Tốn Xu để mua uy tín, hoặc giữ túi tiền và bà con sẽ xa bạn.' },
+  { icon: Crown, title: 'Phân xử chuyện phố', body: 'Tốn đồng để mua uy tín, hoặc giữ túi tiền và bà con sẽ xa bạn.' },
   { icon: Gift, title: 'Giữ phố vui', body: 'Bỏ bê bà con vài giờ thì hạnh phúc tụt, doanh thu giảm theo.' },
 ];
 
@@ -159,7 +159,7 @@ export default function WelcomeScreen({
                   ['Cấp Thị Trưởng', String(mayorLevel)],
                   ['Tiệm đã mở', String(buildingCount)],
                   ['Cư dân', String(npcCount)],
-                  ['Ngân khố', `${formatCompact(coins)} Xu`],
+                  ['Ngân khố', `${formatCompact(coins)} đồng`],
                 ].map(([label, value]) => (
                   <div
                     key={label}
@@ -261,14 +261,14 @@ export default function WelcomeScreen({
                 </p>
                 <p className="text-pretty text-[13px] font-bold text-[#92400E]">
                   {hasNamedCity
-                    ? `Vốn sẵn có ${formatNumber(coins)} Xu`
-                    : `Vốn sẵn có ${formatNumber(STARTING_COINS)} Xu · Tặng thêm +${formatNumber(firstTimeBonus)} Xu`}
-                  {offlineBonus > 0 ? ` · +${formatCompact(offlineBonus)} Xu doanh thu vắng mặt` : ''}
+                    ? `Vốn sẵn có ${formatNumber(coins)}`
+                    : `Vốn sẵn có ${formatNumber(STARTING_COINS)} · Tặng thêm +${formatNumber(firstTimeBonus)}`}
+                  {offlineBonus > 0 ? ` · +${formatCompact(offlineBonus)} doanh thu vắng mặt` : ''}
                 </p>
               </div>
             </div>
             <span className="shrink-0 rounded-xl bg-[#D82D8B] px-2.5 py-1 text-xs font-black text-white shadow-sm">
-              {loginBonus > 0 ? `+${formatCompact(loginBonus)} XU` : `${formatCompact(coins)} XU`}
+              {loginBonus > 0 ? `+${formatCompact(loginBonus)}` : `${formatCompact(coins)}`}
             </span>
           </div>
 

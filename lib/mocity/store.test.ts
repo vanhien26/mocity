@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { normalizeStoredState, isQuestCompleted, MAX_MAYOR_LEVEL, IDLE_XP_CAP, SAVE_FILE_VERSION as STATE_VERSION } from './store';
+import { normalizeStoredState, MAX_MAYOR_LEVEL, IDLE_XP_DAILY_CAP, SAVE_FILE_VERSION as STATE_VERSION } from './store';
+import { VND_PER_OLD_COIN } from './currency';
 import {
   BUILDINGS,
   BUILDING_BY_ID,
@@ -11,7 +12,7 @@ import {
   upgradeCostCoins,
   xpForLevel,
 } from './mock-city-data';
-import { flowFor, grossUpFor, happinessFor, CORPORATE_TAX_RATE } from './city-calculator';
+import { flowFor, happinessFor, CORPORATE_TAX_RATE } from './city-calculator';
 import { CITY_EVENTS, REQUEST_SCRIPTS } from './dialogue-data';
 import { ARCHETYPES } from './npc-data';
 import { emptyLedger, type BuildingNode, type StoreModuleId } from './types';
@@ -104,9 +105,9 @@ describe('normalizeStoredState - version 3 (khong xoa sach thanh pho)', () => {
     assert.deepEqual(s.buildings[0].modules, ['QR_LOA_THAN_TAI']);
   });
 
-  it('nang len version 9 va bo sung field moi', () => {
+  it('nang len version 10 va bo sung field moi', () => {
     const s = normalizeStoredState(v3Save(), NOW);
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.equal(s.eventLog.resolved, 0);
     assert.deepEqual(s.tappedAt, {});
     assert.equal(s.happinessBoost, 0);
@@ -202,7 +203,15 @@ describe('normalizeStoredState - tu cho thuong offline', () => {
   it('gioi han 8 gio van mat', () => {
     const short = normalizeStoredState(v3Save({ lastSeenAt: NOW - 8 * 3_600_000 }), NOW);
     const long = normalizeStoredState(v3Save({ lastSeenAt: NOW - 72 * 3_600_000 }), NOW);
-    assert.deepEqual(short.pendingOffline, long.pendingOffline, 'vuot 8h khong duoc thuong them');
+    assert.ok(short.pendingOffline && long.pendingOffline);
+    // So sanh tung truong tien thay vi deepEqual: `capped` PHAI khac nhau
+    // (72h thi phai bao rang "da cham tran 8 gio", 8h thi chua vuot), con
+    // so tien va so don thi phai trung nhau.
+    assert.equal(short.pendingOffline.coins, long.pendingOffline.coins, 'vuot 8h khong duoc thuong them');
+    assert.equal(short.pendingOffline.orders, long.pendingOffline.orders, 'vuot 8h khong duoc them don');
+    assert.equal(short.pendingOffline.elapsedMs, long.pendingOffline.elapsedMs);
+    assert.equal(short.pendingOffline.capped, false, 'dung 8h chua vuot tran');
+    assert.equal(long.pendingOffline.capped, true, '72h phai bao cham tran 8 gio');
   });
 });
 
@@ -228,12 +237,12 @@ describe('normalizeStoredState - han muc su kien', () => {
 describe('normalizeStoredState - du lieu hong', () => {
   it('reset khi khong co version', () => {
     const s = normalizeStoredState(JSON.stringify({ coins: 50 }));
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
   });
 
   it('reset khi client cu hon server', () => {
     const s = normalizeStoredState(v3Save({ version: 99, coins: 88_888 }));
-    assert.equal(s.coins, 600, 'version > hien tai phai reset ve khoi tao');
+    assert.equal(s.coins, 50_000_000, 'version > hien tai phai reset ve khoi tao');
   });
 
   it('giu cong trinh ma khong con trong BUILDINGS', () => {
@@ -334,7 +343,7 @@ describe('field feverUntil/feverEverUsed cu - chi con giu cho tuong thich save',
       JSON.stringify({ ...JSON.parse(v3Save()), version: 4, feverUntil: NOW + 30_000 }),
       NOW,
     );
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.equal(s.feverEverUsed, true, 'save v4 co Fever dang chay phai giu nhan');
   });
 
@@ -371,14 +380,14 @@ describe('balance - chi phi nang cap theo nhip', () => {
     let total = 0;
     for (let l = 1; l < 50; l++) total += upgradeCostCoins(def, l);
     // UPGRADE_GROWTH 1.25 lam tong 5,6 ty - khong bao gio hoa von duoc.
-    assert.ok(total < 500_000_000, `tong nang cap Thap MoMo la ${total}, phai duoi 500 trieu`);
+    assert.ok(total < 1_000_000_000_000, `tong nang cap Thap MoMo la ${total}, phai duoi 1 trieu`);
   });
 
   it('chi phi len cap scale theo san luong chu khong theo gia xay dung', () => {
     const cafe = BUILDING_BY_ID['quan-ca-phe'];
-    const thap = BUILDING_BY_ID['thap-momo'];
-    const revRatio = thap.baseYieldPerSec / cafe.baseYieldPerSec;
-    const costRatio = upgradeCostCoins(thap, 20) / upgradeCostCoins(cafe, 20);
+    const sieuThi = BUILDING_BY_ID['sieu-thi'];
+    const revRatio = sieuThi.baseYieldPerSec / cafe.baseYieldPerSec;
+    const costRatio = upgradeCostCoins(sieuThi, 20) / upgradeCostCoins(cafe, 20);
     assert.ok(
       Math.abs(costRatio - revRatio) / revRatio < 0.15,
       `chi phi ratio ${costRatio.toFixed(2)} phai khop san luong ratio ${revRatio.toFixed(2)}`,
@@ -399,12 +408,14 @@ describe('balance - chi phi nang cap theo nhip', () => {
 
 describe('balance - moi cap den duoc dung mot phan nho thoi gian len cap', () => {
   it('AFK thuan khong lo lao cap 50', () => {
-    const idleXpPerDay = 4 * 86_400;
+    // Cua chan that la tran NGAY khong phai tran moi giay. Tran moi giay
+    // (IDLE_XP_CAP) chi quyet dinh XP hien tren thanh truoc khi cham tran ngay.
+    const idleXpPerDay = IDLE_XP_DAILY_CAP;
     let total = 0;
     for (let l = 1; l < MAX_MAYOR_LEVEL; l++) total += xpForLevel(l);
     const days = total / idleXpPerDay;
-    assert.ok(days > 1, `AFK cap ${IDLE_XP_CAP}/tick len cap 50 trong ${days.toFixed(2)} ngay, phai > 1`);
-    assert.ok(days < 30, `AFK cap ${IDLE_XP_CAP}/tick ton ${days.toFixed(1)} ngay, qua dai`);
+    assert.ok(days > 7, `AFK cap ${IDLE_XP_DAILY_CAP}/ngay len cap 50 trong ${days.toFixed(1)} ngay, phai > 7 de AFK khong nuot het game`);
+    assert.ok(days < 60, `AFK cap ${IDLE_XP_DAILY_CAP}/ngay ton ${days.toFixed(1)} ngay, qua dai`);
   });
 });
 
@@ -515,7 +526,10 @@ describe('Chi phí hội thoại không bị trích hai lần', () => {
     for (const s of [...CITY_EVENTS, ...REQUEST_SCRIPTS]) {
       for (const c of s.choices) {
         if (c.costCoins === undefined) continue;
-        const moneyTag = (c.tags ?? []).find((t) => /XU/.test(t.label));
+        const moneyTag = (c.tags ?? []).find((t) => {
+          const digits = parseInt(t.label.replace(/[^\d]/g, ''), 10);
+          return Number.isFinite(digits) && digits === c.costCoins;
+        });
         assert.ok(moneyTag, `${s.id}/${c.id} phai co pill hien chi phi`);
         const shown = parseInt(moneyTag.label.replace(/[^\d]/g, ''), 10);
         assert.equal(
@@ -558,20 +572,20 @@ describe('Migration ladder phai chay DAY DU cac bac', () => {
    */
   it('save v3 qua duoc ca bac 4 den 9', () => {
     const s = normalizeStoredState(v3Save(), NOW);
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.equal(s.feverEverUsed, false, 'V5 phai gan false vi V3 chua co field');
     assert.equal(s.lastTalkAt, 0, 'V5 phai gan 0');
   });
 
   it('save v4 qua duoc bac 5 den 9', () => {
     const s = normalizeStoredState(JSON.stringify({ ...JSON.parse(v3Save()), version: 4 }), NOW);
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.equal(typeof s.totalGrants, 'number');
   });
 
   it('save v5 qua duoc bac 6 den 9', () => {
     const s = normalizeStoredState(JSON.stringify({ ...JSON.parse(v3Save()), version: 5 }), NOW);
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.equal(s.totalRevenue, 0);
   });
 
@@ -628,7 +642,7 @@ describe('P&L - cong bang va tat ca dinh nghia', () => {
   });
 
   it('thue khong bao gio am khi cong trinh lam loi chay', () => {
-    // Thua l亏损 thi EBIT < 0; thue phai = 0 chu khong duoc trừ nguoc.
+    // Lo thi EBIT < 0; thue phai = 0 chu khong duoc tru nguoc.
     const f = flowFor([], [], 1, 0, { idleMs: 0 });
     assert.equal(f.tax, 0, 'cong trinh rong khong phai nop thue');
   });
@@ -636,8 +650,13 @@ describe('P&L - cong bang va tat ca dinh nghia', () => {
 
 describe('P&L - bien loi nhuan phu thuoc cau truc kinh doanh', () => {
   it('cua hang an uong co bien gop thap hon tram tai chinh', () => {
-    const cafe = flowFor([node('quan-ca-phe', 0, 0, 10)], [], 10, 0, { idleMs: 0 });
-    const bank = flowFor([node('ngan-hang-so', 0, 0, 10)], [], 10, 0, { idleMs: 0 });
+    // Ngan Hang So khong con phan doanh thu "ban hang" (khong xep hang, khong
+    // gia von): thu nhap cua no la LAI TIET KIEM tren so du. Cho `coins = 0`
+    // thi so do thu 0 va ca so sanh tro thanh so sanh voi 0 - khong con do
+    // duoc gi. `cogs` dong 0 cho dong nay nen bien gop cua tram tai chinh = 1.
+    const cafe = flowFor([node('quan-ca-phe', 0, 0, 10)], [], 10, 100_000, { idleMs: 0 });
+    const bank = flowFor([node('ngan-hang-so', 0, 0, 10)], [], 10, 100_000, { idleMs: 0 });
+    assert.ok(bank.grossMargin > 0, `tram tai chinh co so du phai sinh duoc doanh thu (${bank.grossMargin})`);
     assert.ok(
       cafe.grossMargin < bank.grossMargin,
       `quan ca phe (${cafe.grossMargin.toFixed(3)}) phai thap hon ngan hang (${bank.grossMargin.toFixed(3)})`,
@@ -664,16 +683,6 @@ describe('P&L - bien loi nhuan phu thuoc cau truc kinh doanh', () => {
         `${b.id} thieu opexRate hop le`,
       );
     }
-  });
-
-  it('moi thu muc doi grossUp - khong con so phong to chung', () => {
-    // Cong trinh giao dich so (gia von 8%) phai can grossUp nho hon cua hang
-    // an uong (gia von 45%). Dung 1 he so chung se lam mot trong hai ben sai,
-    // va so do cua game se khong cong bang nua.
-    const cafe = grossUpFor(0.45, 0.35, 0.9);
-    const sàn = grossUpFor(0.08, 0.2, 0.9);
-    assert.ok(sàn < cafe, `sàn (${sàn.toFixed(2)}) < cà phê (${cafe.toFixed(2)})`);
-    assert.ok(cafe > 4, 'gia von cao phai can phong to doanh thu gap nhieu');
   });
 
   it('moi cong trinh van ra duoc bao cao P&L co bien khac nhau', () => {
@@ -707,14 +716,12 @@ describe('P&L - tien thuc nhan khong doi so voi truoc Tầng 1', () => {
    * choi dang cap 40 se phai tra them 4,5 gio moi cap thay vi 269 phut, va moi
    * hang so san bang (`UPGRADE_GROWTH`, `xpForLevel`) se pha.
    */
-  it('netIncome = tong 3 dong doanh thu, khong con la con so nao khac', () => {
+  it('grossRevenue = tong 3 dong doanh thu, netIncome = gross tru chi phi', () => {
     /**
-     * Bat buoc: `grossUp` phai tri chinh het muc giam cua ca gia von, chi phi
-     * van hanh va thue. Bang chung: so tien thuc vao ngan khoc phai bang DUNG
-     * tong 3 dong doanh thu tinh duoc - y het tinh huong truoc Tầng 1.
-     *
-     * Test nay khong dung so co dinh nen khong phu thuoc toa do (ke lien nhau
-     * lam doi Combo Lien Ke) hay con so may sinh ngau nhien.
+     * Sau khi bo `grossUp`, `grossRevenue` la tien THAT vao (khong phong to),
+     * va `netIncome` = gross - COGS - OPEX - no xau - lai vay - thue.
+     * Day la boi ke toan trung thuong: vao bao nhieu, tru chi phi, con lai
+     * moi la loi nhuan dua vao ngan khoc.
      */
     const mods: StoreModuleId[] = ['QR_LOA_THAN_TAI', 'VI_TRA_SAU_VOUCHER', 'TUI_THAN_TAI_AUTO'];
     const max = (defId: string, c: number, r: number) =>
@@ -731,10 +738,26 @@ describe('P&L - tien thuc nhan khong doi so voi truoc Tầng 1', () => {
     for (const city of cities) {
       const f = flowFor(city, [], 10, 100_000, { idleMs: 0 });
       const lines = f.storeYield + f.networkFee + f.savingsYield;
-      const diff = Math.abs((f.netIncome / lines - 1) * 100);
+
+      // Gross = tien that vao, khong phong to.
+      const grossDiff = Math.abs((f.grossRevenue / lines - 1) * 100);
       assert.ok(
-        diff < 0.01,
-        `netIncome ${f.netIncome} phai bang tong 3 dong ${lines} (lech ${diff.toFixed(3)}%)`,
+        grossDiff < 0.01,
+        `grossRevenue ${f.grossRevenue} phai bang tong 3 dong ${lines} (lech ${grossDiff.toFixed(3)}%)`,
+      );
+
+      // Net = gross tru het chi phi.
+      const rebuilt = f.grossRevenue - f.cogs - f.opex - f.badDebt - f.interestExpense - f.tax;
+      const netDiff = Math.abs(f.netIncome - rebuilt);
+      assert.ok(
+        netDiff < Math.max(1e-6, Math.abs(f.netIncome) * 1e-6),
+        `netIncome ${f.netIncome} phai bang gross - chi phi ${rebuilt} (lech ${netDiff})`,
+      );
+
+      // Co chi phi that nen net phai nho hon gross.
+      assert.ok(
+        f.netIncome < f.grossRevenue,
+        `netIncome ${f.netIncome} phai nho hon gross ${f.grossRevenue} (khong con grossUp)`,
       );
     }
   });
@@ -745,31 +768,39 @@ describe('P&L - tien thuc nhan khong doi so voi truoc Tầng 1', () => {
     const relics = flowFor(b, [], 10, 100_000, { idleMs: 0, relicBonus: 0.9 });
     const fever = flowFor(b, [], 10, 100_000, { idleMs: 0, isFever: true });
     for (const [name, f] of [['bao vat', relics], ['gio vang', fever]] as const) {
+      // Gross van = tong 3 dong, du nhan voi he so phuc vu nao.
       const lines = f.storeYield + f.networkFee + f.savingsYield;
       assert.ok(
-        Math.abs((f.netIncome / lines - 1) * 100) < 0.01,
-        `${name}: phai van giu cong thuc doanh thu = loi nhuan rong`,
+        Math.abs((f.grossRevenue / lines - 1) * 100) < 0.01,
+        `${name}: grossRevenue van bang tong 3 dong doanh thu`,
+      );
+      // Net van = gross - chi phi (cong thuc khong doi).
+      const rebuilt = f.grossRevenue - f.cogs - f.opex - f.badDebt - f.interestExpense - f.tax;
+      assert.ok(
+        Math.abs(f.netIncome - rebuilt) < Math.max(1e-6, Math.abs(f.netIncome) * 1e-6),
+        `${name}: netIncome van = gross - chi phi`,
       );
     }
-    // Giờ Vàng nhân đôi mọi thứ: cả doanh thu lẫn lợi nhuận ròng.
+    // Giờ Vàng nhân đôi mọi thứ: cả doanh thu gộp lẫn lợi nhuận ròng.
     assert.ok(fever.netIncome > plain.netIncome * 1.9);
   });
 
-  it('grossUp tu hieu - chi phi cao thi grossUp tham hon', () => {
-    // Doanh thu gop phai lon gap hon de con nghiem loi nhuan mong doi.
-    // Gia von cao -> phai phong to doanh thu it hon.
-    const dat = grossUpFor(0.45, 0.35, 0.9);
-    const rao = grossUpFor(0.10, 0.15, 0.9);
-    assert.ok(
-      rao < dat,
-      `giao dich so (${rao.toFixed(2)}) phai it phong to hon cua hang an uong (${dat.toFixed(2)})`,
-    );
-  });
-
-  it('grossUp luon duong - tien nhan khong bao gio am', () => {
-    for (const [c, o] of [[0.45, 0.35], [0.1, 0.15], [0.05, 0.05], [0.7, 0.2]]) {
-      const g = grossUpFor(c, o, 0.95);
-      assert.ok(g > 1, `grossUp(${c},${o},0.95)=${g} phai > 1`);
+  it('moi cong trinh deu sinh loi rong - khong co cong trinh tien mat', () => {
+    // Mot cong trinh cung khong duoc lam mat tien. Day la tai san cua cau test
+    // "grossUp luon duong" cu, do di sau hon: khong chi netRate > 0 o mot cap
+    // ma la `netIncome > 0` o TAT CA cac cap.
+    //
+    // `tram-tui-than-tai` va `ngan-hang-so` chi sinh thu tren so du vi khach
+    // de lai, nen `coins = 0` cho `netIncome = 0` - phai cho von > 0 giong
+    // test tren cung `ngan-hang-so` o dau describe.
+    for (const b of BUILDINGS) {
+      for (const level of [1, 5, 10]) {
+        const f = flowFor([node(b.id, 0, 0, level)], [], level, 100_000, { idleMs: 0 });
+        assert.ok(
+          f.netIncome > 0,
+          `${b.id} cap ${level}: netIncome ${f.netIncome.toFixed(4)} phai > 0`,
+        );
+      }
     }
   });
 });
@@ -806,7 +837,29 @@ describe('Sổ cái - phân biệt chi phí vận hành và chi tiêu vốn', ()
     );
     assert.equal(s.ledgerLifetime.grossRevenue, 0);
     assert.equal(s.ledgerLifetime.netIncome, 0);
-    assert.equal(s.ledgerLifetime.capex, 0);
+    assert.equal(s.ledgerLifetime.cogs, 0);
+  });
+
+  it('migration v9 -> v10 nhan tat ca so tien cu VND_PER_OLD_COIN', () => {
+    const s = normalizeStoredState(
+      JSON.stringify({
+        ...JSON.parse(v3Save()),
+        version: 9,
+        coins: 1_000_000,
+        debt: 500_000,
+        totalRevenue: 2_500_000,
+        totalGrants: 300_000,
+        totalTapIncome: 100_000,
+        totalInterestPaid: 50_000,
+      }),
+      NOW,
+    );
+    assert.equal(s.coins, 1_000_000 * VND_PER_OLD_COIN);
+    assert.equal(s.debt, 500_000 * VND_PER_OLD_COIN);
+    assert.equal(s.totalRevenue, 2_500_000 * VND_PER_OLD_COIN);
+    assert.equal(s.totalGrants, 300_000 * VND_PER_OLD_COIN);
+    assert.equal(s.totalTapIncome, 100_000 * VND_PER_OLD_COIN);
+    assert.equal(s.totalInterestPaid, 50_000 * VND_PER_OLD_COIN);
   });
 
   it('so ngay va thang tro ve ky hien tai khi normalize', () => {

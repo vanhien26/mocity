@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Crown,
+  FileText,
   Gem,
   Layers,
   Lock,
@@ -13,6 +14,7 @@ import {
   UserCheck,
   X,
   Zap,
+  ShoppingBag,
 } from 'lucide-react';
 import {
   BUILDING_BY_ID,
@@ -26,12 +28,19 @@ import {
   ZONES,
 } from '@/lib/mocity/mock-city-data';
 import { BUILDING_ICON } from './building-icons';
-import { nodeYieldBreakdown } from '@/lib/mocity/city-calculator';
+import ShophouseFacade from './ShophouseFacade';
+import BuildingDossierView from './BuildingDossierView';
+import { themeForBuilding } from '@/lib/mocity/facade-theme';
+import { nodeYieldBreakdown, queueCapacityFor } from '@/lib/mocity/city-calculator';
+import { queueHardCap, arrivalRateFor, serviceIntervalMsFor, STAFF_MAX } from '@/lib/mocity/transactions';
 import {
   assignStoreManager,
   evolveBuildingStar,
+  hireStaff,
   installStoreModule,
+  staffHireCost,
   upgradeBuilding,
+  effectiveMaxLevel,
   MAX_UPGRADE_PER_ACTION,
   useCity,
 } from '@/lib/mocity/store';
@@ -52,11 +61,12 @@ export default function StoreInspectorModal({
   onClose: () => void;
   onToast: (msg: string) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'UPGRADE' | 'MOMO_TECH' | 'MANAGER'>('UPGRADE');
+  const [activeTab, setActiveTab] = useState<'INFO' | 'UPGRADE' | 'MOMO_TECH' | 'MANAGER'>('INFO');
   const coins = useCity((s) => s.coins);
   const gems = useCity((s) => s.gems);
   const buildings = useCity((s) => s.buildings);
   const unlockedManagers = useCity((s) => s.unlockedManagers ?? EMPTY_MANAGERS);
+  const mayorLevel = useCity((s) => s.mayorLevel);
 
   if (!open || !node) return null;
   const def = BUILDING_BY_ID[node.defId];
@@ -64,18 +74,22 @@ export default function StoreInspectorModal({
 
   const Icon = BUILDING_ICON[def.icon];
   const zone = ZONES[def.zone];
+  const facadeTheme = themeForBuilding(def.id);
+  const houseNumber = node.col * 2 + node.row * 20 + 2;
   const yieldInfo = nodeYieldBreakdown(node, buildings);
   const nextMilestone = nextMilestoneLevel(node.level);
   // He so dot pha CU THE cua moc sap toi (vd 1.4x), thay vi dai cung ban cu.
   const nextMilestoneStep = node.level >= nextMilestone
     ? 1
     : milestoneMultiplierFor(nextMilestone) / milestoneMultiplierFor(nextMilestone - 1);
+  const upgradeCap = effectiveMaxLevel(def.maxLevel, mayorLevel);
   const atMaxLevel = node.level >= def.maxLevel;
+  const gatedByMayor = !atMaxLevel && node.level >= upgradeCap;
   const currentStar = node.starRating || 1;
   const starCost = starUpgradeCost(def, currentStar);
 
   const cost1 = upgradeCostCoins(def, node.level);
-  const headroom = Math.max(0, def.maxLevel - node.level);
+  const headroom = Math.max(0, upgradeCap - node.level);
   const countToMilestone = Math.min(MAX_UPGRADE_PER_ACTION, Math.max(1, nextMilestone - node.level), headroom);
   let costMilestone = 0;
   for (let i = 0; i < countToMilestone; i++) {
@@ -105,11 +119,13 @@ export default function StoreInspectorModal({
     const applied = Math.min(count, MAX_UPGRADE_PER_ACTION, headroom);
     const res = upgradeBuilding(node.col, node.row, applied);
     if (res === 'ok') {
-      onToast(`Đã nâng cấp ${def.name} (+${applied} cấp)! Sản lượng Xu tăng vọt.`);
+      onToast(`Đã nâng cấp ${def.name} (+${applied} cấp)! Sản lượng đồng tăng vọt.`);
     } else if (res === 'funds') {
-      onToast('Chưa đủ Xu để nâng cấp.');
+      onToast('Chưa đủ đồng để nâng cấp.');
     } else if (res === 'max') {
       onToast('Công trình đã đạt cấp tối đa.');
+    } else if (res === 'mayor') {
+      onToast(`Lên cấp Thị Trưởng ${upgradeCap + 1} để mở khóa nâng cấp cao hơn.`);
     }
   };
 
@@ -119,7 +135,7 @@ export default function StoreInspectorModal({
       particles.confetti(window.innerWidth / 2, window.innerHeight * 0.4);
       onToast(`Đột phá kiến trúc ${def.name} lên ${currentStar + 1} Sao!`);
     } else if (res === 'funds') {
-      onToast('Chưa đủ Xu hoặc Kim Cương để nâng Sao.');
+      onToast('Chưa đủ đồng hoặc Kim Cương để nâng Sao.');
     }
   };
 
@@ -128,16 +144,27 @@ export default function StoreInspectorModal({
     if (res === 'ok') {
       onToast(`Đã tích hợp tiện ích ${modName} cho ${def.name}!`);
     } else if (res === 'funds') {
-      onToast('Chưa đủ Xu để gắn tiện ích MoMo này.');
+      onToast('Chưa đủ đồng để gắn tiện ích MoMo này.');
     }
   };
 
   const handleAssignManager = (mgrId: string, mgrName: string) => {
     const res = assignStoreManager(node.col, node.row, mgrId);
     if (res === 'ok') {
-      onToast(`Đã bổ nhiệm ${mgrName} quản lý ${def.name}!`);
+      onToast(`Đã mời ${mgrName} làm Cổ Đông góp vốn ${def.name}!`);
     } else if (res === 'funds') {
-      onToast('Chưa đủ Xu hoặc Kim Cương để chiêu mộ Quản lý này.');
+      onToast('Chưa đủ đồng hoặc Kim Cương để mời Cổ Đông này.');
+    }
+  };
+
+  const handleHireStaff = () => {
+    const res = hireStaff(node.col, node.row);
+    if (res === 'ok') {
+      onToast(`Đã thuê thêm Nhân Viên cho ${def.name}! Tiệm bán nhanh hơn.`);
+    } else if (res === 'funds') {
+      onToast('Chưa đủ đồng để thuê thêm Nhân Viên.');
+    } else if (res === 'max') {
+      onToast(`${def.name} đã đủ ${STAFF_MAX} Nhân Viên tối đa.`);
     }
   };
 
@@ -164,11 +191,37 @@ export default function StoreInspectorModal({
           }}
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
+            {/*
+             * THUMBNAIL MẶT TIỀN THẬT - thay icon trừu tượng.
+             *
+             * Dung lại `ShophouseFacade` thật (cùng component vẽ ngoài phố)
+             * thu nhỏ bằng transform scale, neo đáy để luôn thấy tầng trệt +
+             * biển hiệu (phần nhận diện rõ nhất), không bị cắt mất khi scale.
+             * Khi Sao/Cấp đổi, thumbnail đổi theo ngay vì dùng đúng dữ liệu.
+             */}
             <span
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2"
-              style={{ background: zone.tint, borderColor: '#C9A227' }}
+              className="relative block shrink-0 overflow-hidden rounded-2xl border-2"
+              style={{ width: 56, height: 72, borderColor: '#C9A227', background: facadeTheme.wallBg }}
             >
-              <Icon size={24} className="shrink-0" style={{ color: def.hue }} />
+              <span
+                className="pointer-events-none absolute bottom-0 left-0"
+                style={{ width: 228, transform: 'scale(0.246)', transformOrigin: 'bottom left' }}
+              >
+                <ShophouseFacade
+                  shopType={facadeTheme.shopType}
+                  houseNumber={houseNumber}
+                  shopTitle={def.shortName || def.name}
+                  isBuilt
+                  unlocked
+                  level={node.level}
+                  starRating={currentStar}
+                  yieldPerSec={yieldInfo.totalPerSec}
+                  timeOfDay="DAY"
+                  wallBg={facadeTheme.wallBg}
+                  wallHatch={facadeTheme.wallHatch}
+                  signBg={facadeTheme.signBg}
+                />
+              </span>
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
@@ -227,7 +280,7 @@ export default function StoreInspectorModal({
           * Chi tinh khi chua dat cap toi da va tang cap thuc su tang them doanh
           * thu (neu bang 0 thi khong bao gio hoa von duoc).
           */}
-        {!atMaxLevel && cost1 > 0 && marginalYield > 0 && (
+        {!atMaxLevel && !gatedByMayor && cost1 > 0 && marginalYield > 0 && (
           <div
             className="border-b px-4 py-2.5"
             style={{ background: 'rgba(5,150,105,0.10)', borderColor: '#10B98144' }}
@@ -246,7 +299,7 @@ export default function StoreInspectorModal({
                 </p>
               </div>
               <p className="flex-1 text-right text-[12px] font-semibold leading-tight" style={{ color: '#3E2A1B' }}>
-                Bỏ {formatCompact(cost1)} Xu để nhận thêm {formatRate(marginalYield)}.
+                Bỏ {formatCompact(cost1)} đồng để nhận thêm {formatRate(marginalYield)}.
                 <br />
                 <span style={{ color: '#047857' }}>Đây là vốn, không phải chi phí vận hành.</span>
               </p>
@@ -300,63 +353,107 @@ export default function StoreInspectorModal({
               </span>
             </div>
             <span className="shrink-0 font-black">
-              {yieldInfo.synergyBonus > 0 ? `+${Math.round(yieldInfo.synergyBonus * 100)}% Xu` : 'Chưa kích hoạt'}
+              {yieldInfo.synergyBonus > 0 ? `+${Math.round(yieldInfo.synergyBonus * 100)}% đồng` : 'Chưa kích hoạt'}
             </span>
           </div>
+
+          {/* Năng lực phục vụ & Luồng giao dịch vỉa hè */}
+          {def.zone === 'COMMERCIAL' && (
+            <div className="mt-2 grid grid-cols-3 gap-1.5 text-center text-[11px]">
+              <div className="rounded-lg border bg-white/70 p-1.5" style={{ borderColor: '#C9A22744' }}>
+                <p className="font-bold text-[#8A7355]">Chỗ phục vụ</p>
+                <p className="font-black text-[#3E2A1B]">{queueCapacityFor(node)} quầy</p>
+              </div>
+              <div className="rounded-lg border bg-white/70 p-1.5" style={{ borderColor: '#C9A22744' }}>
+                <p className="font-bold text-[#8A7355]">Sức chứa hàng</p>
+                <p className="font-black text-[#3E2A1B]">{queueHardCap(node)} khách</p>
+              </div>
+              <div className="rounded-lg border bg-white/70 p-1.5" style={{ borderColor: '#C9A22744' }}>
+                <p className="font-bold text-[#8A7355]">Thanh toán</p>
+                <p className="font-black text-[#047857]">
+                  {node.modules?.includes('QR_LOA_THAN_TAI') ? '📱 QR + Loa' : '💵 Tiền mặt'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 3 Tabs Dieu Khien */}
-        <div className="grid grid-cols-3 gap-1.5 border-b px-4 py-2.5" style={{ borderColor: '#C9A22744' }}>
+        {/* 4 Tabs Điều Khiển */}
+        <div className="grid grid-cols-4 gap-1 border-b px-3 py-2" style={{ borderColor: '#C9A22744' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('INFO')}
+            className="flex items-center justify-center gap-1 rounded-xl border py-2 text-xs font-black transition-all"
+            style={
+              activeTab === 'INFO'
+                ? { background: 'linear-gradient(180deg,#78533D,#5A3E2D)', color: '#FFFFFF', borderColor: '#4A3018' }
+                : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
+            }
+          >
+            <FileText size={13} className="shrink-0" />
+            <span className="truncate">Chi Tiết</span>
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab('UPGRADE')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
+            className="flex items-center justify-center gap-1 rounded-xl border py-2 text-xs font-black transition-all"
             style={
               activeTab === 'UPGRADE'
                 ? { background: 'linear-gradient(180deg,#D9A441,#C9A227)', color: '#3E2A1B', borderColor: '#8A6A43' }
                 : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
             }
           >
-            <ArrowUpCircle size={14} className="shrink-0" />
-            <span className="truncate">Cấp & Sao</span>
+            <ArrowUpCircle size={13} className="shrink-0" />
+            <span className="truncate">Nâng Cấp</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('MOMO_TECH')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
+            className="flex items-center justify-center gap-1 rounded-xl border py-2 text-xs font-black transition-all"
             style={
               activeTab === 'MOMO_TECH'
                 ? { background: 'linear-gradient(180deg,#EB2F96,#C22181)', color: '#FFFFFF', borderColor: '#9D174D' }
                 : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
             }
           >
-            <Zap size={14} className="shrink-0" />
-            <span className="truncate">Tiện Ích MoMo ({node.modules?.length ?? 0}/3)</span>
+            <Zap size={13} className="shrink-0" />
+            <span className="truncate">MoMo ({node.modules?.length ?? 0}/3)</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('MANAGER')}
-            className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
+            className="flex items-center justify-center gap-1 rounded-xl border py-2 text-xs font-black transition-all"
             style={
               activeTab === 'MANAGER'
                 ? { background: 'linear-gradient(180deg,#2563EB,#1D4ED8)', color: '#FFFFFF', borderColor: '#1E3A8A' }
                 : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
             }
           >
-            <UserCheck size={14} className="shrink-0" />
-            <span className="truncate">Quản Lý RPG</span>
+            <UserCheck size={13} className="shrink-0" />
+            <span className="truncate">Nhân Lực</span>
           </button>
         </div>
 
         {/* Noi dung Tab */}
         <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto p-4">
+          {activeTab === 'INFO' && (
+            <BuildingDossierView
+              node={node}
+              def={def}
+              yieldInfo={yieldInfo}
+              buildings={buildings}
+              houseNumber={houseNumber}
+              onSwitchToUpgrade={() => setActiveTab('UPGRADE')}
+            />
+          )}
+
           {activeTab === 'UPGRADE' && (
             <>
               {/* Tien trinh Moc Dot Pha */}
               <div className="rounded-2xl border-2 p-3.5" style={{ background: '#FFFDF7', borderColor: '#C9A22766' }}>
                 <div className="flex items-center justify-between text-xs font-black" style={{ color: '#3E2A1B' }}>
                   <span>Mốc Đột Phá Tiếp Theo: Cấp {nextMilestone}</span>
-                  <span style={{ color: '#D97706' }}>Vượt mốc: ×{nextMilestoneStep.toFixed(2)} Xu/s</span>
+                  <span style={{ color: '#D97706' }}>Vượt mốc: ×{nextMilestoneStep.toFixed(2)} đồng/s</span>
                 </div>
                 <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-amber-950/15">
                   <div
@@ -368,7 +465,7 @@ export default function StoreInspectorModal({
                   />
                 </div>
 
-                {!atMaxLevel ? (
+                {!atMaxLevel && !gatedByMayor ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
                       type="button"
@@ -384,7 +481,7 @@ export default function StoreInspectorModal({
                       <span className="text-xs font-black uppercase">Nâng +1 Cấp</span>
                       <span className="mt-0.5 flex items-center gap-1 text-[13px] font-bold">
                         <CircleDollarSign size={12} className="shrink-0" />
-                        {formatCompact(cost1)} Xu
+                        {formatCompact(cost1)}
                       </span>
                     </button>
 
@@ -404,7 +501,7 @@ export default function StoreInspectorModal({
                       </span>
                       <span className="mt-0.5 flex items-center gap-1 text-[13px] font-bold">
                         <CircleDollarSign size={12} className="shrink-0" />
-                        {formatCompact(costMilestone)} Xu
+                        {formatCompact(costMilestone)}
                       </span>
                     </button>
                     {/*
@@ -419,8 +516,10 @@ export default function StoreInspectorModal({
                     )}
                   </div>
                 ) : (
-                  <p className="mt-3 text-center text-xs font-black" style={{ color: '#16A34A' }}>
-                    Công trình đã đạt cấp độ tối đa ({def.maxLevel})!
+                  <p className="mt-3 text-center text-xs font-black" style={{ color: gatedByMayor ? '#B45309' : '#16A34A' }}>
+                    {gatedByMayor
+                      ? `🔒 Cần cấp Thị Trưởng ${upgradeCap + 1} để mở khóa nâng cấp tiếp (${node.level}/${upgradeCap})`
+                      : `Công trình đã đạt cấp độ tối đa (${def.maxLevel})!`}
                   </p>
                 )}
               </div>
@@ -433,7 +532,7 @@ export default function StoreInspectorModal({
                       Tiến Hóa Kiến Trúc ({currentStar}★ / 5★)
                     </p>
                     <p className="mt-0.5 text-[13px]" style={{ color: '#7A6449' }}>
-                      Mỗi cấp Sao tăng +35% sản lượng Xu và +25% sức chứa Cư dân.
+                      Mỗi cấp Sao tăng +35% sản lượng đồng và +25% sức chứa Cư dân.
                     </p>
                   </div>
                   <Star size={18} className="shrink-0 text-amber-500" />
@@ -454,7 +553,7 @@ export default function StoreInspectorModal({
                     <Star size={14} className="shrink-0" />
                     <span>Tiến hóa lên {currentStar + 1} Sao</span>
                     <span className="flex items-center gap-1">
-                      · {formatCompact(starCost.coins)} Xu & {starCost.gems} Kim Cương
+                      · {formatCompact(starCost.coins)} & {starCost.gems} Kim Cương
                     </span>
                   </button>
                 ) : (
@@ -488,7 +587,7 @@ export default function StoreInspectorModal({
                           className="rounded-md px-2 py-0.5 text-[12px] font-black text-white"
                           style={{ background: mod.color }}
                         >
-                          +{Math.round(mod.yieldBonus * 100)}% Xu/s
+                          +{Math.round(mod.yieldBonus * 100)}% Doanh thu
                         </span>
                         <p className="truncate text-xs font-black" style={{ color: '#3E2A1B' }}>
                           {mod.name}
@@ -522,7 +621,7 @@ export default function StoreInspectorModal({
                         }
                       >
                         <span>Tích hợp</span>
-                        <span className="text-[12px]">{formatCompact(mod.costCoins)} Xu</span>
+                        <span className="text-[12px]">{formatCompact(mod.costCoins)}</span>
                       </button>
                     )}
                   </div>
@@ -533,6 +632,73 @@ export default function StoreInspectorModal({
 
           {activeTab === 'MANAGER' && (
             <div className="space-y-2.5">
+              {/*
+               * NHÂN VIÊN - khác hẳn Cổ Đông bên dưới. Nhân Viên không tăng
+               * doanh thu mỗi đơn, chỉ rút ngắn khoảng cách giữa 2 đơn tự
+               * bán (xem `serviceIntervalMsFor`). Đây là cách DUY NHẤT tăng
+               * tốc bán hàng kể từ khi bỏ nút bấm tay.
+               */}
+              {(() => {
+                const staffCount = Math.min(STAFF_MAX, Math.max(0, node.staffCount ?? 0));
+                const atMax = staffCount >= STAFF_MAX;
+                const cost = staffHireCost(node);
+                const canAffordStaff = coins >= cost;
+                const intervalNow = serviceIntervalMsFor(node) / 1000;
+                const intervalNext = !atMax
+                  ? serviceIntervalMsFor({ ...node, staffCount: staffCount + 1 }) / 1000
+                  : intervalNow;
+
+                return (
+                  <div
+                    className="rounded-2xl border-2 p-3.5"
+                    style={{ background: '#FFFDF7', borderColor: '#C9A22766' }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-black uppercase" style={{ color: '#3E2A1B' }}>
+                          Nhân Viên ({staffCount}/{STAFF_MAX})
+                        </p>
+                        <p className="mt-0.5 text-[13px]" style={{ color: '#7A6449' }}>
+                          Chủ quán một mình bán {intervalNow.toFixed(1)}s/đơn. Thuê thêm để bán nhanh hơn.
+                        </p>
+                      </div>
+                      <UserCheck size={18} className="shrink-0 text-blue-600" />
+                    </div>
+
+                    {!atMax ? (
+                      <button
+                        type="button"
+                        disabled={!canAffordStaff}
+                        onClick={handleHireStaff}
+                        className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border-2 text-xs font-black uppercase transition-transform active:scale-95"
+                        style={
+                          canAffordStaff
+                            ? { background: 'linear-gradient(180deg,#2563EB,#1D4ED8)', borderColor: '#1E3A8A', color: '#FFFFFF' }
+                            : { background: 'rgba(0,0,0,0.06)', borderColor: '#C9A22733', color: '#9C8767', cursor: 'not-allowed' }
+                        }
+                      >
+                        <UserCheck size={14} className="shrink-0" />
+                        <span>Thuê Nhân Viên thứ {staffCount + 1}</span>
+                        <span className="flex items-center gap-1">
+                          · {formatCompact(cost)} đồng · còn {intervalNext.toFixed(1)}s/đơn
+                        </span>
+                      </button>
+                    ) : (
+                      <p className="mt-2 text-center text-xs font-black text-blue-600">
+                        Đã đủ {STAFF_MAX} Nhân Viên - bán {intervalNow.toFixed(1)}s/đơn, tốc độ tối đa!
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <h3 className="text-[13px] font-black uppercase tracking-wider text-[#5B3D22]">
+                Cổ Đông
+              </h3>
+              <p className="-mt-1.5 text-[12px]" style={{ color: '#8A7355' }}>
+                Góp vốn lấy % Xu/giây - không ảnh hưởng tốc độ bán, đó là việc của Nhân Viên ở trên.
+              </p>
+
               {STORE_MANAGERS.map((mgr) => {
                 const isAssignedHere = assignedManager?.id === mgr.id;
                 const isUnlocked = unlockedManagers.includes(mgr.id);
@@ -563,14 +729,14 @@ export default function StoreInspectorModal({
                         </span>
                       </div>
                       <p className="mt-1 text-[13px]" style={{ color: '#5B3D22' }}>
-                        <strong>{mgr.skillName}:</strong> +{Math.round(mgr.yieldMultiplier * 100)}% Xu/s, +{mgr.happinessBonus} Hạnh phúc
+                        <strong>{mgr.skillName}:</strong> +{Math.round(mgr.yieldMultiplier * 100)}% Doanh thu, +{mgr.happinessBonus} Hạnh phúc
                       </p>
                     </div>
 
                     {isAssignedHere ? (
                       <span className="flex shrink-0 items-center gap-1 rounded-xl bg-blue-100 px-3 py-2 text-xs font-black text-blue-800">
                         <Crown size={14} className="shrink-0" />
-                        Đang quản lý
+                        Đang góp vốn
                       </span>
                     ) : (
                       <button
@@ -584,10 +750,10 @@ export default function StoreInspectorModal({
                             : { background: 'rgba(0,0,0,0.06)', borderColor: '#C9A22733', color: '#9C8767', cursor: 'not-allowed' }
                         }
                       >
-                        <span>{isUnlocked ? 'Điều động' : 'Chiêu mộ'}</span>
+                        <span>{isUnlocked ? 'Điều động' : 'Mời Cổ Đông'}</span>
                         {!isUnlocked && (
                           <span className="flex items-center gap-1 text-[12px]">
-                            {formatCompact(mgr.costCoins)} Xu
+                            {formatCompact(mgr.costCoins)} đồng
                             {mgr.costGems > 0 && (
                               <>
                                 · <Gem size={9} className="shrink-0" />

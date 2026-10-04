@@ -20,11 +20,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'nạp-vetc-momo',
-        text: 'Nạp cấp tốc 300 XU vào tài khoản VETC qua MoMo cho xe qua trạm tức thì',
+        text: 'Nạp cấp tốc 300 đồng vào tài khoản VETC qua MoMo cho xe qua trạm tức thì',
         costCoins: 300,
         btnTone: 'green',
         tags: [
-          { label: '-300 XU', tone: 'red' },
+          { label: '-300 đồng', tone: 'red' },
           { label: 'thông trạm ngay ++', tone: 'green' },
           { label: 'anh Lâm đội ơn', tone: 'green' },
         ],
@@ -68,11 +68,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'gift-5g-data',
-        text: 'Tài trợ 250 XU nạp gói Data 5G Siêu Tốc 10GB qua MoMo + mở Ví Trả Sau',
+        text: 'Tài trợ 250 đồng nạp gói Data 5G Siêu Tốc 10GB qua MoMo + mở Ví Trả Sau',
         costCoins: 250,
         btnTone: 'green',
         tags: [
-          { label: '-250 XU', tone: 'red' },
+          { label: '-250 đồng', tone: 'red' },
           { label: 'kết nối 5G tức thì', tone: 'green' },
           { label: 'mở Ví Trả Sau', tone: 'green' },
         ],
@@ -116,11 +116,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'pay-tuition-now',
-        text: 'Chi 450 XU hỗ trợ thanh toán học phí qua Cổng Dịch Vụ Giáo Dục MoMo',
+        text: 'Chi 450 đồng hỗ trợ thanh toán học phí qua Cổng Dịch Vụ Giáo Dục MoMo',
         costCoins: 450,
         btnTone: 'green',
         tags: [
-          { label: '-450 XU', tone: 'red' },
+          { label: '-450 đồng', tone: 'red' },
           { label: 'gia đình chị Mai ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -164,11 +164,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'buy-moto-insurance',
-        text: 'Tài trợ 200 XU mua ngay Bảo Hiểm Xe Máy Điện Tử MoMo nhận giấy trong 30 giây',
+        text: 'Tài trợ 200 đồng mua ngay Bảo Hiểm Xe Máy Điện Tử MoMo nhận giấy trong 30 giây',
         costCoins: 200,
         btnTone: 'green',
         tags: [
-          { label: '-200 XU', tone: 'red' },
+          { label: '-200 đồng', tone: 'red' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
           { label: 'anh Khoa thở phào ++', tone: 'green' },
         ],
@@ -212,11 +212,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'setup-expense-tracker',
-        text: 'Chi 350 XU mở Trợ Lý Quản Lý Chi Tiêu MoMo phân bổ chuẩn 50/30/20 + thưởng nóng',
+        text: 'Chi 350 đồng mở Trợ Lý Quản Lý Chi Tiêu MoMo phân bổ chuẩn 50/30/20 + thưởng nóng',
         costCoins: 350,
         btnTone: 'green',
         tags: [
-          { label: '-350 XU', tone: 'red' },
+          { label: '-350 đồng', tone: 'red' },
           { label: 'chị Vy thức tỉnh ++', tone: 'green' },
           { label: 'mở Tiết Kiệm Số', tone: 'green' },
         ],
@@ -260,11 +260,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'activate-flight-delay-ins',
-        text: 'Tài trợ 380 XU kích hoạt Bảo Hiểm Trễ Chuyến Bay MoMo bồi thường 1 triệu tức thì',
+        text: 'Tài trợ 380 đồng kích hoạt Bảo Hiểm Trễ Chuyến Bay MoMo bồi thường 1 triệu tức thì',
         costCoins: 380,
         btnTone: 'green',
         tags: [
-          { label: '-380 XU', tone: 'red' },
+          { label: '-380 đồng', tone: 'red' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
           { label: 'cặp đôi vui vẻ ++', tone: 'green' },
         ],
@@ -308,11 +308,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'renew-bhyt-momo',
-        text: 'Chi 300 XU đóng gia hạn BHYT hộ gia đình qua MoMo + đưa bà về nhà an toàn',
+        text: 'Chi 300 đồng đóng gia hạn BHYT hộ gia đình qua MoMo + đưa bà về nhà an toàn',
         costCoins: 300,
         btnTone: 'green',
         tags: [
-          { label: '-300 XU', tone: 'red' },
+          { label: '-300 đồng', tone: 'red' },
           { label: 'bà Phúc cảm động ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -356,11 +356,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'open-fund-certificate',
-        text: 'Tài trợ 400 XU mở tài khoản Chứng Chỉ Quỹ Mở MoMo Dragon Capital từ 10.000đ',
+        text: 'Tài trợ 400 đồng mở tài khoản Chứng Chỉ Quỹ Mở MoMo Dragon Capital từ 10.000đ',
         costCoins: 400,
         btnTone: 'green',
         tags: [
-          { label: '-400 XU', tone: 'red' },
+          { label: '-400 đồng', tone: 'red' },
           { label: 'trở thành nhà đầu tư ++', tone: 'green' },
           { label: 'mở Tín Dụng Số', tone: 'green' },
         ],
@@ -404,11 +404,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'gift-smart-speaker-pro',
-        text: 'Tài trợ 350 XU tặng Loa Thần Tài MoMo Pro pin trâu 48h cắm sạc độc lập tại quầy',
+        text: 'Tài trợ 350 đồng tặng Loa Thần Tài MoMo Pro pin trâu 48h cắm sạc độc lập tại quầy',
         costCoins: 350,
         btnTone: 'green',
         tags: [
-          { label: '-350 XU', tone: 'red' },
+          { label: '-350 đồng', tone: 'red' },
           { label: 'mở Loa QR cả tiệm', tone: 'green' },
           { label: 'chị Hai yên tâm ++', tone: 'green' },
         ],
@@ -452,11 +452,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'emergency-bill-pay',
-        text: 'Chi 400 XU thanh toán khẩn cấp qua MoMo & hỗ trợ đội thợ dò tìm điểm vỡ',
+        text: 'Chi 400 đồng thanh toán khẩn cấp qua MoMo & hỗ trợ đội thợ dò tìm điểm vỡ',
         costCoins: 400,
         btnTone: 'green',
         tags: [
-          { label: '-400 XU', tone: 'red' },
+          { label: '-400 đồng', tone: 'red' },
           { label: 'nước chảy mát lành ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -500,11 +500,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'grant-bnpl-laptop',
-        text: 'Tài trợ 450 XU mở hạn mức Ví Trả Sau MoMo trả góp laptop mới 0% lãi suất',
+        text: 'Tài trợ 450 đồng mở hạn mức Ví Trả Sau MoMo trả góp laptop mới 0% lãi suất',
         costCoins: 450,
         btnTone: 'green',
         tags: [
-          { label: '-450 XU', tone: 'red' },
+          { label: '-450 đồng', tone: 'red' },
           { label: 'đạt thủ khoa đồ án ++', tone: 'green' },
           { label: 'mở Ví Trả Sau', tone: 'green' },
         ],
@@ -548,11 +548,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'sponsor-food-voucher',
-        text: 'Chi 300 XU tung gói Voucher Ăn Trưa MoMo Food giảm 40% cho cả toà nhà',
+        text: 'Chi 300 đồng tung gói Voucher Ăn Trưa MoMo Food giảm 40% cho cả toà nhà',
         costCoins: 300,
         btnTone: 'green',
         tags: [
-          { label: '-300 XU', tone: 'red' },
+          { label: '-300 đồng', tone: 'red' },
           { label: 'hội chị em hoan hô ++', tone: 'green' },
           { label: 'mở Tiết Kiệm Số', tone: 'green' },
         ],
@@ -592,15 +592,15 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     missingService: 'CREDIT',
     title: 'Bác tài xế xe ôm cần tiền gấp đóng tiền thuốc cho mẹ già',
     subtitle: 'Hải Xe Ôm đang ngồi thất thần trên yên xe máy cũ...',
-    body: 'Mẹ Hải ở quê bất ngờ nhập viện cần 500 XU tiền thuốc khẩn cấp. Tiền cuốc xe công nghệ cuối tuần mới đối soát về tài khoản, vay người ngoài thì sợ lãi cắt cổ. Hải tuyệt vọng cầu cứu Thị Trưởng:',
+    body: 'Mẹ Hải ở quê bất ngờ nhập viện cần 500 đồng tiền thuốc khẩn cấp. Tiền cuốc xe công nghệ cuối tuần mới đối soát về tài khoản, vay người ngoài thì sợ lãi cắt cổ. Hải tuyệt vọng cầu cứu Thị Trưởng:',
     choices: [
       {
         id: 'fast-money-support',
-        text: 'Bảo lãnh gói Vay Nhanh MoMo FastMoney 500 XU giải ngân trong 60 giây',
+        text: 'Bảo lãnh gói Vay Nhanh MoMo FastMoney 500 đồng giải ngân trong 60 giây',
         costCoins: 500,
         btnTone: 'green',
         tags: [
-          { label: '-500 XU', tone: 'red' },
+          { label: '-500 đồng', tone: 'red' },
           { label: 'cứu viện khẩn cấp ++', tone: 'green' },
           { label: 'mở Vay Vốn', tone: 'green' },
         ],
@@ -644,11 +644,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'business-credit-espresso',
-        text: 'Bảo lãnh gói Vốn Kinh Doanh Trả Góp MoMo 600 XU rinh ngay máy pha xịn sò',
+        text: 'Bảo lãnh gói Vốn Kinh Doanh Trả Góp MoMo 600 đồng rinh ngay máy pha xịn sò',
         costCoins: 600,
         btnTone: 'green',
         tags: [
-          { label: '-600 XU', tone: 'red' },
+          { label: '-600 đồng', tone: 'red' },
           { label: 'doanh thu quán x3 ++', tone: 'green' },
           { label: 'mở Tín Dụng Số', tone: 'green' },
         ],
@@ -692,11 +692,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'digital-waste-fee',
-        text: 'Chi 280 XU tích hợp thu phí Vệ Sinh Môi Trường trực tuyến qua MoMo cho toàn khu phố',
+        text: 'Chi 280 đồng tích hợp thu phí Vệ Sinh Môi Trường trực tuyến qua MoMo cho toàn khu phố',
         costCoins: 280,
         btnTone: 'green',
         tags: [
-          { label: '-280 XU', tone: 'red' },
+          { label: '-280 đồng', tone: 'red' },
           { label: 'bác Tư khỏe re ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -740,11 +740,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'sponsor-game-card',
-        text: 'Chi 250 XU nạp thẻ game chiết khấu cao qua MoMo + nâng điểm uy tín cho Đạt',
+        text: 'Chi 250 đồng nạp thẻ game chiết khấu cao qua MoMo + nâng điểm uy tín cho Đạt',
         costCoins: 250,
         btnTone: 'green',
         tags: [
-          { label: '-250 XU', tone: 'red' },
+          { label: '-250 đồng', tone: 'red' },
           { label: 'đoạt cúp vô địch ++', tone: 'green' },
           { label: 'mở Điểm Tín Dụng', tone: 'green' },
         ],
@@ -788,11 +788,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'transfer-wedding-momo',
-        text: 'Tài trợ 320 XU mở tính năng Chuyển Tiền Mừng Cưới MoMo kèm thiệp 3D độc quyền',
+        text: 'Tài trợ 320 đồng mở tính năng Chuyển Tiền Mừng Cưới MoMo kèm thiệp 3D độc quyền',
         costCoins: 320,
         btnTone: 'green',
         tags: [
-          { label: '-320 XU', tone: 'red' },
+          { label: '-320 đồng', tone: 'red' },
           { label: 'cô dâu chú rể thích mê ++', tone: 'green' },
           { label: 'mở Thanh Toán Số', tone: 'green' },
         ],
@@ -836,11 +836,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'gift-vietqr-pro-board',
-        text: 'Chi 280 XU tặng Bảng Mica VietQR Pro MoMo chống nước, chống xước để bàn',
+        text: 'Chi 280 đồng tặng Bảng Mica VietQR Pro MoMo chống nước, chống xước để bàn',
         costCoins: 280,
         btnTone: 'green',
         tags: [
-          { label: '-280 XU', tone: 'red' },
+          { label: '-280 đồng', tone: 'red' },
           { label: 'xe xôi sáng loáng ++', tone: 'green' },
           { label: 'mở Loa QR cả tiệm', tone: 'green' },
         ],
@@ -880,15 +880,15 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     missingService: 'INSURANCE',
     title: 'Con nhỏ sốt xuất huyết nằm viện, hóa đơn ngoài BHYT làm cả nhà lo sốt vó',
     subtitle: 'Vợ chồng trẻ Minh - Thư đang nhìn bảng kê viện phí bệnh viện...',
-    body: 'Bé Bơ 3 tuổi bị sốt xuất huyết phải nằm viện điều trị cả tuần. Mặc dù có BHYT nhưng các khoản xét nghiệm chuyên sâu, phòng dịch vụ và thuốc đặc trị lên tới 800 XU làm quỹ tiết kiệm của đôi vợ chồng trẻ kiệt quệ. Bạn sẽ:',
+    body: 'Bé Bơ 3 tuổi bị sốt xuất huyết phải nằm viện điều trị cả tuần. Mặc dù có BHYT nhưng các khoản xét nghiệm chuyên sâu, phòng dịch vụ và thuốc đặc trị lên tới 800 đồng làm quỹ tiết kiệm của đôi vợ chồng trẻ kiệt quệ. Bạn sẽ:',
     choices: [
       {
         id: 'activate-hospital-insurance',
-        text: 'Tài trợ 480 XU kích hoạt Bảo Hiểm Sức Khỏe & Trợ Cấp Viện Phí MoMo thanh toán trực tuyến',
+        text: 'Tài trợ 480 đồng kích hoạt Bảo Hiểm Sức Khỏe & Trợ Cấp Viện Phí MoMo thanh toán trực tuyến',
         costCoins: 480,
         btnTone: 'green',
         tags: [
-          { label: '-480 XU', tone: 'red' },
+          { label: '-480 đồng', tone: 'red' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
           { label: 'bé Bơ khỏe mạnh ++', tone: 'green' },
         ],
@@ -932,11 +932,11 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
     choices: [
       {
         id: 'claim-screen-insurance',
-        text: 'Chi 350 XU bồi hoàn Bảo Hiểm Rơi Vỡ Màn Hình MoMo thay màn hình chính hãng ngay',
+        text: 'Chi 350 đồng bồi hoàn Bảo Hiểm Rơi Vỡ Màn Hình MoMo thay màn hình chính hãng ngay',
         costCoins: 350,
         btnTone: 'green',
         tags: [
-          { label: '-350 XU', tone: 'red' },
+          { label: '-350 đồng', tone: 'red' },
           { label: 'màn hình nét căng ++', tone: 'green' },
           { label: 'mở Bảo Hiểm Số', tone: 'green' },
         ],

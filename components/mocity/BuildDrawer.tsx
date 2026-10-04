@@ -197,7 +197,7 @@ export default function BuildDrawer({
                   </span>
                   {!locked && (
                     <span className="text-[12px]" style={{ color: '#8A7355' }}>
-                      {affordable ? 'Xây ngay' : 'Thiếu Xu'}
+                      {affordable ? 'Xây ngay' : 'Chưa đủ tiền'}
                     </span>
                   )}
                 </span>

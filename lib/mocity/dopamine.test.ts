@@ -9,7 +9,7 @@ import {
   weekComparison,
   COMPARISON_WINDOW_DAYS,
 } from './comparison';
-import { DAILY_SNAPSHOT_KEEP, eventFits, normalizeStoredState, SAVE_FILE_VERSION } from './store';
+import { DAILY_SNAPSHOT_KEEP, eventFits, normalizeStoredState } from './store';
 import { CITY_EVENTS } from './dialogue-data';
 import { CONDITIONAL_CITY_EVENTS } from './dialogue-events-conditional';
 import { CITY_MOOD_LINES, cityMood, streetLineFor } from './dialogue-engine';
@@ -149,7 +149,7 @@ describe('so sanh 7 ngay - CHUA DU DU LIEU thi khong duoc hien so', () => {
 
   it('khong phan tram am vo nghia khi hom nay co va ky truoc khong co', () => {
     const r = weekComparison([snap('2026-3-1', { revenue: 0 })], { netIncome: 100, revenue: 200 });
-    const doanhThu = r.lines.find((l) => l.label === 'Doanh thu vận hành');
+    const doanhThu = r.lines.find((l) => l.label === 'Doanh thu gộp');
     assert.equal(doanhThu?.chenhLech, null, 'tu 0 len 200 khong phai tang vo han');
     assert.equal(doanhThu?.trend, 'UNKNOWN');
   });
@@ -159,7 +159,7 @@ describe('so sanh 7 ngay - CHUA DU DU LIEU thi khong duoc hien so', () => {
       netIncome: 0,
       revenue: 0,
     });
-    const doanhThu = r.lines.find((l) => l.label === 'Doanh thu vận hành');
+    const doanhThu = r.lines.find((l) => l.label === 'Doanh thu gộp');
     assert.equal(doanhThu?.chenhLech, 0);
   });
 });
@@ -179,7 +179,7 @@ describe('so sanh 7 ngay - phai so VOI NGAY LIEN KE truoc', () => {
   it('so sanh nhom voi ngay lien ke chu khong phai voi trung binh', () => {
     const cu = sevenDays(2_000);
     const r = weekComparison(cu, { netIncome: 3_000, revenue: 5_000 });
-    const doanhThu = r.lines.find((l) => l.label === 'Doanh thu vận hành');
+    const doanhThu = r.lines.find((l) => l.label === 'Doanh thu gộp');
     assert.equal(doanhThu?.kyTruoc, 2_600, 'ky truoc la ngay gan nhat chu khong phai trung binh');
   });
 
@@ -189,9 +189,9 @@ describe('so sanh 7 ngay - phai so VOI NGAY LIEN KE truoc', () => {
     const giam = weekComparison(cu, { netIncome: 1_000, revenue: 500 });
     const bang = weekComparison(cu, { netIncome: 1_000, revenue: 2_600 });
 
-    const t1 = tang.lines.find((l) => l.label === 'Doanh thu vận hành');
-    const t2 = giam.lines.find((l) => l.label === 'Doanh thu vận hành');
-    const t3 = bang.lines.find((l) => l.label === 'Doanh thu vận hành');
+    const t1 = tang.lines.find((l) => l.label === 'Doanh thu gộp');
+    const t2 = giam.lines.find((l) => l.label === 'Doanh thu gộp');
+    const t3 = bang.lines.find((l) => l.label === 'Doanh thu gộp');
     assert.equal(t1?.trend, 'UP');
     assert.equal(t2?.trend, 'DOWN');
     assert.equal(t3?.trend, 'FLAT');
@@ -253,7 +253,7 @@ describe('snapshot - chi giu 7 ngay va khong ghi trung', () => {
       }),
       NOW,
     );
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.deepEqual(s.dailySnapshots, [], 'khong duoc uoc luong 7 ngay da qua tu ledger');
   });
 
@@ -366,7 +366,10 @@ describe('su kien theo trang thai - phai co kich ban that su xay ra', () => {
     for (const ev of CITY_EVENTS) {
       for (const c of ev.choices) {
         if (c.costCoins === undefined) continue;
-        const moneyTag = (c.tags ?? []).find((t) => /XU/.test(t.label));
+        const moneyTag = (c.tags ?? []).find((t) => {
+          const digits = parseInt(t.label.replace(/[^\d]/g, ''), 10);
+          return Number.isFinite(digits) && digits === c.costCoins;
+        });
         assert.ok(moneyTag, `${ev.id}/${c.id} phai co pill hien chi phi`);
         assert.equal(parseInt(moneyTag.label.replace(/[^\d]/g, ''), 10), c.costCoins);
       }

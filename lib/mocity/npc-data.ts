@@ -127,7 +127,7 @@ export const CITY_ADVISORS: AdvisorDef[] = [
     name: 'Chị Mai Quy Hoạch',
     roleTitle: 'Cố vấn Đô thị & Dân sinh',
     specialty: 'Quy hoạch Combo liền kề & Cân bằng nhà ở',
-    tip: 'Đặt Rạp Phim cạnh Quán Cà Phê hoặc Phố Ẩm Thực sẽ kích hoạt Combo +25% Xu/giây!',
+    tip: 'Đặt Rạp Phim cạnh Quán Cà Phê hoặc Phố Ẩm Thực sẽ kích hoạt Combo +25% đồng/giây!',
     hue: '#16A34A',
   },
   {
@@ -135,7 +135,7 @@ export const CITY_ADVISORS: AdvisorDef[] = [
     name: 'Anh Hưng Tài Chính',
     roleTitle: 'Chuyên gia Túi Thần Tài & Đầu tư',
     specialty: 'Lãi kép tự động & Tiện ích MoMo',
-    tip: 'Xây Trạm Túi Thần Tài giúp toàn bộ số Xu nhàn rỗi của Thị Trưởng tự đẻ lãi kép mỗi giây.',
+    tip: 'Xây Trạm Túi Thần Tài giúp toàn bộ số đồng nhàn rỗi của Thị Trưởng tự đẻ lãi kép mỗi giây.',
     hue: '#2563EB',
   },
   {

@@ -49,35 +49,3 @@ export function useAmbientChatter(npcs: NpcState[], mood: CityMood | null = null
   }
   return lines;
 }
-
-export default function SpeechBubble({ text, hue }: { text: string; hue: string }) {
-  return (
-    <div
-      className="pointer-events-none absolute left-1/2 z-30 w-[132px] -translate-x-1/2 rounded-xl border-2 px-2 py-1.5"
-      style={{
-        bottom: '100%',
-        marginBottom: 8,
-        background: '#FBF3DE',
-        borderColor: hue,
-        boxShadow: '0 4px 10px rgba(62,42,27,0.28)',
-        animation: 'mc2d-bubble-in 0.3s cubic-bezier(0.34,1.56,0.64,1) both',
-      }}
-    >
-      <p className="text-[10px] font-bold leading-snug" style={{ color: '#3E2A1B' }}>
-        {text}
-      </p>
-      <span
-        aria-hidden
-        className="absolute left-1/2 -translate-x-1/2"
-        style={{
-          top: '100%',
-          width: 0,
-          height: 0,
-          borderLeft: '5px solid transparent',
-          borderRight: '5px solid transparent',
-          borderTop: `6px solid ${hue}`,
-        }}
-      />
-    </div>
-  );
-}

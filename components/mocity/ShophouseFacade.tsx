@@ -4,9 +4,6 @@ import React from 'react';
 import {
   Coffee,
   Clapperboard,
-  Sparkles,
-  Zap,
-  Store,
   BookOpen,
   Wrench,
   Star,
@@ -23,7 +20,17 @@ export type ShopType =
   | 'RICE_SHOP'
   | 'CINEMA'
   | 'FINTECH'
-  | 'CAFE';
+  | 'CAFE'
+  /*
+   * BA LOAI KHONG PHAI CUA TIEM.
+   *
+   * Truoc day ca 7 loai deu la kieu cua tiem, nen cong vien bi ve ra cua
+   * cuon + bien hieu + menu, nha o thi thanh quan an. Khong phai gan sai
+   * theme - ma la KHONG CO theme nao dung de gan.
+   */
+  | 'PARK'
+  | 'HOME'
+  | 'LANDMARK';
 
 export interface ShophouseFacadeProps {
   shopType: ShopType;
@@ -57,6 +64,12 @@ const PALETTE: Record<ShopType, { wall: string; wall2: string; stripe: string; s
   CINEMA:     { wall: '#F5DCF0', wall2: '#ECC8E4', stripe: '#7A2868', signBg: '#5A1048', roofBg: '#E0B0D4' },
   FINTECH:    { wall: '#D8EAF8', wall2: '#C0D8F0', stripe: '#1848A8', signBg: '#0C2878', roofBg: '#B8CFF0' },
   STATIONERY: { wall: '#ECF1F8', wall2: '#DDE7F2', stripe: '#2C60A0', signBg: '#183C80', roofBg: '#C8D8EC' },
+  /* Cong vien: tuong rao thap mau voi, khong co bien hieu nen signBg chi dung cho bang ten. */
+  PARK:       { wall: '#E4EFD8', wall2: '#D2E4C0', stripe: '#5E8C42', signBg: '#2F4A22', roofBg: '#C4DCA8' },
+  /* Nha o: tuong voi cu, khong bang hieu buon ban. */
+  HOME:       { wall: '#F0E8DA', wall2: '#E4D8C4', stripe: '#9A8468', signBg: '#5A4632', roofBg: '#D8C8AC' },
+  /* Ky quan: da sang va vang dong. */
+  LANDMARK:   { wall: '#FBF0D8', wall2: '#F4E2BC', stripe: '#B8862A', signBg: '#7A4F14', roofBg: '#EFD9A8' },
 };
 
 /** Dam/nhat mot mau hex theo he so - tao lop giay phia sau thay cho vien. */
@@ -92,6 +105,28 @@ export interface DangNha {
   mai: KieuMai;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * NGÂN SÁCH CHIỀU CAO - phải chừa bầu trời phía trên.
+ *
+ * Phố neo theo ĐÁY (nhà đứng trên vỉa hè), nên nhà càng cao thì mọi thứ vẽ
+ * phía TRÊN nóc càng bị đẩy lên khỏi màn hình. Mà phía trên nóc chính là chỗ
+ * đặt thông báo: badge hàng chờ, bong bóng "Chuyện phố!", bong bóng thoại.
+ *
+ * Đo thực tế bản cũ: khối nhà cao 386px, badge hàng chờ rơi vào y = -12px
+ * trên khung 914px - tức nằm NGOÀI mép trên, không nhìn thấy và không bấm
+ * được. Phóng khung lên 1100px thì badge mới hiện. Nghĩa là trên màn hình
+ * thường, người chơi không bao giờ thấy thông báo của tiệm.
+ *
+ * Nên các con số chiều cao bên dưới KHÔNG phải tuỳ ý thẩm mỹ, chúng là ngân
+ * sách. Đã cắt khoảng 98px ở nhà 2 lầu:
+ *   bồn nước 24->16 · vòm 28->18 · sân thượng 44->20 · tầng 3 py-3->py-1
+ *   · ban công pt-2->pt-1 · biển hiệu 40->32 · tầng trệt 120->82
+ * Muốn cho nhà cao lại thì phải trả chỗ đó từ nơi khác, nếu không thông báo
+ * lại biến mất đúng như cũ.
+ *
+ * Số lầu GIỮ NGUYÊN đa dạng 1/2 lầu: chiều cao khác nhau giữa các tiệm là yêu
+ * cầu riêng, không được gộp vào đây mà san phẳng.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 const DANG_NHA: DangNha[] = [
   { soLau: 2, mai: 'PHANG' },
   { soLau: 1, mai: 'NGOI' },
@@ -127,18 +162,45 @@ export function dangNhaFor(houseNumber: number): DangNha {
  * chung một bộ câu cho cả hai thì bong bóng trên cửa sổ đọc như quảng cáo.
  */
 export const THOAI_CUA_SO = [
+  // Sinh hoạt gia đình & đời thường
   'Cơm chín rồi, xuống ăn đi mấy đứa ơi!',
   'Phơi đồ xong rồi mà trời lại kéo mây, sốt ruột ghê.',
   'Dưới phố hôm nay đông quá, bán được hàng là mừng rồi.',
-  'Hoá đơn điện tháng này đóng qua app rồi nghen ba.',
-  'Ai hát karaoke sớm vậy trời, mới 7 giờ sáng mà.',
+  'Hoá đơn điện tháng này đóng qua MoMo tự động rồi nghen ba!',
+  'Ai hát karaoke sớm vậy trời, mới 7 giờ sáng mà!',
   'Thị Trưởng ơi, hẻm mình xin thêm cái đèn đường nha!',
-  'Nay nhà làm bún riêu, ai rảnh qua ăn nghen.',
-  'Mưa là y như rằng dột chỗ cũ, sửa hoài không hết.',
-  'Con học bài chưa đó? Đừng có coi phim nữa nha!',
-  'Nghe nói sắp mở thêm tiệm mới, phố mình vui rồi.',
-  'Tiền chợ sáng nay quét mã cái rẹt, khỏi thối lẻ.',
-  'Phố xá sạch đẹp vầy ở mới thấy đáng tiền thuê.',
+  'Nay nhà làm bún riêu cua đồng, ai rảnh qua ăn nghen!',
+  'Con học bài chưa đó? Đừng có cày phim nữa nha!',
+  'Tiền chợ sáng nay quét mã cái rẹt, khỏi lúng túng thối lẻ.',
+  'Phố xá sạch đẹp vầy ở mới thấy đáng đồng tiền bát gạo.',
+
+  // Hóng drama xóm giềng & tin sốt dẻo
+  'Mấy bà ơi, đầu ngõ có vụ cãi nhau chí chóe vì đậu xe chắn cửa kìa!',
+  'Nghe đồn quán trà sữa đối diện vừa bị bóc phốt bill giả photoshop đó!',
+  'Bà Tám đầu phố mới tậu cái Loa Thần Tài ting ting làm ai cũng lác mắt.',
+  'Anh Năm chạy Grab nghe đâu vừa trúng vé số an ủi hay sao mà tươi rói!',
+  'Drama tiệm tạp hóa giảm giá sốc làm nguyên con phố kẹt cứng từ sáng tới giờ.',
+  'Mới có xe Cảnh sát đi tuần nhắc nhở bà con không lấn chiếm lòng lề đường kìa!',
+  'Có ai thấy con mèo mướp nhà tôi đâu không? Nó lại lẻn sang tiệm cá viên rồi!',
+  'Nhỏ Lan mới khoe tiền lãi Túi Thần Tài đủ mua 2 cốc trà sữa sầu riêng!',
+
+  // Thời tiết thất thường: Nắng gắt, nồm ẩm, chuyển giông gió
+  'Trời đất ơi! Sáng nắng cháy da chiều lại sấm chớp đùng đùng, thời tiết gì kì vậy!',
+  'Gió giật mạnh quá, mau ra kéo đồ phơi vào kẻo bay sang nóc nhà hàng xóm!',
+  'Trời nồm sàn nhà ướt nhẹp như bôi mỡ, đi đứng trượt té mấy lần.',
+  'Áp thấp nhiệt đới đang về hay sao mà mây đen ùn ùn che kín cả góc trời!',
+  'Nóng hầm hập 39 độ, bật máy lạnh mà xót tiền điện quá trời!',
+  'Thời tiết chuyển mùa độc ghê, ra đường nhớ mang theo áo mưa nghen con!',
+
+  // Cảnh báo lũ lụt & triều cường ngập phố
+  'Nước lên rồi! Nước tràn bờ kè ngập tới nửa bánh xe ngoài đường rồi bà con ơi!',
+  'Mau kê tủ lạnh với máy giặt lên cao lẹ! Triều cường dâng cao dữ dội quá!',
+  'Chết dở, xe máy đậu ngoài vỉa hè chết máy một loạt, thợ sửa xe bao bận luôn!',
+  'Bì bõm lội nước mà còn bị sóng xe buýt tạt ướt hết cả người, cáu thật!',
+  'May mà khu phố mình có đóng Bảo Hiểm MoMo, hư hỏng đồ đạc được đền bù liền!',
+  'Trôi mất đôi dép tổ ong huyền thoại rồi, nước ngập lụt gì mà xiết ghê!',
+  'Nước ngập mênh mông như biển, tí nữa chắc phải chèo thuyền đi chợ quá!',
+  'Bà con chặn bao cát trước cửa tiệm gấp, coi chừng nước bẩn tràn vào nhà!',
 ];
 
 /** Tông da và áo, lấy từ dải màu thời kỳ cho khớp với cư dân chibi ngoài phố. */
@@ -146,35 +208,195 @@ const DA_CU_DAN = ['#EFC49C', '#E0A87E', '#C98F68'];
 const AO_CU_DAN = ['#8C3B2E', '#4A6B5A', '#3E4C63', '#A8701F', '#73164A', '#6E8C72'];
 
 /**
- * Một người ngồi trong khung cửa sổ, nhìn ra phố.
- *
- * Vẽ bằng khối bo tròn giống cư dân chibi: đầu to, vai nhỏ, mặt tối giản.
- * Không có chân vì bị bệ cửa sổ che - đó cũng là lý do cỡ này đọc được ở
- * khung kính chỉ 50x40px.
+ * CSS Keyframes dành riêng cho người ở cửa sổ:
+ * - Vẫy tay chào người dưới phố
+ * - Ngó nghiêng qua lại hóng chuyện phố
+ * - Nhún nhảy theo điệu nhạc
+ * - Chớp mắt / cử động tự nhiên
+ */
+const WINDOW_CHAR_CSS = `
+@keyframes winWaveArm {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-24deg); }
+  75% { transform: rotate(18deg); }
+}
+@keyframes winLookAround {
+  0%, 100% { transform: translateX(0px) rotate(0deg); }
+  30% { transform: translateX(-3px) rotate(-3deg); }
+  70% { transform: translateX(3px) rotate(3deg); }
+}
+@keyframes winBopHead {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2.5px); }
+}
+@keyframes winPetTail {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(14deg); }
+}
+`;
+
+/**
+ * Một người hoặc thú cưng ở khung cửa sổ, nhìn ra phố với chuyển động sống động:
+ * - Loại 0: Người vẫy tay chào thân thiện
+ * - Loại 1: Đeo tai nghe nhún nhảy yêu đời
+ * - Loại 2: Bác già đeo kính đọc báo / ngó nghiêng
+ * - Loại 3: Cô gái đội nón lá ngắm phố
+ * - Loại 4: Mèo cưng thò đầu gác cằm ngoe nguẩy đuôi
+ * - Loại 5: Thanh niên cầm điện thoại lướt app MoMo
  */
 function NguoiCuaSo({ seed, isNight }: { seed: number; isNight: boolean }) {
   const da = DA_CU_DAN[seed % DA_CU_DAN.length];
   const ao = AO_CU_DAN[(seed * 3) % AO_CU_DAN.length];
-  const toc = seed % 3 === 0 ? '#2B2420' : seed % 3 === 1 ? '#4A3B30' : '#6B4A2F';
+  const toc = seed % 4 === 0 ? '#2B2420' : seed % 4 === 1 ? '#4A3B30' : seed % 4 === 2 ? '#6B4A2F' : '#1E1B18';
   const muc = '#2B2420';
-  /* Ban đêm người trong nhà thành bóng đổ ngược sáng trên nền đèn vàng. */
-  const mo = isNight ? 0.55 : 1;
+  const mo = isNight ? 0.65 : 1;
+
+  // Kiểu nhân vật dựa trên seed
+  const kieu = seed % 6;
+  const animDelay = `${((seed * 17) % 30) / 10}s`;
 
   return (
-    <span className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center" style={{ opacity: mo }}>
-      <svg width="30" height="30" viewBox="0 0 30 30" className="overflow-visible">
-        {/* Vai */}
-        <path d="M5 30 Q5 21 15 21 Q25 21 25 30 Z" fill={ao} />
-        {/* Đầu */}
-        <circle cx="15" cy="13" r="8" fill={da} />
-        {/* Tóc phủ đỉnh đầu */}
-        <path d="M7 12 Q7 4 15 4 Q23 4 23 12 Q19 8 15 8 Q11 8 7 12 Z" fill={toc} />
-        {/* Mắt và miệng, tối giản cho cỡ nhỏ */}
-        <circle cx="12" cy="13" r="1.3" fill={muc} />
-        <circle cx="18" cy="13" r="1.3" fill={muc} />
-        <path d="M13 17 Q15 19 17 17" fill="none" stroke={muc} strokeWidth="1.1" strokeLinecap="round" />
-      </svg>
-    </span>
+    <>
+      <style>{WINDOW_CHAR_CSS}</style>
+      <span
+        className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center"
+        style={{ opacity: mo }}
+      >
+        {kieu === 4 ? (
+          /* Mèo mướp gác cằm trên bệ cửa sổ, đuôi ngoe nguẩy */
+          <svg width="34" height="28" viewBox="0 0 34 28" className="overflow-visible">
+            {/* Đuôi mèo ngoe nguẩy */}
+            <path
+              d="M4 24 C2 16 5 8 8 6 C9 8 7 16 8 24 Z"
+              fill="#D97706"
+              style={{
+                transformOrigin: '6px 24px',
+                animation: 'winPetTail 2.4s ease-in-out infinite',
+                animationDelay: animDelay,
+              }}
+            />
+            {/* Thân mèo */}
+            <ellipse cx="17" cy="22" rx="12" ry="7" fill="#F59E0B" />
+            {/* Hai tai mèo nhọn */}
+            <polygon points="10,13 13,6 16,13" fill="#D97706" />
+            <polygon points="18,13 21,6 24,13" fill="#D97706" />
+            <polygon points="11,12 13,8 15,12" fill="#FDE68A" />
+            <polygon points="19,12 21,8 23,12" fill="#FDE68A" />
+            {/* Đầu mèo gác lên bệ */}
+            <ellipse cx="17" cy="15" rx="8" ry="6" fill="#F59E0B" />
+            {/* Mắt mèo lim dim hạnh phúc */}
+            <path d="M12 14 Q14 12 15 14" fill="none" stroke="#78350F" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M19 14 Q20 12 22 14" fill="none" stroke="#78350F" strokeWidth="1.2" strokeLinecap="round" />
+            {/* Mũi hồng và ria mép */}
+            <polygon points="16,16 18,16 17,17.5" fill="#F43F5E" />
+            <path d="M9 16 L14 16.5 M9 18 L14 17.5" stroke="#78350F" strokeWidth="0.8" />
+            <path d="M25 16 L20 16.5 M25 18 L20 17.5" stroke="#78350F" strokeWidth="0.8" />
+            {/* Hai chân trước gác bệ cửa */}
+            <ellipse cx="12" cy="23" rx="3.5" ry="2.5" fill="#FEF3C7" stroke="#D97706" strokeWidth="0.8" />
+            <ellipse cx="22" cy="23" rx="3.5" ry="2.5" fill="#FEF3C7" stroke="#D97706" strokeWidth="0.8" />
+          </svg>
+        ) : (
+          /* Người trong cửa sổ */
+          <svg
+            width="34"
+            height="32"
+            viewBox="0 0 34 32"
+            className="overflow-visible"
+            style={{
+              animation: kieu === 1 ? 'winBopHead 1.6s ease-in-out infinite' : 'winLookAround 4.5s ease-in-out infinite',
+              animationDelay: animDelay,
+            }}
+          >
+            {/* Thân áo */}
+            <path d="M6 32 Q6 21 17 21 Q28 21 28 32 Z" fill={ao} />
+
+            {/* Chi tiết áo: cổ áo sơ mi / cổ tròn */}
+            <path d="M14 21 L17 25 L20 21 Z" fill="#FFFFFF" opacity="0.9" />
+
+            {/* Cà vạt hoặc khăn quàng nếu là dạng công sở */}
+            {kieu === 5 && (
+              <path d="M16 23 L18 23 L17.5 28 L16.5 28 Z" fill="#DC2626" />
+            )}
+
+            {/* Cánh tay vẫy chào (Loại 0) */}
+            {kieu === 0 && (
+              <g
+                style={{
+                  transformOrigin: '26px 23px',
+                  animation: 'winWaveArm 1.8s ease-in-out infinite',
+                  animationDelay: animDelay,
+                }}
+              >
+                {/* Ống tay áo */}
+                <path d="M25 23 Q29 16 30 11" stroke={ao} strokeWidth="3.5" strokeLinecap="round" fill="none" />
+                {/* Bàn tay vẫy */}
+                <circle cx="30" cy="10" r="2.5" fill={da} />
+              </g>
+            )}
+
+            {/* Đầu và cổ */}
+            <circle cx="17" cy="13" r="7.5" fill={da} />
+
+            {/* Kiểu tóc / Mũ đa dạng */}
+            {kieu === 3 ? (
+              /* Nón lá truyền thống duyên dáng */
+              <polygon points="17,3 4,14 30,14" fill="#FDE68A" stroke="#D97706" strokeWidth="0.8" />
+            ) : kieu === 2 ? (
+              /* Tóc bạc bác lớn tuổi + Kính mắt */
+              <>
+                <path d="M10 12 Q10 5 17 5 Q24 5 24 12 Q21 9 17 9 Q13 9 10 12 Z" fill="#9CA3AF" />
+                {/* Gọng kính mắt tròn trí thức */}
+                <circle cx="14" cy="13" r="2.5" fill="none" stroke="#374151" strokeWidth="1" />
+                <circle cx="20" cy="13" r="2.5" fill="none" stroke="#374151" strokeWidth="1" />
+                <path d="M16.5 13 L17.5 13" stroke="#374151" strokeWidth="1" />
+              </>
+            ) : kieu === 1 ? (
+              /* Tai nghe headphone sành điệu */
+              <>
+                <path d="M10 12 Q10 5 17 5 Q24 5 24 12 Q21 8 17 8 Q13 8 10 12 Z" fill={toc} />
+                {/* Quai tai nghe trên đầu */}
+                <path d="M9 13 Q17 2 25 13" fill="none" stroke="#EC4899" strokeWidth="1.8" strokeLinecap="round" />
+                {/* Hai ốp tai */}
+                <rect x="8" y="11" width="3" height="5" rx="1.5" fill="#D82D8B" />
+                <rect x="23" y="11" width="3" height="5" rx="1.5" fill="#D82D8B" />
+              </>
+            ) : (
+              /* Tóc thông thường mái xéo / ngắn */
+              <path d="M9 12 Q9 5 17 5 Q25 5 25 12 Q21 8 17 8 Q13 8 9 12 Z" fill={toc} />
+            )}
+
+            {/* Mắt và khuôn mặt */}
+            {kieu !== 2 && (
+              <>
+                <circle cx="14" cy="13" r="1.2" fill={muc} />
+                <circle cx="20" cy="13" r="1.2" fill={muc} />
+              </>
+            )}
+
+            {/* Má hồng hào tươi vui */}
+            <circle cx="12" cy="15" r="1.2" fill="#FB7185" opacity="0.65" />
+            <circle cx="22" cy="15" r="1.2" fill="#FB7185" opacity="0.65" />
+
+            {/* Nụ cười tươi */}
+            <path d="M15 16.5 Q17 18.5 19 16.5" fill="none" stroke={muc} strokeWidth="1.1" strokeLinecap="round" />
+
+            {/* Chiếc điện thoại thông minh giơ lên (Loại 5) */}
+            {kieu === 5 && (
+              <g
+                style={{
+                  transformOrigin: '24px 26px',
+                  animation: 'winBopHead 2.5s ease-in-out infinite',
+                  animationDelay: animDelay,
+                }}
+              >
+                <rect x="23" y="18" width="6" height="10" rx="1.2" fill="#1E293B" stroke="#A855F7" strokeWidth="0.8" />
+                <rect x="24" y="19.5" width="4" height="6.5" fill="#F43F5E" />
+              </g>
+            )}
+          </svg>
+        )}
+      </span>
+    </>
   );
 }
 
@@ -203,15 +425,15 @@ export function ShophouseRoofCap({
     // Bồn nước inox trên chân sắt - thứ có mặt trên nóc gần như mọi nhà phố.
     const inox = isNight ? '#6E7378' : '#B8BCC0';
     return (
-      <div aria-hidden className="pointer-events-none relative h-[24px] w-[228px]">
+      <div aria-hidden className="pointer-events-none relative h-[16px] w-[228px]">
         <div className="absolute bottom-0 right-6 flex flex-col items-center">
-          <div className="relative" style={{ width: 32, height: 16, backgroundColor: inox, borderRadius: '7px 7px 2px 2px' }}>
+          <div className="relative" style={{ width: 28, height: 11, backgroundColor: inox, borderRadius: '6px 6px 2px 2px' }}>
             <div className="absolute inset-x-0 top-[5px] h-[2px]" style={{ backgroundColor: shade('#B8BCC0', 0.78) }} />
             <div className="absolute inset-x-0 top-[10px] h-[2px]" style={{ backgroundColor: shade('#B8BCC0', 0.78) }} />
           </div>
           <div className="flex w-[26px] justify-between">
-            <span className="h-[8px] w-[3px]" style={{ backgroundColor: '#5A5048' }} />
-            <span className="h-[8px] w-[3px]" style={{ backgroundColor: '#5A5048' }} />
+            <span className="h-[5px] w-[3px]" style={{ backgroundColor: '#5A5048' }} />
+            <span className="h-[5px] w-[3px]" style={{ backgroundColor: '#5A5048' }} />
           </div>
         </div>
       </div>
@@ -223,10 +445,10 @@ export function ShophouseRoofCap({
   const nen = isNight ? shade(pal.roofBg, 0.55) : pal.roofBg;
   const nam = 1954 + ((houseNumber * 7) % 40);
   return (
-    <div aria-hidden className="pointer-events-none flex h-[28px] w-[228px] items-end justify-center">
+    <div aria-hidden className="pointer-events-none flex h-[18px] w-[228px] items-end justify-center">
       <div
         className="relative flex items-end justify-center"
-        style={{ width: 104, height: 28, backgroundColor: nen, borderRadius: '52px 52px 0 0' }}
+        style={{ width: 104, height: 18, backgroundColor: nen, borderRadius: '52px 52px 0 0' }}
       >
         <div
           className="absolute inset-x-[10px] top-[5px] bottom-0"
@@ -238,6 +460,51 @@ export function ShophouseRoofCap({
         >
           {nam}
         </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Màu nhận diện của một ô cửa sổ, tính một lần ở `ShophouseFacade` rồi truyền
+ * xuống `Win`. Tách ra prop để `Win` sống ở module scope - component khai báo
+ * trong render sẽ bị React Compiler coi là component mới mỗi nhịp render.
+ */
+type WinSkin = { frame: string; fill: string; shadow: string; isNight: boolean };
+
+/**
+ * Cua so cut paper: khong vien nau. Khung la mot mang giay dam hon mau
+ * tuong, kinh la mang phang dat long vao trong.
+ */
+function Win({
+  skin,
+  wide = false,
+  /** Ghế ngồi của một cư dân. `null` là cửa sổ bỏ trống. */
+  nguoi = null,
+  children,
+}: {
+  skin: WinSkin;
+  wide?: boolean;
+  nguoi?: number | null;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      className="relative shrink-0"
+      style={{ width: wide ? 76 : 58, height: wide ? 58 : 48, backgroundColor: skin.frame }}
+    >
+      <div
+        className="absolute overflow-hidden"
+        style={{ inset: 4, backgroundColor: skin.fill, boxShadow: skin.shadow }}
+      >
+        <div className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2" style={{ backgroundColor: skin.frame }} />
+        <div className="absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2" style={{ backgroundColor: skin.frame }} />
+        {/*
+         * Người vẽ SAU hai thanh nẹp kính nên nẹp nằm phía sau lưng, đúng
+         * như nhìn từ ngoài đường vào. Vẽ trước thì nẹp cắt ngang mặt.
+         */}
+        {nguoi !== null && <NguoiCuaSo seed={nguoi} isNight={skin.isNight} />}
+        {children}
       </div>
     </div>
   );
@@ -260,6 +527,16 @@ export default function ShophouseFacade({
   const isSunset = timeOfDay === 'SUNSET';
   const pal = PALETTE[shopType];
   const dang = dangNhaFor(houseNumber);
+
+  /*
+   * KHÔNG PHẢI CỬA TIỆM thì không được vẽ như cửa tiệm.
+   *
+   * Công viên, nhà ở, kỳ quan đều không buôn bán: không cửa cuốn, không
+   * biển hiệu quảng cáo, không bảng MENU. Trước đây cả ba đều lọt vào khuôn
+   * nhà ống bán hàng nên mới có cảnh "công viên treo menu cà phê muối" và
+   * "nhà phố in photocopy".
+   */
+  const laTiem = shopType !== 'PARK' && shopType !== 'HOME' && shopType !== 'LANDMARK';
 
   /*
    * AI Ở CỬA SỔ NÀO.
@@ -298,41 +575,8 @@ export default function ShophouseFacade({
     ? `color-mix(in srgb, ${pal.wall2} 55%, #1C1A14)`
     : pal.wall2;
 
-  /* Component cửa sổ tái sử dụng */
-  /**
-   * Cua so cut paper: khong vien nau. Khung la mot mang giay dam hon mau
-   * tuong, kinh la mang phang dat long vao trong.
-   */
   const frame = shade(pal.wall, 0.52);
-  const Win = ({
-    wide = false,
-    /** Ghế ngồi của một cư dân. `null` là cửa sổ bỏ trống. */
-    nguoi = null,
-    children,
-  }: {
-    wide?: boolean;
-    nguoi?: number | null;
-    children?: React.ReactNode;
-  }) => (
-    <div
-      className="relative shrink-0"
-      style={{ width: wide ? 76 : 58, height: wide ? 58 : 48, backgroundColor: frame }}
-    >
-      <div
-        className="absolute overflow-hidden"
-        style={{ inset: 4, backgroundColor: winFill, boxShadow: winShadow }}
-      >
-        <div className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2" style={{ backgroundColor: frame }} />
-        <div className="absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2" style={{ backgroundColor: frame }} />
-        {/*
-         * Người vẽ SAU hai thanh nẹp kính nên nẹp nằm phía sau lưng, đúng
-         * như nhìn từ ngoài đường vào. Vẽ trước thì nẹp cắt ngang mặt.
-         */}
-        {nguoi !== null && <NguoiCuaSo seed={nguoi} isNight={isNight} />}
-        {children}
-      </div>
-    </div>
-  );
+  const winSkin: WinSkin = { frame, fill: winFill, shadow: winShadow, isNight };
 
   return (
     <div className="relative w-full flex flex-col" style={{ backgroundColor: wallColor }}>
@@ -363,7 +607,7 @@ export default function ShophouseFacade({
       {dang.mai !== 'NGOI' && (
       <div
         className="relative w-full flex items-end justify-between px-2 overflow-visible"
-        style={{ height: 44, backgroundColor: pal.roofBg, borderBottom: `3px solid ${shade(pal.roofBg, 0.68)}` }}
+        style={{ height: 20, backgroundColor: pal.roofBg, borderBottom: `3px solid ${shade(pal.roofBg, 0.68)}` }}
       >
         {/* Viền gờ cornice trên cùng */}
         <div className="absolute top-0 inset-x-0 h-2" style={{ backgroundColor: pal.stripe }} />
@@ -426,17 +670,17 @@ export default function ShophouseFacade({
       {/* ═══ 2. TẦNG 3 — CỬA SỔ (chỉ nhà 2 lầu) ════════════════════════ */}
       {dang.soLau >= 2 && (
       <div
-        className="relative flex items-center justify-around px-5 py-3"
+        className="relative flex items-center justify-around px-5 py-1"
         style={{ backgroundColor: wallColor, borderBottom: `2px solid ${shade(pal.wall, 0.8)}` }}
       >
-        <Win nguoi={oCoNguoi(0)}>
+        <Win skin={winSkin} nguoi={oCoNguoi(0)}>
           {shopType === 'CAFE' && isNight && (
             <div className="absolute inset-0 flex items-center justify-center opacity-60">
               <Coffee size={10} className="text-amber-900" />
             </div>
           )}
         </Win>
-        <Win nguoi={oCoNguoi(1)}>
+        <Win skin={winSkin} nguoi={oCoNguoi(1)}>
           {shopType === 'STATIONERY' && (
             <div className="absolute inset-0 flex items-center justify-center opacity-50">
               <BookOpen size={9} className="text-blue-900" />
@@ -455,7 +699,7 @@ export default function ShophouseFacade({
 
       {/* ═══ 3. TẦNG 2 — BAN CÔNG ═══════════════════════════════════════ */}
       <div
-        className="relative flex items-end justify-around gap-2 px-4 pt-2"
+        className="relative flex items-end justify-around gap-2 px-4 pt-1"
         style={{ backgroundColor: wall2Color }}
       >
         {/*
@@ -465,13 +709,13 @@ export default function ShophouseFacade({
          */}
         {windowSpeech && (
           <div
-            className="pointer-events-none absolute left-1/2 z-40 w-max max-w-[210px] -translate-x-1/2 whitespace-normal break-words border-2 px-2.5 py-1.5 text-center leading-snug shadow-md"
+            className="pointer-events-none absolute left-1/2 z-50 w-max max-w-[170px] -translate-x-1/2 whitespace-normal break-words rounded-xl border border-[#5A4A3F] px-2 py-1 text-center leading-snug shadow-md"
             style={{
-              bottom: 'calc(100% + 6px)',
+              bottom: 'calc(100% + 4px)',
               backgroundColor: '#FFFDF7',
               borderColor: '#5A4A3F',
               color: '#3E2A1B',
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: 700,
             }}
           >
@@ -483,15 +727,15 @@ export default function ShophouseFacade({
                 top: '100%',
                 width: 0,
                 height: 0,
-                borderLeft: '6px solid transparent',
-                borderRight: '6px solid transparent',
-                borderTop: '7px solid #5A4A3F',
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid #5A4A3F',
               }}
             />
           </div>
         )}
         {/* Cửa sổ rộng tầng 2 */}
-        <Win wide nguoi={oCoNguoi(2)}>
+        <Win skin={winSkin} wide nguoi={oCoNguoi(2)}>
           {shopType === 'CINEMA' && (
             <div className="absolute inset-1 flex items-center justify-center rounded bg-pink-900/80">
               <span className="text-[7px] font-black text-pink-200 rotate-0">POSTER</span>
@@ -503,7 +747,7 @@ export default function ShophouseFacade({
             </div>
           )}
         </Win>
-        <Win nguoi={oCoNguoi(3)}>
+        <Win skin={winSkin} nguoi={oCoNguoi(3)}>
           {/* Rèm cửa nhẹ */}
           <div className="absolute bottom-0 inset-x-0 h-1/3 "
             style={{ backgroundColor: 'rgba(255,255,255,0.35)' }} />
@@ -545,7 +789,7 @@ export default function ShophouseFacade({
        * bang hieu, khong con cho de cham nhau.
        */}
       <div
-        className="relative mx-0 flex h-[40px] items-center gap-1.5 px-2"
+        className="relative mx-0 flex h-[32px] items-center gap-1.5 px-2"
         style={{
           backgroundColor: isBuilt ? pal.signBg : '#5A5048',
           borderBottom: `3px solid ${shade(isBuilt ? pal.signBg : '#5A5048', 0.6)}`,
@@ -578,7 +822,7 @@ export default function ShophouseFacade({
       <div
         className="relative mx-0 mb-0 overflow-hidden"
         style={{
-          height: 120,
+          height: 82,
           borderLeft: `3px solid ${shade(pal.wall, 0.62)}`,
           borderRight: `3px solid ${shade(pal.wall, 0.62)}`,
           borderBottom: `4px solid ${shade(pal.wall, 0.5)}`,
@@ -589,6 +833,84 @@ export default function ShophouseFacade({
       >
         {isBuilt ? (
           <>
+            {/* ───── CÔNG VIÊN: không cửa cuốn, không quầy. Cây, ghế đá, lối đi. ───── */}
+            {shopType === 'PARK' && (
+              <div className="relative h-full w-full overflow-hidden" style={{ backgroundColor: isNight ? '#1E2A1C' : '#DCEBCC' }}>
+                {/* Thảm cỏ */}
+                <div className="absolute inset-x-0 bottom-0 h-6" style={{ backgroundColor: isNight ? '#22331E' : '#8FBF6A' }} />
+                {/* Lối đi lát gạch */}
+                <div className="absolute bottom-0 left-1/2 h-6 w-10 -translate-x-1/2" style={{ backgroundColor: isNight ? '#3A352C' : '#D9CBA8' }} />
+                {/* Hai cây xanh tán tròn */}
+                {[26, 180].map((x, i) => (
+                  <div key={i} className="absolute bottom-5 flex flex-col items-center" style={{ left: x }}>
+                    <div className="rounded-full" style={{ width: 30 + i * 6, height: 26 + i * 5, backgroundColor: isNight ? '#2C4A28' : '#4E8C3A' }} />
+                    <div style={{ width: 5, height: 14, backgroundColor: isNight ? '#3A2E20' : '#6B4A2F' }} />
+                  </div>
+                ))}
+                {/* Ghế đá */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+                  <div style={{ width: 44, height: 5, backgroundColor: isNight ? '#5A5750' : '#B8B2A4' }} />
+                  <div className="flex justify-between" style={{ width: 44 }}>
+                    <span style={{ width: 5, height: 9, backgroundColor: isNight ? '#4A473F' : '#9A958A' }} />
+                    <span style={{ width: 5, height: 9, backgroundColor: isNight ? '#4A473F' : '#9A958A' }} />
+                  </div>
+                </div>
+                {/* Đèn công viên */}
+                <div className="absolute bottom-6 right-7 flex flex-col items-center">
+                  <div className="rounded-full" style={{ width: 8, height: 8, backgroundColor: isNight ? '#FDE68A' : '#E8E0C4' }} />
+                  <div style={{ width: 3, height: 20, backgroundColor: '#5A5048' }} />
+                </div>
+              </div>
+            )}
+
+            {/* ───── NHÀ Ở: cửa ra vào + cửa sổ, không hàng hóa, không biển. ───── */}
+            {shopType === 'HOME' && (
+              <div className="relative h-full w-full overflow-hidden" style={{ backgroundColor: isNight ? '#2A2520' : '#F2EADC' }}>
+                {/* Bậc thềm */}
+                <div className="absolute inset-x-0 bottom-0 h-3" style={{ backgroundColor: isNight ? '#3A332A' : '#CDBFA4' }} />
+                {/* Cửa ra vào hai cánh */}
+                <div className="absolute bottom-3 left-10" style={{ width: 46, height: 60, backgroundColor: isNight ? '#4A3526' : '#8A5A33', border: `3px solid ${isNight ? '#2F2318' : '#6B4423'}` }}>
+                  <div className="absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2" style={{ backgroundColor: isNight ? '#2F2318' : '#6B4423' }} />
+                  <span className="absolute right-2 top-1/2 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: '#D9A441' }} />
+                </div>
+                {/* Cửa sổ có chấn song */}
+                <div className="absolute bottom-10 right-9" style={{ width: 52, height: 36, backgroundColor: isNight ? '#3E4C63' : '#C8DCEA', border: `3px solid ${isNight ? '#2F2318' : '#6B4423'}` }}>
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="absolute inset-y-0" style={{ left: `${25 * (i + 1)}%`, width: 2, backgroundColor: isNight ? '#2F2318' : '#6B4423' }} />
+                  ))}
+                </div>
+                {/* Chậu cây trước cửa */}
+                <div className="absolute bottom-3 left-2 flex flex-col items-center">
+                  <div className="rounded-full" style={{ width: 14, height: 12, backgroundColor: isNight ? '#2C4A28' : '#4E8C3A' }} />
+                  <div style={{ width: 11, height: 9, backgroundColor: '#A86A3C' }} />
+                </div>
+              </div>
+            )}
+
+            {/* ───── KỲ QUAN: bệ đá + tượng đài, không buôn bán. ───── */}
+            {shopType === 'LANDMARK' && (
+              <div className="relative h-full w-full overflow-hidden" style={{ backgroundColor: isNight ? '#2E2616' : '#FBF2DC' }}>
+                {/* Bậc tam cấp */}
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="absolute left-1/2 -translate-x-1/2" style={{ bottom: i * 5, width: 120 - i * 22, height: 5, backgroundColor: isNight ? '#4A3E22' : '#E0CE9C' }} />
+                ))}
+                {/* Bệ và cột tượng */}
+                <div className="absolute bottom-[15px] left-1/2 -translate-x-1/2" style={{ width: 34, height: 12, backgroundColor: isNight ? '#5A4A28' : '#D9BE7A' }} />
+                <div className="absolute bottom-[27px] left-1/2 -translate-x-1/2" style={{ width: 16, height: 30, backgroundColor: isNight ? '#6B5730' : '#E8D2A0' }} />
+                {/* Ngôi sao vàng trên đỉnh */}
+                <div className="absolute bottom-[55px] left-1/2 -translate-x-1/2">
+                  <Star size={16} className="fill-[#D9A441] text-[#D9A441]" />
+                </div>
+                {/* Hai chậu cảnh hai bên */}
+                {[10, 182].map((x, i) => (
+                  <div key={i} className="absolute bottom-0 flex flex-col items-center" style={{ left: x }}>
+                    <div className="rounded-full" style={{ width: 16, height: 14, backgroundColor: isNight ? '#2C4A28' : '#4E8C3A' }} />
+                    <div style={{ width: 13, height: 10, backgroundColor: '#A86A3C' }} />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* TIỆM SỬA XE MÁY */}
             {shopType === 'TIRE_SHOP' && (
               <div className="flex h-full w-full items-end justify-between px-3 pb-2" style={{ backgroundColor: isNight ? '#222018' : '#EDEBE0' }}>

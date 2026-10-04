@@ -1,32 +1,35 @@
-const UNITS: Array<[number, string]> = [
-  [1e12, 'T'],
-  [1e9, 'B'],
-  [1e6, 'M'],
-  [1e3, 'K'],
-];
+/**
+ * Tương thích ngược: mọi file vẫn import từ đây, nhưng implementation
+ * đã dời vào `lib/mocity/currency.ts`. GĐ 2 sẽ cleanup.
+ */
+import {
+  formatVND,
+  formatVNDCompact,
+  formatVNDPerSecond,
+  formatPercent,
+} from './currency';
 
-/** 1234567 -> "1,23tr" (kieu viet gọn tieng Viet, doc nhanh tren HUD hien) */
+export {
+  formatVND,
+  formatVNDCompact,
+  formatVNDPerSecond,
+  formatPercent,
+  CURRENCY_UNIT,
+  VND_ROUNDING,
+  VND_PER_OLD_COIN,
+  roundVND,
+} from './currency';
+
 export function formatCompact(n: number): string {
-  const v = Math.floor(Math.abs(n));
-  for (const [threshold, suffix] of UNITS) {
-    if (v >= threshold) {
-      const scaled = n / threshold;
-      const text = scaled >= 100 ? scaled.toFixed(0) : scaled.toFixed(2);
-      return `${text.replace(/\.?0+$/, '').replace('.', ',')}${suffix}`;
-    }
-  }
-  return `${Math.floor(n)}`;
+  return formatVNDCompact(n);
 }
 
-/** 1234567 -> "1.234.567" */
 export function formatNumber(n: number): string {
-  return Math.floor(n).toLocaleString('vi-VN');
+  return formatVND(n);
 }
 
-/** Xu/giay -> chuoi de hien thi tren HUD. 0.5 -> "0,5/s" */
 export function formatRate(perSec: number): string {
-  if (perSec >= 1000) return `${formatCompact(perSec)}/s`;
-  return `${perSec.toFixed(1).replace('.', ',')}/s`;
+  return formatVNDPerSecond(perSec);
 }
 
 export function formatDuration(ms: number): string {
@@ -37,8 +40,4 @@ export function formatDuration(ms: number): string {
   if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`;
   if (m > 0) return `${m}m ${s.toString().padStart(2, '0')}s`;
   return `${s}s`;
-}
-
-export function formatPercent(value: number, fractionDigits = 0): string {
-  return `${value.toFixed(fractionDigits).replace('.', ',')}%`;
 }

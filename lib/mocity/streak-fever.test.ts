@@ -8,7 +8,7 @@ import { STREAK_SHIELD_DAY, STREAK_SHIELD_MAX } from './store';
 const NOW = 1_700_000_000_000;
 
 describe('phieu bao vui chuoi ngay', () => {
-  const base = { version: 9, streak: { days: 0, lastDay: '', best: 0 } };
+  const base = { version: 10, streak: { days: 0, lastDay: '', best: 0 } };
 
   it('save cu khong co field phieu phai chuan hoa ve 0', () => {
     const s = normalizeStoredState(JSON.stringify(base), 1_700_000_000_000);
@@ -48,7 +48,7 @@ describe('phieu bao vui chuoi ngay', () => {
  */
 describe('field feverUsedToday/feverDay cu - chi con giu cho tuong thich save', () => {
   it('b dem chua co gia tri mac dinh ve 0', () => {
-    const s = normalizeStoredState(JSON.stringify({ version: 9 }), 1_700_000_000_000);
+    const s = normalizeStoredState(JSON.stringify({ version: 10 }), 1_700_000_000_000);
     assert.equal(s.feverUsedToday, 0);
     assert.equal(s.feverDay, '');
   });
@@ -58,14 +58,14 @@ describe('field feverUsedToday/feverDay cu - chi con giu cho tuong thich save', 
       JSON.stringify({ version: 8, feverUntil: 0, gems: 999 }),
       1_700_000_000_000,
     );
-    assert.equal(s.version, 9);
+    assert.equal(s.version, 10);
     assert.equal(s.feverUsedToday, 0);
     assert.equal(s.feverDay, '');
   });
 
   it('giu nguyen bo dem cua ngay hien tai', () => {
     const s = normalizeStoredState(
-      JSON.stringify({ version: 9, feverUsedToday: 2, feverDay: '2026-3-1' }),
+      JSON.stringify({ version: 10, feverUsedToday: 2, feverDay: '2026-3-1' }),
       1_700_000_000_000,
     );
     assert.equal(s.feverUsedToday, 2);
@@ -74,7 +74,7 @@ describe('field feverUsedToday/feverDay cu - chi con giu cho tuong thich save', 
 
   it('bo dem am phai ve 0', () => {
     const s = normalizeStoredState(
-      JSON.stringify({ version: 9, feverUsedToday: -5, feverDay: 'x' }),
+      JSON.stringify({ version: 10, feverUsedToday: -5, feverDay: 'x' }),
       1_700_000_000_000,
     );
     assert.equal(s.feverUsedToday, 0);
@@ -91,7 +91,7 @@ describe('khoa lưu - ha tang bao ve thuoc ve may in tien', () => {
   it('xem save co phieu thi khong duoc cap them tu save', () => {
     const s = normalizeStoredState(
       JSON.stringify({
-        version: 9,
+        version: 10,
         streak: { days: 100, lastDay: '2026-3-1', best: 100, shields: 99 },
       }),
       1_700_000_000_000,
@@ -110,7 +110,7 @@ describe('khoa lưu - ha tang bao ve thuoc ve may in tien', () => {
  */
 describe('thanh pho moi phai co du field', () => {
   it('khoi tao chuoi co san phieu bao ve', () => {
-    const s = normalizeStoredState(JSON.stringify({ version: 9 }), NOW);
+    const s = normalizeStoredState(JSON.stringify({ version: 10 }), NOW);
     assert.equal(s.streak.shields, 0, 'phieu phai la 0 chu khong undefined');
     assert.ok(Array.isArray(s.dailySnapshots), 'dailySnapshots phai la mang rong');
     assert.equal(s.dailySnapshots.length, 0);
@@ -131,7 +131,7 @@ describe('thanh pho moi phai co du field', () => {
      * field phai co san gia tri mac dinh. Truoc day `streak.shields` va
      * `dailySnapshots` deu undefined luc moi choi.
      */
-    const s = normalizeStoredState(JSON.stringify({ version: 9 }), NOW);
+    const s = normalizeStoredState(JSON.stringify({ version: 10 }), NOW);
     assert.ok(s.streak !== undefined);
     assert.notEqual(s.streak.shields as unknown, undefined);
     assert.notEqual(s.dailySnapshots as unknown, undefined);

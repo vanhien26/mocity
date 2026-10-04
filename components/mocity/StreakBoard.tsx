@@ -118,7 +118,7 @@ export default function StreakBoard() {
             />
           </div>
           <p className="mt-1.5 text-[12px] font-bold text-[#8B6318]">
-            Còn {Math.max(0, next.days - days)} ngày · +{formatCompact(next.rewardCoins)} Xu · +
+            Còn {Math.max(0, next.days - days)} ngày · +{formatCompact(next.rewardCoins)} · +
             {next.rewardGems} KC
           </p>
         </div>
@@ -172,7 +172,7 @@ export default function StreakBoard() {
                     {m.title}
                   </p>
                   <p className="text-[12px] font-bold text-[#6E4F3A]">
-                    +{formatCompact(m.rewardCoins)} Xu · +{m.rewardGems} KC ·{' '}
+                    +{formatCompact(m.rewardCoins)} · +{m.rewardGems} KC ·{' '}
                     +{formatCompact(m.rewardXp)} XP
                   </p>
                 </div>

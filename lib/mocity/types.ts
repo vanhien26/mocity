@@ -1,11 +1,13 @@
 export type ZoneType = 'COMMERCIAL' | 'FINTECH' | 'RESIDENTIAL' | 'LANDMARK';
 
 export interface Currencies {
+  /** Đồng (VNĐ) - Tiền tệ kinh doanh & dòng tiền thực tế */
   coins: number;
+  /** Kim Cương (KC) - Tiền tệ chiến lược & cao cấp */
   gems: number;
-  energy: number;
-  blueprints: number;
-  medals: number;
+  energy?: number;
+  blueprints?: number;
+  medals?: number;
 }
 
 export type CurrencyKey = keyof Currencies;
@@ -74,7 +76,25 @@ export interface BuildingNode {
   starRating: number;
   lastCollectedAt: number;
   modules?: StoreModuleId[];
+  /**
+   * Cổ Đông đang góp vốn - đổi tên UI từ "Quản Lý" nhưng giữ nguyên field
+   * này để không vỡ save cũ. Tác dụng: +% Xu/giây (yield bonus), KHÔNG ảnh
+   * hưởng tốc độ tự bán - đó là việc của `staffCount`.
+   */
   managerId?: string;
+  /**
+   * Số Nhân Viên đang thuê (0..`MAX_STAFF`). Nhân viên KHÔNG tăng doanh thu
+   * mỗi đơn - họ rút ngắn `serviceIntervalMs`, tức tiệm tự đóng đơn nhanh
+   * hơn. Đây là cơ chế DUY NHẤT điều khiển tốc độ bán kể từ khi bỏ nút bấm
+   * tay "Đóng đơn"/"Dọn hàng".
+   */
+  staffCount?: number;
+  /**
+   * Mốc tự phục vụ gần nhất, dùng để tính đơn đã tự đóng mỗi `tickIdle`
+   * (kể cả lúc offline). `undefined` = chưa từng tự phục vụ, tính từ `now`
+   * ở lần tick đầu tiên để không dồn đơn hồi tố cho save cũ.
+   */
+  lastAutoServedAt?: number;
   stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
   lastFraudPreventedAt?: number;
 }
@@ -378,6 +398,18 @@ export interface PeriodLedger extends LedgerEntry {
   month: string;
 }
 
+/**
+ * Hàng chờ khách của MỘT tiệm.
+ *
+ * `arrivedAt` là timestamp từng khách đang đợi, xếp theo thứ tự đến.
+ * Khách đứng đầu hàng được đóng trước (FIFO). Vượt sức chứa hoặc chờ quá
+ * lâu thì khách bỏ đi - mất doanh thu thật, không phải hình phạt suy ra.
+ */
+export interface ShopQueue {
+  shopId: string;
+  arrivedAt: number[];
+}
+
 export function emptyPeriodLedger(day: string, month: string): PeriodLedger {
   return { ...emptyLedger(), day, month };
 }
@@ -524,10 +556,59 @@ export interface CityState extends Currencies {
   /** Sổ cái trong tháng. Reset lúc sang tháng mới. */
   ledgerMonth: PeriodLedger;
   bubblesCollected: number;
-  /** Thuong AFK chua nhan. null = da xu ly xong. */
-  pendingOffline: { coins: number; elapsedMs: number } | null;
+  /**
+   * Kết quả mô phỏng lô giao dịch trong lúc vắng mặt.
+   *
+   * Đây KHÔNG phải "tiền tự sinh theo thời gian" nữa - nó là tập hợp các
+   * giao dịch thật (khách vẫn mua hàng, chỉ không có chủ canh nên đạt
+   * `OFFLINE_FILL_RATE` sản lượng), gộp lại để không tạo 30.000 object.
+   *
+   * `coins` = LỢI NHUẬN RÒNG của lô. Bốn dòng `gross/cogs/opex/tax` được giữ
+   * riêng để lúc nhận thưởng vẫn ghi đủ P&L: ví cộng net, sổ cái cũng cộng net,
+   * cộng thêm các dòng chi phí đi kèm - nếu bỏ, sổ cái sẽ nói dối.
+   *
+   * null = đã xử lý xong (đã nhận hoặc đã bỏ qua).
+   */
+  pendingOffline: {
+    coins: number;
+    elapsedMs: number;
+    orders?: number;
+    gross?: number;
+    cogs?: number;
+    opex?: number;
+    tax?: number;
+    /**
+     * Thời gian vắng bị chặn ở trần 8 giờ.
+     *
+     * Tách riêng thay vì để UI tự suy ra từ `elapsedMs`: `elapsedMs` đã bị
+     * cắt sẵn nên `elapsedMs > 8h` luôn false - đúng lỗi "cảnh báo trần 8 giờ
+     * không bao giờ hiện" đang sửa.
+     */
+    capped?: boolean;
+  } | null;
+
+  /* ── Transaction Engine: hàng chờ khách của từng tiệm ── */
+  /**
+   * KHÁCH ĐANG CHỜ tại từng tiệm. Đây là nguồn sinh tiền duy nhất:
+   * không có hàng chờ thì không có giao dịch, không có giao dịch thì không
+   * có doanh thu. Người chơi phải bấm để đóng từng đơn.
+   *
+   * Mảng rỗng = không có khách nào chờ = không có thu nhập.
+   */
+  shopQueues?: ShopQueue[];
+  /**
+   * Số đơn đã bị bỏ lỡ vì hết hàng chờ hoặc quá hạn trong phiên hiện tại.
+   * Hiển thị để người chơi thấy hệ quả của việc không bấm kịp.
+   */
+  ordersLost?: number;
+  /** Tổng số đơn đã đóng từ đầu - chỉ số hoạt động của thành phố. */
+  ordersClosed?: number;
   /** Thoi diem trong ngay: BINH MINH, NGAY, HOANG HON, DEM */
   timeOfDay?: TimeOfDay;
+  /** Thời tiết đô thị: Nắng ráo, Mưa rào, Triều cường ngập lụt, Giông bão */
+  weather?: WeatherType;
+  /** Trạng thái đường phố đang bị ngập lụt */
+  isFlooded?: boolean;
 
   /* ── Cơ chế Luật Chơi & Quản Trị Tài Chính Thực Chiến ── */
   /** Điểm Tin Cậy MoMo (300 - 850). Quyết định hạn mức vay, lãi suất & độ uy tín */
@@ -555,6 +636,7 @@ export interface CityState extends Currencies {
 }
 
 export type TimeOfDay = 'DAWN' | 'DAY' | 'SUNSET' | 'NIGHT';
+export type WeatherType = 'SUNNY' | 'RAIN' | 'FLOOD' | 'STORM';
 
 /** Ten icon trong BUILDING_ICON map (components/mocity/building-icons.ts). */
 export type BuildingIconKey =

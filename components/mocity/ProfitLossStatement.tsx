@@ -2,11 +2,23 @@
 
 import { useEffect, useState } from 'react';
 
-import { useCity, useCityDerived, takeLoan, repayLoan, markTutorialFlag } from '@/lib/mocity/store';
+import {
+  useCity,
+  useCityDerived,
+  takeLoan,
+  repayLoan,
+  markTutorialFlag,
+  transferToPersonalWealth,
+  depositToWorkingCapital,
+  depositToTuiThanTai,
+  withdrawFromTuiThanTai,
+  buyMoMoInsurance,
+} from '@/lib/mocity/store';
 import {
   COVERAGE_WARNING_AT,
   LOAN_ANNUAL_RATE,
   MAX_DEBT_TO_EBIT,
+  TUI_THAN_TAI_RATE_YEAR,
 } from '@/lib/mocity/city-calculator';
 import type { PeriodLedger } from '@/lib/mocity/types';
 import { formatNumber, formatRate } from '@/lib/mocity/format';
@@ -99,13 +111,14 @@ function Pct({ value }: { value: number }) {
 /**
  * BAO CAO KET QUA KINH DOANH.
  *
- * Ban <= 6 game chi co MOT con so: tien vao ngan khoc. Khong co gia von, khong
- * co chi phi van hanh, khong co thue - nen loi nhuan gop va loi nhuan rong VO
- * NGHIA chu khong phai "chua hien thi". Cong truong "XU/giay" tren HUD cung
- * la loi nhuan rong chu khong phai doanh thu.
+ * Ba con so tro len tren man hinh khac nhau, va khong so nao la so gia:
+ *   - Dong "XU/giay" tren HUD la LOI NHUAN RONG (sau chi phi va thue).
+ *   - "Doanh thu gop" la tien vao that, khong phong to (grossUp da bi xoa).
+ *   - "Loi nhuan rong" chi con khoang 23% doanh thu gop - con lai bi gia von,
+ *     chi phi van hanh va thue an het.
  *
- * Man hinh nay la noi game day nguoi choi hieu tien doanh thu KHONG phai la
- * tien con lai: phai tru gia von, chi phi van hanh va thue truoc.
+ * Man hinh nay la noi day nguoi choi doc dung: doanh thu lon khong phai la
+ * tien con lai. Phai tru gia von, chi phi van hanh va thue truoc.
  */
 /* ═══════════════════════════════════════════════════════════════════════════
  * KHOẢN VAY NGÂN HÀNG SỐ MOMO
@@ -114,7 +127,7 @@ function Pct({ value }: { value: number }) {
  * khoản vay và dòng "chi phí lãi vay" nó tạo ra trong cùng một màn hình, nếu
  * không thì vay tiền vẫn là chuyện không hậu quả.
  * ═══════════════════════════════════════════════════════════════════════════ */
-function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
+export function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
   const coins = useCity((s) => s.coins);
   const coBank = useCity((s) => s.buildings.some((b) => b.defId === 'ngan-hang-so'));
   const derived = useCityDerived();
@@ -138,12 +151,12 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
     const r = takeLoan(so);
     if (r.ok) {
       setSoTien('');
-      onToast?.(`Đã giải ngân ${formatNumber(r.amount)} Xu. Dư nợ mới ${formatNumber(duNo + r.amount)} Xu.`);
+      onToast?.(`Đã giải ngân ${formatNumber(r.amount)} đồng. Dư nợ mới ${formatNumber(duNo + r.amount)} đồng.`);
       return;
     }
     if (r.reason === 'needBank') onToast?.('Cần xây Ngân Hàng Số (mở ở Bậc 3 - Phố Vỉa Hè) mới được vay.');
     else if (r.reason === 'noIncome') onToast?.('Thành phố chưa có lợi nhuận hoạt động nên chưa đủ điều kiện vay.');
-    else if (r.reason === 'ceiling') onToast?.(`Vượt hạn mức. Chỉ còn vay được ${formatNumber(conVay)} Xu.`);
+    else if (r.reason === 'ceiling') onToast?.(`Vượt hạn mức. Chỉ còn vay được ${formatNumber(conVay)} đồng.`);
     else onToast?.('Nhập số tiền muốn vay.');
   };
 
@@ -151,7 +164,7 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
     const r = repayLoan(so || duNo);
     if (r.ok) {
       setSoTien('');
-      onToast?.(`Đã trả ${formatNumber(r.amount)} Xu. Dư nợ còn ${formatNumber(r.remaining)} Xu.`);
+      onToast?.(`Đã trả ${formatNumber(r.amount)} đồng. Dư nợ còn ${formatNumber(r.remaining)} đồng.`);
       return;
     }
     if (r.reason === 'funds') onToast?.('Ngân khố không đủ để trả khoản này.');
@@ -168,7 +181,7 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
           🔒 Vay Nhanh - chưa mở
         </p>
         <p className="mt-1 text-[13px] leading-relaxed" style={{ color: '#6E4F3A' }}>
-          Xây <span className="font-black">Ngân Hàng Số MoMo</span> (mở ở Bậc 3 - Phố Vỉa Hè) để thiết lập quan hệ tín dụng. Có ngân hàng rồi mới được vay vốn tăng tốc xây dựng.
+          Xây <span className="font-black">Ngân Hàng Số</span> (mở ở Bậc 3 - Phố Vỉa Hè) để thiết lập quan hệ tín dụng. Có ngân hàng rồi mới được vay vốn tăng tốc xây dựng.
         </p>
       </div>
     );
@@ -184,7 +197,7 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-[12px] font-black uppercase tracking-wide" style={{ color: cang ? '#B91C1C' : '#8B6318' }}>
-          Khoản vay Ngân Hàng Số MoMo
+          Khoản vay Ngân Hàng Số
         </p>
         <span className="text-[12px] font-black" style={{ color: '#8B6318' }}>
           lãi {Math.round(LOAN_ANNUAL_RATE * 100)}%/năm
@@ -195,12 +208,12 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
         <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
           <p className="text-[11px] font-black uppercase text-[#8A7355]">Dư nợ</p>
           <p className="text-sm font-black tabular-nums" style={{ color: duNo > 0 ? '#B91C1C' : '#1C171A' }}>
-            {formatNumber(duNo)} Xu
+            {formatNumber(duNo)}
           </p>
         </div>
         <div className="rounded-xl px-2.5 py-1.5" style={{ background: '#FFFFFF' }}>
           <p className="text-[11px] font-black uppercase text-[#8A7355]">Còn vay được</p>
-          <p className="text-sm font-black tabular-nums text-[#1C171A]">{formatNumber(conVay)} Xu</p>
+          <p className="text-sm font-black tabular-nums text-[#1C171A]">{formatNumber(conVay)}</p>
         </div>
       </div>
 
@@ -233,7 +246,7 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
           value={soTien}
           onChange={(e) => setSoTien(e.target.value.replace(/\D/g, ''))}
           inputMode="numeric"
-          placeholder="Số Xu"
+          placeholder="Số tiền VNĐ"
           className="min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs font-black tabular-nums outline-none"
           style={{ borderColor: '#C9A22788', background: '#FFFFFF', color: '#1C171A' }}
         />
@@ -264,6 +277,270 @@ function LoanPanel({ onToast }: { onToast?: (msg: string) => void }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * BẢNG ĐIỀU HÀNH TÀI CHÍNH THỰC CHIẾN MOMO
+ * ═══════════════════════════════════════════════════════════════════════════ */
+export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => void }) {
+  const coins = useCity((s) => s.coins);
+  const derived = useCityDerived();
+  const [tuiInput, setTuiInput] = useState('');
+  const [wealthInput, setWealthInput] = useState('');
+
+  const tuiVal = Number(tuiInput.replace(/\D/g, '')) || 0;
+  const wealthVal = Number(wealthInput.replace(/\D/g, '')) || 0;
+
+  const handleDepositTui = () => {
+    if (depositToTuiThanTai(tuiVal)) {
+      setTuiInput('');
+      onToast?.(`Đã gửi ${formatNumber(tuiVal)} đồng vào Túi Thần Tài! Lãi sinh lời đều đặn mỗi đêm.`);
+    } else {
+      onToast?.('Số đồng không hợp lệ hoặc Ngân Khố không đủ.');
+    }
+  };
+
+  const handleWithdrawTui = () => {
+    const amount = tuiVal || derived.tuiThanTaiBalance;
+    if (withdrawFromTuiThanTai(amount)) {
+      setTuiInput('');
+      onToast?.(`Đã rút ${formatNumber(amount)} đồng từ Túi Thần Tài về Ngân Khố thành phố tức thì!`);
+    } else {
+      onToast?.('Số dư Túi Thần Tài không đủ để rút.');
+    }
+  };
+
+  const handleRuttTienVeVi = () => {
+    if (transferToPersonalWealth(wealthVal)) {
+      setWealthInput('');
+      onToast?.(`Đã rút ${formatNumber(wealthVal)} đồng về Ví Cá Nhân Thị Trưởng.`);
+    } else {
+      onToast?.('Ngân Khố không đủ để rút số đồng này.');
+    }
+  };
+
+  const handleNapVonKinhDoanh = () => {
+    const amount = wealthVal || derived.personalWealth;
+    if (depositToWorkingCapital(amount)) {
+      setWealthInput('');
+      onToast?.(`Đã nạp ${formatNumber(amount)} đồng từ Ví Cá Nhân vào Quỹ Vận Hành!`);
+    } else {
+      onToast?.('Ví Cá Nhân không đủ số dư để nạp.');
+    }
+  };
+
+  const handleBuyInsurance = () => {
+    if (buyMoMoInsurance(2500)) {
+      onToast?.('🎉 Đã kích hoạt Gói Bảo Hiểm Toàn Diện MoMo! An tâm trước thiên tai, sự cố.');
+    } else if (derived.hasInsurance) {
+      onToast?.('Thành phố đã được bảo hiểm toàn diện!');
+    } else {
+      onToast?.('Cần 2.500 đồng để mua gói bảo hiểm.');
+    }
+  };
+
+  const trustColor =
+    derived.trustScore >= 800
+      ? '#047857'
+      : derived.trustScore >= 700
+        ? '#2563EB'
+        : derived.trustScore >= 600
+          ? '#D97706'
+          : '#DC2626';
+
+  return (
+    <div className="space-y-2.5">
+      {/* 1. ĐIỂM TIN CẬY & VỐN LƯU ĐỘNG */}
+      <div
+        className="rounded-2xl border-2 p-3.5"
+        style={{ background: '#FFFDF7', borderColor: '#C9A22788' }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-[12px] font-black uppercase tracking-wide text-[#8A7355]">
+              Điểm Tin Cậy Thị Trưởng MoMo
+            </p>
+            <div className="mt-0.5 flex items-baseline gap-2">
+              <span className="text-2xl font-black tabular-nums" style={{ color: trustColor }}>
+                {derived.trustScore}
+              </span>
+              <span className="text-[11px] font-bold text-[#8A7355]">/ 1000 điểm tín nhiệm</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] font-bold text-[#8A7355]">Hệ số an toàn dòng tiền</p>
+            <span
+              className="text-base font-black tabular-nums"
+              style={{ color: derived.cashflowRatio >= 1.5 ? '#047857' : derived.cashflowRatio >= 1 ? '#D97706' : '#DC2626' }}
+            >
+              {derived.cashflowRatio.toFixed(2)}x
+            </span>
+          </div>
+        </div>
+
+        <p className="mt-1.5 text-[11px] font-medium leading-relaxed text-[#6E4F3A]">
+          {derived.trustScore >= 800
+            ? '🌟 Điểm hạng Vàng: Lịch sử tín dụng và thanh toán QR xuất sắc, trần vay tối đa!'
+            : derived.trustScore >= 700
+              ? '👍 Điểm hạng Chuẩn: Duy trì thanh toán đúng hạn và số dư lành mạnh để mở thêm ưu đãi.'
+              : '⚠️ Cảnh báo: Nợ xấu hoặc chậm trả nợ làm giảm điểm tin cậy. Cần tối ưu chi phí!'}
+        </p>
+
+        {/* Tách bạch Quỹ Vận Hành vs Ví Cá Nhân */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2 border-t pt-2.5" style={{ borderColor: '#EBDCB9' }}>
+          <div className="rounded-xl bg-[#F6EFE0] p-2">
+            <p className="text-[10px] font-bold uppercase text-[#8A7355]">Vốn Lưu Động (Quán)</p>
+            <p className="text-sm font-black tabular-nums text-[#1C171A]">
+              {formatNumber(derived.workingCapital)}
+            </p>
+          </div>
+          <div className="rounded-xl bg-[#EFF6FF] p-2">
+            <p className="text-[10px] font-bold uppercase text-[#2563EB]">Ví Cá Nhân (Thị Trưởng)</p>
+            <p className="text-sm font-black tabular-nums text-[#1E40AF]">
+              {formatNumber(derived.personalWealth)}
+            </p>
+          </div>
+        </div>
+
+        {/* Thao tác Chuyển tiền tách bạch */}
+        <div className="mt-2 flex items-center gap-1.5">
+          <input
+            value={wealthInput}
+            onChange={(e) => setWealthInput(e.target.value.replace(/\D/g, ''))}
+            inputMode="numeric"
+            placeholder="Số tiền VNĐ"
+            className="min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs font-black tabular-nums outline-none"
+            style={{ borderColor: '#C9A22788', background: '#FFFFFF', color: '#1C171A' }}
+          />
+          <button
+            type="button"
+            onClick={handleRuttTienVeVi}
+            disabled={wealthVal <= 0 || coins < wealthVal}
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-black text-white transition-transform active:scale-95 disabled:opacity-40"
+            style={{ background: '#D97706' }}
+            title="Rút tiền lời ra ví riêng"
+          >
+            Rút về ví
+          </button>
+          <button
+            type="button"
+            onClick={handleNapVonKinhDoanh}
+            disabled={derived.personalWealth <= 0}
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-black text-white transition-transform active:scale-95 disabled:opacity-40"
+            style={{ background: '#2563EB' }}
+            title="Bơm vốn từ ví cá nhân vào quán"
+          >
+            Nạp vốn
+          </button>
+        </div>
+      </div>
+
+      {/* 2. TÚI THẦN TÀI & BẢO HIỂM MOMO */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {/* Túi Thần Tài */}
+        <div
+          className="rounded-2xl border-2 p-3"
+          style={{ background: '#FFFBEB', borderColor: '#F59E0B88' }}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-black uppercase text-[#B45309]">Túi Thần Tài MoMo</p>
+            <span className="rounded bg-amber-200 px-1 py-0.5 text-[10px] font-bold text-amber-900">
+              {(TUI_THAN_TAI_RATE_YEAR * 100).toFixed(1)}%/năm
+            </span>
+          </div>
+          <div className="mt-1">
+            <span className="text-base font-black tabular-nums text-[#92400E]">
+              {formatNumber(Math.round(derived.tuiThanTaiBalance))}
+            </span>
+            <p className="text-[10px] font-medium text-[#78350F]">
+              Đêm về tự sinh lời, rút ra 24/7 tức thì
+            </p>
+          </div>
+
+          <div className="mt-2 flex items-center gap-1">
+            <input
+              value={tuiInput}
+              onChange={(e) => setTuiInput(e.target.value.replace(/\D/g, ''))}
+              inputMode="numeric"
+              placeholder="Số tiền VNĐ"
+              className="min-w-0 flex-1 rounded border px-1.5 py-1 text-[11px] font-black tabular-nums outline-none"
+              style={{ borderColor: '#F59E0B66', background: '#FFFFFF' }}
+            />
+            <button
+              type="button"
+              onClick={handleDepositTui}
+              disabled={tuiVal <= 0 || coins < tuiVal}
+              className="rounded bg-[#D97706] px-2 py-1 text-[10px] font-black text-white disabled:opacity-40"
+            >
+              Gửi
+            </button>
+            <button
+              type="button"
+              onClick={handleWithdrawTui}
+              disabled={derived.tuiThanTaiBalance <= 0}
+              className="rounded bg-[#047857] px-2 py-1 text-[10px] font-black text-white disabled:opacity-40"
+            >
+              Rút
+            </button>
+          </div>
+        </div>
+
+        {/* Bảo Hiểm Toàn Diện MoMo */}
+        <div
+          className="rounded-2xl border-2 p-3 flex flex-col justify-between"
+          style={{
+            background: derived.hasInsurance ? '#F0FDF4' : '#FEF2F2',
+            borderColor: derived.hasInsurance ? '#22C55E88' : '#EF444466',
+          }}
+        >
+          <div>
+            <div className="flex items-center justify-between">
+              <p
+                className="text-[11px] font-black uppercase"
+                style={{ color: derived.hasInsurance ? '#15803D' : '#991B1B' }}
+              >
+                Bảo Hiểm MoMo
+              </p>
+              <span
+                className="rounded px-1.5 py-0.5 text-[9.5px] font-bold text-white"
+                style={{ background: derived.hasInsurance ? '#16A34A' : '#DC2626' }}
+              >
+                {derived.hasInsurance ? 'ĐÃ BẢO VỆ' : 'CHƯA MUA'}
+              </span>
+            </div>
+            <p className="mt-1 text-[10.5px] font-medium leading-tight text-[#4B5563]">
+              {derived.hasInsurance
+                ? 'Được bồi thường 80% khi gặp sự cố mưa ngập, chập điện mặt bằng.'
+                : 'Chưa có khiên bảo vệ! Sự cố có thể làm tổn thất 10-20% tài sản ngân khố.'}
+            </p>
+          </div>
+
+          {!derived.hasInsurance && (
+            <button
+              type="button"
+              onClick={handleBuyInsurance}
+              disabled={coins < 2500}
+              className="mt-2 w-full rounded-lg py-1.5 text-center text-[11px] font-black text-white transition-transform active:scale-95 disabled:opacity-40"
+              style={{ background: '#DC2626' }}
+            >
+              Mua gói bảo vệ (2.500 đồng)
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Cảnh báo Chặn gian lận Bill giả */}
+      {(derived.fraudBlockedCount > 0 || derived.fraudLossCoins > 0) && (
+        <div className="rounded-xl border px-3 py-2 text-[11px]" style={{ background: '#FFF1F2', borderColor: '#FDA4AF' }}>
+          <span className="font-bold text-[#9F1239]">🛡️ Giám Sát Chống Gian Lận MoMo: </span>
+          <span className="text-[#881337]">
+            Đã chặn đứng <b>{derived.fraudBlockedCount}</b> vụ bill giả nhờ Loa Thần Tài.
+            {derived.fraudLossCoins > 0 && ` Thất thoát do tiền mặt/chưa có loa: ${formatNumber(derived.fraudLossCoins)} đồng.`}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProfitLossStatement({ onToast }: { onToast?: (msg: string) => void }) {
   const day = useCity((s) => s.ledgerDay);
   const month = useCity((s) => s.ledgerMonth);
@@ -275,7 +552,7 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
 
   return (
     <div className="space-y-3">
-      <LoanPanel onToast={onToast} />
+      {/* LoanPanel va FinancialRulesPanel da chuyen sang tab Ngan Hang */}
 
       {/* Tốc độ hiện tại - cùng cấu trúc nhưng là /giây */}
       <div
@@ -283,10 +560,10 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
         style={{ background: '#F0FDF9', borderColor: '#10B98166' }}
       >
         <p className="text-[12px] font-black uppercase tracking-wide text-[#047857]">
-          Nhịp hiện tại · mỗi giây
+          Tiềm năng mỗi giây
         </p>
         <div className="mt-2 space-y-0.5">
-          <Row label="Doanh thu gộp" sublabel="Tiền vô đếm sướng tay 💵" value={derived.grossRevenue} indent />
+          <Row label="Doanh thu gộp" sublabel="Tiền vô đếm sướng tay 💵" value={derived.grossRevenue} />
           <Row label="− Giá vốn hàng bán" sublabel="Tiền mua thịt cá, trà sữa... 🥩" value={-derived.cogs} tone="minus" indent />
           <Row
             label={`= Lợi nhuận gộp${derived.grossMargin ? ` (biên ${(derived.grossMargin * 100).toFixed(0)}%)` : ''}`}
@@ -320,8 +597,9 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
           <Row label="− Thuế TNDN 20%" sublabel="Đóng góp xây phố phồn vinh 🏛️" value={-derived.tax} tone="minus" indent />
           <Row label="= Lợi nhuận ròng" sublabel="Tiền THẬT SỰ nhét túi quần ✨" value={derived.netIncome} tone="total" strong />
         </div>
-        {/* Khách bỏ hàng: doanh thu chưa kịp thành tiền. */}
-        {derived.crowdingFactor < 1 && (
+        {/* Khách bỏ hàng: chỉ báo khi mất đủ 1% doanh thu. Mất vài phần
+            nghìn thì cảnh báo đỏ chót chỉ tạo ảo giác khủng hoảng. */}
+        {derived.grossRevenue > 0 && derived.lostSales > derived.grossRevenue * 0.01 && (
           <div
             className="mt-2 rounded-xl px-2.5 py-2"
             style={{ background: '#FFF7ED', border: '1px solid #FDBA74' }}
@@ -338,9 +616,19 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
         )}
 
         <p className="mt-2 border-t pt-2 text-[12px] font-semibold leading-relaxed text-[#5B3D22]">
-          HUD đang hiện <b>{formatRate(derived.netIncome)}</b> — đây là <b>lợi nhuận ròng</b>,
-          không phải doanh thu. Doanh thu gộp thật là {formatRate(derived.grossRevenue)}. Mỗi đồng
-          Xu bạn kiếm được đều phải trả tiền hàng, tiền mặt băng và thuế.
+          Một giây phục vụ tối đa cho ra <b>{formatRate(derived.grossRevenue)}</b> doanh thu gộp,
+          nhưng chỉ giữ lại được{" "}
+          <b>
+            {Math.round(
+              derived.grossRevenue > 0
+                ? (derived.netIncome / derived.grossRevenue) * 100
+                : 0,
+            )}
+            %
+          </b>{" "}
+          = <b>{formatRate(derived.netIncome)}</b> lợi nhuận ròng. Số trên HUD là{" "}
+          <b>tiềm năng</b> - tiền chỉ thật sự vào ngân khố khi bạn bấm đóng đơn. Tiền vào nhiều
+          không phải tiền còn lại.
         </p>
       </div>
 
@@ -353,9 +641,18 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
         const laiVay = l.interestExpense ?? 0;
         // Lai vay tru TRUOC thue, nen loi nhuan rong phai tru ca hai.
         const net = operating - laiVay - l.tax;
+        /*
+         * DONG TIEN TU DO.
+         *
+         * Khong goi la "thay doi ngan kho" duoc: so cai khong ghi no goc vay,
+         * thuong nhiem vu hay nap/rut Tui Than Tai - nhung khoan do khong phai
+         * P&L. Ep thanh so ngan khac se tao ra con so noi doi moi, dung la cai
+         * man hinh nay dang sua.
+         *
+         * FCF la chi so ke toan chuan: loi nhuan rong da tru von tai tai san.
+         */
+        const fcf = net - l.capex - l.inventoryBought;
         const empty = l.grossRevenue === 0 && l.capex === 0;
-
-        const periodLabel = period === 'day' ? l.day : l.month;
 
         return (
           <div
@@ -417,21 +714,36 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
                   strong
                 />
 
-                {/* Vốn không đi qua P&L */}
+                {/*
+                 * DONG TIEN: CAPEX va ton kho la TIEN RA that nen hien am do,
+                 * nhung KHONG tru vao Loi nhuan rong o tren: chung tao tai san,
+                 * khong phai chi phi tieu thu. Dong cuoi doi lai doi sang FCF.
+                 */}
                 <div className="mt-2 border-t pt-1.5">
+                  <p className="px-2 pb-0.5 text-[10px] font-black uppercase tracking-wide text-[#8A7355]">
+                    Ngoài P&amp;L · dòng tiền
+                  </p>
                   <Row
-                    label="Chi tiêu vốn (CAPEX)"
-                    sublabel="Mua đồ nghề làm ăn (máy móc, sửa quán) 🛠️"
-                    value={l.capex}
-                    tone="plain"
-                    hint="Xây mới, nâng cấp, mở rộng đất, lên sao, lắp tiện ích, thuê quản lý. Đây là TIỀN VỐN tạo tài sản — không trừ vào lợi nhuận."
+                    label="− Chi tiêu vốn (CAPEX)"
+                    sublabel="Tiền ra sắm đồ nghề (máy móc, sửa quán) 🛠️"
+                    value={-l.capex}
+                    tone="minus"
+                    hint="Xây mới, nâng cấp, mở rộng đất, lên sao, lắp tiện ích, thuê quản lý. TIỀN RA thật nên hiện âm, nhưng đây là TIỀN VỐN tạo tài sản nên KHÔNG trừ vào Lợi nhuận ròng."
                   />
                   <Row
-                    label="Kiểm kê thị trường"
+                    label="− Kiểm kê thị trường"
                     sublabel="Hàng tồn kho & bảo vật 🏺"
-                    value={l.inventoryBought}
-                    tone="plain"
-                    hint="Vật phẩm và Bảo Vật trong Kho Đồ. Tồn kho lâu ngày, không phải chi phí vận hành."
+                    value={-l.inventoryBought}
+                    tone="minus"
+                    hint="Vật phẩm và Bảo Vật trong Kho Đồ. Tiền đã ra rồi nhưng là tài sản còn dùng được, không phải chi phí vận hành nên không trừ vào lợi nhuận."
+                  />
+                  <Row
+                    label="= Dòng tiền tự do"
+                    sublabel="Lợi nhuận ròng sau khi đã tái đầu tư ✨"
+                    value={fcf}
+                    tone="total"
+                    strong
+                    hint="Lợi nhuận ròng trừ chi tiêu vốn và tồn kho. Đây là khoản tiền thật dôi ra, dùng để trả nợ hoặc mở rộng thêm."
                   />
                 </div>
 

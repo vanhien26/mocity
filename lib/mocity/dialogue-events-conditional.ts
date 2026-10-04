@@ -26,11 +26,11 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'hire-more-counter',
-        text: 'Chi 1.200 XU thuê thêm quầy thu ngân & đào tạo nhân viên phục vụ song song',
+        text: 'Chi 1.200 đồng thuê thêm quầy thu ngân & đào tạo nhân viên phục vụ song song',
         costCoins: 1200,
         btnTone: 'green',
         tags: [
-          { label: '-1.200 XU', tone: 'red' },
+          { label: '-1.200 đồng', tone: 'red' },
           { label: 'thêm chỗ phục vụ', tone: 'green' },
           { label: 'khách bỏ hàng giảm', tone: 'green' },
         ],
@@ -87,16 +87,16 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
       },
       {
         id: 'repay-campaign',
-        text: 'Chi 900 XU mở chiến dịch "Trả Hết Một Lần Nhận Món Quà", giảm phí phạt trễ hạn',
+        text: 'Chi 900 đồng mở chiến dịch "Trả Hết Một Lần Nhận Món Quà", giảm phí phạt trễ hạn',
         costCoins: 900,
         btnTone: 'blue',
         tags: [
-          { label: '-900 XU', tone: 'red' },
+          { label: '-900 đồng', tone: 'red' },
           { label: 'nợ xấu giảm nhanh', tone: 'green' },
         ],
         effects: { trustAll: 10, xp: 70, happiness: 6 },
         reply:
-          'Hết tháng mà 8 trong 10 đứa trả nợ trả đủ, tiệm ăn mừng ngày nào cũng thu được tiền. Số tiền 900 Xu chi vào khuyến mãi quay lại thành tiền trả nợ.',
+          'Hết tháng mà 8 trong 10 đứa trả nợ trả đủ, tiệm ăn mừng ngày nào cũng thu được tiền. Số tiền 900 đồng chi vào khuyến mãi quay lại thành tiền trả nợ.',
       },
       {
         id: 'ban-anon',
@@ -114,7 +114,7 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
   },
   {
     id: 'ev-dong-tien-gan-bang',
-    title: 'Hệ Số An Toàn Dòng Tiền Tụt Xuống Dưới 1!',
+    title: 'Hệ Số An Toàn Dòng Tiền Tụt đồngống Dưới 1!',
     subtitle: 'Quỹ vận hành không còn đủ chi phí cho một chu kỳ 60 giây nữa...',
     speaker: 'Trợ Lý Thị Trưởng & Kế Toán Phố',
     body: 'Chi phí vận hành mỗi giây hiện đã lớn hơn khả năng quỹ vận hành của bạn gánh nổi trong một phút. Hệ số an toàn dòng tiền đã tụt dưới 1.0, tức là chỉ cần một sự cố nhỏ là cả thành phố sẽ không đủ tiền trả hoá đơn đến hạn.',
@@ -170,11 +170,11 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
     choices: [
       {
         id: 'heal-project',
-        text: 'Chi 1.000 XU mở chuỗi trung tâm chăm sóc cư dân & đường phố vệ sinh sạch sẽ',
+        text: 'Chi 1.000 đồng mở chuỗi trung tâm chăm sóc cư dân & đường phố vệ sinh sạch sẽ',
         costCoins: 1000,
         btnTone: 'green',
         tags: [
-          { label: '-1.000 XU', tone: 'red' },
+          { label: '-1.000 đồng', tone: 'red' },
           { label: 'hạnh phúc tăng mạnh', tone: 'green' },
           { label: 'hệ số nhân tăng lại', tone: 'green' },
         ],
@@ -278,11 +278,11 @@ export const CONDITIONAL_CITY_EVENTS: CityEventScript[] = [
       },
       {
         id: 'reinforce-first',
-        text: 'Chi 1.100 XU gia cố mái tôn, chằng dây trước, không mua bảo hiểm',
+        text: 'Chi 1.100 đồng gia cố mái tôn, chằng dây trước, không mua bảo hiểm',
         costCoins: 1100,
         btnTone: 'blue',
         tags: [
-          { label: '-1.100 XU', tone: 'red' },
+          { label: '-1.100 đồng', tone: 'red' },
           { label: 'giảm thiệt hại', tone: 'green' },
           { label: 'vẫn không có bảo hiểm', tone: 'red' },
         ],

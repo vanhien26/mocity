@@ -6,21 +6,19 @@ import { claimTapReward, recordCitizenTalk, spendCoins } from '@/lib/mocity/stor
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
 import { useGameJuice } from '@/lib/mocity/useGameJuice';
+import type { CharacterAppearance, FacialEmotion } from '@/lib/mocity/character-appearance';
+import { ChibiBody } from './ChibiRenderer';
 import {
   CITIZEN_SCRIPTS,
   FINANCE_TAG_META,
   type CitizenDialogueOption,
 } from '@/lib/mocity/citizen-scenarios';
+import type { ShopQueue } from '@/lib/mocity/types';
+import { CYCLE_K, PHASE_PER_PX } from '@/lib/mocity/walk-cycle';
+import { menuItemFor, MAX_WAIT_MS } from '@/lib/mocity/transactions';
+import CharacterPanel from './CharacterPanel';
 
-const CITIZEN_TAP_COINS = 25;
-const CITIZEN_TAP_COOLDOWN_MS = 5_000;
-
-/**
- * Cut-paper chi dung hinh phang, khong xep lop mat/may/mieng nhu ban chibi cu.
- * 7 emotion cu gop con 4: WHISTLE_CHILL + CHATTING + WINK -> HAPPY,
- * SWEAT_FUNNY -> TIRED. Moi emotion la mot bo hinh phang doi cho nhau.
- */
-export type FacialEmotion = 'HAPPY' | 'STAR_EYES' | 'SURPRISED' | 'TIRED';
+const EMPTY_REAL_QUEUE: ShopQueue[] = [];
 
 /**
  * TALKING la trang thai do NGUOI CHOI kich hoat khi bam vao cu dan: nhan vat
@@ -36,24 +34,33 @@ export type CitizenBehavior =
   /** Dang xep hang cho cua hang da mo. Chi giu chuc nang o RAM, khong dua vao React state. */
   | 'QUEUEING';
 
-interface CitizenDef {
+/**
+ * Cư dân trên phố = KHÔNG GIAN (vị trí, lane, tốc độ, lời thoại) + DIỆN MẠAO
+ * (màu da/tóc/áo) kế thừa từ `CharacterAppearance`.
+ *
+ * Tách phần diện mạo ra ngoài để mô-đun vẽ không phải biết gì về vòng mô
+ * phỏng: thêm cố vấn/quản lý sau này chỉ cần cấp `CharacterAppearance`, không
+ * phải dựng một `CitizenDef` với startX/lane/quotes.
+ */
+interface CitizenDef extends CharacterAppearance {
   id: string;
   name: string;
   role: string;
   startX: number;
-  laneY: number;
+  /** Chi so hang sau (0 = gan mat duong nhat), doc tu `LANES`. */
+  lane: number;
   startDir: 1 | -1;
   speed: number;
   emotion: FacialEmotion;
-  skinColor: string;
-  hairStyle: 'SHORT' | 'BUN' | 'BOB' | 'CAP_YELLOW' | 'HELMET_BLUE' | 'NON_LA' | 'BALD_GLASSES' | 'PONYTAIL';
-  hairColor: string;
-  shirtColor: string;
-  pantsColor: string;
-  accentColor: string;
-  hasTie?: boolean;
-  heldItem?: 'MILK_TEA' | 'LOTTERY_FAN' | 'SHOPPING_BAG' | 'BRIEFCASE' | 'PHONE_QR' | 'LAPTOP' | 'CAMERA' | 'NONE';
   quotes: string[];
+  /**
+   * Đứng yên một chỗ: không đi dạo, không xếp hàng, không bị kéo vào tiệm.
+   *
+   * Khác với `speed: 0` - `speed = 0` chỉ làm nhân vật đứng im nhưng vẫn bị
+   * hệ thống hành vi coi là người đi đường: vẫn chọn tiệm, vẫn nhận queue,
+   * vẫn bị anti-cluster đẩy xô. Cờ này cắt cả ba nhánh đó.
+   */
+  stationary?: boolean;
 }
 
 /** Mutable simulation state - không trigger React re-render */
@@ -70,8 +77,35 @@ interface SimState {
   queueShopId: string | null;
   /** Vị trí trong hàng đợi, 0 = sát cửa. -1 = chưa vào hàng. */
   queueSlot: number;
+  /**
+   * HÀNG DÙNG CHUNG - chi so hang cho TOAN BO nguoi dang xep hang cua tiem.
+   *
+   * Khong the loi dung `def.lane` duoc. `targetX` chi phan biet truc NGANG
+   * (`shop.x - 34 - slot*26`), con truc SAU van la `laneYOf(def.lane)` rieng
+   * cua tung nguoi - lane 14 den 86, bon buoc 9px. Ket qua: 3 nguoi xep hang
+   * nam o 3 TUNG SAU KHAC NHAU, mat doc ra la mot bui nguoi cham truoc cua
+   * tiem chu khong phai mot hang. Cai nay chinh la loi "bu lai" dang di.
+   *
+   * Nguoi vao hang dau tien chon lane cua minh, cac nguoi sau keo theo. Nguoi
+   * do roi hang thi lane van giu tren nguoi con lai - khong ai bi day ve lane
+   * rieng giua hang. Nguoi cuoi cung roi xong thi hang het, lan sau lai bat dau
+   * tu lane rieng cua nguoi moi.
+   *
+   * -1 = chua vao hang nao.
+   */
+  queueLane: number;
   /** Số giây đã phục vụ, dùng cho bong bóng "Cảm ơn Thị Trưởng". */
   serviceTimer: number;
+  /**
+   * Mốc giờ (`arrivedAt`) của ĐƠN HÀNG THẬT mà cư dân này đang đại diện đứng
+   * chờ - lấy thẳng từ `ShopQueue` trong store, không tự bịa.
+   *
+   * Khi mốc này KHÔNG CÒN trong hàng chờ thật nữa (người chơi đã bấm đóng,
+   * hoặc đơn hết hạn), cư dân rời quầy ngay - đây là điểm khác bản cũ: cũ
+   * đứng chờ theo đồng hồ riêng (`serviceTimer > phucVuGiay`), không liên
+   * quan gì tới việc người chơi có bấm hay không.
+   */
+  claimedArrivedAt: number | null;
   /** Khoảng lấy lý do kêu gọi cư dân vào tiệm, chống spam mỗi frame. */
   nextShopPullAt: number;
   /**
@@ -102,27 +136,15 @@ interface SimState {
 /** Một cửa tiệm đã mở, dùng làm điểm tụ cho cư dân xếp hàng. */
 export interface ShopAnchor {
   id: string;
+  /** `BuildingDef.id` - dùng để tra menu món (`menuItemFor`). */
+  defId: string;
   /** Tọa độ X của cửa tiệm trên vỉa hè. */
   x: number;
   /** Tên hiển thị trên bảng hiệu. */
   label: string;
   /** Số chỗ phục vụ đồng thời, tăng theo cấp tiệm. */
   capacity: number;
-  /**
-   * Doanh thu tiệm này tạo ra mỗi giây, ở CẤP ĐỘ CÔNG TRÌNH hiện tại.
-   *
-   * Dùng để hiển thị "+X Xu" khi một khách rời quầy sau khi được phục vụ.
-   * Đây là số liệu THẬT lấy từ cùng công thức nuôi `flowFor`, không phải số
-   * random - nhưng chỉ dùng để HIỂN THỊ, tuyệt đối không cộng thêm vào ví.
-   * Tiền thật đã chảy liên tục qua `tickIdle` mỗi giây rồi; vẽ "+X Xu" ở đây
-   * là tô đậm một khoảnh khắc của dòng tiền đó, không phải tạo dòng tiền
-   * thứ hai. Cộng thêm sẽ phá đường cân bằng kinh tế vừa chỉnh.
-   */
-  yieldPerSec: number;
 }
-
-/** shopId -> số khách đang xếp. */
-export type ShopQueueCount = Record<string, number>;
 
 /** Appearance state - chỉ thay đổi khi behavior change (~mỗi 10-15s) */
 interface CitAppearance {
@@ -130,10 +152,6 @@ interface CitAppearance {
   bubbleText: string | null;
 }
 
-const ALL_EMOTIONS: FacialEmotion[] = ['HAPPY', 'STAR_EYES', 'SURPRISED', 'TIRED'];
-
-/** Thời gian đứng ở quầy để "giao dịch" trước khi rời đi. */
-const SERVICE_SECONDS = 6.5;
 
 /**
  * Bong bong sau khi được phục vụ.
@@ -150,19 +168,37 @@ const SERVED_LINE = [
   'Để tiền vô Túi Thần Tài luôn đi, kẹp xong tiếp đồ!',
 ];
 
-/** Dam/nhat mot mau hex theo he so - dung tao lop giay phia sau. */
-function shade(hex: string, k: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  const c = (v: number) => Math.min(255, Math.round(v * k));
-  return `#${((1 << 24) | (c((n >> 16) & 255) << 16) | (c((n >> 8) & 255) << 8) | c(n & 255)).toString(16).slice(1)}`;
+
+/**
+ * Hang sau tren via he.
+ *
+ * Truoc day `laneY` long le 16-42 tren via he cao 150px: 12 nguoi chen vao
+ * mot day rong 26px nen nhin nhu di hang ngang, va ai cung gan mat duong.
+ * Via he gio cao 196px va hang rai 9 buoc 9px = vung 14-86px, gap gan 3 lan.
+ *
+ * `lane` la CHI SO (0 = gan mat duong nhat), `LANE_Y` moi la toa do thuc. Dung
+ * chi so de khi them nhan vat moi chi can cham so hang, khong phai tinh toa do
+ * va dam bao khong trung hang voi nguoi da co.
+ *
+ * Moc gioi han: dau nguoi (72px + 8px day `bottom-2`) phai khong vuot qua
+ * mat via he, tuc `laneY <= VIA_HE_HEIGHT - 80 = 116`. Hang cuc lai 86 con
+ * du 30px cho dong tac vi hoat thanh ban cong gianh.
+ */
+export const LANES = [14, 23, 32, 41, 50, 59, 68, 77, 86];
+export const LANE_COUNT = LANES.length;
+
+/** Toa do hang theo chi so hang, vo han (lan 0 roi quay lai tu dau). Export cho `StreetPassersby` dung chung - khong sua hai ban. */
+export function laneYOf(lane: number): number {
+  return LANES[((lane % LANE_COUNT) + LANE_COUNT) % LANE_COUNT];
 }
 
 const CITIZEN_DEFS: CitizenDef[] = [
   {
     id: 'cit-mayor-assistant', name: 'Trợ Lý Thị Trưởng', role: 'Cán Bộ Quy Hoạch',
-    startX: 240, laneY: 28, startDir: 1, speed: 0.4, emotion: 'HAPPY',
+    startX: 240, lane: 0, startDir: 1, speed: 0.4, emotion: 'HAPPY',
     skinColor: '#FDE6D2', hairStyle: 'SHORT', hairColor: '#2B2118',
-    shirtColor: '#2B4368', pantsColor: '#1E293B', accentColor: '#DC2626', hasTie: true,
+    shirtColor: '#2B4368', pantsColor: '#1E293B', accentColor: '#DC2626',
+    outfitType: 'OFFICE_VEST', hasTie: true,
     heldItem: 'BRIEFCASE',
     quotes: [
       'Trời nắng 40°C mà cán bộ vẫn đi tuần kiểm tra vỉa hè đây!',
@@ -175,9 +211,10 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-co-tu', name: 'Cô Tư Đi Chợ', role: 'Bà Nội Trợ Săn Deal',
-    startX: 390, laneY: 16, startDir: -1, speed: 0.3, emotion: 'STAR_EYES',
-    skinColor: '#FCD9BD', hairStyle: 'NON_LA', hairColor: '#2B2118',
-    shirtColor: '#EC4899', pantsColor: '#334155', accentColor: '#FEF08A',
+    startX: 390, lane: 4, startDir: -1, speed: 0.3, emotion: 'STAR_EYES',
+    skinColor: '#FCD9BD', hairStyle: 'HEADSCARF', hairColor: '#2B2118',
+    shirtColor: '#0D9488', pantsColor: '#334155', accentColor: '#14B8A6',
+    outfitType: 'WORKER_OVERALLS',
     heldItem: 'SHOPPING_BAG',
     quotes: [
       'Trời nồm ẩm sàn trơn như sân trượt băng, đi chợ phải rón rén!',
@@ -190,7 +227,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-be-nam', name: 'Bé Nam GenZ', role: 'Sinh Viên Năm 3',
-    startX: 540, laneY: 42, startDir: 1, speed: 0.5, emotion: 'HAPPY',
+    startX: 540, lane: 8, startDir: 1, speed: 0.5, emotion: 'HAPPY',
     skinColor: '#FDE6D2', hairStyle: 'CAP_YELLOW', hairColor: '#1F2937',
     shirtColor: '#65A30D', pantsColor: '#374151', accentColor: '#FACC15',
     heldItem: 'MILK_TEA',
@@ -205,9 +242,10 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-chi-thao', name: 'Chị Thảo Văn Phòng', role: 'Thánh Chốt Đơn',
-    startX: 690, laneY: 22, startDir: -1, speed: 0.38, emotion: 'HAPPY',
+    startX: 690, lane: 3, startDir: -1, speed: 0.38, emotion: 'HAPPY',
     skinColor: '#FFF1E6', hairStyle: 'BUN', hairColor: '#3E2723',
-    shirtColor: '#F472B6', pantsColor: '#475569', accentColor: '#D82D8B',
+    shirtColor: '#F472B6', pantsColor: '#334155', accentColor: '#D82D8B',
+    outfitType: 'SKIRT',
     heldItem: 'PHONE_QR',
     quotes: [
       'Ting! Lãi Túi Thần Tài sáng nay về đủ bù ly cà phê muối chữa lành!',
@@ -220,7 +258,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-ong-loc', name: 'Ông Lộc Vé Số', role: 'Thần Tài Góc Phố',
-    startX: 840, laneY: 34, startDir: 1, speed: 0.28, emotion: 'HAPPY',
+    startX: 840, lane: 7, startDir: 1, speed: 0.28, emotion: 'HAPPY',
     skinColor: '#FCD9BD', hairStyle: 'BALD_GLASSES', hairColor: '#9CA3AF',
     shirtColor: '#D97706', pantsColor: '#3E2A1B', accentColor: '#FEF08A',
     heldItem: 'LOTTERY_FAN',
@@ -234,25 +272,27 @@ const CITIZEN_DEFS: CitizenDef[] = [
     ],
   },
   {
-    id: 'cit-anh-hoang', name: 'Anh Hoàng IT', role: 'Kỹ Sư Phần Mềm',
-    startX: 990, laneY: 18, startDir: -1, speed: 0.42, emotion: 'TIRED',
-    skinColor: '#FDE6D2', hairStyle: 'SHORT', hairColor: '#111827',
-    shirtColor: '#E2E8F0', pantsColor: '#1E293B', accentColor: '#38BDF8',
-    heldItem: 'LAPTOP',
+    id: 'cit-anh-hoang', name: 'Anh Hoàng Thợ Điện', role: 'Kỹ Thuật Điện Lực',
+    startX: 990, lane: 2, startDir: -1, speed: 0.42, emotion: 'HAPPY',
+    skinColor: '#E0A87E', hairStyle: 'HARD_HAT_ORANGE', hairColor: '#111827',
+    shirtColor: '#EA580C', pantsColor: '#1E293B', accentColor: '#F97316',
+    outfitType: 'ELECTRICIAN',
+    heldItem: 'NONE',
     quotes: [
-      'Server nóng 100 độ, ngoài trời 40 độ, coder sắp hoá thạch luôn!',
-      'Trời nồm ẩm bàn phím dính nhơm nhở, fix bug mà tưởng làm thơ!',
-      'Camera ngã tư chạy AI nhận diện biển số nét căng, đừng hòng vượt!',
-      'Vừa nạp data 4G cấp tốc quét QR trả tiền cơm trưa cứu đói!',
-      'Bug thì nhiều mà lương chưa về, may sao Ví Trả Sau hạn mức 5 củ!',
-      'Đi xe điện lướt êm ru qua đoạn ngập nước, khỏi lo chết máy bug máy!',
+      'Kiểm tra trạm biến áp mùa nắng nóng, đảm bảo điện lưới cho cả phố MoCity!',
+      'Trời nồm ẩm dây điện dễ chập, bà con chú ý an toàn thiết bị gia đình nha!',
+      'Mưa ngập là đội kỹ thuật đi ngắt điện điểm trũng liền, bảo vệ an toàn!',
+      'Tự động thanh toán hoá đơn tiền điện qua MoMo đỡ mất công đóng trễ cắt điện!',
+      'Bảo trì đường dây cao thế mồ hôi ướt đẫm, mà thấy phố sáng rực là vui rồi!',
+      'Mùa triều cường bà con nhớ ngắt aptomat tầng trệt nếu nước mấp mé cửa nghen!',
     ],
   },
   {
-    id: 'cit-bao-ngoc', name: 'Bảo Ngọc KOC', role: 'Reviewer Phố Phường',
-    startX: 1140, laneY: 38, startDir: 1, speed: 0.45, emotion: 'STAR_EYES',
+    id: 'cit-bao-ngoc', name: 'Bảo Ngọc Dạo Phố', role: 'Reviewer Phố Phường',
+    startX: 1140, lane: 6, startDir: 1, speed: 0.45, emotion: 'STAR_EYES',
     skinColor: '#FFF1E6', hairStyle: 'BOB', hairColor: '#7C2D12',
-    shirtColor: '#38BDF8', pantsColor: '#1E293B', accentColor: '#F43F5E',
+    shirtColor: '#38BDF8', pantsColor: '#475569', accentColor: '#F43F5E',
+    outfitType: 'SKIRT',
     heldItem: 'CAMERA',
     quotes: [
       'Livestream review quán lẩu trời mưa ngập mà view nổ triệu triệu tim!',
@@ -265,7 +305,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-chu-bay', name: 'Chú Bảy Hàng Xóm', role: 'Tổ Trưởng Dân Phố',
-    startX: 1290, laneY: 26, startDir: -1, speed: 0.33, emotion: 'SURPRISED',
+    startX: 1290, lane: 1, startDir: -1, speed: 0.33, emotion: 'SURPRISED',
     skinColor: '#FCD9BD', hairStyle: 'HELMET_BLUE', hairColor: '#1F2937',
     shirtColor: '#4ADE80', pantsColor: '#334155', accentColor: '#22D3EE',
     heldItem: 'NONE',
@@ -280,7 +320,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-bac-tai', name: 'Bác Tài Xe Ôm', role: 'Tài Xế Công Nghệ',
-    startX: 1440, laneY: 20, startDir: 1, speed: 0.36, emotion: 'HAPPY',
+    startX: 1440, lane: 5, startDir: 1, speed: 0.36, emotion: 'HAPPY',
     skinColor: '#FCD9BD', hairStyle: 'HELMET_BLUE', hairColor: '#1F2937',
     shirtColor: '#16A34A', pantsColor: '#1E293B', accentColor: '#22C55E',
     heldItem: 'PHONE_QR',
@@ -295,7 +335,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-chi-hang-rong', name: 'Chị Hàng Rong', role: 'Gánh Xôi Đầu Ngõ',
-    startX: 1590, laneY: 36, startDir: -1, speed: 0.29, emotion: 'HAPPY',
+    startX: 1590, lane: 0, startDir: -1, speed: 0.29, emotion: 'HAPPY',
     skinColor: '#FCD9BD', hairStyle: 'NON_LA', hairColor: '#2B2118',
     shirtColor: '#A16207', pantsColor: '#44403C', accentColor: '#FBBF24',
     heldItem: 'SHOPPING_BAG',
@@ -310,7 +350,7 @@ const CITIZEN_DEFS: CitizenDef[] = [
   },
   {
     id: 'cit-be-an', name: 'Bé An Học Sinh', role: 'Học Sinh Cấp 2',
-    startX: 1740, laneY: 30, startDir: 1, speed: 0.44, emotion: 'STAR_EYES',
+    startX: 1740, lane: 4, startDir: 1, speed: 0.44, emotion: 'STAR_EYES',
     skinColor: '#FDE6D2', hairStyle: 'SHORT', hairColor: '#111827',
     shirtColor: '#F1F5F9', pantsColor: '#1E3A8A', accentColor: '#3B82F6',
     heldItem: 'NONE',
@@ -324,29 +364,147 @@ const CITIZEN_DEFS: CitizenDef[] = [
     ],
   },
   {
-    id: 'cit-co-linh', name: 'Cô Linh Dạy Thêm', role: 'Giáo Viên',
-    startX: 1890, laneY: 24, startDir: -1, speed: 0.31, emotion: 'HAPPY',
-    skinColor: '#FFF1E6', hairStyle: 'BOB', hairColor: '#4A2C17',
-    shirtColor: '#0EA5E9', pantsColor: '#334155', accentColor: '#0284C7',
-    heldItem: 'LAPTOP',
+    id: 'cit-co-linh', name: 'Cô Linh Áo Dài', role: 'Cô Giáo Duyên Dáng',
+    startX: 1890, lane: 8, startDir: -1, speed: 0.31, emotion: 'HAPPY',
+    skinColor: '#FFF1E6', hairStyle: 'LONG_HAIR', hairColor: '#1E1B18',
+    shirtColor: '#F43F5E', pantsColor: '#FFFFFF', accentColor: '#FDE047',
+    outfitType: 'AO_DAI',
+    heldItem: 'NONE',
     quotes: [
+      'Tà áo dài thướt tha dạo bước giữa phố MoCity ngập tràn cờ hoa rực rỡ!',
       'Trời nồm ẩm phấn viết bảng bị ướt, thôi cô chuyển qua chiếu slide online!',
       'Trời rét thế này học sinh đi học muộn với lý do trùm chăn ấm quá!',
       'Phụ huynh chuyển khoản học phí tự động ting ting, sổ sách nhẹ tênh!',
-      'Hôm qua hóng drama đề thi thử khó quá làm học sinh kêu trời kêu đất!',
       'Đầu tháng trích lương vào Túi Thần Tài lấy lãi ngày, vừa tiết kiệm vừa an tâm!',
-      'Nắng nóng học sinh nhớ uống nhiều nước, đừng ham trà sữa đá bào quá nha!',
+      'Nắng rực rỡ soi bóng tà áo dài truyền thống, chụp hình kỷ yếu lớp đẹp mê ly!',
+    ],
+  },
+  {
+    /*
+     * AN XIN - nhan vat dau tien khong phai khach hang.
+     *
+     * Tat ca 12 nguoi kia deu la khach hang: ho co tien tieu, xep hang, mua
+     * duoc. Anh Ba thi khong. Neu cho anh vao vong di bo + xep hang chung thi
+     * tro thanh mot "khach hang nua" va mat het ca y nghia ke ca tinh huong ke.
+     * `stationary` cat ca ba nhanh do.
+     *
+     * `pose: 'SIT'`: nguoi xoi dat, chan gop thanh mot khoi ngang rong hon
+     * than. Dung thi khong con doc ra gi.
+     *
+     * Vi tri: lane 0 (gan mat duong, thay ngay) tai `startX 780` - doan ma hai
+     * cu dan lane 0 khac (home 240 va 1590, ban kinh toi da 430) khong bao gio
+     * quay toi, nen khong ai di qua nguoi dang ngoi. Dung lane sau thi bi che
+     * het boi 12 nguoi phia truoc.
+     *
+     * Thuong: di qua `claimTapReward` (bonus `rewardBonus`), KHONG qua
+     * `recordTransactions`. Anh khong ban hang - cho tien la don gian la cho
+     * tien, ma cho tien la chi tieu rieng cua thi truong, khong phai doanh thu
+     * cua khoi.
+     */
+    id: 'cit-an-xin', name: 'Anh Ba', role: 'Ngồi Vỉa Hè',
+    startX: 780, lane: 0, startDir: 1, speed: 0.3, emotion: 'TIRED',
+    stationary: true, pose: 'SIT',
+    skinColor: '#C98F68', hairStyle: 'MESSY', hairColor: '#4A3B30',
+    shirtColor: '#7E7667', pantsColor: '#6B5B4A', accentColor: '#8C3B2E',
+    heldItem: 'BOWL',
+    quotes: [
+      'Sáng nay chưa có gì vào bụng, Thị Trưởng có thừa bát nào không ạ?',
+      'Đêm qua ngủ ở hiên chợ, sáng ra thì bị bảo vệ xua đi mất chỗ.',
+      'Tội người ta, chứ tui cũng từng có cửa tiệm ngày xưa chú ơi.',
+      'Bữa nay được hai ổ bánh mì, chia lại một ổ cho bà cụ cuối chợ.',
+    ],
+  },
+  {
+    /*
+     * CO GANH VE CHAI - khach hang NHUNG khong phai khach hang cua tiem.
+     *
+     * Khac Anh Ba (dang ngoi xin, co `stationary`): co DI va co tien, nen
+     * van binh thuong di bo va van xep hang duoc. `speed: 0.17` la cham nhat
+     * pho - dang GANH mot gánh, khong phai dang di dao.
+     *
+     * NON_LA + que gach la hai dau hieu doc ra duoc ngay trong hinh 56x72,
+     * khong can doc ten. Gioc ve chai ve ben NGOAI than (o `translate(44,46)`),
+     * dau que con lai di len sau dau bi dau dau che - dung nhu nhin tu phia
+     * truoc, va gioc sau nguoi bi than che nen chi con mot gioc thay ro.
+     *
+     * Chu de rieng `THANH_KHOAN` - xem ghi chu trong `citizen-scenarios.ts`.
+     */
+    id: 'cit-co-ve-chai', name: 'Cô Hai', role: 'Gánh Ve Chai',
+    startX: 1215, lane: 3, startDir: -1, speed: 0.17, emotion: 'SMUG',
+    skinColor: '#C98F68', hairStyle: 'NON_LA', hairColor: '#3A2E26',
+    shirtColor: '#6E8C72', pantsColor: '#4A3B30', accentColor: '#C97A4A',
+    heldItem: 'SHOULDER_POLE',
+    quotes: [
+      'Mệt thì mệt mà tiền tươi, cân xong là cầm liền chẳng phải chờ ai chốt.',
+      'Cháu giữ cái này đi, cô gom cả ngày mới được có một bọc.',
+      'Giá giấy hôm nay hơi xịt, thôi thì đi thêm một vòng nữa vậy.',
+      'Cô gánh suốt hai mươi năm rồi, chân cô thuộc từng nẻo đường phố mình.',
+    ],
+  },
+  {
+    /*
+     * CÔ LAO CÔNG - loại trang phục còn thiếu trong dàn nhân vật: đồng phục
+     * vệ sinh môi trường (áo phản quang vàng + khẩu trang kéo xuống cổ), cầm
+     * chổi thay vì đồ nghề buôn bán. Đi chậm đều vì vừa đi vừa quét, khác
+     * nhịp hối hả của dân văn phòng/shipper.
+     */
+    id: 'cit-co-lao-cong', name: 'Cô Sáu Lao Công', role: 'Vệ Sinh Môi Trường',
+    startX: 2040, lane: 2, startDir: 1, speed: 0.24, emotion: 'HAPPY',
+    skinColor: '#E0A87E', hairStyle: 'HEADSCARF', hairColor: '#2B2118',
+    shirtColor: '#16A34A', pantsColor: '#1E293B', accentColor: '#FDE047',
+    outfitType: 'CLEANER',
+    heldItem: 'BROOM',
+    quotes: [
+      'Quét xong đoạn này là phố mình sạch bong từ đầu hẻm tới cuối ngõ!',
+      'Rác phân loại sẵn giùm cô nha, chai lọ với bọc ni lông để riêng ra.',
+      'Nắng nóng 40 độ vẫn phải quét ca sáng, xong ca là tắm cái đã đời!',
+      'Bà con đổ rác đúng giờ là cô đỡ cực biết bao nhiêu, cảm ơn nha!',
     ],
   },
 ];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SẢI CHÂN PHẢI KHỚP QUÃNG ĐƯỜNG - nếu không thì "đi như bay".
+ *
+ * Đây là phép đo, không phải cảm tính:
+ *
+ *   Tốc độ thật   `sim.x += vel * dt * 10`, với `dt = ms/100`
+ *                 → quãng đường = speed × 100 px mỗi giây.
+ *
+ *   Sải chân thật chân dài `dai=17`, khớp ở hông, xoay ±`SWING_DEG`.
+ *                 Bàn chân (đầu dưới) quét ngang
+ *                 `2 × 17 × sin(26°)` ≈ 14,9px cho MỘT bước.
+ *
+ * Bản cũ đặt `--spd = 0.6 / speed`, nên mỗi chu kỳ (2 bước) thân đi
+ * `speed×100 × 0.6/speed` = 60px, tức 30px/bước - GẤP ĐÔI quãng mà bàn chân
+ * với tới được. Chân không bám kịp đất, thân trôi đi: đúng hiện tượng nhân
+ * vật "lướt/bay" mà mắt bắt được ngay dù không chỉ ra được vì sao.
+ *
+ * Giữ nguyên tốc độ di chuyển (phố phải sống), chỉ RÚT NGẮN chu kỳ để mỗi
+ * bước đi đúng 14,9px: chân ngắn thì phải bước nhanh và ngắn - đó cũng là
+ * cách các bộ sprite walk-cycle chibi dựng sẵn vẫn làm.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Hằng số suy từ ràng buộc trên, xem `lib/mocity/walk-cycle.ts`. */
+export { CYCLE_K } from '@/lib/mocity/walk-cycle';
 
 /**
  * CSS keyframes cho walk animation.
  * Toàn bộ leg/arm swing, body bob, head wobble chạy hoàn toàn qua CSS -
  * không cần React re-render mỗi frame.
- * --spd: animation duration được set per-character dựa trên speed.
+ * --spd: thời lượng animation, CẬP NHẬT SỐNG mỗi khung hình theo vận tốc
+ * thật (`Math.abs(sim.vel)`) chứ không chỉ gán một lần theo `def.speed` -
+ * xem khối cập nhật `--spd` trong vòng lặp RAF, ngay sau khi đổi class
+ * `walking`/`idle`. Không thì chân đá đều tốc độ danh nghĩa trong lúc thân
+ * đang tăng/giảm tốc, nhìn như trượt băng.
+ *
+ * `export` cho `StreetPassersby.tsx` dùng lại: chung một keyframe set, không
+ * nhân bản tay. Hai `<style>` cùng inject một bộ keyframe KHÔNG triệt tiêu
+ * nhau - `@keyframes` trùng tên lấy cái xuất hiện sau, mà hai bộ giống hệt
+ * nhau nên kết quả không đổi. Component kia vẫn tự inject để không phụ thuộc
+ * vào việc file này có được mount hay không.
  */
-const WALK_CSS = `
+export const WALK_CSS = `
 /*
  * CHU KỲ ĐI BỘ CHIBI - khớp xoay liên tục.
  *
@@ -402,11 +560,26 @@ const WALK_CSS = `
 }
 `;
 
-const EMOTION_EMOJIS: Record<FacialEmotion, string> = {
-  HAPPY: '😊',
-  STAR_EYES: '🤩',
-  SURPRISED: '😮',
-  TIRED: '😅',
+/**
+ * STICKER TAM TRANG - thay cho chuoi emoji loi cu.
+ *
+ * Emoji noi duoc "muon cam gi" va 9 emoji doc giong nhau o kich thuoc 14px
+ * trong header. Sticker noi duoc CAI CAU - vi du "Thay tien la sang mat" -
+ * chinh la phan lam nhan vat cuoi duoc khi dang noi tien.
+ *
+ * Day khong phai noi duy nhat bieu cam: mat da ve trong `ChibiBody`, sticker
+ * chi la nhan de doc nhanh khi mat qua nho.
+ */
+const EMOTION_STICKERS: Record<FacialEmotion, { emoji: string; line: string }> = {
+  HAPPY: { emoji: '😊', line: 'Vui vẻ' },
+  STAR_EYES: { emoji: '🤩', line: 'Lóa mắt' },
+  SURPRISED: { emoji: '😮', line: 'Hả?' },
+  TIRED: { emoji: '😅', line: 'Mệt xỉu' },
+  MONEY_EYES: { emoji: '🪙', line: 'Thấy tiền là sáng mắt' },
+  CRYING: { emoji: '😭', line: 'Khóc cạn nước mắt' },
+  SMUG: { emoji: '😏', line: 'Tự đắc' },
+  ANGRY: { emoji: '🤬', line: 'Nổi điên' },
+  SLEEPY: { emoji: '🥱', line: 'Ngáp te te' },
 };
 
 
@@ -416,342 +589,15 @@ const EMOTION_EMOJIS: Record<FacialEmotion, string> = {
  * Cac diem xoay cua walk animation (chan 24/32,48 - tay 22/34,31 - dau 28,16)
  * phai giu nguyen, neu doi thi WALK_CSS transform-origin lech theo.
  */
-/* ═══════════════════════════════════════════════════════════════════════════
- * NHÂN VẬT PIXEL ART - LƯỚI 14 x 18
- *
- * viewBox 56x72 chia cho 4 ra đúng lưới 14 ngang, 18 dọc. Mọi hình đều là
- * `<rect>` bám lưới, không có đường cong nào - đó là định nghĩa của pixel art,
- * và cũng là lý do bản cut-paper cũ dù phẳng vẫn không đọc ra retro.
- *
- * VÌ SAO KHÔNG XOAY KHỚP NỮA
- * Bản cũ hoạt hoạ bằng `rotate()` trên khớp tay chân. Xoay một khối pixel tạo
- * ra cạnh chéo khử răng cưa - thứ phá hỏng pixel art nhanh nhất. Chu kỳ đi bộ
- * ở đây dịch chuyển khối theo trục, đúng cách pixel art thật làm, nên mọi cạnh
- * luôn thẳng hàng với lưới.
- * ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Một ô lưới bằng bao nhiêu đơn vị SVG. */
-const PX = 4;
-
-/** Vẽ một khối chữ nhật theo toạ độ lưới. */
-function B({ x, y, w = 1, h = 1, fill }: { x: number; y: number; w?: number; h?: number; fill: string }) {
-  return (
-    <rect
-      x={x * PX}
-      y={y * PX}
-      width={w * PX}
-      height={h * PX}
-      fill={fill}
-      shapeRendering="crispEdges"
-    />
-  );
-}
-
-/**
- * BẢNG MÀU HẠN CHẾ THỜI BAO CẤP.
- *
- * Pixel art sống bằng bảng màu hẹp. Màu gốc của 12 cư dân rải tự do khắp dải
- * RGB, nên phải nắn về bảng này - nếu không thì dù vẽ bằng khối vuông vẫn ra
- * cảm giác vector hiện đại vì màu quá nhiều và quá tươi.
- */
-const RAMP = [
-  /* Mực và gỗ */
-  '#2B2420', '#4A3B30', '#6B4A2F', '#8A6A43',
-  /* Vôi, xi măng, giấy */
-  '#7E7667', '#B5AC98', '#C9B98F', '#E3D6B4', '#F0E6CE',
-  /* Da người - PHẢI có bậc riêng, nếu không mọi khuôn mặt sẽ nắn về màu
-     giấy và áo trắng cũng rơi vào đúng màu đó, thành ra như không mặc áo. */
-  '#C98F68', '#E0A87E', '#EFC49C',
-  /* Xanh rêu */
-  '#2F4A3C', '#4A6B5A', '#6E8C72', '#A9BEB4',
-  /* Đỏ son, gạch */
-  '#6B241C', '#8C3B2E', '#B33A2B', '#C97A4A',
-  /* Vàng nghệ */
-  '#7A4F14', '#A8701F', '#D9A441', '#E8C46A',
-  /* Xanh mực */
-  '#262F3D', '#3E4C63', '#5C7390', '#8C9BB0',
-  /* Hồng in */
-  '#4E0F32', '#73164A', '#A8246B',
-];
-
-/** Khoảng cách màu trong không gian RGB, đủ dùng cho việc nắn bảng. */
-function nearest(hex: string): string {
-  const v = hex.replace('#', '');
-  const r = parseInt(v.slice(0, 2), 16);
-  const g = parseInt(v.slice(2, 4), 16);
-  const b = parseInt(v.slice(4, 6), 16);
-  let best = RAMP[0];
-  let bestD = Infinity;
-  for (const c of RAMP) {
-    const cr = parseInt(c.slice(1, 3), 16);
-    const cg = parseInt(c.slice(3, 5), 16);
-    const cb = parseInt(c.slice(5, 7), 16);
-    const d = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2;
-    if (d < bestD) { bestD = d; best = c; }
-  }
-  return best;
-}
-
-/** Độ sáng cảm nhận, dùng để so hai màu đậm nhạt. */
-function lum(hex: string): number {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return 0.299 * r + 0.587 * g + 0.114 * b;
-}
-
-/**
- * Bậc đậm hơn trong cùng bảng, chọn theo ĐỘ SÁNG chứ không theo chỉ số mảng.
- *
- * Bản đầu lùi một bậc theo chỉ số. Nhưng bảng nhóm theo họ màu, nên lùi một
- * bậc có thể nhảy sang họ khác: `darker('#4A6B5A')` ra `#F0E6CE` - bóng đổ
- * thành vùng sáng. Lỗi loại này chỉ lộ ra khi nhìn tận mắt từng nhân vật.
- */
-function darker(hex: string): string {
-  const muc = lum(hex) * 0.62;
-  let best = RAMP[0];
-  let bestD = Infinity;
-  for (const c of RAMP) {
-    if (lum(c) >= lum(hex)) continue;
-    const d = Math.abs(lum(c) - muc);
-    if (d < bestD) { bestD = d; best = c; }
-  }
-  return best;
-}
-
-/**
- * Nắn màu da trong DẢI DA RIÊNG, không qua bảng chung.
- *
- * Màu da gốc của 12 cư dân đều rất sáng (#FDE6D2, #FFF1E6). Qua bảng chung
- * thì bậc gần nhất là #F0E6CE - đúng màu giấy và màu tường vôi, nên khuôn mặt
- * đọc thành mặt nạ trắng bệch lẫn vào nền. Da là loại màu có ý nghĩa riêng,
- * không được để nó cạnh tranh bậc với vôi và giấy.
- */
-const DA_RAMP = ['#C98F68', '#E0A87E', '#EFC49C'];
-
-function nearestSkin(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  let best = DA_RAMP[0];
-  let bestD = Infinity;
-  for (const c of DA_RAMP) {
-    const d =
-      (r - parseInt(c.slice(1, 3), 16)) ** 2 +
-      (g - parseInt(c.slice(3, 5), 16)) ** 2 +
-      (b - parseInt(c.slice(5, 7), 16)) ** 2;
-    if (d < bestD) { bestD = d; best = c; }
-  }
-  return best;
-}
-
-/** Nắn màu áo sao cho không trùng màu da, nếu không nhìn như không mặc áo. */
-function tachKhoiDa(ao: string, da: string): string {
-  return ao === da ? darker(ao) : ao;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
- * NHÂN VẬT CHIBI ĐƠN GIẢN
- *
- * Thay bản pixel art ở lượt trước. Pixel art ở khung 56x72 với chu kỳ bốn
- * khung hình ra cứng như máy: kích thước quá nhỏ để số khung hình thấp đọc
- * thành phong cách, nó chỉ đọc thành giật cục.
- *
- * Chibi giữ được cảm giác tự nhiên vì tay chân xoay quanh khớp theo đường
- * cong liên tục. Đánh đổi: bớt retro hơn pixel. Bảng màu thời kỳ vẫn giữ để
- * nhân vật không tách khỏi bối cảnh đã ngả màu.
- *
- * TỶ LỆ: đầu chiếm 46% chiều cao. Đó là ngưỡng chibi - thấp hơn thì thành
- * người thường thu nhỏ, ở 56px sẽ không đọc được nét mặt.
- * ═══════════════════════════════════════════════════════════════════════════ */
-function CitizenContent({ def, emotion }: { def: CitizenDef; emotion: FacialEmotion }) {
-  const da = nearestSkin(def.skinColor);
-  const daToi = darker(da);
-  const ao = tachKhoiDa(nearest(def.shirtColor), da);
-  const aoToi = darker(ao);
-  const quan = nearest(def.pantsColor);
-  const quanToi = darker(quan);
-  const toc = nearest(def.hairColor);
-  const nhan = nearest(def.accentColor);
-  const muc = '#2B2420';
-
-  /** Một chi: hình viên thuốc bo tròn, vẽ từ khớp đổ xuống. */
-  const Chi = ({ fill, dai, day = 7 }: { fill: string; dai: number; day?: number }) => (
-    <rect x={-day / 2} y={0} width={day} height={dai} rx={day / 2} fill={fill} />
-  );
-
-  const mat = (() => {
-    switch (emotion) {
-      case 'STAR_EYES':
-        return (
-          <>
-            <path d="M20 17 L21.4 20 L24.4 21.4 L21.4 22.8 L20 25.8 L18.6 22.8 L15.6 21.4 L18.6 20 Z" fill={muc} />
-            <path d="M36 17 L37.4 20 L40.4 21.4 L37.4 22.8 L36 25.8 L34.6 22.8 L31.6 21.4 L34.6 20 Z" fill={muc} />
-            <path d="M23 28 Q28 33 33 28 Z" fill={muc} />
-          </>
-        );
-      case 'SURPRISED':
-        return (
-          <>
-            <circle cx="20" cy="21" r="3.4" fill={muc} />
-            <circle cx="36" cy="21" r="3.4" fill={muc} />
-            <ellipse cx="28" cy="29" rx="3" ry="3.8" fill={muc} />
-          </>
-        );
-      case 'TIRED':
-        return (
-          <>
-            <rect x="16.5" y="20" width="7" height="2.4" rx="1.2" fill={muc} />
-            <rect x="32.5" y="20" width="7" height="2.4" rx="1.2" fill={muc} />
-            <rect x="24" y="28.5" width="8" height="2.2" rx="1.1" fill={muc} />
-          </>
-        );
-      default:
-        return (
-          <>
-            <circle cx="20" cy="21" r="2.8" fill={muc} />
-            <circle cx="36" cy="21" r="2.8" fill={muc} />
-            <path d="M23.4 27.6 Q28 32.4 32.6 27.6 Q28 30 23.4 27.6 Z" fill={muc} />
-          </>
-        );
-    }
-  })();
-
-  const dauToc = (() => {
-    switch (def.hairStyle) {
-      case 'NON_LA':
-        return (
-          <>
-            <path d="M28 -8 L48 9 L8 9 Z" fill="#D9A441" />
-            <path d="M28 -8 L34 2 L22 2 Z" fill="#E8C46A" />
-            <rect x="6" y="8" width="44" height="3.4" rx="1.7" fill="#A8701F" />
-          </>
-        );
-      case 'CAP_YELLOW':
-        return (
-          <>
-            <path d="M10 10 Q28 -8 46 10 Z" fill="#D9A441" />
-            <rect x="4" y="9" width="26" height="3.6" rx="1.8" fill="#A8701F" />
-          </>
-        );
-      case 'HELMET_BLUE':
-        return (
-          <>
-            <path d="M8 13 Q28 -10 48 13 Z" fill="#3E4C63" />
-            <rect x="7" y="11.5" width="42" height="3.4" rx="1.7" fill="#262F3D" />
-          </>
-        );
-      case 'BALD_GLASSES':
-        return (
-          <>
-            <path d="M12 10 Q28 -4 44 10 Z" fill={daToi} />
-            <circle cx="20" cy="21" r="6" fill="none" stroke="#3E4C63" strokeWidth="2" />
-            <circle cx="36" cy="21" r="6" fill="none" stroke="#3E4C63" strokeWidth="2" />
-            <rect x="25" y="20" width="6" height="2" fill="#3E4C63" />
-          </>
-        );
-      case 'BOB':
-        return (
-          <>
-            <path d="M9 20 Q9 -4 28 -4 Q47 -4 47 20 Q42 10 28 10 Q14 10 9 20 Z" fill={toc} />
-            <rect x="7.5" y="14" width="5" height="18" rx="2.5" fill={toc} />
-            <rect x="43.5" y="14" width="5" height="18" rx="2.5" fill={toc} />
-          </>
-        );
-      case 'BUN':
-        return (
-          <>
-            <circle cx="28" cy="-5" r="6.5" fill={toc} />
-            <path d="M9 18 Q9 -3 28 -3 Q47 -3 47 18 Q42 9 28 9 Q14 9 9 18 Z" fill={toc} />
-          </>
-        );
-      case 'PONYTAIL':
-        return (
-          <>
-            <path d="M44 6 Q56 16 50 32 L45 29 Q49 18 40 10 Z" fill={toc} />
-            <path d="M9 18 Q9 -3 28 -3 Q47 -3 47 18 Q42 9 28 9 Q14 9 9 18 Z" fill={toc} />
-          </>
-        );
-      default:
-        return <path d="M9 18 Q9 -3 28 -3 Q47 -3 47 18 Q42 9 28 9 Q14 9 9 18 Z" fill={toc} />;
-    }
-  })();
-
-  const doCam = (() => {
-    const g = (child: React.ReactNode) => <g transform="translate(44,46)">{child}</g>;
-    switch (def.heldItem) {
-      case 'MILK_TEA':
-        return g(<><rect x="-4" y="0" width="8" height="10" rx="1.5" fill="#E3D6B4" /><rect x="-4.6" y="-2" width="9.2" height="2.6" rx="1.3" fill="#8A6A43" /></>);
-      case 'SHOPPING_BAG':
-        return g(<><rect x="-5" y="0" width="10" height="11" rx="1.5" fill={nhan} /><path d="M-2.6 0 Q0 -5 2.6 0" fill="none" stroke={darker(nhan)} strokeWidth="1.6" /></>);
-      case 'BRIEFCASE':
-        return g(<><rect x="-6" y="0" width="12" height="9" rx="1.5" fill="#6B4A2F" /><rect x="-2" y="-2.4" width="4" height="2.6" fill="#4A3B30" /></>);
-      case 'LOTTERY_FAN':
-        return g(<><rect x="-3" y="-1" width="7" height="11" rx="1" fill="#F0E6CE" transform="rotate(14)" /><rect x="0" y="-2" width="7" height="11" rx="1" fill="#E3D6B4" transform="rotate(-10)" /></>);
-      case 'PHONE_QR':
-        return g(<><rect x="-3.4" y="-1" width="6.8" height="11" rx="1.4" fill="#2B2420" /><rect x="-2.2" y="0.4" width="4.4" height="7" fill="#A9BEB4" /></>);
-      case 'LAPTOP':
-        return g(<><rect x="-6" y="2" width="12" height="2.6" rx="1" fill="#8C9BB0" /><rect x="-5" y="-5" width="10" height="7" rx="1" fill="#5C7390" /></>);
-      case 'CAMERA':
-        return g(<><rect x="-6" y="0" width="12" height="8.4" rx="1.6" fill="#3E4C63" /><circle cx="0" cy="4.2" r="3" fill="#8C9BB0" /></>);
-      default:
-        return null;
-    }
-  })();
-
-  return (
-    <>
-      <ellipse cx="28" cy="69" rx="13" ry="2.6" fill="rgba(43,36,32,0.22)" />
-
-      <g className="cit-bw">
-        {/* CHÂN - khớp ở hông, xoay quanh gốc toạ độ của nhóm trong */}
-        <g transform="translate(23,47)"><g className="cit-lb"><Chi fill={quanToi} dai={17} /></g></g>
-        <g transform="translate(33,47)"><g className="cit-lf"><Chi fill={quan} dai={17} /></g></g>
-
-        {/* TAY SAU */}
-        <g transform="translate(16,34)"><g className="cit-ab"><Chi fill={aoToi} dai={15} day={6} /></g></g>
-
-        {/* THÂN - bo tròn, thu lại ở eo cho dáng chibi */}
-        <path d="M17 32 Q28 29 39 32 L37.5 50 Q28 53 18.5 50 Z" fill={ao} />
-        <path d="M17 32 Q28 29 39 32 L38.4 37 Q28 34 17.6 37 Z" fill={aoToi} />
-        {def.hasTie ? (
-          <path d="M26.6 31 L29.4 31 L30.6 43 L28 45.4 L25.4 43 Z" fill={nhan} />
-        ) : (
-          <circle cx="28" cy="40" r="2.6" fill={nhan} />
-        )}
-
-        {/* TAY TRƯỚC */}
-        <g transform="translate(40,34)"><g className="cit-af"><Chi fill={ao} dai={15} day={6} /></g></g>
-        {doCam}
-
-        {/* ĐẦU - chiếm 46% chiều cao, tỷ lệ chibi */}
-        <g className="cit-hw">
-          <rect x="24.5" y="27" width="7" height="6" fill={daToi} />
-          <circle cx="28" cy="21" r="17" fill={da} />
-          <ellipse cx="17.5" cy="25" rx="3.2" ry="2" fill="#C97A4A" opacity="0.5" />
-          <ellipse cx="38.5" cy="25" rx="3.2" ry="2" fill="#C97A4A" opacity="0.5" />
-          {mat}
-          {dauToc}
-        </g>
-      </g>
-    </>
-  );
-}
 
 export default function ExpressiveStreetCitizens({
   onCitizenReward,
-  onQueueChange,
   streetWidth = 2400,
   shops = [],
+  realQueue = EMPTY_REAL_QUEUE,
 }: {
   onCitizenReward?: (msg: string) => void;
-  /**
-   * Báo số khách đang xếp ở từng tiệm.
-   *
-   * Gửi ra ngoài để dải biển hiện đếm khách. Không gọi mỗi frame: chỉ gọi
-   * khi chữ số thực sự đổi, tối đa một lần mỗi 500ms.
-   */
-  onQueueChange?: (counts: ShopQueueCount) => void;
   /**
    * Be rong that cua day pho. Cu dan phai quay dau trong pham vi nay, neu khong
    * ho se di tiep ra ngoai via he va lo lung giua nen troi khi nguoi choi moi
@@ -763,19 +609,33 @@ export default function ExpressiveStreetCitizens({
    * chi con "ADMIRING_SHOP" nhu truoc.
    */
   shops?: ShopAnchor[];
+  /**
+   * HÀNG CHỜ THẬT, đọc thẳng từ store (`state.shopQueues`).
+   *
+   * Trước đây cư dân tự quyết định ai xếp hàng, tự đếm rồi báo ngược ra
+   * ngoài qua `onQueueChange` - một mô phỏng RIÊNG, không liên quan tới hàng
+   * chờ thật mà badge/ví đang dùng. Giờ cư dân ĐỌC THẲNG mảng này: một người
+   * đứng chờ trên phố = một đơn hàng thật đang chờ được bấm, không hơn
+   * không kém.
+   */
+  realQueue?: ShopQueue[];
 }) {
   /** Bien di lai, doc trong vong RAF nen giu o ref de khong resubscribe. */
   const walkBoundRef = useRef(Math.max(360, streetWidth - 140));
-  walkBoundRef.current = Math.max(360, streetWidth - 140);
+  useEffect(() => {
+    walkBoundRef.current = Math.max(360, streetWidth - 140);
+  }, [streetWidth]);
 
   /*
    * `floatNumber` tao tu hook nen phai luu vao ref de goi trong vong RAF -
-   * cung ly do voi `onQueueChangeRef` o duoi: dong trong lan render dau se
-   * thanh closure cu vinh vien.
+   * cung ly do voi `realQueueRef`/`shopsRef` o duoi: dong trong lan render
+   * dau se thanh closure cu vinh vien.
    */
   const { floatNumber } = useGameJuice();
   const floatNumberRef = useRef(floatNumber);
-  floatNumberRef.current = floatNumber;
+  useEffect(() => {
+    floatNumberRef.current = floatNumber;
+  }, [floatNumber]);
 
   /**
    * Danh sach tiem giu trong ref.
@@ -785,14 +645,21 @@ export default function ExpressiveStreetCitizens({
    * luon thay pho moi nhung khong phai khoi dong lai RAF.
    */
   const shopsRef = useRef<ShopAnchor[]>(shops);
-  shopsRef.current = shops;
+  useEffect(() => {
+    shopsRef.current = shops;
+  }, [shops]);
 
   /**
-   * Callback báo hàng đợi cũng phải qua ref: RAF loop mount một lần nên
-   * `onQueueChange` đóng trong lần render đầu sẽ thành closure cũ vĩnh viễn.
+   * HÀNG CHỜ THẬT, gom theo `shopId -> arrivedAt[]`, giữ trong ref cùng lý do
+   * với `shopsRef`: RAF loop chỉ mount một lần, đọc `realQueue` trực tiếp sẽ
+   * đóng băng ở giá trị của lần render đầu.
    */
-  const onQueueChangeRef = useRef(onQueueChange);
-  onQueueChangeRef.current = onQueueChange;
+  const realQueueRef = useRef<Record<string, number[]>>({});
+  useEffect(() => {
+    const map: Record<string, number[]> = {};
+    for (const q of realQueue) map[q.shopId] = q.arrivedAt;
+    realQueueRef.current = map;
+  }, [realQueue]);
 
   // Appearance state: tất cả bắt đầu rỗng, không hiện ồ ạt bóng thoại khi mới vào
   const [appearances, setAppearances] = useState<CitAppearance[]>(() =>
@@ -817,18 +684,25 @@ export default function ExpressiveStreetCitizens({
       speechCooldown: 2 + i * 4, // Trải đều cooldown ban đầu để tránh cư dân đồng loạt cất lời
       queueShopId: null,
       queueSlot: -1,
+      queueLane: -1,
       serviceTimer: 0,
+      claimedArrivedAt: null,
       /*
        * MILI GIAY, cung thang do voi timestamp cua requestAnimationFrame.
        * Ban cu dat `3 + i * 1.4` (3 toi 18) la gia tri co giay, trong khi nhip
        * ke tiep lai la `now + 9000`, nen ca 12 nguoi cung thu ghe tiem ngay
        * frame dau va y do rai deu khong chay.
        */
-      nextShopPullAt: 3_000 + i * 1_400,
+      /*
+       * `Number.POSITIVE_INFINITY` cho nguoi stationary: khong bao gio het han,
+       * nen khong con duoc keo vao queue. Dat `0` thi `now >= 0` luon dung va
+       * nguoi ngoi tren via he lien tuc xep hang nhu mot khach hang binh thuong.
+       */
+      nextShopPullAt: c.stationary ? Number.POSITIVE_INFINITY : 3_000 + i * 1_400,
       // Neo ngay chỗ xuất phát, bán kính so le để các vùng chồng lấn tự nhiên.
       homeX: Math.min(c.startX, Math.max(360, streetWidth - 140)),
-      roamRadius: 170 + (i % 5) * 65,
-      vel: c.startDir * c.speed,
+      roamRadius: c.stationary ? 0 : 170 + (i % 5) * 65,
+      vel: c.stationary ? 0 : c.startDir * c.speed,
       faceDir: c.startDir,
       faceTurn: 0,
     }))
@@ -844,14 +718,6 @@ export default function ExpressiveStreetCitizens({
 
   // Batched appearance updates để flush vào React mỗi 200ms
   const pendingUpdates = useRef<Map<number, Partial<CitAppearance>>>(new Map());
-
-  /**
-   * Số khách đang xếp, dùng để so sánh trước/sau rồi mới gọi callback.
-   * Khởi tạo rỗng để lần đầu có hàng đều báo.
-   */
-  const lastQueueSigRef = useRef('');
-  /** Mốc thời gian tối thiểu giữa hai lần gọi callback, chặn render dày. */
-  const lastQueuePushRef = useRef(0);
 
   useEffect(() => {
     let rafId: number;
@@ -872,25 +738,34 @@ export default function ExpressiveStreetCitizens({
       /**
        * HÀNG ĐỢI TIỆM - phân bổ chỗ đứng cho từng cửa hàng.
        *
-       * Số thứ tự trong hàng là thứ tự index của cư dân đang xếp, nên người tới
-       * trước luôn đứng trước. Slot 0 sát cửa, mỗi slot lùi thêm 26px về trái.
+       * Slot 0 sát cửa, mỗi slot lùi thêm về trái.
+       *
+       * SAPO THEO THU TU GIA NHAN HANG CHỜ THẬT, khong theo index.
+       *
+       * Ban cu` duyet `simRef.current` theo index nen ai index nho nhat giu slot
+       * 0 du dang dung o dau kia pho. Nguoi dang dung ngay cua lai bi day ra slot
+       * roi phai di NGANG QUA nguoi kia de vao cho - hai nguoi lan nhau, mat doc
+       * ra la di qua di lai chu khong phai xep hang. `claimedArrivedAt` la moc
+       * don THAT, nho nhat = vao hang TRUOC, dung nghia FIFO luc nguoi choi bam
+       * ban.
        */
       const queueCounters = new Map<string, number>();
-      for (const s of simRef.current) {
-        /*
-         * KHONG loc theo `queueSlot >= 0`.
-         *
-         * Nguoi vua vao hang luon mang slot -1, nen dieu kien do tu loai tru
-         * chinh doi tuong can cap so: khong ai tung nhan slot 0. Hau qua la
-         * `targetX = shop.x - 34 - (-1)*26` tro thanh `shop.x - 8` - ca hang
-         * chong len nhau lech 8px ben trai cua - va luot phuc vu ket thuc o
-         * 4,1 giay thay vi 6,5 giay vi `SERVICE_SECONDS + (-1)*2.4`.
-         */
-        if (s.behavior === 'QUEUEING' && s.queueShopId) {
-          const occupied = queueCounters.get(s.queueShopId) ?? 0;
-          s.queueSlot = occupied;
-          queueCounters.set(s.queueShopId, occupied + 1);
-        }
+      const dangXep = simRef.current
+        .filter((s) => s.behavior === 'QUEUEING' && s.queueShopId)
+        .sort((a, b) => (a.claimedArrivedAt ?? 0) - (b.claimedArrivedAt ?? 0));
+      /*
+       * KHONG loc theo `queueSlot >= 0`.
+       *
+       * Nguoi vua vao hang luon mang slot -1, nen dieu kien do tu loai tru
+       * chinh doi tuong can cap so: khong ai tung nhan slot 0. Hau qua la
+       * `targetX = shop.x - 34 - (-1)*26` tro thanh `shop.x - 8` - ca hang
+       * chong len nhau lech 8px ben phai cua.
+       */
+      for (const s of dangXep) {
+        if (!s.queueShopId) continue;
+        const occupied = queueCounters.get(s.queueShopId) ?? 0;
+        s.queueSlot = occupied;
+        queueCounters.set(s.queueShopId, occupied + 1);
       }
 
       simRef.current.forEach((sim, i) => {
@@ -899,7 +774,7 @@ export default function ExpressiveStreetCitizens({
 
         const wasWalking = sim.behavior === 'WALKING';
         const wasQueueing = sim.behavior === 'QUEUEING';
-        if (wasWalking) {
+        if (wasWalking && !def.stationary) {
           /*
            * Vận tốc ĐUỔI THEO tốc độ mục tiêu thay vì nhảy thẳng tới.
            *
@@ -933,23 +808,80 @@ export default function ExpressiveStreetCitizens({
 
           if (sim.x > maxX) { sim.x = maxX; sim.dir = -1; }
           else if (sim.x < 180) { sim.x = 180; sim.dir = 1; }
-          // Chân bước nhanh chậm theo tốc độ THẬT: đi chậm thì bước ngắn lại.
-          sim.walkPhase += 0.22 * dt * 10 * Math.min(1, Math.abs(sim.vel) / def.speed);
+          /*
+           * Nhịp nhún thân tính theo QUÃNG ĐƯỜNG VỪA ĐI, không theo đồng hồ.
+           * Một cái nhún đúng một bước chân (xem `PHASE_PER_PX`), nên thân và
+           * chân không bao giờ lệch nhịp dù đang tăng hay giảm tốc.
+           */
+          sim.walkPhase += PHASE_PER_PX * Math.abs(sim.vel * dt * 10);
         } else if (wasQueueing) {
           /**
            * Tiệm bị xoá giữa chừng (người chơi bán lại) thì cư dân phải tự
            * rời hàng, nếu không họ đứng giữa vỉa hè vô thời hạn.
            */
           const shop = shopsRef.current.find((sh) => sh.id === sim.queueShopId);
-          if (!shop) {
+          /*
+           * ĐƠN HÀNG CÒN THẬT KHÔNG?
+           *
+           * Đây là điểm khác bản cũ: cũ đứng chờ theo đồng hồ riêng
+           * (`serviceTimer > phucVuGiay`), không liên quan gì tới việc người
+           * chơi có bấm hay không. Giờ hễ `claimedArrivedAt` KHÔNG CÒN trong
+           * hàng chờ thật (`realQueueRef`) nữa - vì người chơi đã bấm đóng,
+           * hoặc đơn hết hạn tự nhiên - cư dân rời quầy NGAY, không chờ thêm
+           * một giây giả nào.
+           */
+          const pending = sim.claimedArrivedAt !== null && sim.queueShopId
+            ? (realQueueRef.current[sim.queueShopId] ?? []).includes(sim.claimedArrivedAt)
+            : false;
+          if (!shop || !pending) {
+            if (shop && sim.claimedArrivedAt !== null) {
+              /*
+               * Đơn vừa biến mất trong lúc đang đứng chờ: đoán lý do theo
+               * tuổi đơn. Gần/ngang `MAX_WAIT_MS` thì nhiều khả năng ĐÃ HẾT
+               * HẠN (người chơi không bấm kịp) - cư dân bực bội bỏ đi, đúng
+               * hậu quả thật của việc để khách chờ quá lâu. Còn trẻ thì nhiều
+               * khả năng VỪA ĐƯỢC BẤM BÁN - cư dân vui vẻ rời đi.
+               */
+              const age = now - sim.claimedArrivedAt;
+              const expired = age >= MAX_WAIT_MS - 1500;
+              const container = containerRefs.current[i];
+              if (container) {
+                const rect = container.getBoundingClientRect();
+                floatNumberRef.current(
+                  rect.left + rect.width / 2,
+                  rect.top,
+                  expired ? 'Thôi, đi chỗ khác!' : 'Đã phục vụ',
+                  expired ? '#B45309' : '#4A6B5A',
+                );
+              }
+              pendingUpdates.current.set(i, {
+                emotion: expired ? 'ANGRY' : 'STAR_EYES',
+                bubbleText: expired
+                  ? 'Chờ lâu quá, thôi tui đi chỗ khác!'
+                  : SERVED_LINE[Math.floor(Math.random() * SERVED_LINE.length)],
+              });
+              sim.bubbleTimer = 3.6;
+            }
             sim.behavior = 'WALKING';
             sim.queueShopId = null;
             sim.queueSlot = -1;
-            sim.behaviorTimer = 6 + Math.random() * 6;
+            sim.queueLane = -1;
+            sim.claimedArrivedAt = null;
+            sim.serviceTimer = 0;
+            sim.behaviorTimer = 8 + Math.random() * 10;
+            sim.speechCooldown = 20 + Math.random() * 20;
             sim.dir = Math.random() < 0.5 ? 1 : -1;
+            sim.jumpOffset = 6;
           } else {
-            /** Người phục vụ đứng sát cửa, người sau lùi dần theo hàng. */
-            const targetX = shop.x - 34 - sim.queueSlot * 26;
+            /**
+             * Người đứng sát cửa, người sau lùi dần theo hàng.
+             *
+             * 32px chu khong phai 26px: luc moi nguoi cung mot lane (xem
+             * `queueLane`), khoang cach 26px cho hai cai dau chieu ~34px CHUNG
+             * mot do sau - nguoi sau an mat nguoi truoc. 32px van la hang cham
+             * (chua sum) ma moi cai dau con doc duoc.
+             */
+            const targetX = shop.x - 34 - sim.queueSlot * 32;
             const gap = targetX - sim.x;
             if (Math.abs(gap) < 2.5) {
               // Đã tới chỗ: đứng yên, quay mặt về phía cửa tiệm.
@@ -958,60 +890,32 @@ export default function ExpressiveStreetCitizens({
               sim.vel += (0 - sim.vel) * Math.min(1, dtSec * 6);
               sim.walkPhase += 0.05 * dt * 10;
               sim.serviceTimer += dtSec;
-              if (sim.serviceTimer > 5.5 && sim.bubbleTimer <= 0) {
+              /*
+               * Nhắc lại món đang chờ mỗi khoảng - KHÔNG quyết định rời hàng
+               * nữa, chỉ là bong bóng thoại. Rời hàng giờ hoàn toàn do
+               * `pending` ở trên quyết định.
+               */
+              if (sim.serviceTimer > 6 && sim.bubbleTimer <= 0) {
+                const item = menuItemFor(shop.defId, sim.claimedArrivedAt!);
                 pendingUpdates.current.set(i, {
-                  bubbleText: SERVED_LINE[Math.floor(Math.random() * SERVED_LINE.length)],
+                  bubbleText: item
+                    ? `Món ${item.name} xong chưa chị ơi?`
+                    : SERVED_LINE[Math.floor(Math.random() * SERVED_LINE.length)],
                   emotion: 'HAPPY',
                 });
                 sim.bubbleTimer = 4.2;
-              }
-              /**
-               * Chỗ phục vụ tính theo `queueSlot < capacity`. Người vượt số chỗ
-               * vẫn xếp hàng (đó là chuyện bình thường ở quán đông) nhưng phải
-               * chờ lâu hơn, nên thời gian phục vụ nhân theo độ dài hàng.
-               */
-              const phucVuGiay = SERVICE_SECONDS + sim.queueSlot * 2.4;
-              if (sim.serviceTimer > phucVuGiay) {
-                /*
-                 * GIAO DỊCH: khách vừa trả tiền cho đúng tiệm này.
-                 *
-                 * Số Xu hiển thị lấy từ `shop.yieldPerSec` - doanh thu THẬT
-                 * của tiệm ở cấp hiện tại, cùng công thức nuôi `flowFor` -
-                 * nhân với thời gian khách vừa đứng tại quầy. Đây CHỈ LÀ HIỂN
-                 * THỊ: tiền thật đã chảy liên tục qua `tickIdle` mỗi giây rồi,
-                 * nên tuyệt đối KHÔNG gọi hàm cộng Xu ở đây. Cộng thêm sẽ
-                 * cộng tiền hai lần và phá đường cân bằng kinh tế.
-                 */
-                const container = containerRefs.current[i];
-                if (shop.yieldPerSec > 0 && container) {
-                  const rect = container.getBoundingClientRect();
-                  const soTien = Math.max(1, Math.round(shop.yieldPerSec * phucVuGiay));
-                  floatNumberRef.current(
-                    rect.left + rect.width / 2,
-                    rect.top,
-                    `+${formatCompact(soTien)} Xu`,
-                    '#4A6B5A',
-                  );
-                  particles.coinShower(rect.left + rect.width / 2, rect.top, 5);
-                }
-
-                sim.behavior = 'WALKING';
-                sim.queueShopId = null;
-                sim.queueSlot = -1;
                 sim.serviceTimer = 0;
-                sim.behaviorTimer = 10 + Math.random() * 10;
-                sim.speechCooldown = 25 + Math.random() * 20;
-                sim.dir = Math.random() < 0.5 ? 1 : -1;
-                sim.jumpOffset = 8;
-                pendingUpdates.current.set(i, { emotion: 'STAR_EYES' });
               }
             } else {
               sim.dir = gap > 0 ? 1 : -1;
               const vMuc = sim.dir * def.speed;
               sim.vel += (vMuc - sim.vel) * Math.min(1, dtSec * 4);
               const step = Math.abs(sim.vel) * dt * 10;
-              sim.x += Math.sign(gap) * Math.min(step, Math.abs(gap));
-              sim.walkPhase += 0.22 * dt * 10 * Math.min(1, Math.abs(sim.vel) / def.speed);
+              // Quang DI THAT: gan toi noi thi bi gap chan lai, phai lay so da
+              // dich chuyen that de nhip chan khong chay tiep khi da dung.
+              const diThat = Math.min(step, Math.abs(gap));
+              sim.x += Math.sign(gap) * diThat;
+              sim.walkPhase += PHASE_PER_PX * diThat;
             }
           }
         } else {
@@ -1027,8 +931,22 @@ export default function ExpressiveStreetCitizens({
         // Direct DOM updates - không qua React setState
         const container = containerRefs.current[i];
         if (container) {
-          container.style.transform = `translate3d(${Math.round(sim.x)}px,${-Math.round(def.laneY + bodyBob + sim.jumpOffset)}px,0)`;
-          container.style.zIndex = String(Math.round(60 - def.laneY));
+          /*
+           * DANG XEP HANG thi lay lane CHUNG cua hang, khong lay lane rieng.
+           * Day la nua sau cua loi "bu lai": truc ngang da dung (slot FIFO) thi
+           * phai dung ca truc sau, neu khong van con bon nguoi o bon do sau khac
+           * nhau va van doc la mot bui.
+           */
+          const laneY = wasQueueing && sim.queueLane >= 0
+            ? laneYOf(sim.queueLane)
+            : laneYOf(def.lane);
+          container.style.transform = `translate3d(${Math.round(sim.x)}px,${-Math.round(laneY + bodyBob + sim.jumpOffset)}px,0)`;
+          /*
+           * `100 - laneY` chu de duong dan duong khi `laneY` len toi 86: cong
+           * thuc cu `60 - laneY` cho ra so am va con nay nam trong mot stacking
+           * context cua cha, so am se an duoi nen vỉa he thay vi nam tren no.
+           */
+          container.style.zIndex = String(Math.round(100 - laneY));
         }
         const btn = btnRefs.current[i];
         if (btn) {
@@ -1058,11 +976,29 @@ export default function ExpressiveStreetCitizens({
            * trượt ngang vỉa hè hàng trăm px với dáng đứng yên. Đứng tại quầy
            * rồi mới là `idle`.
            */
-          const dangBuoc = wasWalking || (wasQueueing && Math.abs(sim.vel) > 0.04);
+          // Nguoi ngoi van giu behavior 'WALKING' nhung khong buoc: khong cham
+          // vao day thi chan se dap nhu di bo tren cho trong khi dang ngoi.
+          const dangBuoc = !def.stationary && (wasWalking || (wasQueueing && Math.abs(sim.vel) > 0.04));
           const cls = dangBuoc ? 'walking' : 'idle';
           if (!svg.classList.contains(cls)) {
             svg.classList.remove('walking', 'idle');
             svg.classList.add(cls);
+          }
+          /*
+           * NHỊP CHÂN PHẢI THEO TỐC ĐỘ THẬT, không phải tốc độ danh nghĩa.
+           *
+           * `--spd` trước đây gán MỘT LẦN lúc render từ `def.speed` (hằng số)
+           * rồi không bao giờ đổi. Nhưng `sim.vel` luôn "đuổi theo" tốc độ
+           * đích dần dần (đoạn `vel += (vMuc - vel) * dtSec*4`, mất khoảng
+           * 0,25s mỗi lần đổi hướng) - nên suốt khoảng đó chân vẫn đá đều
+           * tốc độ danh nghĩa trong khi thân gần như chưa dịch chuyển, đúng
+           * kiểu "trượt băng" (feet-sliding) kinh điển của hoạt hình thuật
+           * toán. Cập nhật sống theo vận tốc thật mỗi khung hình để chân
+           * chậm lại đúng lúc thân chậm lại, nhanh lên đúng lúc thân tăng tốc.
+           */
+          if (dangBuoc) {
+            const tocDoThat = Math.max(def.speed * 0.3, Math.min(def.speed * 1.5, Math.abs(sim.vel)));
+            svg.style.setProperty('--spd', `${(CYCLE_K / tocDoThat).toFixed(2)}s`);
           }
         }
 
@@ -1104,45 +1040,67 @@ export default function ExpressiveStreetCitizens({
         }
 
         /**
-         * KÉO CƯ DÂN VỀ TIỆM.
+         * KÉO CƯ DÂN VỀ TIỆM - CHỈ KHI CÓ ĐƠN THẬT ĐANG CHỜ.
          *
-         * Chỉ xảy ra khi đang đi dạo và đã qua thời hạn riêng. Ưu tiên tiệm
-         * gần nhất chưa xếp đầy: đây là thứ khiến người chơi thấy "xây thêm
-         * tiệm thì phố đông hơn" bằng mắt, không cần đọc chỉ số nào.
+         * Trước đây cư dân tự ước lượng "còn chỗ không" bằng cách đếm NHAU
+         * (`dangXep < capacity`), hoàn toàn không đụng tới hàng chờ thật
+         * trong store. Hệ quả: người chơi thấy cư dân xếp hàng trong khi
+         * badge báo trống, hoặc ngược lại - hai mô phỏng không nói chuyện.
+         *
+         * Giờ một cư dân chỉ được vào hàng khi THỰC SỰ có một khách hàng
+         * (`arrivedAt`) trong `realQueueRef` CHƯA ai nhận đại diện. Không có
+         * đơn thật nào đang chờ ở tiệm gần đó thì không ai xếp hàng cả -
+         * đúng nghĩa "khách phải đến xếp hàng thật sự".
          */
-        if (wasWalking && sim.behavior === 'WALKING' && shopsRef.current.length > 0) {
+        if (wasWalking && !def.stationary && sim.behavior === 'WALKING' && shopsRef.current.length > 0) {
           if (now >= sim.nextShopPullAt) {
-            sim.nextShopPullAt = now + 9000 + Math.random() * 12000;
-            if (Math.random() < 0.55) {
-              // Sắp tiệm theo khoảng cách rồi chọn ngẫu nhiên trong nhóm gần nhất.
-              const ranked = shopsRef.current
-                .map((sh) => ({ sh, dist: Math.abs(sh.x - sim.x) }))
-                .sort((a, b) => a.dist - b.dist);
-              const shortlist = ranked.slice(0, Math.min(3, ranked.length));
-              const pick = shortlist[Math.floor(Math.random() * shortlist.length)]?.sh;
-              if (pick) {
-                /*
-                 * Dem theo SUC CHUA thay vi chan tu nguoi thu hai.
-                 *
-                 * Ban cu dung `some(...)`: chi can mot nguoi dang xep la ca pho
-                 * khong ai duoc vao nua. `queueCapacityFor` tinh 1 toi 4 cho
-                 * theo cap tiem va `ViaHeStreetBoard` da truyen sang, nhung
-                 * `capacity` khong duoc doc o dau ca - toan bo he thong suc
-                 * chua la ma chet. Voi 2 tiem thi toi da 2/12 cu dan co the o
-                 * tiem cung luc, nen nhin nhu khong ai ghe.
-                 */
-                const dangXep = simRef.current.filter(
-                  (o) => o !== sim && o.behavior === 'QUEUEING' && o.queueShopId === pick.id,
-                ).length;
-                if (dangXep < Math.max(1, pick.capacity)) {
-                  sim.behavior = 'QUEUEING';
-                  sim.queueShopId = pick.id;
-                  sim.queueSlot = -1;
-                  sim.serviceTimer = 0;
-                  sim.dir = pick.x > sim.x ? 1 : -1;
-                  pendingUpdates.current.set(i, { emotion: 'STAR_EYES' });
-                }
-              }
+            sim.nextShopPullAt = now + 4000 + Math.random() * 6000;
+            // Sắp tiệm theo khoảng cách, thử từng tiệm gần nhất tới xa dần.
+            const ranked = shopsRef.current
+              .map((sh) => ({ sh, dist: Math.abs(sh.x - sim.x) }))
+              .sort((a, b) => a.dist - b.dist)
+              .slice(0, Math.min(3, shopsRef.current.length));
+
+            for (const { sh } of ranked) {
+              const entries = realQueueRef.current[sh.id];
+              if (!entries || entries.length === 0) continue;
+
+              const claimedByOthers = new Set(
+                simRef.current
+                  .filter((o) => o !== sim && o.behavior === 'QUEUEING' && o.queueShopId === sh.id)
+                  .map((o) => o.claimedArrivedAt),
+              );
+              // Khách chờ LÂU NHẤT trước - khớp đúng thứ tự FIFO lúc bấm bán.
+              const free = entries.find((ts) => !claimedByOthers.has(ts));
+              if (free === undefined) continue;
+
+              sim.behavior = 'QUEUEING';
+              sim.queueShopId = sh.id;
+              sim.queueSlot = -1;
+              sim.serviceTimer = 0;
+              sim.claimedArrivedAt = free;
+              sim.dir = sh.x > sim.x ? 1 : -1;
+              /*
+               * KEO THEO lane cua hang. Ai vao truoc dung lane cua minh, nguoi
+               * sau keo theo de ca hang chung mot do sau. Chua ai dang xep thi
+               * lay lane rieng cua minh - moi hang co mot do sau rieng, khong
+               * phai moi nguoi.
+               */
+              const banCungHang = simRef.current.find(
+                (o) =>
+                  o !== sim &&
+                  o.behavior === 'QUEUEING' &&
+                  o.queueShopId === sh.id &&
+                  o.queueLane >= 0,
+              );
+              sim.queueLane = banCungHang ? banCungHang.queueLane : def.lane;
+              const item = menuItemFor(sh.defId, free);
+              pendingUpdates.current.set(i, {
+                emotion: 'STAR_EYES',
+                bubbleText: item ? `Cho 1 ${item.name} đi chị ơi!` : null,
+              });
+              sim.bubbleTimer = 3.6;
+              break;
             }
           }
         }
@@ -1162,6 +1120,57 @@ export default function ExpressiveStreetCitizens({
           sim.speechCooldown -= dtSec;
         }
       });
+
+      /*
+       * TACH HAI NGUOI CUNG HANG neu dap len nhau.
+       *
+       * Hang gio rai 9 buoc nhung van co 2-3 nguoi chung mot hang, va moi
+       * nguoi co `roamRadius` rieng nen cuoc gap mat la binh thuong. Khong co
+       * buoc nay thi hai nguoi cung chieu di vao nhau va TRUYEN XAU qua nhau -
+       * mat depth cua hang sau bien mat, nguoi doc thay 2 cai dau liet vao mot
+       * cho. Nguocchieu thi ca hai quay dau, cung chieu thi nguoi sau quay lai.
+       *
+       * Day toa do ra tu tu (khong nhay) de khong thay doi vi tri mot cach
+       * dot ngot giua hai frame - mat depth dang la cai dang bao ve.
+       */
+      {
+        const MIN_GAP = 70;
+        const sims = simRef.current;
+        for (let a = 0; a < sims.length; a++) {
+          const sa = sims[a];
+          if (sa.behavior !== 'WALKING' || CITIZEN_DEFS[a].stationary) continue;
+          const laneA = laneYOf(CITIZEN_DEFS[a].lane);
+          for (let b = a + 1; b < sims.length; b++) {
+            const sb = sims[b];
+            if (sb.behavior !== 'WALKING' || CITIZEN_DEFS[b].stationary) continue;
+            if (laneA !== laneYOf(CITIZEN_DEFS[b].lane)) continue;
+            const d = sb.x - sa.x;
+            const overlap = MIN_GAP - Math.abs(d);
+            if (overlap <= 0) continue;
+            /*
+             * LẮC QUA LẮC LẠI khi hai người gần như đứng chồng lên nhau.
+             *
+             * `d` bị chính vòng lặp này làm nhiễu: mỗi frame đẩy hai người ra
+             * xa nhau một chút, rồi frame sau `d` lại đổi dấu vì họ vừa vượt
+             * qua nhau, rồi lại đổi dấu tiếp - `sign`/`dir` tính lại từ `d`
+             * sống mỗi frame nên lật liên tục, nhìn như rung/giật qua lại.
+             *
+             * Khi còn cách nhau rõ (`|d|` đủ lớn) thì vẫn dùng `d` thật - ai ở
+             * đâu rẽ đúng hướng đó. Chỉ khi gần như chồng khít (`|d| <= 4px`,
+             * đúng vùng mặt đối mặt) mới chốt theo thứ tự chỉ số cố định (a,
+             * b) - không đổi giữa chừng, hết lắc.
+             */
+            const sign: 1 | -1 = Math.abs(d) > 4 ? (d >= 0 ? 1 : -1) : (a < b ? 1 : -1);
+            const back: 1 | -1 = sign === 1 ? -1 : 1;
+            // Day nhanh hon de rut ngan thoi gian hai nguoi con nam trong "vung nguy hiem" gan 0.
+            const shove = overlap * Math.min(0.9, dtSec * 10);
+            sa.x -= sign * shove;
+            sb.x += sign * shove;
+            if (sa.dir === sign) sa.dir = back;
+            if (sb.dir === back) sb.dir = sign;
+          }
+        }
+      }
 
       // 3. Điều phối thoại đường phố: Chỉ cho phép tối đa 1 người nói tại một thời điểm
       const activeBubbles = simRef.current.filter(s => s.bubbleTimer > 0).length;
@@ -1202,24 +1211,6 @@ export default function ExpressiveStreetCitizens({
       }
 
       // Flush appearance updates mỗi 200ms thay vì mỗi frame
-      /*
-       * BÁO HÀNG ĐỢI LÊN BIỂN HIỆU.
-       *
-       * `queueCounters` đã tính ở đầu vòng lặp nên ở đây chỉ chuyển thành
-       * object thường. Chỉ gọi khi chữ số khác lần trước VÀ đã qua 500ms,
-       * tránh setState mỗi frame.
-       */
-      if (onQueueChangeRef.current) {
-        const sig = [...queueCounters.entries()].map(([k, v]) => `${k}:${v}`).sort().join('|');
-        if (sig !== lastQueueSigRef.current && now - lastQueuePushRef.current >= 500) {
-          lastQueueSigRef.current = sig;
-          lastQueuePushRef.current = now;
-          const payload: ShopQueueCount = {};
-          for (const [k, v] of queueCounters) payload[k] = v;
-          onQueueChangeRef.current(payload);
-        }
-      }
-
       if (flushAccum >= 200 && pendingUpdates.current.size > 0) {
         flushAccum = 0;
         const updates = new Map(pendingUpdates.current);
@@ -1252,6 +1243,12 @@ export default function ExpressiveStreetCitizens({
    * người chơi biết mình vừa học được gì.
    */
   const [lesson, setLesson] = useState<{ title: string; text: string } | null>(null);
+  /**
+   * Cac lua chon CO TRA PHI (bieu tien) da dung trong lan tro chuyen hien
+   * tai. Khong co bang nay thi nguoi choi bam lien tuc nut "Biếu 50 đồng" la
+   * tru tien lien tuc - option khong tu disable sau lan dau.
+   */
+  const [usedPaidOptIds, setUsedPaidOptIds] = useState<Set<string>>(() => new Set());
 
   const handleClickCitizen = useCallback((idx: number) => {
     const def = CITIZEN_DEFS[idx];
@@ -1267,6 +1264,7 @@ export default function ExpressiveStreetCitizens({
     setTalkingIdx(idx);
     setSelectedOptId(null);
     setLesson(null);
+    setUsedPaidOptIds(new Set());
 
     const script = CITIZEN_SCRIPTS[def.id];
     let greeting = `Dạ Thị Trưởng! Tui là ${def.name}, ${def.role.toLowerCase()} ở khu này.`;
@@ -1328,22 +1326,27 @@ export default function ExpressiveStreetCitizens({
   const handleTalkOption = useCallback(
     (opt: CitizenDialogueOption) => {
       if (talkingIdx === null) return;
-      const def = CITIZEN_DEFS[talkingIdx];
+      const idx = talkingIdx;
+      const def = CITIZEN_DEFS[idx];
       const script = CITIZEN_SCRIPTS[def.id];
-      const citizenX = simRef.current[talkingIdx]?.x ?? 400;
+      const citizenX = simRef.current[idx]?.x ?? 400;
+      const isPaidGift = !!(opt.cost && opt.cost > 0);
 
-      if (opt.cost && opt.cost > 0) {
-        const paid = spendCoins(opt.cost);
+      if (isPaidGift) {
+        // Da bieu trong lan tro chuyen nay roi - khong tru tien lan 2.
+        if (usedPaidOptIds.has(opt.id)) return;
+        const paid = spendCoins(opt.cost!);
         if (!paid) {
           setTalkLine('Thôi khỏi Thị Trưởng ơi, ngân khố đang eo hẹp mà!');
           setCurrentEmotion('TIRED');
           setAppearances((prev) =>
-            prev.map((a, i) => (i === talkingIdx ? { ...a, emotion: 'TIRED' } : a)),
+            prev.map((a, i) => (i === idx ? { ...a, emotion: 'TIRED' } : a)),
           );
           return;
         }
         particles.coinShower(citizenX, 380, 10);
-        onCitizenReward?.(`Đã biếu ${def.name} ${formatCompact(opt.cost)} Xu.`);
+        onCitizenReward?.(`Đã biếu ${def.name} ${formatCompact(opt.cost!)} đồng.`);
+        setUsedPaidOptIds((prev) => new Set(prev).add(opt.id));
       }
 
       if (opt.particles === 'coin') {
@@ -1354,10 +1357,10 @@ export default function ExpressiveStreetCitizens({
 
       if (opt.rewardBonus) {
         claimTapReward('citizen', opt.rewardBonus.coins, { cooldownMs: 1500 });
-        onCitizenReward?.(`🎁 ${def.name}: ${opt.rewardBonus.reason} (+${opt.rewardBonus.coins} Xu)!`);
+        onCitizenReward?.(`🎁 ${def.name}: ${opt.rewardBonus.reason} (+${opt.rewardBonus.coins} đồng)!`);
       }
 
-      const nextEmotion = opt.emotionOnSelect ?? (opt.cost && opt.cost > 0 ? 'STAR_EYES' : 'HAPPY');
+      const nextEmotion = opt.emotionOnSelect ?? (isPaidGift ? 'STAR_EYES' : 'HAPPY');
       setSelectedOptId(opt.id);
       setTalkLine(opt.reply);
       setCurrentEmotion(nextEmotion);
@@ -1372,8 +1375,30 @@ export default function ExpressiveStreetCitizens({
         setLesson({ title: script.financeTheme.title, text: script.financeTheme.lesson });
       }
       setAppearances((prev) =>
-        prev.map((a, i) => (i === talkingIdx ? { ...a, emotion: nextEmotion } : a)),
+        prev.map((a, i) => (i === idx ? { ...a, emotion: nextEmotion } : a)),
       );
+
+      /*
+       * BIẾU TIỀN XONG LÀ ĐÓNG LUÔN.
+       *
+       * Lựa chọn có trả phí là hành động "một lần rồi thôi" - người chơi đã
+       * biếu xong thì không còn lý do đứng lại bảng hội thoại nữa. Đóng tự
+       * động sau một nhịp ngắn để kịp thấy lời cảm ơn + hiệu ứng tiền rơi.
+       */
+      if (isPaidGift) {
+        window.setTimeout(() => {
+          const sim = simRef.current[idx];
+          if (sim) {
+            sim.behavior = 'WALKING';
+            sim.behaviorTimer = 8 + Math.random() * 8;
+            sim.bubbleTimer = 0;
+            sim.speechCooldown = 30 + Math.random() * 20;
+          }
+          setTalkingIdx((cur) => (cur === idx ? null : cur));
+          setSelectedOptId(null);
+          setLesson(null);
+        }, 1600);
+      }
     },
     [talkingIdx, onCitizenReward],
   );
@@ -1394,7 +1419,7 @@ export default function ExpressiveStreetCitizens({
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: WALK_CSS }} />
-      <div className="pointer-events-none absolute inset-0 z-20 overflow-visible">
+      <div className="pointer-events-none absolute inset-0 z-40 overflow-visible">
         {CITIZEN_DEFS.map((def, i) => {
           const app = appearances[i];
           return (
@@ -1406,15 +1431,16 @@ export default function ExpressiveStreetCitizens({
             >
               {app.bubbleText && (
                 <div
-                  style={{ marginBottom: 10, zIndex: 45 }}
-                  className="cit-speech-bubble relative w-max max-w-[250px] whitespace-normal break-words text-center leading-snug rounded-2xl border-2 border-[#3E2A1B] bg-[#FFFDF7] px-3.5 py-2 text-xs font-extrabold text-[#3E2A1B] shadow-[0_4px_14px_rgba(62,42,27,0.18)]"
+                  style={{ marginBottom: 10, zIndex: 50 }}
+                  className="cit-speech-bubble relative w-max max-w-[190px]"
                 >
-                  <span>{app.bubbleText}</span>
-                  {/* Mũi tên hướng xuống nhân vật */}
-                  <div
+                  <span
                     aria-hidden="true"
-                    className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 border-b-2 border-r-2 border-[#3E2A1B] bg-[#FFFDF7]"
+                    className="absolute bottom-0 left-1/2 h-3 w-3 -translate-x-1/2 translate-y-1/2 rounded-full border border-[#3E2A1B] bg-[#FFFDF7]"
                   />
+                  <div className="relative whitespace-normal break-words rounded-xl border border-[#3E2A1B] bg-[#FFFDF7] px-2.5 py-1 text-center text-[10px] font-bold leading-tight text-[#3E2A1B] shadow-[0_3px_10px_rgba(62,42,27,0.18)]">
+                    <span>{app.bubbleText}</span>
+                  </div>
                 </div>
               )}
               <div className="relative flex flex-col items-center">
@@ -1454,9 +1480,9 @@ export default function ExpressiveStreetCitizens({
                     height="72"
                     viewBox="0 0 56 72"
                     className="cit-walk-anim overflow-visible walking"
-                    style={{ '--spd': `${(0.6 / def.speed).toFixed(2)}s` } as React.CSSProperties}
+                    style={{ '--spd': `${(CYCLE_K / def.speed).toFixed(2)}s` } as React.CSSProperties}
                   >
-                    <CitizenContent def={def} emotion={app.emotion} />
+                    <ChibiBody def={def} emotion={app.emotion} />
                   </svg>
                 </button>
               </div>
@@ -1477,60 +1503,48 @@ export default function ExpressiveStreetCitizens({
        * `position: fixed` cung khong thoat duoc vi to tien co transform.
        */}
       {talkingIdx !== null && typeof document !== 'undefined' && createPortal(
-        <div className="pointer-events-auto fixed inset-x-0 bottom-[88px] z-[60] flex justify-center px-3">
-          <div
-            className="w-full max-w-lg rounded-2xl p-3.5 shadow-[0_14px_34px_rgba(20,12,8,0.4)] transition-all"
-            style={{ backgroundColor: '#FFFDF7', border: '2px solid #78533D' }}
-          >
-            {/* Header: Role badge, Citizen Name & Emotion emoji, Close button */}
-            <div className="mb-2.5 flex items-start gap-2.5">
-              <span
-                className="mt-0.5 shrink-0 rounded-lg px-2.5 py-1 text-xs font-black text-white shadow-xs"
-                style={{ backgroundColor: '#D82D8B' }}
+        <CharacterPanel
+          variant="street"
+          badge={CITIZEN_DEFS[talkingIdx].role}
+          title={CITIZEN_DEFS[talkingIdx].name}
+          sticker={{
+            emoji: EMOTION_STICKERS[currentEmotion].emoji,
+            line: EMOTION_STICKERS[currentEmotion].line,
+          }}
+          /*
+           * Chu de tai chinh: hien luon, ke ca luc moi chao - day la no dung
+           * bai hoc cua nhan vat truoc khi nguoi choi chon gi.
+           */
+          theme={(() => {
+            const t = talkingIdx !== null ? CITIZEN_SCRIPTS[CITIZEN_DEFS[talkingIdx].id]?.financeTheme : undefined;
+            if (!t) return undefined;
+            const m = FINANCE_TAG_META[t.tag];
+            return { label: t.title, tone: m.tone };
+          })()}
+          /*
+           * Avatar la CHINH nhan vat dang noi chuyen, khong phai ve du theo ten
+           * nhu `ChibiNpcAvatar` cua NPC. Day la cai gia tri ma bang truoc khong
+           * co: ban dang noi voi co Hai mac non la, khong phai mot dau chung.
+           */
+          avatar={
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2"
+              style={{ borderColor: '#6E5A47', background: '#FAF3E3' }}
+            >
+              <svg
+                width="44"
+                height="56"
+                viewBox="0 0 56 72"
+                className="overflow-visible"
+                aria-hidden
               >
-                {CITIZEN_DEFS[talkingIdx].role}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="truncate text-sm font-black text-[#3E2A1B]">
-                    {CITIZEN_DEFS[talkingIdx].name}
-                  </p>
-                  <span className="text-sm" title={`Tâm trạng: ${currentEmotion}`}>
-                    {EMOTION_EMOJIS[currentEmotion]}
-                  </span>
-                </div>
-                <div className="mt-1.5 rounded-xl bg-[#FAF6EE] p-2.5 border border-[#E8DEC8]">
-                  <p className="text-sm font-semibold leading-relaxed text-[#5A3E2B]">
-                    {talkLine}
-                  </p>
-                </div>
-                {/* Chủ đề tài chính của nhân vật: luôn hiện, kể cả lúc mới chào. */}
-                {(() => {
-                  const theme = talkingIdx !== null ? CITIZEN_SCRIPTS[CITIZEN_DEFS[talkingIdx].id]?.financeTheme : undefined;
-                  if (!theme) return null;
-                  const meta = FINANCE_TAG_META[theme.tag];
-                  return (
-                    <span
-                      className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] font-black"
-                      style={{
-                        backgroundColor: meta.tone === 'good' ? '#DCFCE7' : meta.tone === 'bad' ? '#FEE2E2' : '#F1F5F9',
-                        color: meta.tone === 'good' ? '#15803D' : meta.tone === 'bad' ? '#B91C1C' : '#475569',
-                      }}
-                    >
-                      📊 {theme.title}
-                    </span>
-                  );
-                })()}
-              </div>
-              <button
-                type="button"
-                onClick={handleEndTalk}
-                aria-label="Kết thúc trò chuyện"
-                className="shrink-0 rounded-full px-2 py-0.5 text-lg font-black text-[#8B7355] transition-colors hover:text-[#D82D8B]"
-              >
-                ×
-              </button>
+                <ChibiBody def={CITIZEN_DEFS[talkingIdx]} emotion={currentEmotion} />
+              </svg>
             </div>
+          }
+          speech={talkLine}
+          onClose={handleEndTalk}
+        >
 
             {/* Bài học tài chính, hiện sau khi người chơi đã chọn một phương án. */}
             {lesson && (
@@ -1548,36 +1562,44 @@ export default function ExpressiveStreetCitizens({
             <div className="flex flex-wrap gap-2 pt-2 border-t border-[#F0E6D8]">
               {activeOptions.map((opt) => {
                 const isSelected = selectedOptId === opt.id;
-                const isPaid = opt.cost && opt.cost > 0;
+                const isPaid = !!(opt.cost && opt.cost > 0);
+                const alreadyGiven = isPaid && usedPaidOptIds.has(opt.id);
                 return (
                   <button
                     key={opt.id}
                     type="button"
+                    disabled={alreadyGiven}
                     onClick={() => handleTalkOption(opt)}
                     title={
-                      opt.financeTags?.length
-                        ? opt.financeTags.map((t) => FINANCE_TAG_META[t].label).join(' · ')
-                        : undefined
+                      alreadyGiven
+                        ? 'Đã biếu trong lần trò chuyện này rồi'
+                        : opt.financeTags?.length
+                          ? opt.financeTags.map((t) => FINANCE_TAG_META[t].label).join(' · ')
+                          : undefined
                     }
-                    className="group relative rounded-xl px-3 py-2 text-xs font-black transition-all active:scale-95 text-left cursor-pointer"
+                    className="group relative rounded-xl px-3 py-2 text-xs font-black transition-all active:scale-95 text-left"
                     style={
-                      isPaid
-                        ? {
-                            backgroundColor: isSelected ? '#BE185D' : '#D82D8B',
-                            color: '#FFFFFF',
-                            boxShadow: isSelected ? '0 0 0 2px #FBCFE8' : undefined,
-                          }
-                        : {
-                            backgroundColor: isSelected ? '#EAD6C0' : '#F3E8DC',
-                            color: '#5A3E2B',
-                            boxShadow: isSelected ? '0 0 0 2px #D82D8B' : undefined,
-                          }
+                      alreadyGiven
+                        ? { backgroundColor: '#E5DEC9', color: '#9C8767', cursor: 'not-allowed', opacity: 0.7 }
+                        : isPaid
+                          ? {
+                              backgroundColor: isSelected ? '#BE185D' : '#D82D8B',
+                              color: '#FFFFFF',
+                              boxShadow: isSelected ? '0 0 0 2px #FBCFE8' : undefined,
+                              cursor: 'pointer',
+                            }
+                          : {
+                              backgroundColor: isSelected ? '#EAD6C0' : '#F3E8DC',
+                              color: '#5A3E2B',
+                              boxShadow: isSelected ? '0 0 0 2px #D82D8B' : undefined,
+                              cursor: 'pointer',
+                            }
                     }
                   >
-                    <span>{opt.label}</span>
-                    {isPaid && (
+                    <span>{alreadyGiven ? '✅ Đã biếu rồi' : opt.label}</span>
+                    {isPaid && !alreadyGiven && (
                       <span className="ml-1.5 rounded bg-black/20 px-1.5 py-0.5 text-[10px] font-bold">
-                        -{opt.cost} Xu
+                        -{opt.cost}đ
                       </span>
                     )}
                   </button>
@@ -1603,8 +1625,7 @@ export default function ExpressiveStreetCitizens({
                 Chào bà con 👋
               </button>
             </div>
-          </div>
-        </div>,
+        </CharacterPanel>,
         document.body,
       )}
     </>

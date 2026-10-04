@@ -17,20 +17,18 @@ import {
   xpForLevel,
 } from './mock-city-data';
 import { spend } from './currency-manager';
+import { VND_PER_OLD_COIN } from './currency';
 import {
   buildingAt,
-  coinsPerSecond,
   flowFor,
   type FlowOptions,
   debtCeilingFor,
-  interestPerSecond,
   interestCoverage,
   clampHappiness,
   HAPPINESS_BOOST_CAP,
   happinessFor,
   isInsideUnlocked,
   landCostCoins,
-  offlineCoins,
   populationFor,
   taxMultiplierFromHappiness,
   type FlowBreakdown,
@@ -39,14 +37,18 @@ import {
   calculateCashflowRatio,
   calculateTuiThanTaiInterest,
   calculateInsuranceCoverage,
-  currentShopQueue,
   overloadedShopCount,
   type CityCondition,
-  type FraudCheckResult,
   nodeYieldBreakdown,
+  takeRateFor,
+  demandPerSecond,
+  supplyPerSecond,
+  savingsInterestPerSecond,
+  MIN_SUPPLY_FACTOR,
+  blendedRates,
+  CORPORATE_TAX_RATE,
 } from './city-calculator';
 
-export { publishShopQueue } from './city-calculator';
 import { CITY_EVENTS, EVENT_BY_ID, REQUEST_BY_ID } from './dialogue-data';
 import { eligibleRequestFor } from './dialogue-engine';
 import { weekComparison, type WeekComparison } from './comparison';
@@ -68,16 +70,40 @@ import {
   type StreakState,
   type StoreModuleId,
   type TimeOfDay,
+  type WeatherType,
 } from './types';
+import {
+  autoServeQueues,
+  clearShopQueue as txClearShopQueue,
+  closeSingleOrder,
+  expireQueues,
+  resetArrivalAccumulator,
+  serviceIntervalMsFor,
+  settleArrivals,
+  simulateOfflineBatch,
+  STAFF_MAX,
+  sumTransactions,
+  totalBacklog,
+  type ShopQueue,
+  type TxCtx,
+  type Transaction,
+} from './transactions';
 
 /**
  * Tien to khoa luu tru. `/mocity` bay gio bat buoc dang nhap (middleware), nen
  * save duoc gan theo tai khoan: khong thi hai nguoi dung lao tai khoan tren
  * cung mot may se ke thua toan bo thanh pho cua nhau (cung Xu, cung ten Tho).
  */
-const STORAGE_KEY_PREFIX = 'momo_city_v9';
-const STATE_VERSION = 9;
+const STORAGE_KEY_PREFIX = 'momo_city_v10';
+const STATE_VERSION = 10;
 export const OFFLINE_CAP_MS = 8 * 60 * 60 * 1000;
+/**
+ * Trần lô giao dịch AFK, tính trên LỢI NHUẬN RÒNG.
+ *
+ * Trước đây là `Math.min(500_000, earned)` đặt chung với code - cắt tiền mà
+ * người chơi không nhìn thấy. Giờ là hằng có tên, test được.
+ */
+export const OFFLINE_COIN_CAP = 50_000_000;
 const OFFLINE_MIN_MS = 60 * 1000;
 const PERSIST_DEBOUNCE_MS = 250;
 /** Toi da 3 dau `!` cung luc - nhieu hon se thanh nhieu loan tren ban do. */
@@ -119,8 +145,8 @@ const MAX_EVENTS_PER_DAY = 30;
  * nao dat duoc nguong chi phi do. V4 dat lai so khoi tao dung do kinh te:
  * bat dau o Tho Tier-1 (60 - 240 Xu) va tien chi ton tai o dia phuong.
  */
-const STARTING_COINS = 600;
-const STARTING_GEMS = 20;
+export const STARTING_COINS = 50_000_000;
+export const STARTING_GEMS = 10;
 
 /** Khoa ngay theo gio dia phuong, dung de dem han su kiet 24h. */
 function todayKey(ts: number): string {
@@ -222,6 +248,11 @@ function createInitialState(): CityState {
     ledgerMonth: emptyPeriodLedger(todayKey(now), monthKey(now)),
     bubblesCollected: 0,
     pendingOffline: null,
+    // Transaction Engine: khởi đầu không có ai chờ. Không có hàng chờ thì
+    // không có doanh thu - luật chơi mới từ đây.
+    shopQueues: [],
+    ordersLost: 0,
+    ordersClosed: 0,
     timeOfDay: 'DAY',
     trustScore: 650,
     workingCapital: STARTING_COINS,
@@ -234,6 +265,8 @@ function createInitialState(): CityState {
     tuiThanTaiInterestEarned: 0,
     hasInsurance: false,
     insuranceClaimsPaid: 0,
+    weather: 'SUNNY',
+    isFlooded: false,
   };
 }
 
@@ -344,14 +377,33 @@ const MIGRATIONS: Record<number, (s: CityState) => CityState> = {
    * ghi mot lan nua nhung bao cao sai - dung hon la de cho bang so sanh
    * chay sau khi nguoi choi da sung du 7 ngay.
    */
-  8: (s) => ({
-    ...s,
-    dailySnapshots: Array.isArray(s.dailySnapshots) ? s.dailySnapshots : [],
-    feverUsedToday: nonNeg(s.feverUsedToday),
-    feverDay: typeof s.feverDay === 'string' ? s.feverDay : '',
-    streak: s.streak ? { ...s.streak, shields: nonNeg(s.streak.shields) } : s.streak,
-  }),
-};
+   8: (s) => ({
+     ...s,
+     dailySnapshots: Array.isArray(s.dailySnapshots) ? s.dailySnapshots : [],
+     feverUsedToday: nonNeg(s.feverUsedToday),
+     feverDay: typeof s.feverDay === 'string' ? s.feverDay : '',
+     streak: s.streak ? { ...s.streak, shields: nonNeg(s.streak.shields) } : s.streak,
+   }),
+   /**
+    * V9 -> V10: rebase đồng sang VND thật.
+    *
+    * Tất cả các số tiền trong save cũ đều nhân với `VND_PER_OLD_COIN`. Khi
+    * hệ thống kinh tế thay đổi đơn vị, người chơi không mất tiền - chỉ phải
+    * chờ game chuyển đổi tự động.
+    */
+   9: (s) => {
+     const m = VND_PER_OLD_COIN;
+     return {
+       ...s,
+       coins: s.coins * m,
+       debt: s.debt * m,
+       totalRevenue: s.totalRevenue * m,
+       totalGrants: s.totalGrants * m,
+       totalTapIncome: s.totalTapIncome * m,
+       totalInterestPaid: s.totalInterestPaid * m,
+     };
+    },
+   };
 
 /** Gia tri so khong am, ho tro cho ca migration lan normalize. */
 function nonNeg(n: unknown): number {
@@ -404,14 +456,22 @@ const XP_PER_STAR = 900;
  * offline chay duoc mot phan nho.
  */
 const IDLE_XP_DIVISOR = 60;
-export const IDLE_XP_CAP = 4;
+/**
+ * Trần XP mỗi GIÂY khi Xu vào ngân khố.
+ *
+ * Trần cũ = 4 XP/s. Ở cấp 40 doanh thu cho 4.649 XP/s lý thuyết nên 99,9% bị
+ * vứt: XP idle trở thành hành động vô nghĩa đúng lúc người chơi cần thấy tiến
+ * độ. Trần 15 XP/s cắt ở mức `15 × 86400 = 1.296.000` XP/ngay — vô tác dụng vì
+ * `IDLE_XP_DAILY_CAP` (9.000) mới là cửa chặn thật, nhưng ở giữa trận nó cho
+ * XP idle kịp hiện trên thanh trước khi chạm trần ngày.
+ */
+export const IDLE_XP_CAP = 15;
 /**
  * Tran XP nhan roi MOI NGAY.
  *
- * Tran theo tick khong du. `IDLE_XP_CAP = 4`/giay nghe nho, nhung nhan voi
- * 86.400 giay la 345.600 XP - bang 92% toan bo duong cong cap 1 -> 50
- * (377.300 XP). Tuc la chi can de may chay dung mot ngay la gan cham cap toi
- * da, trong khi muc tieu thiet ke la len cap phai den tu hanh dong.
+ * Tran theo tick khong du. `IDLE_XP_CAP = 15`/giay nhan voi 86.400 giay la
+ * 1.296.000 XP - vuot toan bo duong cong cap 1 -> 50 (377.300 XP), nen cua chan
+ * that la `IDLE_XP_DAILY_CAP` duoi day.
  *
  * 9.000 XP/ngay = 2,4% duong cong: van thuong nguoi choi de may chay, nhung
  * khong the thay the viec xay, nang cap va lam nhiem vu.
@@ -583,6 +643,22 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.totalGrants = nonNeg(merged.totalGrants);
   merged.totalTapIncome = nonNeg(merged.totalTapIncome);
   merged.totalCoinsEarned = nonNeg(merged.totalCoinsEarned);
+  /*
+   * Transaction Engine. Save cũ không có trường này - về mảng rỗng thay vì
+   * `undefined`: mỗi chỗ đọc đều phải nén một nhánh null thì sớm muộn cũng
+   * có chỗ quên.
+   */
+  merged.shopQueues = Array.isArray(merged.shopQueues)
+    ? merged.shopQueues
+        .filter((q) => q && typeof q.shopId === 'string' && Array.isArray(q.arrivedAt))
+        .map((q) => ({
+          shopId: q.shopId,
+          arrivedAt: q.arrivedAt.filter((t: unknown) => Number.isFinite(t)),
+        }))
+        .filter((q) => q.arrivedAt.length > 0)
+    : [];
+  merged.ordersLost = nonNeg(merged.ordersLost);
+  merged.ordersClosed = nonNeg(merged.ordersClosed);
   merged.eventLog =
     migrated.eventLog && typeof migrated.eventLog.day === 'string'
       ? { day: migrated.eventLog.day, resolved: Math.max(0, migrated.eventLog.resolved ?? 0) }
@@ -716,6 +792,8 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.tuiThanTaiInterestEarned = typeof migrated.tuiThanTaiInterestEarned === 'number' ? Math.max(0, migrated.tuiThanTaiInterestEarned) : 0;
   merged.hasInsurance = typeof migrated.hasInsurance === 'boolean' ? migrated.hasInsurance : false;
   merged.insuranceClaimsPaid = typeof migrated.insuranceClaimsPaid === 'number' ? Math.max(0, migrated.insuranceClaimsPaid) : 0;
+  merged.weather = (['SUNNY', 'RAIN', 'FLOOD', 'STORM'].includes(migrated.weather as string) ? migrated.weather : 'SUNNY') as WeatherType;
+  merged.isFlooded = typeof migrated.isFlooded === 'boolean' ? migrated.isFlooded : merged.weather === 'FLOOD';
 
   const elapsed = now - (Number.isFinite(merged.lastSeenAt) ? merged.lastSeenAt : now);
   if (elapsed >= OFFLINE_MIN_MS) {
@@ -733,13 +811,74 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
      * van ap dung khi game chay (`tickIdle`), nen khi mo len lai thi pho bi
      * thay doi ngay - dung nghhia, va khong chan viec quay lai.
      */
-    const earned = offlineCoins(
-      coinsPerSecond(merged.buildings, merged.npcs, merged.mayorLevel, merged.coins, {
-        happinessBoost: merged.happinessBoost,
-      }),
-      capped,
+    // `idleMs: 0` - xem `txCtxFor`. Thưởng AFK không được phụ thuộc
+    // lần tương tác gần nhất.
+    const ctx = txCtxFor(merged, now, 0);
+    // Bỏ `now` vì `simulateOfflineBatch` tự gắn `now: 0` cho từng đơn;
+    // còn `supplyFactor`/`earnMult` PHẢI giữ - thiếu chúng thì phần thưởng
+    // AFK lệch với phần thưởng khi chơi (cung-cầu và cổ vật bị bỏ sót).
+    const { now: _now, ...offlineCtx } = ctx;
+    const offlineTxns = simulateOfflineBatch(merged.buildings, offlineCtx, capped);
+
+    const sum = sumTransactions(offlineTxns);
+    /*
+     * Lãi tiết kiệm chạy cả khi vắng mặt - nó là lãi trên số dư, không cần
+     * ai có mặt. Không cộng vào đây thì `tram-tui-than-tai` đùng đùng sinh
+     * lãi khi mở tab nhưng modal lại không hiện.
+     */
+    const savingsGross = savingsInterestPerSecond(merged.buildings, merged.coins) * (capped / 1000);
+    const { opexRate } = blendedRates(merged.buildings);
+    const savingsOpex = savingsGross * opexRate;
+    const savingsTax = Math.max(0, savingsGross - savingsOpex) * CORPORATE_TAX_RATE;
+
+    /*
+     * Thu nhập thụ động (ngoài COMMERCIAL) cũng chạy khi vắng mặt - cùng lý
+     * do với lãi tiết kiệm ở trên. Xem khối "THU NHẬP THỤ ĐỘNG" trong
+     * `tickIdle` để biết vì sao nhóm này không qua hàng chờ.
+     */
+    const passiveNodesOffline = merged.buildings.filter((b) => {
+      const def = BUILDING_BY_ID[b.defId];
+      if (!def || def.zone === 'COMMERCIAL') return false;
+      return b.defId !== 'tram-tui-than-tai' && b.defId !== 'ngan-hang-so';
+    });
+    const passiveRateOffline = passiveNodesOffline.reduce(
+      (s, b) => s + nodeYieldBreakdown(b, merged.buildings).totalPerSec,
+      0,
     );
-    merged.pendingOffline = { coins: Math.min(500_000, Math.max(0, earned)), elapsedMs: capped };
+    const passiveGrossOffline = passiveRateOffline * (capped / 1000);
+    const { opexRate: passiveOpexRateOffline } = blendedRates(passiveNodesOffline);
+    const passiveOpexOffline = passiveGrossOffline * passiveOpexRateOffline;
+    const passiveTaxOffline = Math.max(0, passiveGrossOffline - passiveOpexOffline) * CORPORATE_TAX_RATE;
+
+    const gross = sum.grossRevenue + savingsGross + passiveGrossOffline;
+    const cogs = sum.cogs;
+    const opex = sum.opex + savingsOpex + passiveOpexOffline;
+    const tax = sum.tax + savingsTax + passiveTaxOffline;
+
+    /**
+     * Trần thưởng AFK (500.000 Xu) - trước đây cắt im lặng `earned` trong khi
+     * modal vẫn khoe đầy đủ 8 giờ.
+     *
+     * PHẢI scale cả 4 dòng chứ không cắt riêng `net`: nếu để `gross` nguyên
+     * mà `net` bị cắt thì ví vào bao nhiêu, sổ cái tự trừ ra bấy nhiêu, và
+     * "ngân khố = lãi ròng sổ cái" - cam kết cốt lõi của lần sửa này - hỏng
+     * đúng ở chỗ thử nghiệm đầu tiên người chơi gặp.
+     */
+    const rawNet = Math.max(0, gross - cogs - opex - tax);
+    const k = rawNet > OFFLINE_COIN_CAP ? OFFLINE_COIN_CAP / rawNet : 1;
+    const net = rawNet * k;
+    merged.pendingOffline = {
+      coins: net,
+      elapsedMs: capped,
+      orders: offlineTxns.length,
+      gross: gross * k,
+      cogs: cogs * k,
+      opex: opex * k,
+      tax: tax * k,
+      // `elapsed` là thời gian THẬT trước khi cắt. Tự suy từ `capped` thì
+      // luôn ra false và cảnh báo mất hẳn khỏi modal.
+      capped: elapsed > OFFLINE_CAP_MS,
+    };
   } else {
     merged.pendingOffline = null;
   }
@@ -753,7 +892,7 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
      * reload một sự kiện, và người chơi chỉ cần reload cho tới khi gặp sự kiện
      * dễ thì giải, còn lại thì đóng app luôn.
      */
-    const eligible = eligibleCityEvents(merged, now);
+    const eligible = eligibleCityEvents(merged);
     if (eligible.length > 0) {
       const script = eligible[Math.floor(now / EVENT_INTERVAL_MS) % eligible.length];
       merged.pendingEvent = { id: `${script.id}_${now.toString(36)}`, scriptId: script.id, createdAt: now };
@@ -780,6 +919,12 @@ export function hydrateCity(playerId?: string | null): void {
 
   // Gate UI trong luc nap: `state` luc nay van la thanh pho moi.
   cityHydrated = false;
+  /*
+   * Bo tich lugy khach o module la toan cuc theo shopId. Doi save = doi
+   * so tiem, nhung neu tiem trung ten thi phan le con lai tu phien truoc
+   * se dua khach vao hang cua phien moi truoc khi tick chay.
+   */
+  resetArrivalAccumulator();
   try {
     const raw = localStorage.getItem(storageKeyFor(pid));
     const next = raw ? normalizeStoredState(raw) : createInitialState();
@@ -798,22 +943,59 @@ export function boundPlayer(): string | null {
   return boundPlayerId;
 }
 
+/**
+ * Nhận lô giao dịch AFK.
+ *
+ * Đi qua `recordTransactions` như mọi lần bán hàng khác, gộp lô thành một
+ * Transaction - cùng một đường code với khi bấm đơn. Nếu tách riêng thì
+ * ví và sổ cái sẽ có hai cách tính, và đó chính là lỗi P&L đang sửa.
+ */
 export function claimOffline(): void {
   if (!state.pendingOffline) return;
-  const reward = Number.isFinite(state.pendingOffline.coins)
-    ? Math.max(0, state.pendingOffline.coins)
-    : 0;
+  const po = state.pendingOffline;
+  const net = Number.isFinite(po.coins) ? Math.max(0, po.coins) : 0;
   const cleared: CityState = {
     ...state,
     pendingOffline: null,
     lastSeenAt: Date.now(),
   };
-  setState(reward > 0 ? withCoins(cleared, reward, 'OPERATING') : cleared);
+  if (net <= 0) {
+    setState(cleared);
+    return;
+  }
+  setState(
+    recordTransactions(cleared, [
+      {
+        id: `offline-${po.elapsedMs}`,
+        at: cleared.lastSeenAt,
+        shopId: '__offline__',
+        // Save cũ chỉ có `coins`; bốn dòng không có thì net tức là gross.
+        gross: Number.isFinite(po.gross) ? (po.gross as number) : net,
+        cogs: po.cogs ?? 0,
+        opex: po.opex ?? 0,
+        tax: po.tax ?? 0,
+        net,
+        digital: false,
+      },
+    ]),
+  );
 }
 
+/**
+ * Bỏ qua lô AFK: tiền không vào ví, và các đơn đó được đếm là đơn mất.
+ *
+ * Trước đây đây là hành động âm thầm "mất 8 giờ doanh thu". Giờ nó xuất hiện
+ * trong `ordersLost` để người chơi nhìn thấy hệ quả.
+ */
 export function dismissOffline(): void {
   if (!state.pendingOffline) return;
-  setState({ ...state, pendingOffline: null, lastSeenAt: Date.now() });
+  const lost = state.pendingOffline.orders ?? 0;
+  setState({
+    ...state,
+    pendingOffline: null,
+    lastSeenAt: Date.now(),
+    ordersLost: (state.ordersLost ?? 0) + lost,
+  });
 }
 
 export const RENAME_COST_GEMS = 5;
@@ -846,7 +1028,7 @@ function bumpResolvedEvents(s: CityState, now = Date.now()): Pick<CityState, 'ev
   };
 }
 
-export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 1_000, mayorGender?: import('./types').MayorGender): number {
+export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 10_000_000, mayorGender?: import('./types').MayorGender): number {
   const cleanMayor = mayorName.trim() || state.mayorName || 'Thị Trưởng MoMo';
   const cleanCity = cityName.trim() || state.cityName || 'Đô Thị MoCity';
   const offlineReward = state.pendingOffline && Number.isFinite(state.pendingOffline.coins)
@@ -1118,22 +1300,83 @@ function postLedger(s: CityState, delta: Partial<LedgerEntry>): CityState {
 }
 
 /**
- * Ghi hoat dong kinh doanh vao so cai theo `seconds` vua tick.
+ * Chốt một lô giao dịch thành biến động ngân khố + sổ cái.
  *
- * `flowFor` tinh ca bon dong tren co so mot GIAY, nen nhan `seconds` de ra
- * so tiền cua khoang thoi gian do. Day la nguyen tac ghi so: cong mot lan,
- * dung khoang thoi gian, khong cong lai moi khung hinh.
+ * Đây là ĐIỂM DUY NHẤT tiền vào ví từ việc bán hàng. Trước đây là
+ * `withCoins(flow.revenue * seconds)` - tiền tự sinh theo thời gian.
+ *
+ * Vòng tiền 1 lô gồm 4 bước kế toán:
+ *   1. khách trả GROSS
+ *   2. trả NCC (COGS)
+ *   3. trả tiền nhà (OPEX)
+ *   4. nộp thuế
+ *
+ * Sổ cái ghi cả 4 dòng riêng biệt, P&L tự trừ ra từ đó. Ví nhận đúng phần
+ * net cuối cùng - không còn "con số suy ra từ tỷ lệ".
+ *
+ * XP tính trên LỢI NHUẬN RÒNG chứ không phải gross: nếu tính trên gross thì
+ * nhịp lên cấp sẽ nhanh gấp ~4 lần và phá mốc 5-7 ngày lên cấp 50.
  */
-function recordOperatingFlow(s: CityState, flow: FlowBreakdown, seconds: number): CityState {
-  return postLedger(s, {
-    grossRevenue: flow.grossRevenue * seconds,
-    cogs: flow.cogs * seconds,
-    opex: flow.opex * seconds,
-    badDebt: flow.badDebt * seconds,
-    interestExpense: flow.interestExpense * seconds,
-    tax: flow.tax * seconds,
-    netIncome: flow.netIncome * seconds,
+function recordTransactions(s: CityState, txns: Transaction[]): CityState {
+  if (txns.length === 0) return s;
+  const sum = sumTransactions(txns);
+
+  let next: CityState = { ...s };
+  const cur = (n: unknown) => (Number.isFinite(n) ? Math.max(0, n as number) : 0);
+
+  /*
+   * 4 bước kế toán của một lô:
+   *   +gross  (khách trả)   -cogs (NCC)   -opex (mặt bằng)   -thuế
+   *
+   * Cộng dồn một lần từ `net` chứ không trừ lần lượt từng dòng: nếu trừ
+   * lần lượt thì giữa chừng có thể chạm đáy 0, khi đó ví ghi tăng ít hơn
+   * con số mà P&L tự trừ ra từ các dòng - đúng loại lệch "báo cáo không
+   * bao giờ cộng bằng" mà lần sửa này đang nhắm tới.
+   *
+   * `net` luôn dương (cogs+opex < 100%, thuế chỉ đánh phần lợi nhuận), nên
+   * đây không phải cách che mất chi phí - chỉ là cộng kết quả cuối cùng.
+   */
+  const net = sum.grossRevenue - sum.cogs - sum.opex - sum.tax;
+  next.coins = Math.max(0, cur(next.coins) + net);
+
+  // Thống kê tích lũy. `totalRevenue` giữ NGHĨA lợi nhuận (nhãn trên thẻ
+  // chia sẻ là "Lợi nhuận ròng tích lũy") nên cộng phần net.
+  next.totalRevenue = cur(next.totalRevenue) + net;
+  next.totalCoinsEarned = cur(next.totalCoinsEarned) + net;
+  next.totalVolume = cur(next.totalVolume) + sum.grossRevenue;
+  next.ordersClosed = cur(next.ordersClosed) + txns.length;
+
+  // Sổ cái: 4 dòng P&L tách bạch.
+  next = postLedger(next, {
+    grossRevenue: sum.grossRevenue,
+    cogs: sum.cogs,
+    opex: sum.opex,
+    tax: sum.tax,
+    netIncome: net,
   });
+
+  // XP theo lợi nhuận ròng, cùng công thức nhàn rỗi (chia 60, cap ngày).
+  return accrueOperatingXp(next, net);
+}
+
+/**
+ * Cộng XP Thị Trưởng từ dòng OPERATING.
+ *
+ * Tách khỏi `withCoins` để giao dịch dùng được riêng: trước đây hàm này gắn
+ * cứng với `flow === 'OPERATING'` và tính trên delta vào ví, mà giờ delta vào
+ * ví là GROSS nên sẽ cho XP gấp 4 lần nếu không tách.
+ */
+function accrueOperatingXp(s: CityState, amount: number): CityState {
+  if (!(amount > 0)) return s;
+  const now = Date.now();
+  const log = s.dailyLog?.day === todayKey(now) ? s.dailyLog : emptyDailyLog(now);
+  const conLai = Math.max(0, IDLE_XP_DAILY_CAP - (log.idleXp ?? 0));
+  const them = Math.min(IDLE_XP_CAP, amount / IDLE_XP_DIVISOR, conLai);
+  if (them <= 0) return s;
+  const next = { ...s };
+  Object.assign(next, addMayorXp(next, them));
+  next.dailyLog = { ...log, idleXp: (log.idleXp ?? 0) + them };
+  return next;
 }
 
 /**
@@ -1169,36 +1412,157 @@ export function tickIdle(): void {
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
     debt: state.debt ?? 0,
-    shopQueue: currentShopQueue(),
+    shopQueue: realShopQueueCounts(state.shopQueues ?? []),
   });
 
   let next: CityState = {
     ...rolled,
     lastSeenAt: now,
-    totalVolume: rolled.totalVolume + flow.volume * seconds,
     // Fever dang chay thi chot `feverEverUsed` ngay, de save ghi ra giua
     // chung khong bo mat quest `q-fever-mode`.
     feverEverUsed: rolled.feverEverUsed || isFever,
   };
-  if (flow.revenue > 0) next = withCoins(next, flow.revenue * seconds, 'OPERATING');
-
-  /**
-   * Ghi so cai P&L. Doan nay cong DOANH THU GOP, gia von, chi phi van hanh va
-   * thue - ca hai ve cua bao cao - trong khi `withCoins` o tren chi cong
-   * LOI NHUAN RONG vao ngan khoc. Tach hai viec la bat buoc: coi doanh thu
-   * bang tien nhan se lam bao cao khong bao gio cong bang.
-   */
-  next = recordOperatingFlow(next, flow, seconds);
 
   /*
-   * Lai vay da duoc tru trong `flow.netIncome` roi, day chi cong don de bao
-   * cao. Khong tru lan thu hai.
+   * ⚠ NGUỒN TIỀN ĐÃ ĐỔI.
+   *
+   * TRƯỚC: `withCoins(flow.revenue * seconds)` - tiền tự sinh theo thời gian.
+   * GIỜ: tickIdle KHÔNG cộng đồng Xu nào từ việc bán hàng. Nó chỉ:
+   *   (a) đón khách mới vào hàng chờ  (autonomous)
+   *   (b) cho khách quá hạn bỏ đi      (autonomous)
+   * Tiền chỉ vào ví khi NGƯỜI CHƠI bấm đóng đơn -> `recordTransactions`.
+   *
+   * `flowFor` vẫn được gọi nhưng giờ là DỰ BÁN: nó nuôi lãi vay, nợ xấu,
+   * điều kiện spawn sự kiện và con số "tiềm năng" trên HUD.
    */
-  if (flow.interestExpense > 0) {
+  const arrived = settleArrivals(next.buildings, next.shopQueues ?? [], { now }, elapsed);
+  const expired = expireQueues(next.buildings, arrived.queues, { now });
+  next = {
+    ...next,
+    shopQueues: expired.queues,
+    ordersLost: (next.ordersLost ?? 0) + arrived.lost + expired.lost,
+  };
+
+  /*
+   * TỰ PHỤC VỤ - không còn nút bấm tay nào khác biến khách chờ thành tiền.
+   * Chủ quán một mình thì chậm (14s/đơn); mỗi Nhân Viên thuê thêm rút ngắn
+   * khoảng cách. Chạy mỗi tick (mỗi giây) nên hoạt động cả khi đang chơi lẫn
+   * khi tab ở nền - chỉ tắt hẳn lúc đóng tab, lúc đó đã có
+   * `simulateOfflineBatch` lo riêng.
+   */
+  const autoServed = autoServeQueues(
+    next.buildings,
+    next.shopQueues ?? [],
+    txCtxFor(next, now),
+    (next.ordersClosed ?? 0) + 1,
+  );
+  next = { ...next, buildings: autoServed.buildings, shopQueues: autoServed.queues };
+  if (autoServed.txns.length > 0) {
+    next = recordTransactions(next, autoServed.txns);
+  }
+
+  /*
+   * LÃI TIẾT KIỂM TỪ CÔNG TRÌNH - dòng thu thụ động duy nhất còn lại.
+   *
+   * `tram-tui-than-tai` và `ngan-hang-so` không có khách hàng nào đến chờ:
+   * tiền lãi sinh ra từ số dư, không sinh ra từ một đơn hàng. Ép nó vào hàng
+   * chờ thì vừa vô nghĩa về mô tả, vừa khiến `orderValueFor` phụ thuộc số dư
+   * đang đổi theo từng tick.
+   *
+   * Nhưng nếu bỏ qua là mất thật: `flowFor` vẫn tính `savingsYield` vào doanh
+   * thu, nên để ví không cộng mà P&L vẫn báo là tự tạo ra đúng lỗi sổ cái đang
+   * sửa. Ghi đủ 3 dòng: gross, chi phí bình quân, thuế.
+   */
+  const savingsGross =
+    savingsInterestPerSecond(next.buildings, next.coins) *
+    seconds *
+    (isFever ? 2 : 1) *
+    (1 + relicYieldBonus);
+  if (savingsGross > 0) {
+    const { opexRate } = blendedRates(next.buildings);
+    const savingsOpex = savingsGross * opexRate;
+    const savingsTax = Math.max(0, savingsGross - savingsOpex) * CORPORATE_TAX_RATE;
+    const savingsNet = savingsGross - savingsOpex - savingsTax;
+    const cur = (n: unknown) => (Number.isFinite(n) ? Math.max(0, n as number) : 0);
     next = {
       ...next,
-      totalInterestPaid: (next.totalInterestPaid ?? 0) + flow.interestExpense * seconds,
+      coins: Math.max(0, cur(next.coins) + savingsNet),
+      totalCoinsEarned: cur(next.totalCoinsEarned) + savingsNet,
+      totalRevenue: cur(next.totalRevenue) + savingsNet,
     };
+    next = postLedger(next, {
+      grossRevenue: savingsGross,
+      opex: savingsOpex,
+      tax: savingsTax,
+      netIncome: savingsNet,
+    });
+    // Lãi tự sinh KHÔNG cho XP Thị Trưởng: XP đến từ việc bán hàng (bấm đơn).
+    // Ép lãi tiết kiệm vào XP thì thành phố chỉ cần ngồi giữ tiền là lên cấp.
+  }
+
+  /*
+   * THU NHẬP THỤ ĐỘNG - ngoài COMMERCIAL.
+   *
+   * Hàng chờ + bấm đơn giờ CHỈ áp dụng cho 7 công trình COMMERCIAL (ăn uống,
+   * mua sắm - xem `arrivalRateFor` trong `transactions.ts`). Nhà ở, kỳ quan
+   * và nhóm FINTECH ngoài túi thần tài/ngân hàng số (đã có lãi tiết kiệm
+   * riêng ở trên) không có khách xếp hàng - không hợp lý khi nhà ở hay sàn
+   * chứng khoán bắt người ta xếp hàng để trả tiền.
+   *
+   * Nhóm này quay lại mô hình CŨ: tự sinh Xu đều theo giây, không cần bấm.
+   */
+  const passiveNodes = next.buildings.filter((b) => {
+    const def = BUILDING_BY_ID[b.defId];
+    if (!def || def.zone === 'COMMERCIAL') return false;
+    return b.defId !== 'tram-tui-than-tai' && b.defId !== 'ngan-hang-so';
+  });
+  const passiveRate = passiveNodes.reduce(
+    (sum, b) => sum + nodeYieldBreakdown(b, next.buildings).totalPerSec,
+    0,
+  );
+  const passiveGross = passiveRate * seconds * (isFever ? 2 : 1) * (1 + relicYieldBonus);
+  if (passiveGross > 0) {
+    const { opexRate } = blendedRates(passiveNodes);
+    const passiveOpex = passiveGross * opexRate;
+    const passiveTax = Math.max(0, passiveGross - passiveOpex) * CORPORATE_TAX_RATE;
+    const passiveNet = passiveGross - passiveOpex - passiveTax;
+    const cur = (n: unknown) => (Number.isFinite(n) ? Math.max(0, n as number) : 0);
+    next = {
+      ...next,
+      coins: Math.max(0, cur(next.coins) + passiveNet),
+      totalCoinsEarned: cur(next.totalCoinsEarned) + passiveNet,
+      totalRevenue: cur(next.totalRevenue) + passiveNet,
+    };
+    next = postLedger(next, {
+      grossRevenue: passiveGross,
+      opex: passiveOpex,
+      tax: passiveTax,
+      netIncome: passiveNet,
+    });
+    // Cùng lý do với lãi tiết kiệm: thụ động không cho XP, XP đến từ bán hàng.
+  }
+
+  /*
+   * LAI VAY VA NO XAU - nay la TIEN RA THAT khoi ngan khoc.
+   *
+   * Trước đây cả hai chỉ "không được cộng vào" (net vào ví đã trừ sẵn).
+   * Giờ gross đã vào ví nên phải trừ đích danh, nếu không P&L sẽ nói
+   * có chi phí mà ví không hề mất tiền - đúng loại lỗi đang sửa.
+   */
+  const interestOut = flow.interestExpense * seconds;
+  const badDebtOut = flow.badDebt * seconds;
+  if (interestOut > 0 || badDebtOut > 0) {
+    const out = interestOut + badDebtOut;
+    next = {
+      ...next,
+      coins: Math.max(0, next.coins - out),
+      totalInterestPaid: (next.totalInterestPaid ?? 0) + interestOut,
+    };
+    next = postLedger(next, {
+      interestExpense: interestOut,
+      badDebt: badDebtOut,
+      netIncome: -out,
+    });
   }
 
   next = maybeSpawnRequest(next, now);
@@ -1294,7 +1658,7 @@ function maybeSpawnEvent(current: CityState, now: number): CityState {
   if (now - current.lastEventAt < EVENT_INTERVAL_MS) return current;
   if (resolvedEventsToday(current) >= MAX_EVENTS_PER_DAY) return current;
 
-  const eligible = eligibleCityEvents(current, now);
+  const eligible = eligibleCityEvents(current);
   if (eligible.length === 0) return current;
 
   /*
@@ -1316,7 +1680,7 @@ function maybeSpawnEvent(current: CityState, now: number): CityState {
 
 /* ── Tap reward: rate-limit o store, khong de component tu ghi tien ── */
 
-export type TapSource = 'bubble' | 'citizen' | 'advisor' | 'patrol' | 'pet';
+export type TapSource = 'bubble' | 'citizen' | 'advisor' | 'patrol' | 'pet' | 'stall';
 
 export interface TapRewardOptions {
   /** Han giay cho phep bam lai. Mac dinh 800ms. */
@@ -1435,7 +1799,7 @@ export type UseItemResult =
   | { ok: true; message: string }
   | { ok: false; message: string };
 
-export function useInventoryItem(itemId: string): UseItemResult {
+export function applyInventoryItem(itemId: string): UseItemResult {
   const def = INVENTORY_BY_ID[itemId];
   if (!def) return { ok: false, message: 'Vật phẩm không tồn tại.' };
   const qty = state.inventory?.[itemId] ?? 0;
@@ -1501,7 +1865,7 @@ export function buyInventoryItem(itemId: string): UseItemResult {
   const def = INVENTORY_BY_ID[itemId];
   if (!def) return { ok: false, message: 'Vật phẩm không tồn tại.' };
   if (state.coins < def.costCoins) {
-    return { ok: false, message: 'Chưa đủ Xu để mua vật phẩm này.' };
+    return { ok: false, message: 'Chưa đủ đồng để mua vật phẩm này.' };
   }
   if (state.gems < def.costGems) {
     return { ok: false, message: 'Chưa đủ Kim Cương để mua vật phẩm này.' };
@@ -1648,7 +2012,7 @@ function cityConditionFor(s: CityState): CityCondition {
       flow.opex,
       flow.interestExpense,
     ),
-    shopsOverloaded: overloadedShopCount(s.buildings, currentShopQueue()),
+    shopsOverloaded: overloadedShopCount(s.buildings, realShopQueueCounts(s.shopQueues ?? [])),
     lateFeeCount: s.loanLateFeeCount ?? 0,
     hasInsurance: s.hasInsurance ?? false,
   };
@@ -1685,8 +2049,12 @@ export function eventFits(script: CityEventScript, cond: CityCondition): boolean
  *
  * Tách khỏi `normalizeStoredState` để hàm đó không phải gọi `flowFor` - đường
  * hydrate phải giữ được rẻ vì nó chạy mỗi lần mở game.
+ *
+ * Không nhận `now`: điều kiện lọc toàn là trạng thái (hạnh phúc, NPL, nợ,
+ * dòng tiền...) chứ không có điều kiện thời gian, nên `now` truyền vào chỉ bị
+ * bỏ qua - gọi `eligibleCityEvents(state)` là đủ.
  */
-export function eligibleCityEvents(s: CityState, now = Date.now()): CityEventScript[] {
+export function eligibleCityEvents(s: CityState): CityEventScript[] {
   const byLevel = CITY_EVENTS.filter((e) => s.mayorLevel >= e.minMayorLevel);
   // Không tốn công tính trạng thái phố khi không kịch bản nào cần nó.
   const canCoDieuKien = byLevel.some(
@@ -1716,6 +2084,118 @@ export function spendCoins(amount: number): boolean {
   if (!wallet) return false;
   setState({ ...state, coins: wallet.coins });
   return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * TRANSACTION ENGINE - NGƯỜI CHƠI ĐÓNG ĐƠN
+ *
+ * Đây là những hàm DUY NHẤT chuyển doanh thu thành tiền trong ngân khố.
+ * Không còn đường `withCoins(flow.revenue * seconds)` nào sống cả.
+ *
+ * Luật chơi: khách tự đến, người chơi bấm để bán. Không bấm là mất.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Bối cảnh tính 1 giao dịch tại thời điểm `now`.
+ *
+ * `idleMs` mặc định là `now - lastEngagedAt` - đúng với lúc đang chơi.
+ * Khi tính lô AFK phải truyền `idleMs: 0`: tiền vắng mặt không được phép
+ * phụ thuộc vào lần tương tác gần nhất, nếu không thì hai người cùng đi vắng
+ * 8 giờ sẽ nhận hai con số khác nhau chỉ vì một người vừa mới bấm.
+ */
+function txCtxFor(s: CityState, now: number, idleMs?: number): TxCtx {
+  const relicHappyBonus = (s.equippedRelics ?? []).reduce((sum, rId) => {
+    return sum + (INVENTORY_BY_ID[rId]?.passiveHappinessBonus ?? 0);
+  }, 0);
+  const happiness = clampHappiness(
+    happinessFor(s.buildings, idleMs ?? Math.max(0, now - s.lastEngagedAt), s.happinessBoost) +
+      relicHappyBonus,
+  );
+
+  /*
+   * Cung - cầu: sao đúng công thức trong `flowFor`. Cầu vượt cung thì bán
+   * được ít hơn, không thể để giao dịch cứ bán full rồi lệch với P&L.
+   */
+  const demand = demandPerSecond(s.buildings, s.npcs);
+  const supply = supplyPerSecond(s.buildings);
+  const supplyFactor =
+    demand <= 0 ? 1 : MIN_SUPPLY_FACTOR + (1 - MIN_SUPPLY_FACTOR) * Math.min(1, supply / demand);
+
+  const relicYieldBonus = (s.equippedRelics ?? []).reduce((sum, rId) => {
+    return sum + (INVENTORY_BY_ID[rId]?.passiveYieldBonus ?? 0);
+  }, 0);
+
+  return {
+    buildings: s.buildings,
+    npcs: s.npcs,
+    happinessMult: taxMultiplierFromHappiness(happiness),
+    levelBonus: 1 + (s.mayorLevel - 1) * 0.12,
+    takeRate: takeRateFor(s.buildings),
+    now,
+    supplyFactor,
+    earnMult: (s.feverUntil > now ? 2 : 1) * (1 + relicYieldBonus),
+  };
+}
+
+/** Đóng 1 đơn hàng thủ công tại tiệm được chọn. */
+export function closeOrder(shopId: string): { ok: boolean; txn?: Transaction | null } {
+  const node = state.buildings.find((b) => b.id === shopId);
+  if (!node) return { ok: false };
+  const ctx = txCtxFor(state, Date.now());
+  const { queues: nextQueues, txn } = closeSingleOrder(node, state.shopQueues ?? [], ctx, (state.ordersClosed ?? 0) + 1);
+  if (!txn) return { ok: false };
+  const next: CityState = { ...state, shopQueues: nextQueues };
+  const recorded = recordTransactions(next, [txn]);
+  setState(recorded);
+  return { ok: true, txn };
+}
+
+/** Dọn toàn bộ hàng chờ tại tiệm được chọn. */
+export function clearShopQueue(shopId: string): { ok: boolean; txns: Transaction[] } {
+  const node = state.buildings.find((b) => b.id === shopId);
+  if (!node) return { ok: false, txns: [] };
+  const ctx = txCtxFor(state, Date.now());
+  const { queues: nextQueues, txns } = txClearShopQueue(node, state.shopQueues ?? [], ctx, (state.ordersClosed ?? 0) + 1);
+  if (txns.length === 0) return { ok: false, txns: [] };
+  const next: CityState = { ...state, shopQueues: nextQueues };
+  const recorded = recordTransactions(next, txns);
+  setState(recorded);
+  return { ok: true, txns };
+}
+
+/** Giá thuê Nhân Viên thứ N - tỉ lệ với quy mô tiệm, tăng dần mỗi người. */
+export function staffHireCost(node: BuildingNode): number {
+  const def = BUILDING_BY_ID[node.defId];
+  const base = Math.max(1000, (def?.costCoins ?? 100_000) * 0.02);
+  const staff = Math.min(STAFF_MAX, Math.max(0, node.staffCount ?? 0));
+  return Math.round(base * 1.8 ** staff);
+}
+
+export type HireStaffResult = 'ok' | 'funds' | 'max' | 'notFound';
+
+/**
+ * Thuê thêm 1 Nhân Viên cho tiệm - rút ngắn `serviceIntervalMsFor`, KHÔNG
+ * ảnh hưởng doanh thu mỗi đơn (đó là việc của Cổ Đông, xem `assignStoreManager`).
+ */
+export function hireStaff(col: number, row: number): HireStaffResult {
+  const node = buildingAt(state.buildings, col, row);
+  if (!node) return 'notFound';
+  const current = Math.min(STAFF_MAX, Math.max(0, node.staffCount ?? 0));
+  if (current >= STAFF_MAX) return 'max';
+
+  const cost = staffHireCost(node);
+  const wallet = spend(state, { coins: cost });
+  if (!wallet) return 'funds';
+
+  const nextState: CityState = {
+    ...state,
+    coins: wallet.coins,
+    buildings: state.buildings.map((b) =>
+      b.id === node.id ? { ...b, staffCount: current + 1 } : b,
+    ),
+  };
+  setState(postLedger(nextState, { capex: cost }));
+  return 'ok';
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1758,7 +2238,7 @@ function flowOptsFor(s: CityState): FlowOptions {
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
     debt: s.debt ?? 0,
-    shopQueue: currentShopQueue(),
+    shopQueue: realShopQueueCounts(s.shopQueues ?? []),
   };
 }
 
@@ -2065,7 +2545,19 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
   return 'ok';
 }
 
-export type UpgradeResult = 'ok' | 'missing' | 'max' | 'funds';
+export type UpgradeResult = 'ok' | 'missing' | 'max' | 'funds' | 'mayor';
+
+/**
+ * Độ cao cấp công trình được nâng tới = `min(def.maxLevel, mayorLevel)`.
+ *
+ * Trước đây 19 công trình hết gate ở cấp Thị Trưởng 8, nên cấp 9→50 (97% đường
+ * XP) không mở nội dung gì. Nay cấp Thị Trưởng gate trực tiếp độ cao cấp công
+ * trình: mỗi cấp Thị Trưởng mở thêm một mức nâng cấp. XP trở thành nút thắt
+ * thật của thu nhập, không phải chỉ số trang trí.
+ */
+export function effectiveMaxLevel(defMax: number, mayorLevel: number): number {
+  return Math.min(defMax, Math.max(1, mayorLevel));
+}
 
 /**
  * So cap toi da nang cap duoc trong MOT LAN bam.
@@ -2085,7 +2577,10 @@ export function upgradeBuilding(col: number, row: number, count = 1): UpgradeRes
   if (!def) return 'missing';
   if (node.level >= def.maxLevel) return 'max';
 
-  const actualCount = Math.min(count, MAX_UPGRADE_PER_ACTION, def.maxLevel - node.level);
+  const cap = effectiveMaxLevel(def.maxLevel, state.mayorLevel);
+  if (node.level >= cap) return 'mayor';
+
+  const actualCount = Math.min(count, MAX_UPGRADE_PER_ACTION, cap - node.level);
   let totalCost = 0;
   for (let i = 0; i < actualCount; i++) {
     totalCost += upgradeCostCoins(def, node.level + i);
@@ -2399,6 +2894,9 @@ export function importCitySave(raw: string): ImportResult {
   const next = normalizeStoredState(raw);
   next.pendingOffline = null;
   next.lastSeenAt = Date.now();
+  // Save mới về = tích lũy khách phải bắt đầu lại từ 0, nếu không thì số khách
+  // của lần chạy trước vẫn còn trong bộ đếm và sinh ra đơn vô căn cứ.
+  resetArrivalAccumulator();
   setState(next);
   return 'ok';
 }
@@ -2467,6 +2965,49 @@ export function cycleTimeOfDay(): TimeOfDay {
   return next;
 }
 
+export function setWeather(weather: WeatherType): void {
+  const isFlooded = weather === 'FLOOD' ? true : state.isFlooded && weather === 'RAIN';
+  state = { ...state, weather, isFlooded };
+  emit();
+  schedulePersist();
+}
+
+export function cycleWeather(): WeatherType {
+  const ORDER: WeatherType[] = ['SUNNY', 'RAIN', 'FLOOD', 'STORM'];
+  const cur = state.weather ?? 'SUNNY';
+  const next = ORDER[(ORDER.indexOf(cur) + 1) % ORDER.length];
+  setWeather(next);
+  return next;
+}
+
+/**
+ * Bật/tắt trạng thái ngập lụt cục bộ trên toàn tuyến đường.
+ * Khi bị ngập lụt, nếu thành phố chưa trang bị Gói Bảo Hiểm Toàn Diện MoMo,
+ * nước triều cường sẽ gây hư hại tài sản và hàng hóa (kích hoạt trừ tiền rủi ro).
+ */
+export function toggleFlood(forceStatus?: boolean): {
+  isFlooded: boolean;
+  damageResult?: { coveredAmount: number; outOfPocket: number; hasInsurance: boolean };
+} {
+  const nextFlooded = forceStatus !== undefined ? forceStatus : !state.isFlooded;
+  let damageResult: { coveredAmount: number; outOfPocket: number; hasInsurance: boolean } | undefined;
+
+  if (nextFlooded) {
+    // Thiệt hại do triều cường / ngập lụt: 1.200 Xu
+    damageResult = triggerHazardEvent(1200);
+  }
+
+  state = {
+    ...state,
+    isFlooded: nextFlooded,
+    weather: nextFlooded ? 'FLOOD' : (state.weather === 'FLOOD' ? 'SUNNY' : state.weather),
+  };
+  emit();
+  schedulePersist();
+
+  return { isFlooded: nextFlooded, damageResult };
+}
+
 /**
  * Selector phai tra ve primitive hoac reference co dinh (mang/object trong state).
  * Tra ve object tao moi moi lan se lam useSyncExternalStore loop vo han.
@@ -2501,6 +3042,22 @@ export function useCity<T>(selector: (s: CityState) => T): T {
 
 const EMPTY_RELICS: string[] = [];
 const EMPTY_SNAPSHOTS: DailySnapshot[] = [];
+const EMPTY_QUEUES: ShopQueue[] = [];
+
+/**
+ * Suc chua (so khach) cua tung tiem THEO HANG CHO THAT - thay cho
+ * `currentShopQueue()` doc tu `liveShopQueue` (bien module-scope o
+ * `city-calculator.ts`, chi do nhan vat tren pho tu dem roi ghi tay vao).
+ *
+ * `flowFor` dung so nay de tinh crowding/lost sales, va `cityMood` dung de
+ * quyet dinh NPC co than van "khach bo hang" khong - ca hai PHAI doc dung
+ * hang cho nguoi choi dang bam, khong phai mot con so trang tri rieng.
+ */
+function realShopQueueCounts(queues: ShopQueue[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const q of queues) map[q.shopId] = q.arrivedAt.length;
+  return map;
+}
 
 export function useCityDerived(): CityDerived {
   const buildings = useCity((s) => s.buildings);
@@ -2540,6 +3097,7 @@ export function useCityDerived(): CityDerived {
   const dailySnapshots = useCity((s) => s.dailySnapshots ?? EMPTY_SNAPSHOTS);
   const ledgerDay = useCity((s) => s.ledgerDay);
   const streakShields = useCity((s) => s.streak?.shields ?? 0);
+  const shopQueues = useCity((s) => s.shopQueues ?? EMPTY_QUEUES);
 
   return useMemo(() => {
     let relicYieldBonus = 0;
@@ -2574,7 +3132,7 @@ export function useCityDerived(): CityDerived {
       relicBonus: relicYieldBonus,
 relicHappinessBonus: relicHappyBonus,
       debt,
-      shopQueue: currentShopQueue(),
+      shopQueue: realShopQueueCounts(shopQueues),
     });
     const debtCeiling = debtCeilingFor(flow.operatingIncome);
     const trustScore = calculateMayorTrustScore(
@@ -2653,6 +3211,7 @@ relicHappinessBonus: relicHappyBonus,
     dailySnapshots,
     ledgerDay,
     streakShields,
+    shopQueues,
   ]);
 }
 

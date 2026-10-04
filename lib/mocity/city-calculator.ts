@@ -42,7 +42,7 @@ const HAPPINESS_DECAY_PER_HOUR = 2;
 const HAPPINESS_DECAY_CAP = 25;
 
 /** San cho phuc vu duoi bao nhieu phan thi thap do khong hoat dong het. */
-const MIN_SUPPLY_FACTOR = 0.6;
+export const MIN_SUPPLY_FACTOR = 0.6;
 
 /** Tran diem Hanh Phuc cong don tu dialogue. */
 export const HAPPINESS_BOOST_CAP = 30;
@@ -587,7 +587,7 @@ export const NPL_MAX_RATE = 0.4;
  * Vuot nguong nay la dau hieu tap trung tin dung: cap qua nhieu han muc cho
  * qua it nguoi, dung co che lam ho so tin dung xau di trong thuc te.
  */
-export const HEALTHY_CREDIT_PER_CAPITA = 0.02;
+export const HEALTHY_CREDIT_PER_CAPITA = 200;
 /** Nguong canh bao ty le no xau. */
 export const NPL_WARNING_AT = 0.1;
 
@@ -657,25 +657,6 @@ export function blendedRates(
   return { cogsRate: cogsWeighted / yieldSum, opexRate: opexWeighted / yieldSum };
 }
 
-/**
- * Ty le gia von van hanh tren DOANH THU GOP, sau thue.
- *
- * Ban <= 6 chi cong doanh thu nen `revenue` (nay la tien thuc nhan) chinh la
- * doanh thu thuan. Sau khi tach gia von + chi phi van hanh + thue, luoi thu
- * chi con mot phan nen tien ngan khoc se giam so voi truoc - pho sanh phu
- * thep `UPGRADE_GROWTH` va `xpForLevel` se pha.
- *
- * `grossRevenue` phai lon gap `grossUpFor()` lan moi thu duoc DUNG so tien
- * dang duoc tra. Cong thuc nay dung bien loi nhuan thuc te cua tung thanh pho
- * nen doi ty le gia von / van hanh khong lam cho canh bang lech.
- */
-export function grossUpFor(cogsRate: number, opexRate: number, storeShare: number): number {
-  const ebitRate = 1 - storeShare * cogsRate - opexRate;
-  // Thanh pho khong co cua hang nao thi khong co gia van, chi con van hanh.
-  const netRate = Math.max(0.05, ebitRate * (1 - CORPORATE_TAX_RATE));
-  return 1 / netRate;
-}
-
 export function flowFor(
   buildings: BuildingNode[],
   npcs: NpcState[],
@@ -710,33 +691,78 @@ export function flowFor(
   const feverMult = opts.isFever ? 2 : 1;
   const relicMult = 1 + (opts.relicBonus ?? 0);
 
-  const storeYield =
-    directStoreYieldPerSecond(buildings) *
-    supplyFactor *
-    crowdingFactor *
-    happinessMult *
-    levelBonus;
+  /*
+   * Ba nguồn thu phải tách riêng - đúng thứ tự ví cộng tiền trong `tickIdle`:
+   *
+   * - Bán hàng (COMMERCIAL) đi qua đơn hàng, nên nhận đủ hệ số cung-cầu,
+   *   độ chen chúc, hạnh phúc và cấp Thị Trưởng.
+   * - Thu nhập thụ động (nhà ở, kỳ quan, FINTECH ngoài 2 toa lãi tiết kiệm)
+   *   tự sinh đều theo giây và KHÔNG nhận các hệ số của cửa hàng: chen chúc
+   *   là chuyện hàng chờ ở tiệm, không phải chuyện nhà cho thuê.
+   * - Lãi tiết kiệm sinh từ số dư nên không nhân hệ số nào.
+   *
+   * Cách cũ trộn hết rồi nhân một lần làm dự báo cao hơn ví thật: thành phố
+   * chỉ có Túi Thần Tài báo 130 Xu/giây mà ngân khố chỉ cộng 112,5.
+   */
+  const shopNodes = buildings.filter((b) => BUILDING_BY_ID[b.defId]?.zone === 'COMMERCIAL');
+  const passiveNodes = buildings.filter((b) => {
+    const def = BUILDING_BY_ID[b.defId];
+    if (!def || def.zone === 'COMMERCIAL') return false;
+    return b.defId !== 'tram-tui-than-tai' && b.defId !== 'ngan-hang-so';
+  });
+
+  /*
+   * Phải giữ nguyên `buildings` đầy đủ khi tính năng suất: `nodeYieldBreakdown`
+   * đếm bonus hàng xóm từ mảng truyền vào. Tách mảng ra rồi mới tính là mất
+   * symlink với nhà bên cạnh và dự báo thấp hơn ví thật.
+   */
+  const yieldOf = (nodes: BuildingNode[]) =>
+    nodes.reduce((sum, b) => sum + nodeYieldBreakdown(b, buildings).totalPerSec, 0);
+
+  const shopYield =
+    yieldOf(shopNodes) * supplyFactor * crowdingFactor * happinessMult * levelBonus;
+  const passiveYield = yieldOf(passiveNodes);
   const savingsYield = savingsInterestPerSecond(buildings, currentCoins);
   const networkFeeRevenue = digitalVolume * takeRate * happinessMult * levelBonus;
+
+  /**
+   * Gộp bán hàng + thu thụ động vào một dòng vì P&L cộng đúng ba dòng
+   * `storeYield + networkFee + savingsYield` = gross. Phân bổ chi phí bên
+   * dưới vẫn tách từng dòng nên gộp ở đây không làm sai COGS/OPEX.
+   */
+  const storeYield = shopYield + passiveYield;
 
 /* ── P&L: cong doanh thu gross truoc khi tru bat ky dong chi nao ── */
   const revenueCu = (storeYield + networkFeeRevenue + savingsYield) * feverMult * relicMult;
 
-  /**
-   * Gia von CHI ap cho doanh thu ban hang. Doanh thu phi thu ho va lai tich
-   * lu khong ton ha tong nen khong co dong gia von - day la phan biet co ban
-   * trong ke toan ma game nay day tinh.
+  /*
+   * Doanh thu gộp = số tiền THẬT vào ngân khố. Không phóng to nữa.
+   * COGS/OPEX/trừ thuế là chi phí thật, `netIncome` là phần còn lại.
    */
-  const { cogsRate, opexRate } = blendedRates(buildings);
-  const storeShare =
-    revenueCu > 0 ? (storeYield * feverMult * relicMult) / revenueCu : 0;
-  const grossUp = grossUpFor(cogsRate, opexRate, storeShare);
-  const grossRevenue = revenueCu * grossUp;
+  const grossRevenue = revenueCu;
 
-  const cogs = grossRevenue * storeShare * cogsRate;
+  const shopStoreRevenue = shopYield * feverMult * relicMult;
+  const shopRevenue = (shopYield + networkFeeRevenue) * feverMult * relicMult;
+  const savingsRevenue = savingsYield * feverMult * relicMult;
+  const passiveRevenue = passiveYield * feverMult * relicMult;
+
+  /**
+   * Gia von CHI ap cho doanh thu ban hang. Lai tiet kiem va thu nhap thu dong
+   * khong ton ha tong nen khong co dong gia von - day la phan biet co ban trong
+   * ke toan ma game nay day tinh.
+   *
+   * Moi dong lay he so cua CHINH NHOM do de khop engine: don hang tinh
+   * `ratesFor(tung tiem)`, dong thu dong tinh `blendedRates(nhom do)` - xem
+   * cac khoi ghi chu trong `tickIdle`. Tron mot `blendedRates(toa pho)` cho
+   * ca ba thi P&L lai lech so voi vi o nhieu hon mot loai cong trinh.
+   */
+  const cogs = shopStoreRevenue * blendedRates(shopNodes).cogsRate;
   const grossProfit = grossRevenue - cogs;
 
-  const opex = grossRevenue * opexRate;
+  const opex =
+    shopRevenue * blendedRates(shopNodes).opexRate +
+    savingsRevenue * blendedRates(buildings).opexRate +
+    passiveRevenue * blendedRates(passiveNodes).opexRate;
 
   /*
    * Du phong no xau: gia that cua viec cap tin dung. Tru o tang CHI PHI HOAT
@@ -795,24 +821,19 @@ export function flowFor(
 }
 
 /**
- * Hàng đợi hiện tại của phố.
+ * ĐÃ BỎ: `liveShopQueue` / `publishShopQueue` / `currentShopQueue`.
  *
- * `flowFor` là hàm thuần: cùng đầu vào phải cho cùng kết quả, nên không đọc
- * biến module ở trong đó. Module này giữ bản sao hàng đợi mà UI đẩy lên, và
- * các entry point của store (`tickIdle`, `loanHeadroom`) gọi qua đây để lấy
- * đúng một nguồn sự thật cho cả HUD lẫn ngân khố.
+ * Trước đây đây là "bản sao hàng đợi mà UI đẩy lên" - nhưng UI đẩy lên từ
+ * `ExpressiveStreetCitizens`, một MÔ PHỎNG NPC RIÊNG tự quyết định ai xếp
+ * hàng, không đọc `ShopQueue` thật trong store. Kết quả: `flowFor` tính
+ * crowding/lost-sales và NPC than "khách bỏ hàng" dựa trên một con số
+ * KHÔNG LIÊN QUAN tới hàng chờ người chơi đang thấy và bấm.
  *
- * Rỗng khi phố chưa có tiệm nào xếp hàng.
+ * Giờ `tickIdle`/`loanHeadroom`/`useCityDerived` tự tính số khách chờ THẬT
+ * từ `state.shopQueues` (xem `realShopQueueCounts` trong `store.ts`) và
+ * truyền thẳng vào `shopQueue` option bên dưới - không qua biến module nào
+ * nữa, đúng tinh thần hàm thuần của `flowFor`.
  */
-let liveShopQueue: Record<string, number> = {};
-
-export function publishShopQueue(counts: Record<string, number>): void {
-  liveShopQueue = counts;
-}
-
-export function currentShopQueue(): Record<string, number> {
-  return liveShopQueue;
-}
 
 /** Trạng thái thành phố, dùng làm điều kiện cho kịch bản sự kiện. */
 export interface CityCondition {
@@ -868,7 +889,10 @@ export function offlineCoins(coinsPerSecondValue: number, elapsedMs: number): nu
 
 export function landCostCoins(unlockedCols: number, unlockedRows: number): number {
   const owned = unlockedCols * unlockedRows;
-  return Math.round((150 + owned * 26) / 10) * 10;
+  // Khởi đầu 16 ô đất (4x4). Mở rộng ô đất tiếp theo tính theo giá đất đô thị Việt Nam (30tr - 2 tỷ / ô)
+  const baseLandVND = 30_000_000;
+  const growth = Math.pow(Math.max(0, owned - 15), 1.6) * 15_000_000;
+  return Math.round((baseLandVND + growth) / 1_000_000) * 1_000_000;
 }
 
 export function isInsideUnlocked(
@@ -974,6 +998,8 @@ export function calculateCashflowRatio(
   return Number((workingCapital / fixedCostCycle).toFixed(2));
 }
 
+export const TUI_THAN_TAI_RATE_YEAR = 0.055;
+
 /**
  * LUẬT 5: Lãi suất sinh lời Túi Thần Tài trên dòng tiền nhàn rỗi.
  * Lãi suất 5.5%/năm tính theo số giây trôi qua.
@@ -981,7 +1007,7 @@ export function calculateCashflowRatio(
 export function calculateTuiThanTaiInterest(
   balance: number,
   elapsedSec: number,
-  annualRate = 0.055,
+  annualRate = TUI_THAN_TAI_RATE_YEAR,
 ): number {
   if (balance <= 0 || elapsedSec <= 0) return 0;
   const ratePerSec = annualRate / (365 * 86400);

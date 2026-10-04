@@ -13,8 +13,6 @@ import {
   MessageSquareWarning,
   Receipt,
   ScrollText,
-  TrendingDown,
-  TrendingUp,
   TriangleAlert,
   Users,
   X,
@@ -39,15 +37,33 @@ import {
   triggerNextEvent,
   useCity,
   MAX_MAYOR_LEVEL,
+  STARTING_COINS,
 } from '@/lib/mocity/store';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
-import ProfitLossStatement from './ProfitLossStatement';
+import ProfitLossStatement, { LoanPanel, FinancialRulesPanel } from './ProfitLossStatement';
 import WeekComparisonPanel from './WeekComparisonPanel';
 import { markTutorialFlag, restartTutorial } from '@/lib/mocity/store';
 import StreakBoard from './StreakBoard';
 
-type Tab = 'PROFILE' | 'QUESTS' | 'CITIZENS' | 'LEDGER' | 'STREAK' | 'DATA';
+type Tab = 'PROFILE' | 'QUESTS' | 'CITIZENS' | 'LEDGER' | 'BANK' | 'STREAK' | 'DATA';
+
+function BankTab({ onToast }: { onToast: (msg: string) => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl border-2 p-3" style={{ background: '#FFFBEB', borderColor: '#C9A22766' }}>
+        <p className="text-[11px] font-black uppercase tracking-wide text-[#8B6318]">
+          Ngân Hàng Số & Đầu Tư MoMo
+        </p>
+        <p className="mt-1 text-[12px] leading-relaxed text-[#6E4F3A]">
+          Vay vốn, gửi tiết kiệm Túi Thần Tài và bảo hiểm rủi ro thành phố - tất cả trong một nơi.
+        </p>
+      </div>
+      <LoanPanel onToast={onToast} />
+      <FinancialRulesPanel onToast={onToast} />
+    </div>
+  );
+}
 
 export default function MayorCenterModal({
   open,
@@ -69,12 +85,14 @@ export default function MayorCenterModal({
   const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    const id = requestAnimationFrame(() => {
       setTab(initialTab);
       setMayorInput(state.mayorName || 'Thị Trưởng MoMo');
       setCityInput(state.cityName || 'Đô Thị MoCity');
       setConfirmReset(false);
-    }
+    });
+    return () => cancelAnimationFrame(id);
   }, [open, initialTab, state.mayorName, state.cityName]);
 
   if (!open) return null;
@@ -237,6 +255,21 @@ export default function MayorCenterModal({
           >
             <Receipt size={14} className="shrink-0" />
             <span className="truncate">Sổ Cái</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTab('BANK')}
+            aria-pressed={tab === 'BANK'}
+            className="flex items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black transition-all"
+            style={
+              tab === 'BANK'
+                ? { background: 'linear-gradient(180deg,#B45309,#92400E)', color: '#FFFFFF', borderColor: '#78350F' }
+                : { background: 'rgba(0,0,0,0.05)', color: '#6B5A45', borderColor: 'transparent' }
+            }
+          >
+            <CircleDollarSign size={14} className="shrink-0" />
+            <span className="truncate">Ngân Hàng</span>
           </button>
 
           <button
@@ -422,7 +455,7 @@ export default function MayorCenterModal({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-black text-[#3E2A1B]">{v.def.title}</p>
                         <p className="text-[12px] font-bold text-[#6E4F3A]">
-                          {v.progress}/{v.def.target} · +{v.def.rewardCoins.toLocaleString('vi-VN')} Xu ·{' '}
+                          {v.progress}/{v.def.target} · +{formatNumber(v.def.rewardCoins)} ·{' '}
                           <span style={{ color: '#0284C7' }}>+{v.def.rewardGems} Kim Cương</span> ·{' '}
                           <span style={{ color: '#7C3AED' }}>+{v.def.rewardXp.toLocaleString('vi-VN')} XP</span>
                         </p>
@@ -566,54 +599,61 @@ export default function MayorCenterModal({
                       return (
                   <div
                     key={q.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border-2 p-3"
+                    className="rounded-2xl border-2"
                     style={{
                       background: isClaimed ? 'rgba(0,0,0,0.04)' : completed ? '#F0FDF4' : '#FFFDF7',
                       borderColor: isClaimed ? '#C9A22733' : completed ? '#22C55E' : '#C9A22766',
                     }}
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-black" style={{ color: '#3E2A1B' }}>
+                    {/* Dong chinh: title + nut hanh dong */}
+                    <div className="flex items-center gap-2.5 p-2.5">
+                      {/* Icon trang thai nho */}
+                      <span className="shrink-0 text-base leading-none">
+                        {isClaimed ? '✅' : completed ? '🎁' : '⬜'}
+                      </span>
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-black" style={{ color: isClaimed ? '#8A7355' : '#3E2A1B' }}>
                         {q.title}
                       </p>
-                      <p className="mt-0.5 text-[13px]" style={{ color: '#7A6449' }}>
-                        {q.description}
-                      </p>
-                      <div className="mt-1.5 flex items-center gap-3 text-[12px] font-black">
-                        <span className="flex items-center gap-1" style={{ color: '#B45309' }}>
-                          <CircleDollarSign size={11} className="shrink-0" />+{formatCompact(q.rewardCoins)} Xu
+                      {isClaimed ? (
+                        <span className="shrink-0 text-[11px] font-bold text-[#8A7355]">Xong</span>
+                      ) : completed ? (
+                        <button
+                          type="button"
+                          onClick={() => handleClaim(q.id, q.title)}
+                          className="flex shrink-0 items-center gap-1 rounded-lg border-2 px-2.5 py-1 text-[11px] font-black text-white shadow transition-transform active:scale-95"
+                          style={{ background: 'linear-gradient(180deg,#22C55E,#16A34A)', borderColor: '#15803D' }}
+                        >
+                          <Gift size={12} className="shrink-0" />
+                          Nhận
+                        </button>
+                      ) : (
+                        <span className="shrink-0 rounded-lg border px-2 py-0.5 text-[11px] font-bold" style={{ borderColor: '#C9A22755', color: '#8A7355' }}>
+                          Đang làm
                         </span>
-                        <span className="flex items-center gap-1 text-blue-600">
-                          <Gem size={11} className="shrink-0" />+{q.rewardGems} Kim Cương
-                        </span>
-                        <span style={{ color: '#16A34A' }}>+{formatCompact(q.rewardXp)} XP</span>
-                      </div>
+                      )}
                     </div>
-
-                    {isClaimed ? (
-                      <span className="flex shrink-0 items-center gap-1 rounded-xl bg-black/5 px-3 py-2 text-[13px] font-bold text-[#8A7355]">
-                        <CheckCircle2 size={14} className="shrink-0" />
-                        Đã nhận
+                    {/* Reward row - luon hien, gon */}
+                    <div className="flex items-center gap-2.5 border-t px-2.5 pb-2 pt-1.5" style={{ borderColor: '#C9A22722' }}>
+                      <span className="flex items-center gap-1 text-[11px] font-black" style={{ color: '#B45309' }}>
+                        <CircleDollarSign size={10} className="shrink-0" />+{formatCompact(q.rewardCoins)}
                       </span>
-                    ) : completed ? (
-                      <button
-                        type="button"
-                        onClick={() => handleClaim(q.id, q.title)}
-                        className="flex shrink-0 items-center gap-1.5 rounded-xl border-2 px-3.5 py-2 text-xs font-black text-white shadow transition-transform active:scale-95"
-                        style={{
-                          background: 'linear-gradient(180deg,#22C55E,#16A34A)',
-                          borderColor: '#15803D',
-                        }}
-                      >
-                        <Gift size={14} className="shrink-0" />
-                        <span>Nhận thưởng</span>
-                      </button>
-                    ) : (
-                      <span className="shrink-0 rounded-xl border px-2.5 py-1.5 text-[12px] font-bold" style={{ borderColor: '#C9A22755', color: '#8A7355' }}>
-                        Đang thực hiện
+                      <span className="flex items-center gap-1 text-[11px] font-black text-blue-600">
+                        <Gem size={10} className="shrink-0" />+{q.rewardGems}
                       </span>
-                    )}
-                        </div>
+                      <span className="text-[11px] font-black" style={{ color: '#16A34A' }}>+{formatCompact(q.rewardXp)} XP</span>
+                      {/* Mo rong de xem huong dan - text mau xam nho */}
+                      {!isClaimed && (
+                        <details className="ml-auto">
+                          <summary className="cursor-pointer list-none text-[10px] font-bold" style={{ color: '#C9A227' }}>
+                            Hướng dẫn
+                          </summary>
+                          <p className="mt-1 text-[11px] leading-relaxed" style={{ color: '#7A6449' }}>
+                            {q.description}
+                          </p>
+                        </details>
+                      )}
+                    </div>
+                  </div>
                       );
                     })}
                   </div>
@@ -692,6 +732,10 @@ export default function MayorCenterModal({
             </div>
           )}
 
+          {tab === 'BANK' && (
+            <BankTab onToast={onToast} />
+          )}
+
           {tab === 'STREAK' && <StreakBoard />}
 
           {tab === 'DATA' && (
@@ -707,7 +751,7 @@ export default function MayorCenterModal({
                 </p>
                 <dl className="mt-3 grid grid-cols-2 gap-2 text-[13px]">
                   {[
-                    ['Ngân khố', `${formatNumber(state.coins)} Xu`],
+                    ['Ngân khố', `${formatCompact(state.coins)} đồng`],
                     ['Kim Cương', `${state.gems}`],
                     ['Tiệm đã mở', `${state.buildings.length} / ${state.unlockedCols * state.unlockedRows}`],
                     ['Dân cư & chủ tiệm', `${state.npcs.length}`],
@@ -715,7 +759,7 @@ export default function MayorCenterModal({
                       'Cấp Thị Trưởng',
                       state.mayorLevel >= MAX_MAYOR_LEVEL
                         ? `Lv.${state.mayorLevel} (tối đa)`
-                        : `Lv.${state.mayorLevel} · ${formatNumber(state.mayorXp)}/${formatNumber(xpForLevel(state.mayorLevel))} XP`,
+                        : `Lv.${state.mayorLevel} · ${formatCompact(state.mayorXp)}/${formatCompact(xpForLevel(state.mayorLevel))} XP`,
                     ],
                   ].map(([label, value]) => (
                     <div
@@ -798,8 +842,8 @@ export default function MayorCenterModal({
                 {!confirmReset ? (
                   <>
                     <p className="text-[13px]" style={{ color: '#7F1D1D' }}>
-                      Xóa vĩnh viễn {state.buildings.length} tiệm, {state.npcs.length} cư dân, toàn bộ Xu
-                      và Kim Cương. Thành phố sẽ quay về {formatNumber(600)} Xu khởi điểm. Không hoàn tác được.
+                      Xóa vĩnh viễn {state.buildings.length} tiệm, {state.npcs.length} cư dân, toàn bộ đồng
+                      và Kim Cương. Thành phố sẽ quay về {formatCompact(STARTING_COINS)} đồng khởi điểm. Không hoàn tác được.
                     </p>
                     <button
                       type="button"

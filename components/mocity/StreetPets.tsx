@@ -17,6 +17,30 @@ const PETS_CSS = `
 .pet-idle     { animation: petIdle 2.5s ease-in-out infinite; }
 @keyframes petBob  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
 @keyframes petIdle { 0%,100%{transform:rotate(-1.5deg)} 50%{transform:rotate(1.5deg)} }
+/* Dính lẹo lúng túng rung lắc giật giật */
+.dinh-leo-wiggle { animation: dinhLeoShudder 0.35s ease-in-out infinite alternate; }
+@keyframes dinhLeoShudder {
+  0%   { transform: translate(0, 0) rotate(-1deg); }
+  50%  { transform: translate(-1.5px, -1px) rotate(1deg); }
+  100% { transform: translate(1.5px, 0.5px) rotate(-0.5deg); }
+}
+/* Giọt mồ hôi rơi / văng */
+@keyframes sweatDrop {
+  0%   { opacity: 0; transform: translateY(-4px) scale(0.6); }
+  30%  { opacity: 1; transform: translateY(0) scale(1.1); }
+  80%  { opacity: 0.9; transform: translateY(6px) scale(0.9); }
+  100% { opacity: 0; transform: translateY(12px) scale(0.5); }
+}
+/* Chim vỗ cánh bay lượn */
+.bird-flapping { animation: birdFlap 0.22s ease-in-out infinite alternate; }
+@keyframes birdFlap {
+  0%   { transform: scaleY(1) translateY(0); }
+  100% { transform: scaleY(-0.7) translateY(-2px); }
+}
+@keyframes birdGlide {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
 /* Bong bóng thoại */
 @keyframes petBubblePop {
   0%   { opacity:0; transform:translateY(6px) scale(0.8); }
@@ -26,11 +50,6 @@ const PETS_CSS = `
   0%   { opacity:1; transform:translateY(0) scale(0.6); }
   100% { opacity:0; transform:translateY(-35px) scale(1.3); }
 }
-/* Lồng chim đung đưa */
-@keyframes cageSwing {
-  0%,100% { transform: rotate(-2deg); }
-  50%     { transform: rotate(2deg); }
-}
 /* Nốt nhạc bay bổng */
 @keyframes noteFloat {
   0%   { opacity:0; transform:translate(0,0) scale(0.6); }
@@ -38,21 +57,18 @@ const PETS_CSS = `
   70%  { opacity:0.8; transform:translate(-4px,-24px) scale(1.1); }
   100% { opacity:0; transform:translate(8px,-36px) scale(0.8); }
 }
-/* Chim nhảy trên cành */
-@keyframes birdHop {
-  0%,80%,100% { transform:translateY(0); }
-  85%  { transform:translateY(-3px) scaleY(0.95); }
-  90%  { transform:translateY(-5px); }
-  95%  { transform:translateY(-1px); }
-}
 `;
+
+function chonNgauNhien<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WALKING PET SVGs — mỗi bé là một tư thế đi bộ nhìn ngang
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Mèo Miu Miu — mèo mướp vàng đi nhón nhén */
-function WalkingCat({ night }: { night: boolean }) {
+function WalkingCat() {
   return (
     <svg width="58" height="44" viewBox="0 0 58 44" className="overflow-visible">
       <ellipse cx="29" cy="42" rx="20" ry="2.5" fill="rgba(62,42,27,0.14)" />
@@ -93,12 +109,16 @@ function WalkingCat({ night }: { night: boolean }) {
 }
 
 /** Cậu Vàng — chó ta vàng lục lạc chạy tung tăng */
-function WalkingDog({ night }: { night: boolean }) {
+function WalkingDog({ night, awkward = false }: { night: boolean; awkward?: boolean }) {
   return (
     <svg width="66" height="50" viewBox="0 0 66 50" className="overflow-visible">
       <ellipse cx="33" cy="47" rx="24" ry="2.5" fill="rgba(62,42,27,0.14)" />
-      {/* Đuôi vẫy */}
-      <path d="M4 22 C2 16 4 8 8 4 C10 2 12 6 10 12 C8 18 12 24 16 26 Z" fill="#EAB308" />
+      {/* Đuôi vẫy / cụp khi dính lẹo */}
+      {awkward ? (
+        <path d="M12 30 C8 32 6 36 8 38 C10 40 14 36 16 32 Z" fill="#CA8A04" />
+      ) : (
+        <path d="M4 22 C2 16 4 8 8 4 C10 2 12 6 10 12 C8 18 12 24 16 26 Z" fill="#EAB308" />
+      )}
       {/* Thân */}
       <ellipse cx="30" cy="28" rx="17" ry="12" fill="#EAB308" />
       <ellipse cx="30" cy="32" rx="12" ry="6" fill="#FEF9C3" />
@@ -119,29 +139,44 @@ function WalkingDog({ night }: { night: boolean }) {
       {/* Đầu */}
       <circle cx="50" cy="16" r="9" fill="#EAB308" />
       <path d="M49 8 Q50 14 50 20 Q48 20 47 16 Z" fill="#FEF9C3" />
-      {/* Tai trái cụp */}
+      {/* Tai trái */}
       <path d="M42 12 C38 15 37 22 41 24 C43 25 44 20 43 16 Z" fill="#A16207" />
-      {/* Tai phải vểnh */}
+      {/* Tai phải */}
       <path d="M56 10 C60 4 63 8 62 14 C61 18 58 19 56 16 Z" fill="#CA8A04" />
-      {/* Mắt */}
-      <circle cx="47" cy="14" r="2" fill="#181411" />
-      <circle cx="47.6" cy="13.4" r="0.6" fill="#FFF" />
-      <circle cx="53" cy="14" r="2" fill="#181411" />
-      <circle cx="53.6" cy="13.4" r="0.6" fill="#FFF" />
+      {/* Mắt — mắt tròn xoè / hoa mắt khi awkward */}
+      {awkward ? (
+        <>
+          <circle cx="47" cy="14" r="2.4" fill="#FFF" stroke="#181411" strokeWidth="0.8" />
+          <circle cx="47" cy="14" r="1.1" fill="#181411" />
+          <circle cx="53" cy="14" r="2.4" fill="#FFF" stroke="#181411" strokeWidth="0.8" />
+          <circle cx="53" cy="14" r="1.1" fill="#181411" />
+        </>
+      ) : (
+        <>
+          <circle cx="47" cy="14" r="2" fill="#181411" />
+          <circle cx="47.6" cy="13.4" r="0.6" fill="#FFF" />
+          <circle cx="53" cy="14" r="2" fill="#181411" />
+          <circle cx="53.6" cy="13.4" r="0.6" fill="#FFF" />
+        </>
+      )}
       {/* Mõm */}
       <ellipse cx="51" cy="19" rx="4.5" ry="3" fill="#FEF9C3" />
       <ellipse cx="51" cy="17.5" rx="1.8" ry="1.2" fill="#181411" />
-      {/* Lưỡi */}
-      {!night && <path d="M50 21 C50 24 52 24 52 21 Z" fill="#F472B6" />}
-      {/* Má */}
-      <circle cx="44" cy="18" r="1.4" fill="#F87171" opacity="0.5" />
-      <circle cx="56" cy="18" r="1.4" fill="#F87171" opacity="0.5" />
+      {/* Lưỡi thè ra bối rối */}
+      {awkward ? (
+        <path d="M50 21 C50 25 53 25 53 21 Z" fill="#F472B6" />
+      ) : !night ? (
+        <path d="M50 21 C50 24 52 24 52 21 Z" fill="#F472B6" />
+      ) : null}
+      {/* Má hồng dở khóc dở cười */}
+      <circle cx="44" cy="18" r={awkward ? 2.2 : 1.4} fill="#F87171" opacity={awkward ? 0.8 : 0.5} />
+      <circle cx="56" cy="18" r={awkward ? 2.2 : 1.4} fill="#F87171" opacity={awkward ? 0.8 : 0.5} />
     </svg>
   );
 }
 
 /** Corgi Bánh Bao — mông trái tim lon ton */
-function WalkingCorgi({ night }: { night: boolean }) {
+function WalkingCorgi({ awkward = false }: { awkward?: boolean }) {
   return (
     <svg width="62" height="42" viewBox="0 0 62 42" className="overflow-visible">
       <ellipse cx="31" cy="40" rx="24" ry="2" fill="rgba(62,42,27,0.14)" />
@@ -169,11 +204,22 @@ function WalkingCorgi({ night }: { night: boolean }) {
       <polygon points="41,8 42,2 44,8" fill="#FCA5A5" />
       <polygon points="47,7 50,0 53,7" fill="#F59E0B" />
       <polygon points="48,7 50,2 52,7" fill="#FCA5A5" />
-      {/* Mắt */}
-      <circle cx="44" cy="13" r="1.6" fill="#181411" />
-      <circle cx="44.5" cy="12.5" r="0.5" fill="#FFF" />
-      <circle cx="49" cy="13" r="1.6" fill="#181411" />
-      <circle cx="49.5" cy="12.5" r="0.5" fill="#FFF" />
+      {/* Mắt — ngơ ngác khi dính lẹo */}
+      {awkward ? (
+        <>
+          <circle cx="44" cy="13" r="2.2" fill="#FFF" stroke="#181411" strokeWidth="0.8" />
+          <circle cx="44" cy="13" r="1" fill="#181411" />
+          <circle cx="49" cy="13" r="2.2" fill="#FFF" stroke="#181411" strokeWidth="0.8" />
+          <circle cx="49" cy="13" r="1" fill="#181411" />
+        </>
+      ) : (
+        <>
+          <circle cx="44" cy="13" r="1.6" fill="#181411" />
+          <circle cx="44.5" cy="12.5" r="0.5" fill="#FFF" />
+          <circle cx="49" cy="13" r="1.6" fill="#181411" />
+          <circle cx="49.5" cy="12.5" r="0.5" fill="#FFF" />
+        </>
+      )}
       {/* Mõm */}
       <ellipse cx="47" cy="17" rx="4" ry="2.5" fill="#FFFBEB" />
       <ellipse cx="47" cy="16" rx="1.5" ry="1" fill="#181411" />
@@ -183,7 +229,7 @@ function WalkingCorgi({ night }: { night: boolean }) {
 }
 
 /** Heo Chiêu Tài MoMo — lon ton nhún nhẩy */
-function WalkingPiggy({ night }: { night: boolean }) {
+function WalkingPiggy() {
   return (
     <svg width="54" height="42" viewBox="0 0 54 42" className="overflow-visible">
       <ellipse cx="27" cy="40" rx="18" ry="2" fill="rgba(62,42,27,0.14)" />
@@ -262,58 +308,50 @@ function WalkingCalico({ night }: { night: boolean }) {
   );
 }
 
-/** Lồng Chim Chào Mào — cố định treo dưới mái hiên */
-function BirdCage({ night, onClick }: { night: boolean; onClick: (e: React.MouseEvent) => void }) {
+/** Chim Bay Trên Bầu Trời Phố Xá — vỗ cánh bay ngang */
+function FlyingBirdGraphic({ night }: { night: boolean }) {
   return (
-    <div
-      onClick={onClick}
-      className="group cursor-pointer select-none transition-transform hover:scale-105 active:scale-95"
-      title="🎶 Chim Chào Mào - Lồng tre (Bấm để nghe hót)"
-      style={{ transformOrigin: '28px 0px', animation: 'cageSwing 4.2s ease-in-out infinite' }}
-    >
-      <svg width="56" height="78" viewBox="0 0 56 78" className="overflow-visible">
-        <line x1="28" y1="0" x2="28" y2="10" stroke="#A16207" strokeWidth="1.8" />
-        <path d="M28 10 Q33 13 28 16 Q23 19 28 22" fill="none" stroke="#D97706" strokeWidth="2" />
-        <path d="M12 34 Q28 20 44 34 Z" fill="#D97706" stroke="#92400E" strokeWidth="1.2" />
-        <circle cx="28" cy="22" r="3" fill="#B45309" />
-        <circle cx="28" cy="22" r="1.3" fill="#FDE047" />
-        <rect x="11" y="33" width="34" height="3" rx="1.5" fill="#92400E" />
-        {[14, 18, 22, 26, 30, 34, 38, 42].map((nx) => (
-          <line key={nx} x1={nx} y1="35" x2={nx} y2="62" stroke="#D97706" strokeWidth="1" opacity="0.8" />
-        ))}
-        <rect x="13" y="50" width="30" height="2.5" rx="1" fill="#78350F" />
-        <rect x="36" y="48" width="5" height="5" rx="1.5" fill="#2563EB" stroke="#1D4ED8" strokeWidth="0.4" />
-        <circle cx="38.5" cy="49" r="1" fill="#FDE047" />
-        <g transform="translate(25, 42)" style={{ animation: 'birdHop 3.6s ease-in-out infinite' }}>
-          <path d="M-1 4 L-5 12 L-2 12 L1 5 Z" fill="#1F2937" />
-          <circle cx="-1" cy="4" r="1" fill="#EF4444" />
-          <ellipse cx="2" cy="3" rx="4.5" ry="3.5" fill="#4B5563" />
-          <ellipse cx="4" cy="4" rx="2.5" ry="2" fill="#E5E7EB" />
-          <ellipse cx="0" cy="2" rx="3" ry="1.8" fill="#1F2937" />
-          <circle cx="5" cy="-2" r="3" fill="#111827" />
-          <path d="M4 -5 L7 -10 L6 -4 Z" fill="#111827" />
-          <ellipse cx="5" cy="-1.5" rx="1.4" ry="1" fill="#FFF" />
-          <circle cx="6.5" cy="-1.5" r="0.8" fill="#EF4444" />
-          <circle cx="6" cy="-3" r="0.6" fill="#FFF" />
-          <circle cx="6.2" cy="-3" r="0.3" fill="#000" />
-          <polygon points="8,-3 11,-2 8,-1" fill="#1F2937" />
-        </g>
-        <rect x="11" y="62" width="34" height="3" rx="1.5" fill="#92400E" />
-        {!night && (
-          <>
-            <text x="38" y="18" fill="#EC4899" fontSize="9" style={{ animation: 'noteFloat 2.6s ease-in-out infinite' }}>🎵</text>
-            <text x="6" y="26" fill="#3B82F6" fontSize="7" style={{ animation: 'noteFloat 3.4s 1.2s ease-in-out infinite' }}>🎶</text>
-          </>
-        )}
-      </svg>
-    </div>
+    <svg width="44" height="32" viewBox="0 0 44 32" className="overflow-visible select-none">
+      {/* Cánh chim vỗ nhịp */}
+      <g className="bird-flapping" style={{ transformOrigin: '20px 16px' }}>
+        <path
+          d="M18 16 Q10 4 2 8 Q8 14 16 18 Z"
+          fill={night ? '#334155' : '#D97706'}
+          stroke={night ? '#1E293B' : '#B45309'}
+          strokeWidth="0.8"
+        />
+        <path
+          d="M22 15 Q28 2 38 6 Q32 12 24 17 Z"
+          fill={night ? '#475569' : '#F59E0B'}
+          stroke={night ? '#1E293B' : '#D97706'}
+          strokeWidth="0.8"
+        />
+      </g>
+      {/* Đuôi chim */}
+      <polygon points="6,18 0,22 2,16" fill={night ? '#1E293B' : '#78350F'} />
+      {/* Thân chim */}
+      <ellipse cx="20" cy="18" rx="10" ry="6" fill={night ? '#38BDF8' : '#FBBF24'} />
+      <ellipse cx="22" cy="20" rx="7" ry="3.5" fill="#FFFBEB" />
+      {/* Đầu & mào */}
+      <circle cx="28" cy="14" r="5" fill={night ? '#0284C7' : '#D97706'} />
+      <polygon points="26,10 28,4 30,10" fill={night ? '#0284C7' : '#B45309'} />
+      {/* Mỏ vàng cam */}
+      <polygon points="32,13 38,15 32,17" fill="#F97316" />
+      {/* Mắt tròn xoe */}
+      <circle cx="29" cy="13" r="1.4" fill="#FFFFFF" />
+      <circle cx="29.3" cy="13" r="0.7" fill="#181411" />
+      {/* Nốt nhạc bay theo khi trời sáng */}
+      {!night && (
+        <text x="32" y="6" fill="#EC4899" fontSize="8" style={{ animation: 'noteFloat 2.2s ease-in-out infinite' }}>
+          🎶
+        </text>
+      )}
+    </svg>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WALK CSS — CSS walk-cycle giống ExpressiveStreetCitizens
-// Dùng lại class .cit-lb .cit-lf đã có ở ExpressiveStreetCitizens.
-// Thêm fallback local nếu chưa load.
 // ─────────────────────────────────────────────────────────────────────────────
 const WALK_CSS = `
 .pet-walk .cit-lb { animation: petLB var(--walk-spd,0.5s) linear infinite; }
@@ -330,7 +368,7 @@ interface WalkingPetDef {
   id: string;
   name: string;
   species: 'CAT' | 'DOG' | 'PIG';
-  El: React.ComponentType<{ night: boolean }>;
+  El: React.ComponentType<{ night: boolean; awkward?: boolean }>;
   startX: number;
   speed: number; // px/s
   startDir: 1 | -1;
@@ -387,18 +425,29 @@ const WALKING_PETS: WalkingPetDef[] = [
   },
 ];
 
-// Lồng chim — cố định không di chuyển
-const BIRD_DEF = {
-  id: 'pet-bird-lieulo', name: 'Chào Mào Líu Lo', species: 'BIRD' as const,
-  x: 990, y: 2, rewardCoins: 25, emoji: '🎶',
+// Chim bay tự do trên bầu trời phố
+const FLYING_BIRD_DEF = {
+  id: 'pet-bird-bayluon',
+  name: 'Chào Mào Bay Lượn',
+  species: 'BIRD' as const,
+  rewardCoins: 25,
+  emoji: '🕊️',
   quotes: [
-    'Líu lo líu lo! Chim hót rộn ràng chào ngày mới trên phố Hoa Sữa!',
-    'Ríu rít ríu rít! Nghe tiếng MoMo hót điệu rộn rã phố xá!',
-    'Líu lo! Ai đi ngang cũng ngước nhìn lồng tre khen hay!',
+    'Líu lo líu lo! Chim tự do sải cánh rợp trời MoCity!',
+    'Ríu rít ríu rít! Ngắm phố xá từ trên cao đẹp lung linh Thị Trưởng ơi!',
+    'Chích chòe líu lo! Tiếng hót chào ngày mới bình an phát tài!',
   ],
 };
 
-/** Mutable sim state cho mỗi pet — không trigger React re-render */
+// Thoại dở khóc dở cười lúc 2 con chó "dính lẹo"
+const DINH_LEO_QUOTES = [
+  'Ủa ủa... sao dính cứng ngắc rồi anh Vàng ơi?! Quê xỉu luôn á! 😭🐶',
+  'Cứu tụi tui với Thị Trưởng ơi! Ai tạt ca nước lạnh gỡ ra giùm cái! 💦🐕',
+  'Trời ơi bà con cô bác đừng nhìn nữa... tụi tui xin chừa rồi! 😳🙈',
+  'Mông chạm mông không rời được... kiếp nạn thứ 82 của Cậu Vàng & Corgi! 🤣',
+];
+
+/** Mutable sim state cho mỗi pet */
 interface PetSim {
   x: number;
   dir: 1 | -1;
@@ -424,8 +473,23 @@ export default function StreetPets({
 }) {
   const isNight = timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET';
 
-  const [activeSpeech, setActiveSpeech] = useState<{ petId: string; text: string } | null>(null);
+  const [activeSpeech, setActiveSpeech] = useState<{ petId: string; text: string; dir: number } | null>(null);
   const [effects, setEffects] = useState<{ id: number; text: string; x: number; y: number }[]>([]);
+
+  // State dính lẹo (trigger định kỳ hoặc khi 2 con chó va chạm)
+  const [dinhLeoActive, setDinhLeoActive] = useState(false);
+  const dinhLeoTimerRef = useRef<number>(0);
+  const nextDinhLeoCooldownRef = useRef<number>(35 + Math.random() * 25); // Sau 35-60s là xuất hiện
+
+  // Chim bay lượn state
+  const birdRef = useRef<HTMLDivElement | null>(null);
+  const birdSimRef = useRef({
+    x: 100,
+    y: 28,
+    dir: 1 as 1 | -1,
+    speed: 68,
+    dipPhase: 0,
+  });
 
   // DOM refs cho mỗi pet walking
   const domRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -444,57 +508,154 @@ export default function StreetPets({
   );
 
   const streetWidthRef = useRef(streetWidth);
-  streetWidthRef.current = Math.max(1200, streetWidth);
+  useEffect(() => {
+    streetWidthRef.current = Math.max(1200, streetWidth);
+  }, [streetWidth]);
 
   // ═══ VÒNG LẶP VẬT LÝ 60 FPS ═══
   useEffect(() => {
     let animId: number;
     let last = performance.now();
 
-    const WALK_MIN_X = 160; // Không đi vào ngã tư
-    const IDLE_WALK_S = [8, 14]; // Đi bộ 8-14s
-    const IDLE_REST_S = [3, 6]; // Nghỉ 3-6s
+    const WALK_MIN_X = 160;
+    const IDLE_WALK_S = [8, 14];
+    const IDLE_REST_S = [3, 6];
+
+    // Vị trí index của Cậu Vàng (1) và Corgi (2)
+    const DOG_VANG_IDX = 1;
+    const CORGI_IDX = 2;
 
     const loop = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.08);
       last = now;
       const maxX = streetWidthRef.current - 80;
 
+      // 1. Cập nhật chim bay
+      const bSim = birdSimRef.current;
+      bSim.x += bSim.dir * bSim.speed * dt;
+      bSim.dipPhase += dt * 3;
+      const birdY = 22 + Math.sin(bSim.dipPhase) * 12; // Lượn sóng nhịp nhàng
+
+      if (bSim.dir === 1 && bSim.x > streetWidthRef.current + 80) {
+        bSim.x = -60;
+        bSim.dir = 1;
+        bSim.speed = 60 + Math.random() * 25;
+      } else if (bSim.dir === -1 && bSim.x < -80) {
+        bSim.x = streetWidthRef.current + 60;
+        bSim.dir = -1;
+        bSim.speed = 60 + Math.random() * 25;
+      }
+
+      const birdEl = birdRef.current;
+      if (birdEl) {
+        birdEl.style.transform = `translate(${bSim.x.toFixed(1)}px, ${birdY.toFixed(1)}px) scaleX(${bSim.dir})`;
+      }
+
+      // 2. Kiểm tra sự kiện DÍNH LẸO
+      if (dinhLeoTimerRef.current > 0) {
+        dinhLeoTimerRef.current -= dt;
+        // Trong lúc dính lẹo: hai bé chó bị khóa vị trí mông-áp-mông, kéo giằng co nhẹ
+        const dogVang = simsRef.current[DOG_VANG_IDX];
+        const corgi = simsRef.current[CORGI_IDX];
+        const midX = (dogVang.x + corgi.x) / 2;
+
+        // Cậu Vàng quay mặt sang trái, Corgi quay mặt sang phải (hoặc ngược lại)
+        dogVang.x = midX - 22;
+        dogVang.dir = -1;
+        dogVang.speed = 0;
+        dogVang.behavior = 'IDLE';
+
+        corgi.x = midX + 22;
+        corgi.dir = 1;
+        corgi.speed = 0;
+        corgi.behavior = 'IDLE';
+
+        if (dinhLeoTimerRef.current <= 0) {
+          // Hết dính lẹo: tách nhau ra chạy té khói về hai phía
+          setDinhLeoActive(false);
+          dogVang.dir = -1;
+          dogVang.speed = dogVang.baseSpeed * 1.8;
+          dogVang.behavior = 'WALKING';
+          dogVang.behaviorTimer = 6;
+
+          corgi.dir = 1;
+          corgi.speed = corgi.baseSpeed * 1.8;
+          corgi.behavior = 'WALKING';
+          corgi.behaviorTimer = 6;
+
+          nextDinhLeoCooldownRef.current = 60 + Math.random() * 45; // 60-105s sau mới có lại
+        }
+      } else {
+        // Đếm cooldown kích hoạt dính lẹo
+        nextDinhLeoCooldownRef.current -= dt;
+        const dogVang = simsRef.current[DOG_VANG_IDX];
+        const corgi = simsRef.current[CORGI_IDX];
+        const dist = Math.abs(dogVang.x - corgi.x);
+
+        // Kích hoạt khi cooldown về 0 VÀ hai con chó ở khoảng cách gần nhau (< 180px)
+        // Hoặc tự hút lại gần nhau nếu đã quá thời gian
+        if (nextDinhLeoCooldownRef.current <= 0) {
+          if (dist < 120) {
+            // Snap vào dính lẹo!
+            setDinhLeoActive(true);
+            dinhLeoTimerRef.current = 10; // Dính lẹo trong 10 giây
+            const quote = chonNgauNhien(DINH_LEO_QUOTES);
+            setActiveSpeech({ petId: 'dinh-leo-pair', text: quote, dir: 1 });
+            // Tạo effect giọt nước / mồ hôi
+            setEffects((p) => [
+              ...p,
+              { id: Date.now(), text: '💦 Quê Xỉu!', x: (dogVang.x + corgi.x) / 2, y: 35 },
+            ]);
+            setTimeout(() => setEffects((p) => p.slice(1)), 2500);
+          } else {
+            // Cho 2 con chó đi hướng về phía nhau để chạm trán
+            if (dogVang.x < corgi.x) {
+              dogVang.dir = 1;
+              corgi.dir = -1;
+            } else {
+              dogVang.dir = -1;
+              corgi.dir = 1;
+            }
+          }
+        }
+      }
+
+      // 3. Cập nhật các pet đi bộ bình thường
       for (let i = 0; i < simsRef.current.length; i++) {
         const sim = simsRef.current[i];
 
-        // Đếm ngược timer hành vi
-        sim.behaviorTimer -= dt;
-        if (sim.behaviorTimer <= 0) {
+        // Nếu đang dính lẹo thì bỏ qua logic di chuyển ngẫu nhiên của 2 chó
+        if (dinhLeoTimerRef.current > 0 && (i === DOG_VANG_IDX || i === CORGI_IDX)) {
+          // Bỏ qua
+        } else {
+          sim.behaviorTimer -= dt;
+          if (sim.behaviorTimer <= 0) {
+            if (sim.behavior === 'WALKING') {
+              sim.behavior = 'IDLE';
+              sim.behaviorTimer = IDLE_REST_S[0] + Math.random() * (IDLE_REST_S[1] - IDLE_REST_S[0]);
+              sim.speed = 0;
+            } else {
+              sim.behavior = 'WALKING';
+              sim.behaviorTimer = IDLE_WALK_S[0] + Math.random() * (IDLE_WALK_S[1] - IDLE_WALK_S[0]);
+              if (Math.random() < 0.35) sim.dir = (sim.dir * -1) as 1 | -1;
+              sim.speed = sim.baseSpeed;
+            }
+          }
+
           if (sim.behavior === 'WALKING') {
-            sim.behavior = 'IDLE';
-            sim.behaviorTimer = IDLE_REST_S[0] + Math.random() * (IDLE_REST_S[1] - IDLE_REST_S[0]);
-            sim.speed = 0;
-          } else {
-            sim.behavior = 'WALKING';
-            sim.behaviorTimer = IDLE_WALK_S[0] + Math.random() * (IDLE_WALK_S[1] - IDLE_WALK_S[0]);
-            // Đôi khi đổi hướng khi hết nghỉ
-            if (Math.random() < 0.35) sim.dir = (sim.dir * -1) as 1 | -1;
-            sim.speed = sim.baseSpeed;
+            sim.x += sim.dir * sim.speed * dt;
+            sim.walkPhase += dt;
+
+            if (sim.x > maxX) { sim.x = maxX; sim.dir = -1; }
+            if (sim.x < WALK_MIN_X) { sim.x = WALK_MIN_X; sim.dir = 1; }
           }
         }
 
-        // Di chuyển
-        if (sim.behavior === 'WALKING') {
-          sim.x += sim.dir * sim.speed * dt;
-          sim.walkPhase += dt;
-
-          // Đổi hướng khi chạm mép
-          if (sim.x > maxX) { sim.x = maxX; sim.dir = -1; }
-          if (sim.x < WALK_MIN_X) { sim.x = WALK_MIN_X; sim.dir = 1; }
-        }
-
-        // Cập nhật DOM trực tiếp — không qua React
+        // Cập nhật DOM
         const el = domRefs.current[WALKING_PETS[i].id];
         if (el) {
           el.style.transform = `translateX(${sim.x.toFixed(1)}px) scaleX(${sim.dir})`;
 
-          // Toggle CSS class walking / idle
           if (sim.behavior === 'WALKING') {
             if (!el.classList.contains('pet-walk')) {
               el.classList.add('pet-walk');
@@ -523,68 +684,193 @@ export default function StreetPets({
     return () => clearTimeout(t);
   }, [activeSpeech]);
 
-  // Xử lý tap pet
+  // Xử lý tap chim bay
+  const handleTapBird = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const result = claimTapReward('pet', FLYING_BIRD_DEF.rewardCoins, { cooldownMs: 1800 });
+    const quote = chonNgauNhien(FLYING_BIRD_DEF.quotes);
+    const bSim = birdSimRef.current;
+    setActiveSpeech({ petId: FLYING_BIRD_DEF.id, text: quote, dir: bSim.dir });
+
+    setEffects((p) => [
+      ...p,
+      { id: Date.now() + Math.random(), text: `🪶 +${FLYING_BIRD_DEF.rewardCoins}đ`, x: bSim.x + 20, y: bSim.y + 10 },
+    ]);
+    setTimeout(() => setEffects((p) => p.slice(1)), 1400);
+
+    // Tăng tốc chim vỗ cánh bay vụt đi một đoạn
+    bSim.speed = 110;
+    setTimeout(() => { bSim.speed = 68; }, 2000);
+
+    if (result.ok) {
+      onPetReward?.(`${FLYING_BIRD_DEF.emoji} ${FLYING_BIRD_DEF.name}: "${quote}" (+${FLYING_BIRD_DEF.rewardCoins}đ)`);
+    } else {
+      onPetReward?.(`${FLYING_BIRD_DEF.emoji} ${FLYING_BIRD_DEF.name}: "${quote}"`);
+    }
+  };
+
+  // Xử lý tap dính lẹo (giải cứu 2 con chó)
+  const handleTapDinhLeo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!dinhLeoActive) return;
+
+    // Người chơi bấm giải cứu: tạt nước lạnh gỡ ra và nhận thưởng nóng
+    claimTapReward('pet', 50, { cooldownMs: 3000 });
+    dinhLeoTimerRef.current = 0.1; // Giải thoát ngay lập tức
+
+    const dogVang = simsRef.current[1];
+    const corgi = simsRef.current[2];
+    const midX = (dogVang.x + corgi.x) / 2;
+
+    setEffects((p) => [
+      ...p,
+      { id: Date.now(), text: '🌊💦 GỠ ĐƯỢC RỒI! (+50đ)', x: midX - 30, y: 20 },
+    ]);
+    setTimeout(() => setEffects((p) => p.slice(1)), 1800);
+
+    setActiveSpeech({
+      petId: 'dinh-leo-pair',
+      text: 'Ôi cảm ơn Thị Trưởng đã tạt nước giải cứu! Tụi em chạy trốn đây! 🏃‍♂️💨',
+      dir: 1,
+    });
+
+    onPetReward?.('💦 Giải cứu đôi bạn Cậu Vàng & Corgi dính lẹo thành công! (+50đ thưởng Thị Trưởng)');
+  };
+
+  // Xử lý tap pet đi bộ bình thường
   const handleTap = (
     pet: { id: string; name: string; species: string; rewardCoins: number; emoji: string; quotes: string[] },
-    simIndex: number | null,
+    simIndex: number,
     e: React.MouseEvent,
   ) => {
     e.stopPropagation();
-    const result = claimTapReward('pet', pet.rewardCoins, { cooldownMs: 1800 });
-    const quote = pet.quotes[Math.floor(Math.random() * pet.quotes.length)];
-    setActiveSpeech({ petId: pet.id, text: quote });
 
-    const effectIcon = pet.species === 'CAT' ? '❤️' : pet.species === 'DOG' ? '🦴' : pet.species === 'BIRD' ? '🎶' : '💰';
-    const effX = simIndex !== null ? simsRef.current[simIndex].x + 20 : BIRD_DEF.x + 20;
+    // Nếu đang trong cảnh dính lẹo mà bấm vào 1 trong 2 chó -> chuyển sang xử lý giải cứu
+    if (dinhLeoActive && (pet.id === 'pet-dog-cauvang' || pet.id === 'pet-corgi-banhbao')) {
+      handleTapDinhLeo(e);
+      return;
+    }
+
+    const result = claimTapReward('pet', pet.rewardCoins, { cooldownMs: 1800 });
+    const quote = chonNgauNhien(pet.quotes);
+    const petDir = simsRef.current[simIndex].dir;
+    setActiveSpeech({ petId: pet.id, text: quote, dir: petDir });
+
+    const effectIcon = pet.species === 'CAT' ? '❤️' : pet.species === 'DOG' ? '🦴' : '💰';
+    const effX = simsRef.current[simIndex].x + 20;
     const effY = 50;
     setEffects((p) => [...p, { id: Date.now() + Math.random(), text: effectIcon, x: effX, y: effY }]);
     setTimeout(() => setEffects((p) => p.slice(1)), 1200);
 
     // Khi bấm, pet dừng lại vài giây
-    if (simIndex !== null) {
-      const sim = simsRef.current[simIndex];
-      sim.behavior = 'IDLE';
-      sim.speed = 0;
-      sim.behaviorTimer = 4;
-    }
+    const sim = simsRef.current[simIndex];
+    sim.behavior = 'IDLE';
+    sim.speed = 0;
+    sim.behaviorTimer = 4;
 
     if (result.ok) {
-      onPetReward?.(`${pet.emoji} ${pet.name}: "${quote}" (+${pet.rewardCoins} Xu)`);
+      onPetReward?.(`${pet.emoji} ${pet.name}: "${quote}" (+${pet.rewardCoins}đ)`);
     } else {
       onPetReward?.(`${pet.emoji} ${pet.name}: "${quote}"`);
     }
   };
 
+  const dogVangSim = simsRef.current[1];
+  const corgiSim = simsRef.current[2];
+  const dinhLeoMidX = (dogVangSim.x + corgiSim.x) / 2;
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: PETS_CSS + WALK_CSS }} />
+
+      {/* ═══ CHIM BAY TỰ DO TRÊN TRỜI PHỐ (THAY THẾ LỒNG CHIM) ═══ */}
+      <div
+        ref={birdRef}
+        onClick={handleTapBird}
+        className="group absolute z-30 cursor-pointer select-none pointer-events-auto"
+        style={{
+          top: 0,
+          left: 0,
+          transformOrigin: '22px 16px',
+        }}
+        title="🕊️ Chào Mào Bay Lượn (Bấm để nhận lộc đồng may mắn)"
+      >
+        {activeSpeech?.petId === FLYING_BIRD_DEF.id && (
+          <div
+            className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center"
+            style={{ animation: 'petBubblePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
+          >
+            <div className="whitespace-nowrap rounded-xl border border-[#0284C7] bg-[#F0F9FF] px-2.5 py-1 text-[11px] font-bold text-[#0369A1] shadow-md">
+              {activeSpeech.text}
+            </div>
+            <div className="h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-[#0284C7]" />
+          </div>
+        )}
+        <div style={{ animation: 'birdGlide 3s ease-in-out infinite' }}>
+          <FlyingBirdGraphic night={isNight} />
+        </div>
+      </div>
+
+      {/* ═══ BUBBLE & HIỆU ỨNG RIÊNG CHO 2 CON CHÓ DÍNH LẸO ═══ */}
+      {dinhLeoActive && (
+        <div
+          onClick={handleTapDinhLeo}
+          className="absolute z-30 cursor-pointer select-none pointer-events-auto"
+          style={{
+            bottom: 48,
+            left: dinhLeoMidX - 110,
+            width: 220,
+          }}
+          title="💦 Bấm nhanh để tạt nước giải cứu 2 bạn cún!"
+        >
+          {/* Mồ hôi rơi vương vãi */}
+          <div className="pointer-events-none absolute -top-4 left-1/4 text-sm" style={{ animation: 'sweatDrop 1.2s infinite' }}>💦</div>
+          <div className="pointer-events-none absolute -top-3 right-1/4 text-sm" style={{ animation: 'sweatDrop 1.2s 0.6s infinite' }}>💦</div>
+
+          {/* Bong bóng kêu cứu */}
+          <div
+            className="flex flex-col items-center"
+            style={{ animation: 'petBubblePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
+          >
+            <div className="rounded-xl border-2 border-red-500 bg-amber-50 px-2.5 py-1.5 text-center text-[11px] font-extrabold text-red-700 shadow-xl animate-pulse">
+              {activeSpeech?.petId === 'dinh-leo-pair'
+                ? activeSpeech.text
+                : '😱 DÍNH LẸO RỒI! Bấm tạt nước cứu tụi em với! 💦'}
+            </div>
+            <div className="h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-red-500" />
+          </div>
+        </div>
+      )}
 
       {/* ═══ WALKING PETS ═══ */}
       {WALKING_PETS.map((pet, i) => {
         const PetEl = pet.El;
         const isSpeaking = activeSpeech?.petId === pet.id;
+        const isDinhLeoDog = dinhLeoActive && (pet.id === 'pet-dog-cauvang' || pet.id === 'pet-corgi-banhbao');
 
         return (
           <div
             key={pet.id}
             ref={(el) => { domRefs.current[pet.id] = el; }}
             onClick={(e) => handleTap(pet, i, e)}
-            className="absolute z-20 cursor-pointer select-none pointer-events-auto pet-walk"
+            className={`absolute z-20 cursor-pointer select-none pointer-events-auto pet-walk ${
+              isDinhLeoDog ? 'dinh-leo-wiggle' : ''
+            }`}
             style={{
               bottom: 12,
               left: 0,
               transform: `translateX(${pet.startX}px) scaleX(${pet.startDir})`,
               ['--walk-spd' as string]: `${0.28 + 0.1 * (1 / (pet.speed / 20))}s`,
             }}
-            title={`${pet.emoji} ${pet.name} (Bấm để cưng nựng)`}
+            title={`${pet.emoji} ${pet.name} ${isDinhLeoDog ? '(Đang dính lẹo - bấm để gỡ!)' : '(Bấm để cưng nựng)'}`}
           >
-            {/* Bong bóng thoại — flip text nếu pet đang scaleX(-1) */}
-            {isSpeaking && (
+            {/* Bong bóng thoại thường — flip text nếu pet đang scaleX(-1) */}
+            {isSpeaking && !dinhLeoActive && (
               <div
                 className="pointer-events-none absolute -top-10 left-1/2 z-30 flex flex-col items-center"
                 style={{
                   animation: 'petBubblePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                  transform: `translateX(-50%) scaleX(${simsRef.current[i].dir})`,
+                  transform: `translateX(-50%) scaleX(${activeSpeech!.dir})`,
                 }}
               >
                 <div className="whitespace-nowrap rounded-xl border border-[#78533D] bg-[#FFFDF7] px-3 py-1.5 text-xs font-bold text-[#3E2A1B] shadow-md">
@@ -594,38 +880,20 @@ export default function StreetPets({
               </div>
             )}
 
-            {/* Wrapper bob lên xuống khi đi */}
-            <div className="pet-walking">
-              <PetEl night={isNight} />
+            {/* Wrapper bob lên xuống khi đi hoặc giật giật khi dính lẹo */}
+            <div className={isDinhLeoDog ? '' : 'pet-walking'}>
+              <PetEl night={isNight} awkward={isDinhLeoDog} />
             </div>
           </div>
         );
       })}
 
-      {/* ═══ LỒNG CHIM CỐ ĐỊNH ═══ */}
-      {BIRD_DEF.x < streetWidth - 80 && (
-        <div className="absolute z-20" style={{ left: BIRD_DEF.x, top: BIRD_DEF.y }}>
-          {activeSpeech?.petId === BIRD_DEF.id && (
-            <div
-              className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center"
-              style={{ animation: 'petBubblePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}
-            >
-              <div className="whitespace-nowrap rounded-xl border border-[#78533D] bg-[#FFFDF7] px-3 py-1.5 text-xs font-bold text-[#3E2A1B] shadow-md">
-                {activeSpeech.text}
-              </div>
-              <div className="h-0 w-0 border-x-4 border-t-4 border-x-transparent border-t-[#78533D]" />
-            </div>
-          )}
-          <BirdCage night={isNight} onClick={(e) => handleTap(BIRD_DEF, null, e)} />
-        </div>
-      )}
-
-      {/* ═══ HIỆU ỨNG BAY LÊN ═══ */}
+      {/* ═══ HIỆU ỨNG BAY LÊN (COINS, TIM, NƯỚC) ═══ */}
       {effects.map((eff) => (
         <div
           key={eff.id}
-          className="pointer-events-none absolute z-30 select-none text-base"
-          style={{ left: eff.x, top: eff.y, animation: 'heartSparkle 1.1s cubic-bezier(0.2,0.8,0.2,1) forwards' }}
+          className="pointer-events-none absolute z-40 select-none text-xs font-black text-amber-900 bg-amber-100/90 px-1.5 py-0.5 rounded shadow border border-amber-300"
+          style={{ left: eff.x, top: eff.y, animation: 'heartSparkle 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards' }}
         >
           {eff.text}
         </div>
@@ -633,3 +901,4 @@ export default function StreetPets({
     </>
   );
 }
+

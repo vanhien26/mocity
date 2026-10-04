@@ -101,26 +101,6 @@ export function FloatingNumbers(): React.JSX.Element {
   );
 }
 
-export function useBouncyCounter(value: number) {
-  const [displayValue, setDisplayValue] = useState(value);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    if (value !== displayValue) {
-      setDisplayValue(value);
-      setIsAnimating(true);
-      const timer = setTimeout(() => setIsAnimating(false), 200);
-      return () => clearTimeout(timer);
-    }
-  }, [value, displayValue]);
-
-  return {
-    displayValue,
-    isAnimating,
-    className: isAnimating ? 'mj-bounce-anim' : '',
-  };
-}
-
 export function GameJuiceStyles(): React.JSX.Element {
   return (
     <style dangerouslySetInnerHTML={{ __html: `

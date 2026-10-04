@@ -16,7 +16,7 @@ export const ZONES: Record<ZoneMeta['type'], ZoneMeta> = {
     color: '#EB2F96',
     tint: '#FFF0F8',
     ring: '#FFD6EE',
-    description: 'Cửa hàng ăn uống, vé xem phim, du lịch kiếm Xu mỗi giây.',
+    description: 'Cửa hàng ăn uống, vé xem phim, du lịch kiếm đồng mỗi giây.',
   },
   FINTECH: {
     type: 'FINTECH',
@@ -55,11 +55,11 @@ export const BUILDINGS: BuildingDef[] = [
     icon: 'coffee',
     zone: 'COMMERCIAL',
     momoServiceTag: 'MoMo QR · Đặt Đồ Uống',
-    description: 'Cửa hàng khởi đầu thu hút sinh viên & dân văn phòng, đẻ Xu đều tay.',
-    baseYieldPerSec: 1.2,
+    description: 'Cửa hàng khởi đầu thu hút sinh viên & dân văn phòng, đẻ đồng đều tay.',
+        baseYieldPerSec: 4000,
     baseHappiness: 3,
     population: 0,
-    costCoins: 60,
+        costCoins: 15000000,
     costGems: 0,
     cogsRate: 0.45,
     opexRate: 0.35,
@@ -71,7 +71,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 1,
     unlockAtTier: 1,
     synergyWith: ['ky-tuc-xa-sinh-vien', 'rap-phim-momo', 'nha-pho-binh-dan'],
-    synergyLabel: 'Combo Cà Phê & Phim/Sinh Viên (+25% Xu)',
+    synergyLabel: 'Combo Cà Phê & Phim/Sinh Viên (+25% đồng)',
   },
   {
     id: 'nha-pho-binh-dan',
@@ -81,10 +81,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'RESIDENTIAL',
     momoServiceTag: 'Cư Dân Đô Thị',
     description: 'Xây dựng tổ ấm cho 90 cư dân mới đến sinh sống và chi tiêu tại các cửa hàng.',
-    baseYieldPerSec: 0.5,
+        baseYieldPerSec: 15000,
     baseHappiness: 5,
     population: 90,
-    costCoins: 80,
+        costCoins: 50000000,
     costGems: 0,
     cogsRate: 0.15,
     opexRate: 0.3,
@@ -95,20 +95,20 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 1,
     unlockAtTier: 1,
     synergyWith: ['cong-vien', 'sieu-thi', 'tram-hoa-don'],
-    synergyLabel: 'Combo Khu Dân Sinh Tiện Nghi (+25% Xu)',
+    synergyLabel: 'Combo Khu Dân Sinh Tiện Nghi (+25% đồng)',
   },
   {
     id: 'sieu-thi',
-    name: 'Siêu Thị Tiện Lợi MoMo',
+    name: 'Siêu Thị Tiện Lợi',
     shortName: 'Siêu thị',
     icon: 'store',
     zone: 'COMMERCIAL',
     momoServiceTag: 'Đi Chợ Online · Hoàn Tiền',
     description: 'Cung cấp nhu yếu phẩm hàng ngày cho toàn bộ khu dân cư.',
-    baseYieldPerSec: 2.2,
+        baseYieldPerSec: 34000,
     baseHappiness: 2,
     population: 0,
-    costCoins: 140,
+        costCoins: 180000000,
     costGems: 0,
     cogsRate: 0.42,
     opexRate: 0.28,
@@ -120,7 +120,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 1,
     unlockAtTier: 1,
     synergyWith: ['nha-pho-binh-dan', 'chung-cu-cao-cap', 'tram-tui-than-tai'],
-    synergyLabel: 'Combo Siêu Thị Cạnh Khu Dân Cư (+25% Xu)',
+    synergyLabel: 'Combo Siêu Thị Cạnh Khu Dân Cư (+25% đồng)',
   },
   {
     id: 'cong-vien',
@@ -130,10 +130,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'RESIDENTIAL',
     momoServiceTag: 'Môi Trường Xanh',
     description: 'Tăng mạnh Hạnh Phúc cư dân, kéo theo hệ số nhân doanh thu toàn thành phố.',
-    baseYieldPerSec: 0.6,
+        baseYieldPerSec: 20000,
     baseHappiness: 15,
     population: 20,
-    costCoins: 240,
+        costCoins: 80000000,
     costGems: 0,
     cogsRate: 0.4,
     opexRate: 0.38,
@@ -144,7 +144,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 1,
     unlockAtTier: 1,
     synergyWith: ['nha-pho-binh-dan', 'ky-tuc-xa-sinh-vien', 'chung-cu-cao-cap'],
-    synergyLabel: 'Combo Đô Thị Xanh An Cư (+25% Xu)',
+    synergyLabel: 'Combo Đô Thị Xanh An Cư (+25% đồng)',
   },
   {
     id: 'ky-tuc-xa-sinh-vien',
@@ -154,10 +154,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'RESIDENTIAL',
     momoServiceTag: 'Cộng Đồng Sinh Viên',
     description: 'Đón 180 sinh viên trẻ cực kỳ chuộng quét QR, uống trà sữa và đặt vé xem phim.',
-    baseYieldPerSec: 1.4,
+        baseYieldPerSec: 45000,
     baseHappiness: 8,
     population: 180,
-    costCoins: 340,
+        costCoins: 120000000,
     costGems: 0,
     cogsRate: 0.2,
     opexRate: 0.32,
@@ -168,7 +168,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 2,
     unlockAtTier: 2,
     synergyWith: ['quan-ca-phe', 'rap-phim-momo', 'pho-am-thuc'],
-    synergyLabel: 'Combo Làng Đại Học Sôi Động (+25% Xu)',
+    synergyLabel: 'Combo Làng Đại Học Sôi Động (+25% đồng)',
   },
   {
     id: 'pho-am-thuc',
@@ -177,11 +177,11 @@ export const BUILDINGS: BuildingDef[] = [
     icon: 'utensils',
     zone: 'COMMERCIAL',
     momoServiceTag: 'Ẩm Thực & Quét Mã QR',
-    description: 'Tụ điểm ăn uống tấp nập, tăng cả doanh thu Xu lẫn điểm Hạnh Phúc.',
-    baseYieldPerSec: 3.8,
+    description: 'Tụ điểm ăn uống tấp nập, tăng cả doanh thu đồng lẫn điểm Hạnh Phúc.',
+        baseYieldPerSec: 26000,
     baseHappiness: 7,
     population: 0,
-    costCoins: 450,
+        costCoins: 250000000,
     costGems: 0,
     cogsRate: 0.48,
     opexRate: 0.34,
@@ -193,20 +193,20 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 2,
     unlockAtTier: 2,
     synergyWith: ['rap-phim-momo', 'ky-tuc-xa-sinh-vien', 'to-hop-du-lich'],
-    synergyLabel: 'Combo Ăn Khuya & Xem Phim (+25% Xu)',
+    synergyLabel: 'Combo Ăn Khuya & Xem Phim (+25% đồng)',
   },
   {
     id: 'rap-phim-momo',
-    name: 'Rạp Chiếu Phim MoMo Cinema',
+    name: 'Rạp Chiếu Phim Phố Thị',
     shortName: 'Rạp phim',
     icon: 'film',
     zone: 'COMMERCIAL',
     momoServiceTag: 'Đặt Vé Xem Phim & Bắp Nước',
-    description: 'Điểm hẹn giải trí bom tấn! Kiếm Xu lớn mỗi suất chiếu và tăng mạnh Hạnh Phúc.',
-    baseYieldPerSec: 5.6,
+    description: 'Điểm hẹn giải trí bom tấn! Kiếm đồng lớn mỗi suất chiếu và tăng mạnh Hạnh Phúc.',
+        baseYieldPerSec: 80000,
     baseHappiness: 14,
     population: 0,
-    costCoins: 680,
+        costCoins: 450000000,
     costGems: 0,
     cogsRate: 0.55,
     opexRate: 0.3,
@@ -218,7 +218,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 2,
     unlockAtTier: 3,
     synergyWith: ['quan-ca-phe', 'pho-am-thuc', 'trung-tam-thuong-mai'],
-    synergyLabel: 'Combo Xem Phim & Trà Sữa/Ẩm Thực (+25% Xu)',
+    synergyLabel: 'Combo Xem Phim & Trà Sữa/Ẩm Thực (+25% đồng)',
   },
   {
     id: 'tram-tui-than-tai',
@@ -227,11 +227,11 @@ export const BUILDINGS: BuildingDef[] = [
     icon: 'piggy',
     zone: 'FINTECH',
     momoServiceTag: 'Tiết Kiệm Sinh Lời Mỗi Ngày',
-    description: 'Giúp tổng Xu nhàn rỗi của Thị Trưởng tự đẻ lãi kép mỗi giây và buff cho ô liền kề.',
-    baseYieldPerSec: 4.8,
+    description: 'Giúp tổng đồng nhàn rỗi của Thị Trưởng tự đẻ lãi kép mỗi giây và buff cho ô liền kề.',
+        baseYieldPerSec: 150000,
     baseHappiness: 6,
     population: 0,
-    costCoins: 780,
+        costCoins: 200000000,
     costGems: 1,
     cogsRate: 0.12,
     opexRate: 0.15,
@@ -243,7 +243,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 2,
     unlockAtTier: 2,
     synergyWith: ['sieu-thi', 'ngan-hang-so', 'san-chung-khoan', 'chung-cu-cao-cap'],
-    synergyLabel: 'Hào Quang Lãi Kép Thần Tài (+25% Xu)',
+    synergyLabel: 'Hào Quang Lãi Kép Thần Tài (+25% đồng)',
   },
   {
     id: 'tram-hoa-don',
@@ -253,10 +253,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'COMMERCIAL',
     momoServiceTag: 'Thanh Toán Điện · Nước · Internet',
     description: 'Hạ tầng thu phí tiện ích tự động từ toàn bộ các khu nhà ở và chung cư.',
-    baseYieldPerSec: 6.4,
+        baseYieldPerSec: 205000,
     baseHappiness: 8,
     population: 0,
-    costCoins: 890,
+        costCoins: 150000000,
     costGems: 0,
     cogsRate: 0.25,
     opexRate: 0.28,
@@ -268,20 +268,20 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 3,
     unlockAtTier: 3,
     synergyWith: ['nha-pho-binh-dan', 'chung-cu-cao-cap', 'trung-tam-du-lieu'],
-    synergyLabel: 'Combo Hạ Tầng Đô Thị Thông Minh (+25% Xu)',
+    synergyLabel: 'Combo Hạ Tầng Đô Thị Thông Minh (+25% đồng)',
   },
   {
     id: 'ngan-hang-so',
-    name: 'Ngân Hàng Số MoMo',
+    name: 'Ngân Hàng Số',
     shortName: 'Ngân hàng',
     icon: 'landmark',
     zone: 'FINTECH',
     momoServiceTag: 'Tài Khoản Số & Vay Nhanh',
     description: 'Trụ cột tài chính đô thị, cấp vốn cho tiểu thương và tăng phí hạ tầng giao dịch.',
-    baseYieldPerSec: 7.5,
+        baseYieldPerSec: 250000,
     baseHappiness: 4,
     population: 0,
-    costCoins: 1_050,
+        costCoins: 800000000,
     costGems: 2,
     cogsRate: 0.15,
     opexRate: 0.22,
@@ -293,7 +293,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 3,
     unlockAtTier: 3,
     synergyWith: ['tram-tui-than-tai', 'trung-tam-vi-tra-sau', 'san-chung-khoan'],
-    synergyLabel: 'Combo Trung Tâm Tài Chính Số (+25% Xu)',
+    synergyLabel: 'Combo Trung Tâm Tài Chính Số (+25% đồng)',
   },
   {
     id: 'trung-tam-vi-tra-sau',
@@ -303,10 +303,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'FINTECH',
     momoServiceTag: 'Mua Trước Trả Sau · Có Kỳ Hạn Trả',
     description: 'Cấp hạn mức mua trước cho cư dân và thu phí thương nhân. Thành phố chịu rủi ro tín dụng: cấp vượt khả năng trả của dân thì nợ xấu ăn vào lợi nhuận.',
-    baseYieldPerSec: 8.8,
+        baseYieldPerSec: 300000,
     baseHappiness: 7,
     population: 0,
-    costCoins: 1_280,
+        costCoins: 600000000,
     costGems: 2,
     cogsRate: 0.1,
     opexRate: 0.18,
@@ -318,7 +318,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 3,
     unlockAtTier: 4,
     synergyWith: ['trung-tam-thuong-mai', 'rap-phim-momo', 'to-hop-du-lich'],
-    synergyLabel: 'Combo Kích Cầu Mua Sắm Trả Sau (+25% Xu)',
+    synergyLabel: 'Combo Kích Cầu Mua Sắm Trả Sau (+25% đồng)',
   },
   {
     id: 'chung-cu-cao-cap',
@@ -328,10 +328,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'RESIDENTIAL',
     momoServiceTag: 'Cư Dân Văn Phòng & Gia Đình',
     description: 'Tòa tháp căn hộ hiện đại cung cấp 320 cư dân thu nhập cao cho thành phố.',
-    baseYieldPerSec: 3.2,
+        baseYieldPerSec: 100000,
     baseHappiness: 10,
     population: 320,
-    costCoins: 1_450,
+        costCoins: 350000000,
     costGems: 2,
     cogsRate: 0.18,
     opexRate: 0.25,
@@ -342,7 +342,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 4,
     unlockAtTier: 4,
     synergyWith: ['cong-vien', 'sieu-thi', 'trung-tam-thuong-mai'],
-    synergyLabel: 'Combo Đô Thị Kiểu Mẫu (+25% Xu)',
+    synergyLabel: 'Combo Đô Thị Kiểu Mẫu (+25% đồng)',
   },
   {
     id: 'to-hop-du-lich',
@@ -351,11 +351,11 @@ export const BUILDINGS: BuildingDef[] = [
     icon: 'plane',
     zone: 'COMMERCIAL',
     momoServiceTag: 'Vé Máy Bay · Khách Sạn · Tàu Xe',
-    description: 'Đón các đoàn du khách VIP đến tham quan và chi tiêu Xu lớn tại thành phố.',
-    baseYieldPerSec: 11.5,
+    description: 'Đón các đoàn du khách VIP đến tham quan và chi tiêu đồng lớn tại thành phố.',
+        baseYieldPerSec: 1155000,
     baseHappiness: 12,
     population: 60,
-    costCoins: 1_750,
+        costCoins: 1200000000,
     costGems: 3,
     cogsRate: 0.5,
     opexRate: 0.32,
@@ -367,7 +367,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 4,
     unlockAtTier: 5,
     synergyWith: ['pho-am-thuc', 'trung-tam-thuong-mai', 'thap-momo'],
-    synergyLabel: 'Combo Du Lịch & Mua Sắm Quốc Tế (+25% Xu)',
+    synergyLabel: 'Combo Du Lịch & Mua Sắm Quốc Tế (+25% đồng)',
   },
   {
     id: 'trung-tam-thuong-mai',
@@ -377,10 +377,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'COMMERCIAL',
     momoServiceTag: 'Đại Siêu Thị & Mua Sắm',
     description: 'Đầu tàu thương mại sầm uất nhất, thu hút hàng ngàn lượt quét mã mỗi ngày.',
-    baseYieldPerSec: 14.2,
+        baseYieldPerSec: 1097000,
     baseHappiness: 10,
     population: 0,
-    costCoins: 2_200,
+        costCoins: 3800000000,
     costGems: 3,
     cogsRate: 0.46,
     opexRate: 0.26,
@@ -392,7 +392,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 5,
     unlockAtTier: 5,
     synergyWith: ['rap-phim-momo', 'trung-tam-vi-tra-sau', 'chung-cu-cao-cap'],
-    synergyLabel: 'Combo Tổ Hợp Mua Sắm & Giải Trí (+25% Xu)',
+    synergyLabel: 'Combo Tổ Hợp Mua Sắm & Giải Trí (+25% đồng)',
   },
   {
     id: 'hoc-vien-tai-chinh',
@@ -402,10 +402,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'FINTECH',
     momoServiceTag: 'Giáo Dục Tài Chính Thông Minh',
     description: 'Đào tạo chuyên gia, tăng dân số chất lượng cao và nâng tầm hiểu biết tài chính.',
-    baseYieldPerSec: 9.6,
+        baseYieldPerSec: 320000,
     baseHappiness: 12,
     population: 160,
-    costCoins: 1_900,
+        costCoins: 900000000,
     costGems: 3,
     cogsRate: 0.25,
     opexRate: 0.3,
@@ -417,7 +417,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 5,
     unlockAtTier: 6,
     synergyWith: ['ky-tuc-xa-sinh-vien', 'san-chung-khoan'],
-    synergyLabel: 'Combo Tri Thức Đầu Tư (+25% Xu)',
+    synergyLabel: 'Combo Tri Thức Đầu Tư (+25% đồng)',
   },
   {
     id: 'san-chung-khoan',
@@ -427,10 +427,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'FINTECH',
     momoServiceTag: 'Chứng Chỉ Quỹ · Cổ Phiếu · Vàng',
     description: 'Nơi dòng vốn của cư dân sinh sôi mạnh mẽ, mang lại nguồn thu khổng lồ cho đô thị.',
-    baseYieldPerSec: 18.5,
+        baseYieldPerSec: 600000,
     baseHappiness: 8,
     population: 0,
-    costCoins: 2_900,
+        costCoins: 1500000000,
     costGems: 5,
     cogsRate: 0.08,
     opexRate: 0.2,
@@ -442,7 +442,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 5,
     unlockAtTier: 6,
     synergyWith: ['ngan-hang-so', 'tram-tui-than-tai', 'trung-tam-du-lieu'],
-    synergyLabel: 'Combo Phố Wall Tài Chính (+25% Xu)',
+    synergyLabel: 'Combo Phố Wall Tài Chính (+25% đồng)',
   },
   {
     id: 'trung-tam-du-lieu',
@@ -452,10 +452,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'FINTECH',
     momoServiceTag: 'Bảo Mật PCI-DSS & AI',
     description: 'Trái tim công nghệ xử lý hàng triệu giao dịch mỗi giây, tối ưu hóa toàn hệ thống.',
-    baseYieldPerSec: 22.0,
+        baseYieldPerSec: 750000,
     baseHappiness: 5,
     population: 0,
-    costCoins: 3_600,
+        costCoins: 2200000000,
     costGems: 6,
     cogsRate: 0.2,
     opexRate: 0.35,
@@ -467,7 +467,7 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 6,
     unlockAtTier: 7,
     synergyWith: ['san-chung-khoan', 'ngan-hang-so', 'thap-momo'],
-    synergyLabel: 'Combo Lõi Siêu Ứng Dụng (+25% Xu)',
+    synergyLabel: 'Combo Lõi Siêu Ứng Dụng (+25% đồng)',
   },
   {
     id: 'quang-truong-heo-vang',
@@ -477,10 +477,10 @@ export const BUILDINGS: BuildingDef[] = [
     zone: 'LANDMARK',
     momoServiceTag: 'MoMo Nhân Ái · Cộng Đồng',
     description: 'Biểu tượng sẻ chia và tiết kiệm, lan tỏa Hạnh Phúc cực đại cho toàn thể cư dân.',
-    baseYieldPerSec: 26.0,
+        baseYieldPerSec: 850000,
     baseHappiness: 26,
     population: 120,
-    costCoins: 4_800,
+        costCoins: 600000000,
     costGems: 8,
     cogsRate: 0.3,
     opexRate: 0.25,
@@ -491,20 +491,20 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 7,
     unlockAtTier: 7,
     synergyWith: ['cong-vien', 'thap-momo', 'tram-tui-than-tai'],
-    synergyLabel: 'Combo Hào Quang Thiện Nguyện (+25% Xu)',
+    synergyLabel: 'Combo Hào Quang Thiện Nguyện (+25% đồng)',
   },
   {
     id: 'thap-momo',
-    name: 'Tháp Đôi MoMo Tower',
+    name: 'Tháp Đôi Phố Thị',
     shortName: 'Tháp MoMo',
     icon: 'tower',
     zone: 'LANDMARK',
     momoServiceTag: 'Kỳ Quan Siêu Ứng Dụng',
-    description: 'Đỉnh cao kiến trúc của MoCity, tăng mạnh cả Dân số, Hạnh Phúc lẫn tốc độ kiếm Xu.',
-    baseYieldPerSec: 42.0,
+    description: 'Đỉnh cao kiến trúc của MoCity, tăng mạnh cả Dân số, Hạnh Phúc lẫn tốc độ kiếm đồng.',
+        baseYieldPerSec: 1400000,
     baseHappiness: 32,
     population: 450,
-    costCoins: 8_500,
+        costCoins: 2500000000,
     costGems: 15,
     cogsRate: 0.14,
     opexRate: 0.22,
@@ -516,13 +516,76 @@ export const BUILDINGS: BuildingDef[] = [
     unlockAtMayorLevel: 8,
     unlockAtTier: 8,
     synergyWith: ['san-chung-khoan', 'trung-tam-thuong-mai', 'quang-truong-heo-vang'],
-    synergyLabel: 'Combo Kỳ Quan Phồn Vinh (+25% Xu)',
+    synergyLabel: 'Combo Kỳ Quan Phồn Vinh (+25% đồng)',
   },
 ];
 
 export const BUILDING_BY_ID: Record<string, BuildingDef> = Object.fromEntries(
   BUILDINGS.map((b) => [b.id, b]),
 );
+
+/**
+ * MENU TỪNG TIỆM - "khách đến order đa dạng" thay vì một con số vô danh.
+ *
+ * Chỉ 7 tiệm COMMERCIAL có khách xếp hàng thật (xem `arrivalRateFor` trong
+ * `transactions.ts`), nên chỉ 7 tiệm này cần menu. Mỗi món có `priceRatio`
+ * neo quanh 1.0 - trung bình CỘNG của một menu LUÔN đúng bằng 1.0 (vd
+ * 0,55+0,85+1,10+1,50 = 4,0 / 4 món = 1.0), để không phải cân bằng lại
+ * `orderValueFor`: món rẻ/đắt chỉ xáo trộn TỪNG đơn, tổng nhiều đơn vẫn
+ * khớp đúng tiềm năng gốc của tiệm - đúng nguyên tắc `ORDER_VARIANCE_CYCLE`
+ * cũ, giờ gắn tên món thật thay vì một hệ số vô nghĩa.
+ */
+export interface MenuItemDef {
+  /** Tên món hiện trong bong bóng thoại và sổ cái. */
+  name: string;
+  /** Hệ số giá so với giá trị đơn trung bình của tiệm - trung bình 1 menu = 1.0. */
+  priceRatio: number;
+}
+
+export const MENU_BY_BUILDING: Record<string, MenuItemDef[]> = {
+  'quan-ca-phe': [
+    { name: 'Cà Phê Đen', priceRatio: 0.54 },
+    { name: 'Cà Phê Sữa Đá', priceRatio: 0.89 },
+    { name: 'Bạc Xỉu', priceRatio: 1.14 },
+    { name: 'Trà Sữa Trân Châu', priceRatio: 1.43 },
+  ],
+  'sieu-thi': [
+    { name: 'Mì Gói & Đồ Khô', priceRatio: 0.44 },
+    { name: 'Nước Ngọt Lốc 6 Lon', priceRatio: 0.67 },
+    { name: 'Đồ Ăn Vặt Linh Tinh', priceRatio: 1.11 },
+    { name: 'Giỏ Hàng Gia Đình', priceRatio: 1.78 },
+  ],
+  'pho-am-thuc': [
+    { name: 'Bánh Tráng Trộn', priceRatio: 0.38 },
+    { name: 'Ốc Các Loại', priceRatio: 0.69 },
+    { name: 'Nem Nướng Cuốn', priceRatio: 1.08 },
+    { name: 'Lẩu Băng Chuyền', priceRatio: 1.85 },
+  ],
+  'rap-phim-momo': [
+    { name: 'Vé 2D', priceRatio: 0.47 },
+    { name: 'Combo Bắp Nước', priceRatio: 0.73 },
+    { name: 'Vé 3D', priceRatio: 1 },
+    { name: 'Vé VIP Đôi', priceRatio: 1.8 },
+  ],
+  'tram-hoa-don': [
+    { name: 'Hóa Đơn Điện', priceRatio: 0.59 },
+    { name: 'Hóa Đơn Nước', priceRatio: 0.82 },
+    { name: 'Hóa Đơn Internet', priceRatio: 1.06 },
+    { name: 'Phí Dịch Vụ Gộp Tháng', priceRatio: 1.53 },
+  ],
+  'to-hop-du-lich': [
+    { name: 'Vé Tàu Xe', priceRatio: 0.15 },
+    { name: 'Tour Trong Ngày', priceRatio: 0.45 },
+    { name: 'Vé Máy Bay Giá Rẻ', priceRatio: 1.33 },
+    { name: 'Phòng Khách Sạn', priceRatio: 2.07 },
+  ],
+  'trung-tam-thuong-mai': [
+    { name: 'Phụ Kiện Linh Tinh', priceRatio: 0.21 },
+    { name: 'Giày Dép', priceRatio: 0.51 },
+    { name: 'Quần Áo Thời Trang', priceRatio: 0.98 },
+    { name: 'Đồ Gia Dụng', priceRatio: 2.3 },
+  ],
+};
 
 /** 3 Tiện ích MoMo gắn trực tiếp vào từng cửa hàng (IDLE RPG Tech Modules) */
 export const STORE_MODULES: StoreModuleDef[] = [
@@ -531,9 +594,9 @@ export const STORE_MODULES: StoreModuleDef[] = [
     name: 'MoMo QR & Loa Thần Tài',
     shortName: 'Loa QR',
     serviceTag: 'Thanh Toán 1 Chạm',
-    description: 'Tự động thu Xu liên tục, báo tiền về tức thì và tăng +25% tốc độ phục vụ đơn hàng.',
+    description: 'Quét mã 1 chạm báo tiền về tức thì, tăng +25% sản lượng tiệm.',
     unlockLevel: 1,
-    costCoins: 90,
+    costCoins: 500_000,
     yieldBonus: 0.25,
     color: '#EB2F96',
   },
@@ -542,9 +605,9 @@ export const STORE_MODULES: StoreModuleDef[] = [
     name: 'Ví Trả Sau & Thẻ Quà Tặng',
     shortName: 'Ví Trả Sau',
     serviceTag: 'Chi Tiêu Trước Trả Sau',
-    description: 'Cư dân thoải mái chốt đơn lớn và săn deal, tăng +50% sản lượng Xu của công trình.',
+    description: 'Cư dân thoải mái chốt đơn lớn và săn deal, tăng +50% sản lượng đồng của công trình.',
     unlockLevel: 3,
-    costCoins: 280,
+    costCoins: 2_000_000,
     yieldBonus: 0.5,
     color: '#8B5CF6',
   },
@@ -553,9 +616,9 @@ export const STORE_MODULES: StoreModuleDef[] = [
     name: 'Kết Nối Túi Thần Tài Tự Động',
     shortName: 'Túi Thần Tài',
     serviceTag: 'Lãi Kép Doanh Thu',
-    description: 'Tự động trích doanh thu cửa hàng sinh lời kép, tăng +65% sản lượng Xu mỗi giây.',
+    description: 'Tự động trích doanh thu cửa hàng sinh lời kép, tăng +65% sản lượng đồng mỗi giây.',
     unlockLevel: 5,
-    costCoins: 650,
+    costCoins: 5_000_000,
     yieldBonus: 0.65,
     color: '#F59E0B',
   },
@@ -577,7 +640,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     skillDesc: 'Chuyên gia bán lẻ phố thị, tăng +30% Xu/giây cho cửa hàng được giao quản lý.',
     yieldMultiplier: 0.3,
     happinessBonus: 3,
-    costCoins: 200,
+    costCoins: 12_000_000,
     costGems: 0,
     hue: '#EB2F96',
   },
@@ -591,7 +654,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     skillDesc: 'Tối ưu hóa đơn hàng ăn uống và siêu thị, tăng +35% Xu/giây và +4 Hạnh phúc.',
     yieldMultiplier: 0.35,
     happinessBonus: 4,
-    costCoins: 350,
+    costCoins: 15_000_000,
     costGems: 0,
     hue: '#F59E0B',
   },
@@ -605,7 +668,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     skillDesc: 'Tạo cơn sốt vé xem phim & giải trí đêm, tăng +65% Xu/giây và +8 Hạnh phúc.',
     yieldMultiplier: 0.65,
     happinessBonus: 8,
-    costCoins: 750,
+    costCoins: 35_000_000,
     costGems: 2,
     hue: '#EC4899',
   },
@@ -619,7 +682,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     skillDesc: 'Nâng tầm chất lượng sống cư dân & khách sạn, tăng +70% Xu/giây và +10 Hạnh phúc.',
     yieldMultiplier: 0.7,
     happinessBonus: 10,
-    costCoins: 900,
+    costCoins: 45_000_000,
     costGems: 2,
     hue: '#06B6D4',
   },
@@ -633,7 +696,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     skillDesc: 'Bậc thầy quản lý tài sản số, tăng +120% Xu/giây và kích thích lãi suất toàn phố.',
     yieldMultiplier: 1.2,
     happinessBonus: 12,
-    costCoins: 1_800,
+    costCoins: 90_000_000,
     costGems: 3,
     hue: '#2563EB',
   },
@@ -647,7 +710,7 @@ export const STORE_MANAGERS: ManagerDef[] = [
     skillDesc: 'Thiên tài công nghệ điều phối mọi phân khu, tăng +135% Xu/giây và +15 Hạnh phúc.',
     yieldMultiplier: 1.35,
     happinessBonus: 15,
-    costCoins: 2_500,
+    costCoins: 150_000_000,
     costGems: 4,
     hue: '#8B5CF6',
   },
@@ -661,72 +724,72 @@ export const MANAGER_BY_ID: Record<string, ManagerDef> = Object.fromEntries(
 export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-name-city',
-    title: 'Khai Sinh Đô Thị — Đặt Tên Sao Cho Sang Miệng',
+    title: 'Đặt tên thành phố',
     description: 'Bấm vào bảng tên trên thanh HUD để đặt tên Thị Trưởng & Thành Phố (đừng để tên mặc định kẻo Shipper tìm không ra!).',
-    rewardCoins: 200,
+    rewardCoins: 5_000_000,
     rewardGems: 3,
     stage: 1,
     rewardXp: 150,
   },
   {
     id: 'q-first-home',
-    title: 'Chấm Dứt Cảnh Ngủ Ghế Đá Công Viên',
+    title: 'Xây khu dân cư đầu tiên',
     description: 'Xây dựng ít nhất 1 công trình Dân Cư (Khu Nhà Phố hoặc Ký Túc Xá Sinh Viên) để bà con có chỗ che mưa che nắng.',
-    rewardCoins: 300,
+    rewardCoins: 15_000_000,
     rewardGems: 3,
     stage: 1,
     rewardXp: 200,
   },
   {
     id: 'q-first-store',
-    title: 'Khởi Nghiệp Trà Sữa & Cà Phê Hốt Bạc',
-    description: 'Xây dựng 1 Cửa Hàng thương mại đầu tiên để dân tình có chỗ “chữa lành” và tạo dòng XU/giây tự động.',
-    rewardCoins: 400,
+    title: 'Mở cửa hàng đầu tiên',
+    description: 'Xây dựng 1 Cửa Hàng thương mại đầu tiên để dân tình có chỗ “chữa lành” và tạo dòng đồng/giây tự động.',
+    rewardCoins: 10_000_000,
     rewardGems: 4,
     stage: 1,
     rewardXp: 250,
   },
   {
     id: 'q-install-qr',
-    title: 'Giải Cứu Cô Tư Khỏi Cảnh Thối Tiền Bằng Kẹo Cao Su',
+    title: 'Lắp QR MoMo',
     description: 'Bấm vào 1 cửa hàng trên bản đồ và lắp đặt tiện ích “MoMo QR & Loa Thần Tài” đọc tiền về vang dội.',
-    rewardCoins: 700,
+    rewardCoins: 12_000_000,
     rewardGems: 5,
     stage: 1,
     rewardXp: 400,
   },
   {
     id: 'q-milestone-lv5',
-    title: 'Lên Đời Cửa Hàng — Đột Phá Cấp 5 Nhận x2 Doanh Thu',
-    description: 'Nâng cấp bất kỳ cửa hàng nào đạt mốc Cấp 5 để kích hoạt hệ số nhân đôi sản lượng XU/giây.',
-    rewardCoins: 1_000,
+    title: 'Nâng cửa hàng lên Cấp 5',
+    description: 'Nâng cấp bất kỳ cửa hàng nào đạt mốc Cấp 5 để kích hoạt hệ số nhân đôi sản lượng đồng/giây.',
+    rewardCoins: 15_000_000,
     rewardGems: 6,
     stage: 1,
     rewardXp: 600,
   },
   {
     id: 'q-cinema-tui-than-tai',
-    title: 'Cứu Tinh Hẹn Hò & Thoát Kiếp Mì Tôm Cuối Tháng',
-    description: 'Xây dựng Rạp Chiếu Phim MoMo Cinema (cho các cặp đôi khỏi ra công viên đếm muỗi) hoặc Trạm Túi Thần Tài (sinh lãi kép).',
-    rewardCoins: 1_500,
+    title: 'Xây Rạp hoặc Túi Thần Tài',
+    description: 'Xây dựng Rạp Chiếu Phim Phố Thị (cho các cặp đôi khỏi ra công viên đếm muỗi) hoặc Trạm Túi Thần Tài (sinh lãi kép).',
+    rewardCoins: 25_000_000,
     rewardGems: 8,
     stage: 1,
     rewardXp: 900,
   },
   {
     id: 'q-hire-manager',
-    title: 'Tuyển CEO Về Trông Quán Nước',
+    title: 'Thuê quản lý đầu tiên',
     description: 'Mở bảng Quản lý Cửa hàng (Tab Quản Lý RPG) và bổ nhiệm 1 Quản Lý chuyên trách để ngồi mát ăn bát vàng.',
-    rewardCoins: 1_800,
+    rewardCoins: 20_000_000,
     rewardGems: 10,
     stage: 1,
     rewardXp: 1_100,
   },
   {
     id: 'q-star-evolve',
-    title: 'Dát Vàng Bảng Hiệu — Tiến Hóa Lên 2 Sao (★★)',
+    title: 'Tiến hóa lên ★★',
     description: 'Tiến hóa bất kỳ công trình nào từ 1★ lên 2★ để cả khu phố phải ngước nhìn.',
-    rewardCoins: 2_200,
+    rewardCoins: 30_000_000,
     rewardGems: 12,
     stage: 1,
     rewardXp: 1_300,
@@ -738,18 +801,18 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
      * hành động thật không tạo thêm doanh thu miễn phí: thuê đủ 2 Quản Lý.
      */
     id: 'q-two-managers',
-    title: 'Mở Rộng Ê Kíp - Thuê 2 Quản Lý Cùng Lúc',
+    title: 'Thuê 2 quản lý',
     description: 'Mở bảng Quản Lý Cửa Hàng và bổ nhiệm Quản Lý cho 2 cửa tiệm khác nhau.',
-    rewardCoins: 1_600,
+    rewardCoins: 35_000_000,
     rewardGems: 8,
     stage: 1,
     rewardXp: 1_000,
   },
   {
     id: 'q-expand-city',
-    title: 'Đại Gia Bất Động Sản — Quy Hoạch 6 Tòa Nhà & 200 Dân',
+    title: '6 công trình & 200 cư dân',
     description: 'Sở hữu từ 6 công trình trở lên và đón ít nhất 200 Cư dân về sinh sống nhộn nhịp.',
-    rewardCoins: 2_300,
+    rewardCoins: 50_000_000,
     rewardGems: 20,
     stage: 1,
     rewardXp: 2_000,
@@ -764,76 +827,76 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
    * tới: tiến hóa sao, module cửa hàng, quản lý, mở rộng đất, chuỗi ngày.
    *
    * Thưởng ở đây phải lớn hơn hẳn chặng một vì tới lúc đó doanh thu mỗi giây
-   * đã vài trăm Xu - thưởng 50.000 Xu không còn là phần thưởng nữa.
+   * đã vài trăm đồng - thưởng 50.000 đồng không còn là phần thưởng nữa.
    */
   {
     id: 'q-full-street',
-    title: 'Kín Mặt Tiền — Lấp Đầy 12 Lô Đất',
+    title: 'Lấp đầy 12 lô đất',
     description: 'Sở hữu 12 công trình trên phố. Đất trống là tiền nằm im, Thị Trưởng ạ.',
-    rewardCoins: 20_000,
+    rewardCoins: 100_000_000,
     rewardGems: 25,
     stage: 2,
     rewardXp: 4_500,
   },
   {
     id: 'q-three-managers',
-    title: 'Bộ Sậu Quản Lý — Bổ Nhiệm 3 Người',
+    title: '3 quản lý cùng lúc',
     description: 'Có ít nhất 3 cửa hàng đang được Quản Lý chuyên trách trông coi cùng lúc.',
-    rewardCoins: 30_000,
+    rewardCoins: 80_000_000,
     rewardGems: 30,
     stage: 2,
     rewardXp: 6_000,
   },
   {
     id: 'q-module-master',
-    title: 'Phủ Sóng Tiện Ích — Lắp 6 Module',
+    title: 'Lắp 6 tiện ích',
     description: 'Lắp tổng cộng 6 tiện ích lên các cửa hàng trong phố (QR, Loa, Ví Trả Sau...).',
-    rewardCoins: 40_000,
+    rewardCoins: 120_000_000,
     rewardGems: 35,
     stage: 2,
     rewardXp: 7_500,
   },
   {
     id: 'q-three-star',
-    title: 'Dát Vàng Toàn Phố — Một Tiệm Lên ★★★',
+    title: 'Tiến hóa lên ★★★',
     description: 'Tiến hóa bất kỳ công trình nào lên 3 sao. Bảng hiệu phải sáng cả khu.',
-    rewardCoins: 55_000,
+    rewardCoins: 150_000_000,
     rewardGems: 40,
     stage: 2,
     rewardXp: 10_000,
   },
   {
     id: 'q-level-20',
-    title: 'Công Trình Cấp 20 — Xây Cho Ra Xây',
+    title: 'Nâng công trình lên Cấp 20',
     description: 'Nâng bất kỳ công trình nào lên Cấp 20.',
-    rewardCoins: 70_000,
+    rewardCoins: 200_000_000,
     rewardGems: 45,
     stage: 2,
     rewardXp: 12_000,
   },
   {
     id: 'q-streak-7',
-    title: 'Bảy Ngày Không Nghỉ — Thị Trưởng Mẫn Cán',
+    title: '7 ngày chơi liên tiếp',
     description: 'Giữ chuỗi ngày chơi liên tiếp đạt 7 ngày.',
-    rewardCoins: 50_000,
+    rewardCoins: 250_000_000,
     rewardGems: 50,
     stage: 2,
     rewardXp: 9_000,
   },
   {
     id: 'q-tier-6',
-    title: 'Lên Rank Đô Thị Quét Mã',
+    title: 'Đạt Rank 6',
     description: 'Đưa thành phố đạt Rank 6 - Đô Thị Quét Mã. Cả phố không còn ai thối tiền lẻ.',
-    rewardCoins: 120_000,
+    rewardCoins: 500_000_000,
     rewardGems: 60,
     stage: 2,
     rewardXp: 18_000,
   },
   {
     id: 'q-landmark',
-    title: 'Biểu Tượng Thành Phố — Dựng Một Landmark',
-    description: 'Xây Quảng Trường Heo Vàng hoặc Tháp Đôi MoMo Tower.',
-    rewardCoins: 90_000,
+    title: 'Xây Landmark',
+    description: 'Xây Quảng Trường Heo Vàng hoặc Tháp Đôi Phố Thị.',
+    rewardCoins: 1_000_000_000,
     rewardGems: 55,
     stage: 2,
     rewardXp: 14_000,
@@ -879,7 +942,7 @@ export function nextMilestoneLevel(level: number): number {
  * phai voi gia xay dung.
  *
  * Ban <= 3 dung `costCoins * 1.42^n`. Van sai vi `costCoins` khong phai he so
- * doanh thu: Thap MoMo dat 8.500 Xu (gap Thap/Ca phe = 140x) nhung san luong
+ * doanh thu: Thap MoMo dat 8.500 đồng (gap Thap/Ca phe = 140x) nhung san luong
  * gap 35x, nhan voi cap 50 + 5* + module + SSR + hieu ung lien ke thi doanh
  * thu gap 68.000x. Che do kinh doanh nhu vay khiến ca o cap 10 chi 1 phut hoa
  * von, cap 30 la 4,8 gio, cap 40 la 6,7 ngay - vung chet.
@@ -919,11 +982,21 @@ interface HoSoNangCap {
   tocDo: number;
 }
 
+/**
+ * Hệ số chi phí nâng cấp theo zone.
+ *
+ * `tocDo` đã hạ từ {1.18, 1.15, 1.12, 1.10} xuống {1.14, 1.11, 1.08, 1.06}
+ * khi bỏ `grossUp` trong `flowFor`. Bỏ grossUp làm thu nhập ròng giảm còn
+ * ~24% gross, kéo hoàn vốn lên 4× — giảm tocDo bù lại để giữ dải 2-13 phút.
+ *
+ * Nguyên tắc: `tocDo` quyết định HÌNH DẠNG đường hoàn vốn (tăng theo cấp),
+ * `heSo` quyết định VỊ TRÍ (cao hơn = hoàn vốn lâu hơn ở mọi cấp).
+ */
 const HO_SO_NANG_CAP: Record<ZoneMeta['type'], HoSoNangCap> = {
-  COMMERCIAL: { heSo: 380, tocDo: 1.18 },
-  RESIDENTIAL: { heSo: 520, tocDo: 1.15 },
-  FINTECH: { heSo: 1_000, tocDo: 1.12 },
-  LANDMARK: { heSo: 1_600, tocDo: 1.1 },
+  COMMERCIAL: { heSo: 0.1, tocDo: 1.14 },
+  RESIDENTIAL: { heSo: 0.02, tocDo: 1.11 },
+  FINTECH: { heSo: 0.03, tocDo: 1.08 },
+  LANDMARK: { heSo: 0.05, tocDo: 1.06 },
 };
 
 /** Chi phí lên cấp mới. Làm tròn về 5 đơn vị để số đẹp. */
@@ -969,7 +1042,7 @@ export const MAYOR_XP_PER_LEVEL = 500;
  * doanh thu nếu trang bị đủ 3 cái). Bỏ thẳng, không giảm nhẹ: thành phố mới
  * tạo còn tự động trang bị sẵn `relic-heo-vang` (+25%) và tặng kèm
  * `relic-cup-qr` (+30%) MIỄN PHÍ trong `STARTER_INVENTORY` - một người chơi
- * mới vào game đã có +55% doanh thu không tốn một Xu nào, đè thẳng lên
+ * mới vào game đã có +55% doanh thu không tốn một đồng nào, đè thẳng lên
  * đường cân bằng kinh tế vừa chỉnh theo nhóm công trình.
  *
  * Chỉ còn GIFT - quà tặng cho NPC để tăng Tín Cậy/Hạnh Phúc, không phải tự
@@ -984,7 +1057,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     description: 'Món quà quốc dân giải nhiệt chiều hè, tặng cho các chủ tiệm và cư dân để gắn kết tình làng nghĩa xóm.',
     effectSummary: 'Tặng cư dân: +25 Tin Cậy (Mở khóa QR) & +10 Hạnh Phúc',
     hue: '#EC4899',
-    costCoins: 12_000,
+    costCoins: 35_000,
     costGems: 0,
   },
   {
@@ -995,7 +1068,7 @@ export const INVENTORY_ITEMS: InventoryItemDef[] = [
     description: 'Hộp quà bánh trà thượng hạng gửi tặng các hộ kinh doanh và bô lão toàn khu phố.',
     effectSummary: 'Tặng toàn phố: +35 Tin Cậy mọi NPC & +14 Hạnh Phúc',
     hue: '#0EA5E9',
-    costCoins: 28_000,
+    costCoins: 350_000,
     costGems: 0,
   },
 ];
@@ -1044,20 +1117,6 @@ export interface CityTierDef {
   };
 }
 
-/**
- * NGUONG DAN SO: phai doc cung `populationFor`, la `def.population * level`.
- *
- * Ban <= 5 dat nguong 120 / 320 / 700 / 1.400 / 2.800 / 5.500 / 10.000. Nghe
- * hop ly nhung dan so NHAN THEO CAP cong trinh trong khi `minBuildings` thi
- * khong, nen hai truc lech nhau rat nhanh: o moc 24 cong trinh nguoi choi da
- * co ~15.900 dan trong khi bac 6 chi doi 2.800. Ket qua la toan bo thang bac
- * chi con phu thuoc so cong trinh, con dan so la so trang tri.
- *
- * Nguong duoi day lay tu mo hinh tien trinh thuc (res chiem ~30% o dat, cap
- * trung binh tang dan 1 -> 18): 180 / 540 / 2.250 / 6.000 / 15.960 / 25.650 /
- * 41.040. Dat nguong hoi thap hon moc do mot chut de nguoi choi khong bi chan
- * cung, nhung du cao de PHAI xay them nha o chu khong chi dan o dat.
- */
 export const CITY_TIERS: CityTierDef[] = [
   {
     id: 'tier-xom-choi-la', rank: 1, name: 'Xóm Chòi Lá',
@@ -1074,7 +1133,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-hem-ba-gac', rank: 2, name: 'Hẻm Ba Gác',
     tagline: 'Hẻm vừa đúng một chiếc ba gác, hai xe gặp nhau là phải lùi.',
     minPopulation: 150, minBuildings: 3,
-    rewardCoins: 600, rewardGems: 4, rewardXp: 900,
+    rewardCoins: 20_000_000, rewardGems: 5, rewardXp: 900,
 
     unlocks: {
       headline: 'Mở Tiết Kiệm - Túi Thần Tài',
@@ -1086,7 +1145,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-pho-via-he', rank: 3, name: 'Phố Vỉa Hè',
     tagline: 'Bắt đầu có hàng quán mặt tiền, tối đến đèn vàng sáng cả dãy.',
     minPopulation: 500, minBuildings: 6,
-    rewardCoins: 2_000, rewardGems: 8, rewardXp: 2_400,
+    rewardCoins: 80_000_000, rewardGems: 10, rewardXp: 2_400,
 
     unlocks: {
       headline: 'Mở Vay Nhanh - Ngân Hàng Số',
@@ -1098,7 +1157,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-thi-tu-tra-da', rank: 4, name: 'Thị Tứ Trà Đá',
     tagline: 'Đông người, có chỗ ngồi tám chuyện từ sáng tới chiều.',
     minPopulation: 2_000, minBuildings: 10,
-    rewardCoins: 5_000, rewardGems: 14, rewardXp: 5_200,
+    rewardCoins: 250_000_000, rewardGems: 18, rewardXp: 5_200,
 
     unlocks: {
       headline: 'Mở Ví Trả Sau (BNPL)',
@@ -1110,7 +1169,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-quan-tra-sua', rank: 5, name: 'Quận Trà Sữa',
     tagline: 'GenZ kéo tới check-in, dòng tiền lên thấy rõ.',
     minPopulation: 5_500, minBuildings: 16,
-    rewardCoins: 12_000, rewardGems: 22, rewardXp: 9_000,
+    rewardCoins: 800_000_000, rewardGems: 30, rewardXp: 9_000,
 
     unlocks: {
       headline: 'Mở rộng quy mô dịch vụ',
@@ -1121,7 +1180,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-do-thi-quet-ma', rank: 6, name: 'Đô Thị Quét Mã',
     tagline: 'Hết cảnh thối tiền bằng kẹo cao su, cả phố quét mã.',
     minPopulation: 14_000, minBuildings: 24,
-    rewardCoins: 30_000, rewardGems: 32, rewardXp: 14_000,
+    rewardCoins: 2_000_000_000, rewardGems: 45, rewardXp: 14_000,
 
     unlocks: {
       headline: 'Mở Đầu Tư & Học Viện Tài Chính',
@@ -1133,7 +1192,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-dai-do-thi-ting-ting', rank: 7, name: 'Đại Đô Thị Ting Ting',
     tagline: 'Tiếng báo có tiền vang từ đầu hẻm tới cuối đại lộ.',
     minPopulation: 24_000, minBuildings: 34,
-    rewardCoins: 75_000, rewardGems: 45, rewardXp: 20_000,
+    rewardCoins: 5_000_000_000, rewardGems: 60, rewardXp: 20_000,
 
     unlocks: {
       headline: 'Hạ tầng lõi siêu ứng dụng',
@@ -1144,7 +1203,7 @@ export const CITY_TIERS: CityTierDef[] = [
     id: 'tier-sieu-do-thi-khong-tien-mat', rank: 8, name: 'Siêu Đô Thị Không Tiền Mặt',
     tagline: 'Không còn ai cầm tiền lẻ. Thị Trưởng đã làm được.',
     minPopulation: 40_000, minBuildings: 46,
-    rewardCoins: 180_000, rewardGems: 70, rewardXp: 25_000,
+    rewardCoins: 15_000_000_000, rewardGems: 100, rewardXp: 25_000,
 
     unlocks: {
       headline: 'Kỳ quan Tháp MoMo',
@@ -1193,22 +1252,22 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
   {
     id: 'd-tro-chuyen', title: 'Đi một vòng hỏi thăm 5 bà con',
     counter: 'talked', target: 5,
-    rewardCoins: 400, rewardGems: 2, rewardXp: 1_600,
+    rewardCoins: 500_000, rewardGems: 2, rewardXp: 1_600,
   },
   {
     id: 'd-nang-cap', title: 'Nâng cấp công trình 3 lượt',
     counter: 'upgraded', target: 3,
-    rewardCoins: 600, rewardGems: 2, rewardXp: 2_200,
+    rewardCoins: 800_000, rewardGems: 2, rewardXp: 2_200,
   },
   {
     id: 'd-xu-chuyen-pho', title: 'Phân xử 2 Chuyện Phố',
     counter: 'eventsResolved', target: 2,
-    rewardCoins: 800, rewardGems: 3, rewardXp: 2_800,
+    rewardCoins: 1_000_000, rewardGems: 3, rewardXp: 2_800,
   },
   {
     id: 'd-mo-tiem', title: 'Mở thêm 1 tiệm mới',
     counter: 'built', target: 1,
-    rewardCoins: 500, rewardGems: 2, rewardXp: 1_800,
+    rewardCoins: 600_000, rewardGems: 2, rewardXp: 1_800,
   },
   {
     /**
@@ -1218,7 +1277,7 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
      */
     id: 'd-tien-hoa', title: 'Dát vàng 1 tiệm lên ★★',
     counter: 'starEvolved', target: 1,
-    rewardCoins: 1_200, rewardGems: 3, rewardXp: 4_500,
+    rewardCoins: 1_200_000, rewardGems: 3, rewardXp: 4_500,
   },
 ];
 
@@ -1242,12 +1301,12 @@ export interface StreakMilestoneDef {
 }
 
 export const STREAK_MILESTONES: StreakMilestoneDef[] = [
-  { days: 3, title: '3 ngày — Phố đã quen mặt bạn', rewardCoins: 20_000, rewardGems: 2, rewardXp: 3_000 },
-  { days: 7, title: '1 tuần — Hàng xóm kín chào', rewardCoins: 60_000, rewardGems: 4, rewardXp: 9_000 },
-  { days: 14, title: '2 tuần — Thị Trưởng được cử tri tín nhiệm', rewardCoins: 180_000, rewardGems: 8, rewardXp: 20_000 },
-  { days: 30, title: '1 tháng — Cả thành phố đứng sau lưng bạn', rewardCoins: 600_000, rewardGems: 15, rewardXp: 45_000 },
-  { days: 60, title: '2 tháng — Rank thành phố không còn chờ ai', rewardCoins: 1_500_000, rewardGems: 25, rewardXp: 90_000 },
-  { days: 100, title: '100 ngày — Huyền thoại Đại Lộ Hoa Sữa', rewardCoins: 4_000_000, rewardGems: 40, rewardXp: 180_000 },
+  { days: 3, title: '3 ngày — Phố đã quen mặt bạn', rewardCoins: 20_000_000, rewardGems: 2, rewardXp: 3_000 },
+  { days: 7, title: '1 tuần — Hàng xóm kín chào', rewardCoins: 60_000_000, rewardGems: 5, rewardXp: 9_000 },
+  { days: 14, title: '2 tuần — Thị Trưởng được cử tri tín nhiệm', rewardCoins: 180_000_000, rewardGems: 10, rewardXp: 20_000 },
+  { days: 30, title: '1 tháng — Cả thành phố đứng sau lưng bạn', rewardCoins: 600_000_000, rewardGems: 25, rewardXp: 45_000 },
+  { days: 60, title: '2 tháng — Rank thành phố không còn chờ ai', rewardCoins: 1_500_000_000, rewardGems: 50, rewardXp: 90_000 },
+  { days: 100, title: '100 ngày — Huyền thoại Đại Lộ Hoa Sữa', rewardCoins: 5_000_000_000, rewardGems: 100, rewardXp: 180_000 },
 ];
 
 /** Moc cao nhat ma chuoi hien tai da cham toi. */

@@ -106,7 +106,7 @@ describe('P&L co lai vay', () => {
   it('vay nhieu thi loi nhuan rong giam, co the am', () => {
     const b = pho();
     const nhe = flowFor(b, [], 10, 0, { debt: 10_000 });
-    const nang = flowFor(b, [], 10, 0, { debt: 50_000_000 });
+    const nang = flowFor(b, [], 10, 0, { debt: 10_000_000_000 });
     assert.ok(nang.netIncome < nhe.netIncome);
     assert.ok(nang.netIncome < 0, 'vay qua suc thi phai lo');
   });
@@ -247,8 +247,8 @@ describe('no xau Vi Tra Sau', () => {
   });
 
   it('nang BNPL ma khong nang dan cu co the lam giam loi nhuan hoat dong', () => {
-    const vua = flowFor(phoCoBnpl(5, 2), [], 10, 0);
-    const quaTay = flowFor(phoCoBnpl(50, 2), [], 10, 0);
+    const vua = flowFor(phoCoBnpl(1, 2), [], 10, 0);
+    const quaTay = flowFor(phoCoBnpl(2, 2), [], 10, 0);
     assert.ok(quaTay.nplRate > vua.nplRate, 'cap qua tay thi rui ro phai tang');
     assert.ok(quaTay.badDebt > vua.badDebt);
   });

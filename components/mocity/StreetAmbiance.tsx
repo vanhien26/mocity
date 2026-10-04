@@ -1,9 +1,120 @@
 'use client';
 
-import React from 'react';
-import { Sun, Sunset, Moon, Sunrise } from 'lucide-react';
-import type { TimeOfDay } from '@/lib/mocity/types';
-import { cycleTimeOfDay, useCity } from '@/lib/mocity/store';
+import React, { useEffect } from 'react';
+import { Sun, Sunset, Moon, Sunrise, CloudRain, Waves, CloudLightning } from 'lucide-react';
+import type { TimeOfDay, WeatherType } from '@/lib/mocity/types';
+import { cycleTimeOfDay, cycleWeather, getCityState, setTimeOfDay, toggleFlood, useCity } from '@/lib/mocity/store';
+
+/**
+ * Tính TimeOfDay dựa theo giờ thực của thiết bị:
+ *  DAWN  : 05:00 – 08:59  (bình minh / sáng sớm)
+ *  DAY   : 09:00 – 16:59  (ban ngày)
+ *  SUNSET: 17:00 – 20:59  (chiều tối / hoàng hôn)
+ *  NIGHT : 21:00 – 04:59  (ban đêm)
+ */
+export function getTimeOfDayFromHour(hour: number): TimeOfDay {
+  if (hour >= 5 && hour < 9) return 'DAWN';
+  if (hour >= 9 && hour < 17) return 'DAY';
+  if (hour >= 17 && hour < 21) return 'SUNSET';
+  return 'NIGHT';
+}
+
+/**
+ * Hook tự động đổi timeOfDay trong store 10 phút / 1 lần.
+ * Tự động xoay vòng: DAY -> SUNSET -> NIGHT -> DAWN
+ */
+export function useAutoTimeOfDay() {
+  useEffect(() => {
+    const TIME_INTERVAL_MS = 10 * 60 * 1000; // 10 phút
+
+    const interval = setInterval(() => {
+      cycleTimeOfDay();
+    }, TIME_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+}
+
+/**
+ * Hook tự động đổi thời tiết trong store 5 phút / 1 lần.
+ * Tự động xoay vòng: SUNNY -> RAIN -> FLOOD -> STORM
+ */
+export function useAutoWeather(onFloodTriggered?: (msg: string) => void) {
+  useEffect(() => {
+    const WEATHER_INTERVAL_MS = 5 * 60 * 1000; // 5 phút
+
+    const interval = setInterval(() => {
+      const next = cycleWeather();
+      if (next === 'FLOOD') {
+        const res = toggleFlood(true);
+        if (res.damageResult) {
+          if (res.damageResult.hasInsurance) {
+            onFloodTriggered?.(`🌊 TRIỀU CƯỜNG DÂNG CAO! Đã kích hoạt Bảo Hiểm MoMo bồi thường +${res.damageResult.coveredAmount} đồng!`);
+          } else {
+            onFloodTriggered?.(`🌊 CẢNH BÁO NGẬP LỤT! Triều cường tràn bờ kè gây thiệt hại -${res.damageResult.outOfPocket} đồng (Chưa có bảo hiểm)!`);
+          }
+        }
+      } else {
+        const isFlooded = getCityState().isFlooded;
+        if (isFlooded) {
+          toggleFlood(false);
+          onFloodTriggered?.('☀️ Nước triều cường đã rút, đường phố khô ráo trở lại!');
+        }
+      }
+    }, WEATHER_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [onFloodTriggered]);
+}
+
+export const WEATHER_META: Record<
+  WeatherType,
+  {
+    label: string;
+    icon: typeof Sun;
+    rainLevel: 'none' | 'light' | 'heavy' | 'storm';
+    badgeColor: string;
+    ambientTint: string;
+    desc: string;
+  }
+> = {
+  SUNNY: {
+    label: 'Nắng Ráo',
+    icon: Sun,
+    rainLevel: 'none',
+    badgeColor: 'border-amber-500 text-amber-300',
+    ambientTint: 'transparent',
+    desc: 'Thời tiết đẹp, đường phố khô ráo',
+  },
+  RAIN: {
+    label: 'Mưa Rào',
+    icon: CloudRain,
+    rainLevel: 'light',
+    badgeColor: 'border-sky-500 text-sky-300',
+    ambientTint: 'rgba(56, 189, 248, 0.08)',
+    desc: 'Mưa rào đường phố, bà con mặc áo mưa',
+  },
+  FLOOD: {
+    label: 'Ngập Lụt',
+    icon: Waves,
+    rainLevel: 'heavy',
+    badgeColor: 'border-blue-600 text-cyan-300 animate-pulse',
+    ambientTint: 'rgba(14, 116, 144, 0.16)',
+    desc: 'Triều cường dâng cao ngập vỉa hè & lòng đường!',
+  },
+  STORM: {
+    label: 'Giông Bão',
+    icon: CloudLightning,
+    rainLevel: 'storm',
+    badgeColor: 'border-purple-500 text-purple-300',
+    ambientTint: 'rgba(88, 28, 135, 0.18)',
+    desc: 'Gió giật mạnh sấm chớp, cây rung lá rơi',
+  },
+};
 
 export const TIME_OF_DAY_META: Record<
   TimeOfDay,
@@ -74,7 +185,7 @@ export function StreetLamp({
     <div
       style={style}
       onClick={onToggle}
-      className={`absolute z-30 flex flex-col items-center select-none transition-transform ${
+      className={`absolute z-15 flex flex-col items-center select-none transition-transform ${
         onToggle ? 'cursor-pointer hover:scale-105 active:scale-95' : 'pointer-events-none'
       } ${className}`}
       title={
@@ -162,23 +273,17 @@ export function StreetLamp({
 }
 
 /**
- * Nút chuyển đổi nhanh Ngày/Đêm trên Toolbar hoặc Header
+ * Badge hiển thị thời gian trong ngày (Tự động đổi 10 phút/lần, không có tương tác thủ công).
  */
 export function TimeOfDaySwitcher() {
   const timeOfDay = useCity((s) => s.timeOfDay ?? 'DAY');
   const meta = TIME_OF_DAY_META[timeOfDay];
   const Icon = meta.icon;
 
-  const handleToggle = () => {
-    cycleTimeOfDay();
-  };
-
   return (
-    <button
-      type="button"
-      onClick={handleToggle}
-      className="flex items-center gap-1.5 rounded-2xl border-2 border-[#78533D] bg-[#FAF6ED] px-2.5 py-1.5 text-xs font-black text-[#3E2A1B] shadow-sm transition-transform hover:scale-105 active:scale-95"
-      title={`Thời gian: ${meta.label}. Bấm để chuyển cảnh ngày/đêm`}
+    <div
+      className="flex items-center gap-1.5 rounded-lg border border-[#6B4423] bg-[#2A1305]/70 px-2.5 py-1.5 text-xs font-bold text-amber-200 shadow-sm select-none"
+      title={`${meta.label} (Tự động đổi 10 phút/lần)`}
     >
       <Icon
         size={14}
@@ -187,11 +292,168 @@ export function TimeOfDaySwitcher() {
             ? 'text-indigo-400 fill-indigo-400'
             : timeOfDay === 'SUNSET'
               ? 'text-amber-500 fill-amber-500'
-              : 'text-amber-600 fill-amber-500'
+              : 'text-amber-400 fill-amber-400'
         }`}
       />
       <span>{meta.label}</span>
-    </button>
+    </div>
+  );
+}
+
+/**
+ * Badge hiển thị Thời Tiết đô thị (Tự động đổi 5 phút/lần, không có tương tác thủ công).
+ */
+export function WeatherSwitcher({ onFloodTriggered }: { onFloodTriggered?: (msg: string) => void }) {
+  const weather = useCity((s) => s.weather ?? 'SUNNY');
+  const isFlooded = useCity((s) => s.isFlooded ?? false);
+  const meta = WEATHER_META[weather];
+  const Icon = meta.icon;
+
+  return (
+    <div
+      className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold shadow-sm select-none bg-[#2A1305]/70 ${
+        meta.badgeColor
+      }`}
+      title={`Thời tiết: ${meta.label} - ${meta.desc} (Tự động đổi 5 phút/lần)`}
+    >
+      <Icon size={14} className="shrink-0" />
+      <span>{meta.label}</span>
+      {isFlooded && (
+        <span className="ml-0.5 inline-block h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Hiệu ứng Mưa rơi xối xả & Tia chớp giông bão
+ */
+export function RainOverlay({ weather }: { weather?: WeatherType }) {
+  if (weather !== 'RAIN' && weather !== 'FLOOD' && weather !== 'STORM') {
+    return null;
+  }
+
+  const isStorm = weather === 'STORM';
+  const isFlood = weather === 'FLOOD';
+  const streakCount = isStorm ? 35 : isFlood ? 26 : 18;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-35 overflow-hidden">
+      {/* Sấm chớp chớp nháy khi bão */}
+      {isStorm && (
+        <div
+          className="absolute inset-0 bg-white/20"
+          style={{ animation: 'stormFlash 4s infinite ease-in-out' }}
+        />
+      )}
+
+      {/* Các vệt mưa rơi xiên chéo */}
+      <svg className="absolute inset-0 h-full w-full opacity-60" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="rainDropGrad" x1="0" y1="0" x2="0.3" y2="1">
+            <stop offset="0%" stopColor="#BAE6FD" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.9" />
+          </linearGradient>
+        </defs>
+        {Array.from({ length: streakCount }).map((_, i) => {
+          const x = (i * 73) % 2000;
+          const y = (i * 47) % 600;
+          const len = 18 + (i % 12);
+          return (
+            <line
+              key={i}
+              x1={x}
+              y1={y}
+              x2={x - 14}
+              y2={y + len}
+              stroke="url(#rainDropGrad)"
+              strokeWidth={i % 3 === 0 ? 2 : 1.2}
+              strokeLinecap="round"
+              style={{
+                animation: `rainFall ${0.6 + (i % 5) * 0.1}s linear infinite`,
+                animationDelay: `${(i % 10) * 0.08}s`,
+              }}
+            />
+          );
+        })}
+      </svg>
+
+      <style jsx>{`
+        @keyframes stormFlash {
+          0%, 92%, 100% { opacity: 0; }
+          93% { opacity: 0.6; }
+          94% { opacity: 0.1; }
+          96% { opacity: 0.8; }
+          98% { opacity: 0; }
+        }
+        @keyframes rainFall {
+          0% { transform: translate(40px, -60px); }
+          100% { transform: translate(-40px, 800px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/**
+ * Lớp nước ngập triều cường trên mặt đường & vỉa hè
+ * Có gợn sóng nhấp nhô, rác nổi/dép tông/vịt cao su trôi lờ lững
+ */
+export function FloodWaterLayer({ isFlooded }: { isFlooded?: boolean }) {
+  if (!isFlooded) return null;
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 z-25 overflow-hidden">
+      {/* Mặt nước triều cường dâng cao ánh xanh lục lam phản chiếu */}
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-cyan-900/60 via-sky-700/40 to-transparent transition-opacity duration-700"
+        style={{ animation: 'waterShimmer 3s ease-in-out infinite alternate' }}
+      />
+
+      {/* Gợn sóng lăn tăn chạy ngang */}
+      <div className="absolute inset-x-0 top-2 h-4 opacity-50">
+        <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1200 20">
+          <path
+            d="M0,10 C150,20 350,0 500,10 C650,20 850,0 1000,10 C1100,15 1150,5 1200,10 L1200,20 L0,20 Z"
+            fill="#38BDF8"
+            opacity="0.4"
+          />
+        </svg>
+      </div>
+
+      {/* Đồ vật trôi dạt trong dòng nước ngập: Dép tổ ong, lá bàng, thùng nhựa */}
+      {[
+        { left: 320, bottom: 22, text: '🩴', label: 'Dép tổ ong trôi' },
+        { left: 740, bottom: 45, text: '🍂', label: 'Lá bàng' },
+        { left: 1180, bottom: 18, text: '🦆', label: 'Vịt cao su' },
+        { left: 1620, bottom: 35, text: '📦', label: 'Thùng carton' },
+      ].map((item, idx) => (
+        <div
+          key={idx}
+          className="absolute select-none text-base filter drop-shadow"
+          style={{
+            left: item.left,
+            bottom: item.bottom,
+            animation: `bobbingFloat ${2.5 + (idx % 2)}s ease-in-out infinite alternate`,
+            animationDelay: `${idx * 0.4}s`,
+          }}
+          title={item.label}
+        >
+          {item.text}
+        </div>
+      ))}
+
+      <style jsx>{`
+        @keyframes waterShimmer {
+          0% { opacity: 0.75; transform: translateY(0px); }
+          100% { opacity: 0.95; transform: translateY(-3px); }
+        }
+        @keyframes bobbingFloat {
+          0% { transform: translateY(0px) rotate(-6deg); }
+          100% { transform: translateY(-6px) rotate(6deg); }
+        }
+      `}</style>
+    </div>
   );
 }
 
@@ -200,7 +462,7 @@ export function TimeOfDaySwitcher() {
  */
 export function SkyAtmosphere({ timeOfDay }: { timeOfDay: TimeOfDay }) {
   const isNight = timeOfDay === 'NIGHT';
-  const isSunset = timeOfDay === 'SUNSET';
+  const weather = useCity((s) => s.weather ?? 'SUNNY');
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
@@ -239,7 +501,7 @@ export function SkyAtmosphere({ timeOfDay }: { timeOfDay: TimeOfDay }) {
       )}
 
       {/* BAN NGÀY & HOÀNG HÔN: CÁC ĐÁM MÂY TRẮNG XỐP LƯỢN QUA */}
-      {!isNight && (
+      {!isNight && weather !== 'STORM' && (
         <div className="absolute top-4 inset-x-0 flex justify-around opacity-70">
           <div className="h-8 w-24 rounded-full bg-white/70 blur-[2px]" />
           <div className="h-10 w-32 rounded-full bg-white/60 blur-[2px] mt-2" />
@@ -248,10 +510,25 @@ export function SkyAtmosphere({ timeOfDay }: { timeOfDay: TimeOfDay }) {
         </div>
       )}
 
+      {/* MÂY ĐEN GIÔNG BÃO */}
+      {(weather === 'STORM' || weather === 'FLOOD') && (
+        <div className="absolute top-2 inset-x-0 flex justify-around opacity-90">
+          <div className="h-14 w-48 rounded-full bg-slate-800/80 blur-[4px]" />
+          <div className="h-16 w-64 rounded-full bg-slate-900/85 blur-[5px] mt-2" />
+          <div className="h-12 w-40 rounded-full bg-slate-800/80 blur-[4px]" />
+          <div className="h-14 w-56 rounded-full bg-slate-900/75 blur-[4px] mt-1" />
+        </div>
+      )}
+
       {/* Màng phủ màu sắc tổng thể (Ambient Color Wash) */}
       <div
         className="absolute inset-0 pointer-events-none transition-colors duration-700"
-        style={{ backgroundColor: TIME_OF_DAY_META[timeOfDay].ambientTint }}
+        style={{
+          backgroundColor:
+            WEATHER_META[weather]?.ambientTint !== 'transparent'
+              ? WEATHER_META[weather]?.ambientTint
+              : TIME_OF_DAY_META[timeOfDay].ambientTint,
+        }}
       />
     </div>
   );

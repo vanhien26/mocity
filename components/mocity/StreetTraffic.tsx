@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { TimeOfDay } from '@/lib/mocity/types';
 import type { TrafficPhase } from './useTrafficController';
+import { ChibiBody } from './ChibiRenderer';
+import { CYCLE_K } from './ExpressiveStreetCitizens';
+import { appearanceFromSeed } from '@/lib/mocity/character-appearance-gen';
 
 /**
  * Dàn phương tiện chạy dưới LÒNG ĐƯỜNG, vẽ theo cut paper đồng bộ với nhân vật MoCity.
@@ -66,13 +69,13 @@ function XichLo({ night }: { night: boolean }) {
       <path d="M3 25 Q22 8 43 23 L43 27 Q22 13 4 29 Z" fill="#D94F3D" />
       <path d="M22.4 15.6 Q33 18.4 43 23 L43 27 Q33 21.6 23 18.6 Z" fill="#A83628" />
       {/* Khách ngồi */}
-      <circle cx="24" cy="31" r="5.4" fill="#FCD9BD" />
+      <circle cx="24" cy="31" r="5.4" fill="#EFC49C" />
       <path d="M18.6 31.4 C18.6 24.6 29.4 24.6 29.4 31.4 C26 28.4 22 28.4 18.6 31.4 Z" fill="#2E1D16" />
       <path d="M19 42 L29 42 L29 34.4 L19 34.4 Z" fill="#E8B23C" />
       {/* Người đạp */}
       <path d="M64 38 L76 38 L75.2 26 L65 26 Z" fill="#4C83C4" />
       <path d="M64 38 L68 38 L67.6 26 L65 26 Z" fill="#35639A" />
-      <circle cx="70" cy="19" r="6" fill="#FCD9BD" />
+      <circle cx="70" cy="19" r="6" fill="#EFC49C" />
       <path d="M62.8 19.6 L77.2 19.6 L76.6 16 L63.4 16 Z" fill="#DEBE63" />
       <path d="M63.6 13.4 L76.4 13.4 Q70 5.4 63.6 13.4 Z" fill="#DEBE63" />
       {/* Đèn phản quang / phanh đuôi */}
@@ -106,7 +109,7 @@ function XeDayDoAn({ night }: { night: boolean }) {
       {/* Người bán */}
       <path d="M76 46 L88 46 L87 30 L77 30 Z" fill="#C2410C" />
       <path d="M76 46 L80 46 L79.4 30 L77 30 Z" fill="#92300A" />
-      <circle cx="82" cy="23" r="6.2" fill="#FCD9BD" />
+      <circle cx="82" cy="23" r="6.2" fill="#EFC49C" />
       <path d="M74.6 23.8 L89.4 23.8 L88.8 20 L75.2 20 Z" fill="#DEBE63" />
       <path d="M75.4 17.4 L88.6 17.4 Q82 9 75.4 17.4 Z" fill="#DEBE63" />
       {/* Đèn phản quang đuôi */}
@@ -182,10 +185,10 @@ function XeMay({ night }: { night: boolean }) {
       {/* Người lái */}
       <path d="M24 15.6 L37 16.2 L36.4 32.4 L23.4 31.8 Z" fill="#4BC6DC" />
       <path d="M24 15.6 L28 15.8 L27.4 32 L23.4 31.8 Z" fill="#35A3B8" />
-      <path d="M34.6 19.6 L50 26 L48.4 29.2 L33.4 23 Z" fill="#E8C6A6" />
-      <circle cx="31" cy="9" r="7.8" fill="#FDE6D2" />
+      <path d="M34.6 19.6 L50 26 L48.4 29.2 L33.4 23 Z" fill="#E0A87E" />
+      <circle cx="31" cy="9" r="7.8" fill="#EFC49C" />
       <circle cx="33.6" cy="8.4" r="1.5" fill="#3E2A1B" />
-      <path d="M31.6 12 L36.6 12 Q34.1 15 31.6 12 Z" fill="#3E2A1B" />
+      <path d="M31.6 12 Q34.1 14.6 36.6 12" fill="none" stroke="#2B2420" strokeWidth="1.1" strokeLinecap="round" />
       <path d="M22.6 8.6 C22.6 -0.8 39.4 -0.8 39.4 8.6 Z" fill="#C2410C" />
       <path d="M22 8.4 L40 8.4 L39.6 11 L22.4 11 Z" fill="#8F2C0A" />
       <Beam x={62} y={32} on={night} />
@@ -206,12 +209,12 @@ function XeDap({ night }: { night: boolean }) {
       <path d="M44.6 25.6 L52.4 26.2 L52.2 28.6 L44.4 28 Z" fill="#1F8A62" />
       <path d="M23 13.6 L34.6 14.2 L33.8 29.4 L23.8 28.8 Z" fill="#EC4899" />
       <path d="M23 13.6 L26.8 13.8 L26.2 29.1 L23.8 28.8 Z" fill="#C0246F" />
-      <path d="M33.2 17 L47 23.4 L45.4 26.2 L32 20 Z" fill="#E8C6A6" />
+      <path d="M33.2 17 L47 23.4 L45.4 26.2 L32 20 Z" fill="#E0A87E" />
       <circle cx="23" cy="-2" r="4.2" fill="#2E1D16" />
-      <circle cx="29.4" cy="5" r="7.8" fill="#FDE6D2" />
+      <circle cx="29.4" cy="5" r="7.8" fill="#EFC49C" />
       <ellipse cx="26" cy="8" rx="2" ry="1.3" fill="#F0A8BE" />
       <circle cx="32.8" cy="4.4" r="1.5" fill="#3E2A1B" />
-      <path d="M31 8 L35.8 8 Q33.4 11.2 31 8 Z" fill="#3E2A1B" />
+      <path d="M31 8 Q33.4 10.8 35.8 8" fill="none" stroke="#2B2420" strokeWidth="1.1" strokeLinecap="round" />
       <path d="M21.4 3.2 C21.4 -4.4 37.4 -4.4 37.4 3.2 C33 -1.4 25.8 -1.4 21.4 3.2 Z" fill="#2E1D16" />
       {/* Đèn phản quang đỏ phía sau */}
       <circle className="brake-light" cx="15" cy="36" r="3.2" fill="#7F1D1D" />
@@ -333,73 +336,102 @@ function XeCanhSat({ night, onClick }: { night: boolean; onClick?: () => void })
 }
 
 /**
- * Người đi bộ băng qua đường trên vạch Zebra khi xe gặp ĐÈN ĐỎ
+ * Người đi bộ băng qua đường trên vạch Zebra khi xe gặp ĐÈN ĐỎ.
+ *
+ * Trước đây đây là 5 div CSS xếp chồng (nón + mặt + áo + 2 chân xoay) - thấp
+ * hơn hẳn `ChibiBody` dùng cho mọi người khác trong game. Bản kế tiếp thay
+ * bằng `ChibiBody` nhưng lái vị trí bằng `setInterval` + CSS `transition`:
+ * mỗi 220ms React re-render toàn cây rồi trình duyệt mới nội suy `top` - hai
+ * tầng không đồng bộ là lý do bước đi giật, khác hẳn cách `StreetPassersby`
+ * và `ExpressiveStreetCitizens` làm (RAF + ghi thẳng `style.transform` vào
+ * DOM, không qua React render mỗi khung hình).
+ *
+ * Bản này đổi sang đúng mô hình đó: RAF cập nhật `translateY` trực tiếp từng
+ * khung hình, mượt như cư dân đi trên vỉa hè. Đồng thời tăng từ 1 lên 3
+ * người - một người băng qua đường đỏ một mình trông vắng vẻ hơn thực tế.
  */
-function ZebraPedestrian({ phase }: { phase: TrafficPhase }) {
-  const isRed = phase === 'RED';
-  const isYellow = phase === 'YELLOW';
-  const [step, setStep] = useState(0);
+const PEDESTRIAN_CROSSERS = [
+  { seed: 'nguoi-qua-duong-1', left: 10, delay: 0, speed: 0.46 },
+  { seed: 'nguoi-qua-duong-2', left: 52, delay: 0.3, speed: 0.4 },
+  { seed: 'nguoi-qua-duong-3', left: -28, delay: 0.65, speed: 0.5 },
+].map((p) => ({ ...p, appearance: appearanceFromSeed(p.seed) }));
+
+/** Thời gian băng hết vạch sọc (y: 12px -> 88px), giây. */
+const CROSS_SECONDS = 2.1;
+
+function ZebraPedestrians({ phase }: { phase: TrafficPhase }) {
+  const crossing = phase === 'RED' || phase === 'YELLOW';
+  const elapsedRef = useRef(PEDESTRIAN_CROSSERS.map(() => 0));
+  const boxRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const svgRefs = useRef<(SVGSVGElement | null)[]>([]);
 
   useEffect(() => {
-    if (!isRed && !isYellow) return;
-    const interval = setInterval(() => {
-      setStep((s) => s + 1);
-    }, 220);
-    return () => clearInterval(interval);
-  }, [isRed, isYellow]);
+    if (!crossing) {
+      elapsedRef.current = PEDESTRIAN_CROSSERS.map(() => 0);
+      return;
+    }
+    let rafId = 0;
+    let last = performance.now();
 
-  // Khi đèn xanh, người đi bộ an toàn đứng trên vỉa hè
-  if (!isRed && !isYellow) return null;
+    const loop = (now: number) => {
+      rafId = requestAnimationFrame(loop);
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
 
-  // Tính toạ độ Y băng qua vạch sọc từ vỉa hè xuống lòng đường (y: 12px -> 84px)
-  const walkingY = isRed ? 12 + ((step * 7) % 76) : 80;
-  const legSwing = step % 2 === 0 ? 8 : -8;
+      PEDESTRIAN_CROSSERS.forEach((def, i) => {
+        elapsedRef.current[i] += dt;
+        const t = elapsedRef.current[i] - def.delay;
+        const progress = Math.max(0, Math.min(1, t / CROSS_SECONDS));
+        const y = 12 + progress * 76;
+
+        const box = boxRefs.current[i];
+        if (box) box.style.transform = `translateY(${y.toFixed(1)}px)`;
+
+        const svg = svgRefs.current[i];
+        if (svg) {
+          const walking = t >= 0 && progress < 1;
+          const cls = walking ? 'walking' : 'idle';
+          if (!svg.classList.contains(cls)) {
+            svg.classList.remove('walking', 'idle');
+            svg.classList.add(cls);
+          }
+          svg.style.visibility = t < 0 ? 'hidden' : 'visible';
+        }
+      });
+    };
+
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [crossing]);
+
+  if (!crossing) return null;
 
   return (
-    <div
-      className="pointer-events-none absolute z-20 flex flex-col items-center select-none"
-      style={{
-        left: 56,
-        top: walkingY,
-        transition: 'top 0.22s linear',
-      }}
-    >
-      {/* Huy hiệu mini qua đường an toàn */}
-      {isRed && (
-        <div className="mb-0.5 rounded-full border border-emerald-400 bg-emerald-600 px-1.5 py-0.5 text-[8px] font-black leading-none text-white shadow">
-          🚶 Qua đường
-        </div>
-      )}
-
-      {/* Cư dân MoCity đi chợ */}
-      <div className="flex flex-col items-center">
-        {/* Nón lá */}
+    <>
+      {PEDESTRIAN_CROSSERS.map((def, i) => (
         <div
-          className="h-2.5 w-6 rounded-t-full border border-[#8C6D37] shadow-sm"
-          style={{ backgroundColor: '#DEBE63' }}
-        />
-        {/* Khuôn mặt */}
-        <div className="h-3 w-3 rounded-full border border-[#D4A373] bg-[#FCD9BD]" />
-
-        {/* Áo bà ba MoCity */}
-        <div className="relative flex h-4 w-4 items-center justify-center rounded-t-sm bg-[#D82D8B]">
-          {/* Làn cói đi chợ */}
-          <div className="absolute -right-2 top-0.5 h-3 w-2.5 rounded-b-sm border border-[#78533D] bg-[#A8864A]" />
+          key={def.seed}
+          ref={(el) => {
+            boxRefs.current[i] = el;
+          }}
+          className="pointer-events-none absolute z-20 select-none"
+          style={{ left: def.left, top: 0, transform: 'translateY(12px)' }}
+        >
+          <svg
+            ref={(el) => {
+              svgRefs.current[i] = el;
+            }}
+            width="56"
+            height="72"
+            viewBox="0 0 56 72"
+            className="cit-walk-anim overflow-visible idle"
+            style={{ '--spd': `${(CYCLE_K / def.speed).toFixed(2)}s` } as React.CSSProperties}
+          >
+            <ChibiBody def={def.appearance} emotion="HAPPY" />
+          </svg>
         </div>
-
-        {/* Đôi chân bước nhịp nhàng */}
-        <div className="mt-0.5 flex gap-1">
-          <div
-            className="h-3 w-1 rounded-full bg-[#1E293B]"
-            style={{ transform: `rotate(${legSwing}deg)` }}
-          />
-          <div
-            className="h-3 w-1 rounded-full bg-[#1E293B]"
-            style={{ transform: `rotate(${-legSwing}deg)` }}
-          />
-        </div>
-      </div>
-    </div>
+      ))}
+    </>
   );
 }
 
@@ -440,10 +472,11 @@ export default function StreetTraffic({
   const headlightsOn = isNight || streetLightsLit;
 
   const trafficPhaseRef = useRef(trafficPhase);
-  trafficPhaseRef.current = trafficPhase;
-
-  const roadWidthRef = useRef(roadWidth);
-  roadWidthRef.current = Math.max(2200, roadWidth);
+  const roadWidthRef = useRef(Math.max(2200, roadWidth));
+  useEffect(() => {
+    trafficPhaseRef.current = trafficPhase;
+    roadWidthRef.current = Math.max(2200, roadWidth);
+  }, [trafficPhase, roadWidth]);
 
   // Lưu trạng thái vật lý của từng xe
   const vehiclesRef = useRef(
@@ -618,7 +651,7 @@ export default function StreetTraffic({
       <style dangerouslySetInnerHTML={{ __html: TRAFFIC_CSS }} />
 
       {/* Người đi bộ sang đường khi xe dừng đèn đỏ */}
-      <ZebraPedestrian phase={trafficPhase} />
+      <ZebraPedestrians phase={trafficPhase} />
 
       {/* Danh sách xe di chuyển */}
       {VEHICLE_MODELS.map(({ id, El, lane, initialX, direction }) => {

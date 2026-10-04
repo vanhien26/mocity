@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Building2, Coins } from 'lucide-react';
-import { formatDuration } from '@/lib/mocity/format';
-
-function formatVND(n: number) {
-  return n.toLocaleString('vi-VN');
-}
+import { formatDuration, formatVND } from '@/lib/mocity/format';
 
 /** Rain of coin emoji particles */
 function CoinRain({ active }: { active: boolean }) {
@@ -47,6 +43,7 @@ export default function OfflineRewardModal({
   coins,
   elapsedMs,
   capped,
+  orders = 0,
   onClaim,
   onClose,
 }: {
@@ -54,6 +51,13 @@ export default function OfflineRewardModal({
   coins: number;
   elapsedMs: number;
   capped: boolean;
+  /**
+   * Số đơn đã thực hiện trong lúc vắng.
+   *
+   * Đây là thứ làm con số có ý nghĩa: "+12.168 đồng" thì vô nghĩa,
+   * "486 đơn đã bán" thì người chơi hình dung được thành phố chạy ra sao.
+   */
+  orders?: number;
   onClaim: () => void;
   onClose: () => void;
 }) {
@@ -65,13 +69,24 @@ export default function OfflineRewardModal({
 
   // Count-up animation
   useEffect(() => {
-    if (!open) { setDisplayed(0); setClaimed(false); return; }
+    if (!open) {
+      const id = requestAnimationFrame(() => {
+        setDisplayed(0);
+        setClaimed(false);
+      });
+      return () => cancelAnimationFrame(id);
+    }
 
-    setShowRain(false);
     const duration = Math.min(2200, 800 + coins / 500);
     const start = performance.now();
+    // Mua nen truoc roi, khong setState truc tiep trong body effect.
+    let daDatMoc = false;
 
     const tick = (now: number) => {
+      if (!daDatMoc) {
+        daDatMoc = true;
+        setShowRain(false);
+      }
       const t = Math.min(1, (now - start) / duration);
       // ease-out cubic
       const eased = 1 - Math.pow(1 - t, 3);
@@ -144,6 +159,12 @@ export default function OfflineRewardModal({
           <p className="mt-1 text-base font-bold text-white/70">
             Đã tự vận hành suốt <span className="font-black text-white">{formatDuration(elapsedMs)}</span>
           </p>
+          {orders > 0 && (
+            <p className="mt-1 text-sm font-bold text-white/50">
+              Đã bán <span className="font-black text-white">{formatVND(orders)}</span> đơn
+              <span className="text-white/30"> · trừ giá vốn, tiền nhà, thuế</span>
+            </p>
+          )}
 
           {/* Số tiền count-up */}
           <div className="my-7">
@@ -153,7 +174,14 @@ export default function OfflineRewardModal({
             >
               +{formatVND(displayed)}
             </p>
-            <p className="mt-2 text-sm font-bold tracking-wide text-white/50">XU THU NHẬP KHI VẮNG</p>
+            <p className="mt-2 text-sm font-bold tracking-wide text-white/50">
+              {orders > 0 ? `LỢI NHUẬN RÒNG TỪ ${formatVND(orders)} ĐƠN` : 'THU NHẬP ĐỒNG KHI VẮNG'}
+            </p>
+            {coins <= 0 && (
+              <p className="mt-3 text-sm font-bold leading-snug text-amber-300/90">
+                Chưa có đơn nào - thành phố chưa có tiệm thương mại nào mở cửa.
+              </p>
+            )}
           </div>
 
           {capped && (
@@ -161,7 +189,7 @@ export default function OfflineRewardModal({
               className="mb-5 rounded-2xl px-4 py-2.5 text-xs font-bold text-amber-300"
               style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)' }}
             >
-              Đã chạm trần 8 giờ - quay lại thường xuyên để không bỏ lỡ Xu
+              Đã chạm trần 8 giờ - quay lại thường xuyên để không bỏ lỡ đồng
             </div>
           )}
 
@@ -178,7 +206,7 @@ export default function OfflineRewardModal({
               boxShadow: claimed ? 'none' : '0 8px 32px rgba(235,47,150,0.45)',
             }}
           >
-            {claimed ? '✓ Đã nhận!' : `Thu ${formatVND(coins)} Xu về Ngân khố`}
+            {claimed ? '✓ Đã nhận!' : `Thu ${formatVND(coins)} về Ngân khố`}
           </button>
 
           <button

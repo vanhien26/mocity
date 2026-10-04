@@ -100,7 +100,7 @@ export default function WeekComparisonPanel() {
 
       <div className="mt-2 space-y-0.5">
         {cmp.lines.map((line) => {
-          const laTien = line.donVi === 'Xu';
+          const laTien = line.donVi === 'đồng';
           return (
             <div
               key={line.label}
@@ -136,7 +136,8 @@ export default function WeekComparisonPanel() {
       )}
 
       <p className="mt-2 border-t pt-2 text-[10px] font-semibold leading-relaxed text-[#5B3D22]">
-        Nhịp hiện tại <b>{formatRate(derived.netIncome)}/giây</b> lợi nhuận ròng.
+        Tiềm năng <b>{formatRate(derived.netIncome)}/giây</b> lợi nhuận ròng - tiền vào
+        ngân khố khi bạn đóng đơn.
         {derived.crowdingFactor < 1 && (
           <>
             {' '}
