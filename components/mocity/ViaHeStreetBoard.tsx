@@ -1057,6 +1057,8 @@ export default function ViaHeStreetBoard({
               streetWidth={streetWidth}
               shops={shopAnchors}
               realQueue={orderQueues}
+              happinessIndex={derivedCity.happiness}
+              timeOfDay={timeOfDay}
               onCitizenReward={(msg) => {
                 setStreetToast(msg);
                 setTimeout(() => setStreetToast(null), 4000);

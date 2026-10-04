@@ -53,7 +53,14 @@ import { CITY_EVENTS, EVENT_BY_ID, REQUEST_BY_ID } from './dialogue-data';
 import { eligibleRequestFor } from './dialogue-engine';
 import { weekComparison, type WeekComparison } from './comparison';
 import { TUTORIAL_STEPS, currentTutorialStep, type TutorialStep } from './tutorial';
-import { ARCHETYPES, DIGITAL_TRUST_THRESHOLD, archetypeForBuilding, npcNameFor } from './npc-data';
+import {
+  ARCHETYPES,
+  ARCHETYPE_SCHEDULE,
+  DIGITAL_TRUST_THRESHOLD,
+  archetypeForBuilding,
+  assignFamilies,
+  npcNameFor,
+} from './npc-data';
 import {
   emptyLedger,
   emptyPeriodLedger,
@@ -2899,7 +2906,10 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
       trust: meta.startTrust,
       acceptsDigital: false,
       services: [...meta.startServices],
+      schedule: ARCHETYPE_SCHEDULE[archetype],
     });
+    // Re-assign families moi khi co NPC moi de ket noi cac don vi chua ghep.
+    assignFamilies(npcs);
   }
 
   const nextState: CityState = {
@@ -3489,7 +3499,7 @@ export function useCityDerived(): CityDerived {
     const now = lastSeenAt;
     const isFever = feverUntil > now;
     const happiness = clampHappiness(
-      happinessFor(buildings, now - lastEngagedAt, happinessBoost) + relicHappyBonus,
+      happinessFor(buildings, now - lastEngagedAt, happinessBoost, npcs) + relicHappyBonus,
     );
     /**
      * Bảo Vật phải được truyền VÀO `flowFor`, không nhân ngoài. Nhân ngoài thì

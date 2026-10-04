@@ -1,5 +1,9 @@
 export type ZoneType = 'COMMERCIAL' | 'FINTECH' | 'RESIDENTIAL' | 'LANDMARK';
 
+import type { FacialEmotion as _FacialEmotion } from './character-appearance';
+export type { FacialEmotion } from './character-appearance';
+type FacialEmotion = _FacialEmotion;
+
 export interface Currencies {
   /** Đồng (VNĐ) - Tiền tệ kinh doanh & dòng tiền thực tế */
   coins: number;
@@ -139,6 +143,32 @@ export interface NpcState {
   trust: number;
   acceptsDigital: boolean;
   services: ServiceId[];
+  /** ID nhom gia dinh (nhieu NPC cung familyId = cung ho). */
+  familyId?: string;
+  /** Cac moi quan he trong gia dinh. */
+  ties?: FamilyTie[];
+  /** Lich trinh 4 khung gio trong ngay. */
+  schedule?: ScheduleSlot[];
+  /**
+   * Cam xuc hien tai - derived tu city state + timeOfDay.
+   * KHONG luu vao save: tinh lai moi tick.
+   */
+  mood?: FacialEmotion;
+}
+
+/** Mot moi quan he voi NPC khac trong cung familyId. */
+export interface FamilyTie {
+  npcId: string;
+  relation: 'PARTNER' | 'PARENT' | 'CHILD' | 'SIBLING';
+}
+
+/** Lich trinh mot khung gio. */
+export interface ScheduleSlot {
+  timeSlot: TimeOfDay;
+  /** Zone NPC thuong xuat hien trong khung gio nay. */
+  zone: ZoneType | 'HOME';
+  /** Cam xuc mac dinh trong khung gio nay (truoc khi city state override). */
+  defaultMood: FacialEmotion;
 }
 
 /* ── Doi thoai ──────────────────────────────────────────────────── */
