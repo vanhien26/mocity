@@ -503,6 +503,16 @@ export interface CityState extends Currencies {
   debt: number;
   /** Tong lai vay da tra tu truoc toi nay, de bao cao. */
   totalInterestPaid: number;
+
+  // ─── STORY: Người lập nghiệp từ quê lên phố ───────────
+  /** Nợ cá nhân của người chơi khi lên thành phố (200M). Khác với `debt` là nợ vay kinh doanh. */
+  playerDebtPrincipal: number;
+  /** Tổng nợ gốc cá nhân đã trả được. */
+  playerDebtPaid: number;
+  /** Ngày trong game phải trả lãi kỳ tiếp (cứ mỗi 30 ngày). */
+  playerDebtNextDueDay: number;
+  /** Số kỳ lãi trễ liên tiếp (>= 2 = cảnh báo). */
+  playerDebtMissed: number;
   dailyLog: DailyLog;
   streak: StreakState;
   /**

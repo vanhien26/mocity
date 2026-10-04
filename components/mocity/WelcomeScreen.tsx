@@ -80,20 +80,20 @@ function MoCityLogo({ size = 64 }: { size?: number }) {
 
 /** Ba trụ cột trải nghiệm cốt truyện "Từ tay trắng đến cơ đồ". */
 const HOW_TO_PLAY = [
-  { 
-    icon: Store, 
-    title: '1. Quyết định chiến lược', 
-    body: 'Lựa chọn mở quán cà phê, mua nhà cũ, vay đòn bẩy hay gọi cổ đông góp vốn qua 5 Act nội dung.' 
+  {
+    icon: Store,
+    title: '1. Kinh doanh trên phố',
+    body: 'Mở tiệm cà phê, thuê người, nhập hàng trên 3 lô đất trống. Thị trưởng quản lý đô thị - bạn lo kinh doanh.'
   },
-  { 
-    icon: Crown, 
-    title: '2. Sống với hậu quả tài chính', 
-    body: 'Tự chịu trách nhiệm cho quyết định: thiếu thanh khoản hoặc gánh nợ lớn sẽ sụp đổ khi mưa bão 3 tuần.' 
+  {
+    icon: Crown,
+    title: '2. Trả nợ 200 triệu',
+    body: 'Lãi 5 triệu/tháng. Trễ hạn 2 kỳ liên tiếp là bị cưỡng chế. Cashflow âm là con đường ngắn nhất về quê.'
   },
-  { 
-    icon: Gift, 
-    title: '3. Cơ đồ 7 chiều (WEALTH Matrix)', 
-    body: 'Chiến thắng không đo bằng tiền tích lũy, mà bằng Dòng tiền thặng dư, Thanh khoản và Hạnh phúc cư dân.' 
+  {
+    icon: Gift,
+    title: '3. Xây dựng cơ đồ',
+    body: 'Trả sạch nợ, dòng tiền dương ổn định, đạo đức kinh doanh - 3 yếu tố quyết định kết thúc câu chuyện.'
   },
 ];
 
@@ -139,12 +139,12 @@ export default function WelcomeScreen({
                 id="mocity-welcome-title"
                 className="mt-0.5 text-balance text-lg font-black leading-tight text-[#3E2A1B] sm:text-xl"
               >
-                {hasNamedCity ? `Mừng bạn trở lại, ${mayorName}!` : 'Chào mừng đến Đô Thị MoCity'}
+                {hasNamedCity ? `Mừng bạn trở lại, ${mayorName}!` : 'Lên Phố Lập Nghiệp'}
               </h1>
               <p className="mt-1 text-pretty text-[12px] leading-relaxed text-[#6E4F3A] sm:text-[13px]">
                 {hasNamedCity
-                  ? `Thành phố ${cityName} đang chờ bạn. Mỗi quyết định tài chính của bạn sẽ biến thị trấn thành một cơ đồ khác nhau.`
-                  : 'Bạn được giao một thị trấn đang đứng trước cơ hội đổi đời. Mỗi quyết định tài chính của bạn sẽ biến thị trấn thành một cơ đồ khác nhau.'}
+                  ? `Khu phố ${cityName} đang chờ bạn. Tiếp tục kinh doanh, trả nợ và xây dựng cơ đồ.`
+                  : 'Bạn lên thành phố với 50 triệu vốn và 200 triệu nợ. Thị trưởng là người cai quản đô thị - bạn chỉ là một người lập nghiệp cần chứng minh mình.'}
               </p>
             </div>
             {hasNamedCity && (
@@ -168,7 +168,7 @@ export default function WelcomeScreen({
               </h2>
               <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
-                  ['Cấp Thị Trưởng', String(mayorLevel)],
+                  ['Cấp Lập Nghiệp', String(mayorLevel)],
                   ['Tiệm đã mở', String(buildingCount)],
                   ['Cư dân', String(npcCount)],
                   ['Ngân khố', `${formatCompact(coins)} đồng`],
@@ -228,7 +228,7 @@ export default function WelcomeScreen({
                     htmlFor="mocity-mayor-name"
                     className="mb-1 block text-[13px] font-black uppercase tracking-wide text-[#6E4F3A]"
                   >
-                    Tên Thị Trưởng
+                    Tên của bạn
                   </label>
                   <input
                     id="mocity-mayor-name"
@@ -236,7 +236,7 @@ export default function WelcomeScreen({
                     maxLength={28}
                     value={mayorInput}
                     onChange={(e) => onMayorInputChange(e.target.value)}
-                    placeholder={displayName?.trim() || 'Thị Trưởng MoMo'}
+                    placeholder={displayName?.trim() || 'Tên của bạn'}
                     className="w-full rounded-xl border-2 border-[#D5CEBF] bg-white px-3.5 py-2.5 text-xs font-extrabold text-[#3E2A1B] focus:border-[#D82D8B] focus:outline-none sm:text-sm"
                   />
                 </div>
@@ -269,12 +269,12 @@ export default function WelcomeScreen({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-xs font-black text-[#78350F]">
-                  {loginBonus > 0 ? 'Vốn khởi điểm & Thưởng nhậm chức' : 'Ngân khố Đô Thị'}
+                  {hasNamedCity ? 'Vốn kinh doanh hiện có' : 'Vốn khởi nghiệp · Nợ cá nhân 200 triệu'}
                 </p>
                 <p className="text-pretty text-[13px] font-bold text-[#92400E]">
                   {hasNamedCity
-                    ? `Vốn sẵn có ${formatCompact(coins)} đồng`
-                    : `Vốn sẵn có ${formatCompact(STARTING_COINS)} đồng · Tặng thêm +${formatCompact(firstTimeBonus)} đồng`}
+                    ? `Tiền mặt ${formatCompact(coins)} đồng`
+                    : `Vốn ${formatCompact(STARTING_COINS)} đồng · Lãi 5 triệu/tháng · 360 ngày`}
                   {offlineBonus > 0 ? ` · +${formatCompact(offlineBonus)} doanh thu vắng mặt` : ''}
                 </p>
               </div>
@@ -292,7 +292,7 @@ export default function WelcomeScreen({
               className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-white bg-[#D82D8B] px-6 py-3.5 text-sm font-black text-white shadow-lg transition-all hover:scale-[1.01] hover:bg-[#EB2F96] active:scale-95"
             >
               <span className="truncate">
-                {hasNamedCity ? 'Vào Phố Thôi' : 'Nhận Chức & Vào Phố MoCity'}
+                {hasNamedCity ? 'Vào Phố Thôi' : 'Lên Phố Lập Nghiệp'}
               </span>
               <ArrowRight size={17} className="shrink-0" />
             </button>

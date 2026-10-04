@@ -203,7 +203,7 @@ function createInitialState(): CityState {
   const now = Date.now();
   return {
     version: STATE_VERSION,
-    mayorName: 'Thị Trưởng MoMo',
+    mayorName: 'Người Lập Nghiệp',
     cityName: 'Đô Thị MoCity',
     hasNamedCity: false,
     mayorGender: 'female',
@@ -235,6 +235,10 @@ function createInitialState(): CityState {
     tutorialFlags: [],
     debt: 0,
     totalInterestPaid: 0,
+    playerDebtPrincipal: 200_000_000,
+    playerDebtPaid: 0,
+    playerDebtNextDueDay: 30,
+    playerDebtMissed: 0,
     dailyLog: emptyDailyLog(now),
     streak: { days: 0, lastDay: '', best: 0, shields: 0 },
     streakClaimed: 0,
@@ -723,6 +727,10 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.loanDueDay = typeof migrated.loanDueDay === 'string' ? migrated.loanDueDay : '';
   merged.loanLateFeeCount = nonNeg(migrated.loanLateFeeCount);
   merged.totalInterestPaid = nonNeg(migrated.totalInterestPaid);
+  merged.playerDebtPrincipal = nonNeg(migrated.playerDebtPrincipal ?? 200_000_000);
+  merged.playerDebtPaid = nonNeg(migrated.playerDebtPaid ?? 0);
+  merged.playerDebtNextDueDay = nonNeg(migrated.playerDebtNextDueDay ?? 30);
+  merged.playerDebtMissed = nonNeg(migrated.playerDebtMissed ?? 0);
   merged.cityTierClaimed = Number.isFinite(migrated.cityTierClaimed)
     ? Math.max(1, Math.min(CITY_TIERS.length, migrated.cityTierClaimed))
     : 1;
@@ -1045,7 +1053,7 @@ export function dismissOffline(): void {
 export const RENAME_COST_GEMS = 5;
 
 export function renameCityAndMayor(mayorName: string, cityName: string, mayorGender?: import('./types').MayorGender): 'ok' | 'funds' {
-  const cleanMayor = mayorName.trim() || state.mayorName || 'Thị Trưởng MoMo';
+  const cleanMayor = mayorName.trim() || state.mayorName || 'Người Lập Nghiệp';
   const cleanCity = cityName.trim() || state.cityName || 'Đô Thị MoCity';
   if (state.hasNamedCity && (cleanMayor !== state.mayorName || cleanCity !== state.cityName)) {
     if (state.gems < RENAME_COST_GEMS) return 'funds';
@@ -1073,7 +1081,7 @@ function bumpResolvedEvents(s: CityState, now = Date.now()): Pick<CityState, 'ev
 }
 
 export function completeMayorLogin(mayorName: string, cityName: string, bonusCoins = 10_000_000, mayorGender?: import('./types').MayorGender): number {
-  const cleanMayor = mayorName.trim() || state.mayorName || 'Thị Trưởng MoMo';
+  const cleanMayor = mayorName.trim() || state.mayorName || 'Người Lập Nghiệp';
   const cleanCity = cityName.trim() || state.cityName || 'Đô Thị MoCity';
   const offlineReward = state.pendingOffline && Number.isFinite(state.pendingOffline.coins)
     ? Math.max(0, state.pendingOffline.coins)
