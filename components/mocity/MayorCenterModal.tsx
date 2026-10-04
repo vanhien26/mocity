@@ -81,16 +81,14 @@ export default function MayorCenterModal({
 }) {
   const state = useCity((s) => s);
   const [tab, setTab] = useState<Tab>(initialTab);
-  const [mayorInput, setMayorInput] = useState(state.mayorName || 'Thị Trưởng MoMo');
-  const [cityInput, setCityInput] = useState(state.cityName || 'Đô Thị MoCity');
+  const [mayorInput, setMayorInput] = useState(state.mayorName || 'Người Lập Nghiệp');
   const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     const id = requestAnimationFrame(() => {
       setTab(initialTab);
-      setMayorInput(state.mayorName || 'Thị Trưởng MoMo');
-      setCityInput(state.cityName || 'Đô Thị MoCity');
+      setMayorInput(state.mayorName || 'Người Lập Nghiệp');
       setConfirmReset(false);
     });
     return () => cancelAnimationFrame(id);
@@ -105,14 +103,14 @@ export default function MayorCenterModal({
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = renameCityAndMayor(mayorInput, cityInput);
+    const result = renameCityAndMayor(mayorInput, state.cityName);
     if (result === 'funds') {
-      onToast(`Cần ${RENAME_COST_GEMS} Kim Cương để đổi tên thành phố!`);
+      onToast(`Cần ${RENAME_COST_GEMS} Kim Cương để đổi tên!`);
       return;
     }
     onToast(isRename
-      ? `Đã đổi tên thành phố (tốn ${RENAME_COST_GEMS} Kim Cương)!`
-      : `Đã đặt tên thành phố "${cityInput.trim() || state.cityName}"!`
+      ? `Đã đổi biệt danh (tốn ${RENAME_COST_GEMS} Kim Cương)!`
+      : `Đã lưu tên "${mayorInput.trim() || state.mayorName}"!`
     );
   };
 
@@ -134,7 +132,7 @@ export default function MayorCenterModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Trung tâm Thị Trưởng & Nhiệm vụ"
+      aria-label="Tòa Thị Chính - Gặp Thị Trưởng & Nhiệm Vụ"
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-4"
     >
       <div
@@ -161,10 +159,10 @@ export default function MayorCenterModal({
             </span>
             <div className="min-w-0">
               <h2 className="truncate text-sm font-black uppercase" style={{ color: '#F5E6C8' }}>
-                Tòa Thị Chính & Nhiệm Vụ
+                Tòa Thị Chính
               </h2>
               <p className="truncate text-[13px] font-bold" style={{ color: '#C4AC85' }}>
-                {state.mayorName} · Cấp Thị Trưởng {state.mayorLevel}
+                {state.mayorName} · Người Lập Nghiệp · Cấp {state.mayorLevel}
               </p>
             </div>
           </div>
@@ -293,6 +291,30 @@ export default function MayorCenterModal({
         <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto p-4">
           {tab === 'PROFILE' && (
             <>
+              {/* Mayor NPC card */}
+              <div
+                className="flex items-start gap-3 rounded-2xl border-2 p-3.5"
+                style={{ background: 'linear-gradient(135deg,#4A3018,#3E2A1B)', borderColor: '#C9A227' }}
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 text-xl" style={{ borderColor: '#C9A22766', background: 'rgba(201,162,39,0.15)' }}>
+                  🏛️
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md px-2 py-0.5 text-[11px] font-black text-white" style={{ background: '#C9A227' }}>
+                      NPC · Thị Trưởng
+                    </span>
+                    <p className="truncate text-xs font-black" style={{ color: '#F5E6C8' }}>Thị Trưởng MoCity</p>
+                  </div>
+                  <p className="mt-1.5 text-[12px] leading-relaxed italic" style={{ color: '#C4AC85' }}>
+                    "Đây là đất của tôi. Bạn muốn kinh doanh trên phố này — tôi tính phí thuê đất. Làm ăn tốt, tôi sẽ mở thêm mặt bằng."
+                  </p>
+                  <p className="mt-1 text-[11px]" style={{ color: '#8B7355' }}>
+                    Người cai quản đô thị MoCity. Không phải bạn.
+                  </p>
+                </div>
+              </div>
+
               <form
                 onSubmit={handleSaveProfile}
                 className="space-y-3 rounded-2xl border-2 p-3.5"
@@ -300,31 +322,19 @@ export default function MayorCenterModal({
               >
                 <div>
                   <label className="block text-[13px] font-black uppercase" style={{ color: '#5B3D22' }}>
-                    Tên Thị Trưởng (Người Chơi)
+                    Biệt danh của bạn trên phố
                   </label>
+                  <p className="mt-0.5 text-[11px]" style={{ color: '#8B7355' }}>
+                    Cư dân và chủ tiệm sẽ gọi bạn bằng cái tên này.
+                  </p>
                   <input
                     type="text"
                     maxLength={28}
                     value={mayorInput}
                     onChange={(e) => setMayorInput(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 px-3 py-2 text-xs font-bold outline-none"
+                    className="mt-2 w-full rounded-xl border-2 px-3 py-2 text-xs font-bold outline-none"
                     style={{ background: '#FBF3DE', borderColor: '#C9A227', color: '#3E2A1B' }}
-                    placeholder="Nhập tên Thị Trưởng..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[13px] font-black uppercase" style={{ color: '#5B3D22' }}>
-                    Tên Thành Phố Của Bạn
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={32}
-                    value={cityInput}
-                    onChange={(e) => setCityInput(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-2 px-3 py-2 text-xs font-bold outline-none"
-                    style={{ background: '#FBF3DE', borderColor: '#C9A227', color: '#3E2A1B' }}
-                    placeholder="Nhập tên Thành phố..."
+                    placeholder="Tên của bạn..."
                   />
                 </div>
 
@@ -344,7 +354,7 @@ export default function MayorCenterModal({
                       <span>Đổi tên ({RENAME_COST_GEMS} Kim Cương)</span>
                     </>
                   ) : (
-                    <span>Lưu Hồ Sơ Thị Trưởng & Đô Thị</span>
+                    <span>Lưu Tên</span>
                   )}
                 </button>
               </form>
@@ -783,7 +793,7 @@ export default function MayorCenterModal({
                     ['Tiệm đã mở', `${state.buildings.length} / ${state.unlockedCols * state.unlockedRows}`],
                     ['Dân cư & chủ tiệm', `${state.npcs.length}`],
                     [
-                      'Cấp Thị Trưởng',
+                      'Cấp Lập Nghiệp',
                       state.mayorLevel >= MAX_MAYOR_LEVEL
                         ? `Lv.${state.mayorLevel} (tối đa)`
                         : `Lv.${state.mayorLevel} · ${formatCompact(state.mayorXp)}/${formatCompact(xpForLevel(state.mayorLevel))} XP`,
