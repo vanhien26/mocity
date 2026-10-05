@@ -52,8 +52,8 @@ describe('gan save theo tai khoan', () => {
     );
     assert.equal(
       getCityState().mayorName,
-      'Thị Trưởng MoMo',
-      'ten cua A khong duoc sang cho B',
+      'Người Lập Nghiệp',
+      'ten cua A khong duoc sang cho B (B phai mac dinh ten moi)',
     );
 
     // Quay lai A - thanh pho phai con nguyen.
@@ -307,7 +307,13 @@ describe('cong vay gate theo Ngan Hang So (Bac 3)', () => {
     assert.equal(mocity.loanHeadroom(getCityState()), 0, 'khong co ngan hang thi han muc phai = 0');
     const r = mocity.takeLoan(1000);
     assert.equal(r.ok, false);
-    if (!r.ok) assert.equal(r.reason, 'needBank');
+    /*
+     * Tính năng vay đã tắt trong gameplay (`takeLoan` luôn trả `disabled`)
+     * - người chơi chỉ có khoản nợ gốc 200 triệu phải trả hết để kết thúc.
+     * `loanHeadroom` vẫn phải = 0 để HUD không hứa hẹn một hạn mức không
+     * dùng được.
+     */
+    if (!r.ok) assert.equal(r.reason, 'disabled');
     assert.equal(getCityState().debt ?? 0, 0, 'khong duoc phat sinh no khi chua co ngan hang');
   });
 

@@ -8,7 +8,6 @@ import {
   happinessFor,
   landCostCoins,
   nodeYieldBreakdown,
-  offlineCoins,
   populationFor,
   supplyPerSecond,
   takeRateFor,
@@ -203,17 +202,6 @@ describe('takeRateFor', () => {
     const many = Array.from({ length: 40 }, (_, i) => node('thap-momo', i % 10, Math.floor(i / 10)));
     const rate = takeRateFor(many);
     assert.ok(rate <= 0.065 + 1e-9, `take rate vuot MAX: ${rate}`);
-  });
-});
-
-describe('offlineCoins', () => {
-  it('khong tra ve so am', () => {
-    assert.equal(offlineCoins(100, 0), 0);
-    assert.equal(offlineCoins(0, 10_000), 0);
-  });
-
-  it('tang theo thoi gian van mat', () => {
-    assert.ok(offlineCoins(100, 60_000) > offlineCoins(100, 30_000));
   });
 });
 

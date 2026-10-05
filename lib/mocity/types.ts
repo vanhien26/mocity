@@ -60,11 +60,11 @@ export interface MayorQuestDef {
   rewardGems: number;
   rewardXp: number;
   /**
-   * Chang tien trinh. 1 la nhap mon (xong trong buoi dau), 2 la dai han.
-   * Bang Nhiem Vu nhom theo truong nay, neu khong 18 muc se thanh mot danh
-   * sach dai khong co moc nao de nguoi choi dinh huong.
+   * Chang tien trinh. 1 nhap mon (xong buoi dau), 2 dai han, 3 co nghiep
+   * (vong choi muon). Bang Nhiem Vu nhom theo truong nay, neu khong se thanh
+   * mot danh sach dai khong co moc nao de nguoi choi dinh huong.
    */
-  stage: 1 | 2;
+  stage: 1 | 2 | 3;
 }
 
 export interface BuildingNode {
@@ -97,6 +97,12 @@ export interface BuildingNode {
   lastAutoServedAt?: number;
   stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
   lastFraudPreventedAt?: number;
+  /**
+   * Đánh dấu node là nhà của thành phố (NPC). Node này LUÔN nằm trong
+   * `CityState.cityBuildings`, không bao giờ nằm trong `buildings`.
+   * Field giữ lại để UI đọc trực tiếp trên node đang render.
+   */
+  npcOwned?: boolean;
 }
 
 /* ── Con nguoi trong thanh pho ──────────────────────────────────── */
@@ -416,6 +422,14 @@ export function emptyPeriodLedger(day: string, month: string): PeriodLedger {
 
 export type MayorGender = 'male' | 'female';
 
+/**
+ * Cac ket thuc cua tro choi:
+ * - `survival` / `prosperity` / `empire`: tra het no goc 200 trieu, quy mo
+ *   tinh theo dong tien thang.
+ * - `bankrupt`: tre du so ky lai lien tien ma khong tra duoc -> ong Chin lay dat.
+ */
+export type GameEnding = 'survival' | 'prosperity' | 'empire' | 'bankrupt';
+
 export interface CityState extends Currencies {
   version: number;
   mayorName: string;
@@ -428,6 +442,19 @@ export interface CityState extends Currencies {
   unlockedCols: number;
   unlockedRows: number;
   buildings: BuildingNode[];
+  /**
+   * Nhà của THÀNH PHỐ (NPC) - đã có sẵn từ đầu, người chơi không xây,
+   * không nâng, không nhận tiền từ đây.
+   *
+   * Tách hẳn khỏi `buildings` thay vì đánh dấu bằng `npcOwned`: toàn bộ
+   * logic kinh tế/nhiệm vụ/bậc thành phố (viết trước khi có nhà NPC) đều
+   * duyệt `state.buildings`, nên tách ra là mọi chỗ đó tự đúng theo mặc
+   * định, không phải nhớ đi canh `!b.npcOwned` ở hơn chục vòng lặp.
+   *
+   * Thành phố chỉ xuất hiện ở 2 chỗ: render lên phố (bảng vỉa hè) và làm
+   * HÀNG XÓM cho synergy +25% liên kế.
+   */
+  cityBuildings: BuildingNode[];
   npcs: NpcState[];
   unlockedManagers: string[];
   claimedQuests: string[];
@@ -476,8 +503,9 @@ export interface CityState extends Currencies {
   lastTalkAt: number;
   /**
    * Lan gan nhat Thi Truong THAT SỰ quan tâm den pho (giai quyet su kien hoac
-   * yeu cau cua nguoi dan). Tach rieng `lastEventAt` - cai do chi dem han 35
-   * giay giua cac su kien, dung de kiem tra xem co duoc spawn them khong.
+   * yeu cau cua nguoi dan). Tach rieng `lastEventAt` - cai do chi dem khoang
+   * cach 6 phut giua cac su kien (`EVENT_INTERVAL_MS`), dung de kiem tra xem
+   * co duoc spawn them khong.
    *
    * Day la dong ho chay cho suy giam hanh phuc.
    */
@@ -511,10 +539,10 @@ export interface CityState extends Currencies {
   playerDebtPaid: number;
   /** Ngày đến hạn lãi kỳ tiếp, dạng "YYYY-M-D" (cùng format loanDueDay). */
   playerDebtNextDueDateStr: string;
-  /** Số kỳ lãi trễ liên tiếp (>= 2 = game over warning). */
+  /** Số kỳ lãi trễ liên tiếp. Trả vượt `PLAYER_DEBT_MISSED_LIMIT` = mất đất (bankrupt). */
   playerDebtMissed: number;
-  /** Kết thúc game khi trả hết nợ. null = chưa kết thúc. */
-  gameEnding: 'survival' | 'prosperity' | 'empire' | null;
+  /** Kết thúc game. null = chưa kết thúc. */
+  gameEnding: GameEnding | null;
   dailyLog: DailyLog;
   streak: StreakState;
   /**
@@ -682,16 +710,32 @@ export interface CityState extends Currencies {
   insuranceActiveUntilMs?: number;
   /** Danh sách sự cố đô thị đang diễn ra cần Thị Trưởng giải quyết */
   activeIncidents?: CityIncident[];
+  /** Danh sách các vấn đề đã khắc phục triệt để (buildingId:incidentType), không bao giờ tái diễn */
+  fixedIncidents?: string[];
 }
 
 export type IncidentType = 'FIRE' | 'THEFT' | 'COMPLAINT' | 'STOCKOUT';
 
+export interface IncidentSolution {
+  id: string;
+  title: string;
+  desc: string;
+  cost: number;
+  mayorPoints: number;
+  fixPermanent: boolean;
+  bonusEffectText?: string;
+}
+
 export interface CityIncident {
   id: string;
   type: IncidentType;
+  title?: string;
   buildingId: string;
   buildingName: string;
   description: string;
+  rootCause?: string;
+  witnessQuote?: string;
+  solutions?: IncidentSolution[];
   penaltyPct: number;
   startedAt: number;
   resolved: boolean;

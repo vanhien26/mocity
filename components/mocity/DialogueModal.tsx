@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { formatCompact } from '@/lib/mocity/format';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import { SERVICE_LABEL, SERVICE_TOOL } from '@/lib/mocity/npc-data';
+import { useCity } from '@/lib/mocity/store';
 import type { ConsequenceTag, DialogueChoice } from '@/lib/mocity/types';
 import { resolveCharacterAppearance } from '@/lib/mocity/character-roster';
 import CharacterPanel from '@/components/mocity/CharacterPanel';
@@ -96,13 +98,36 @@ export default function DialogueModal({
   onClose: () => void;
 }) {
   const [picked, setPicked] = useState<DialogueChoice | null>(null);
+  const mayorName = useCity((s) => s.mayorName);
+
+  /*
+   * Điền tên người chơi vào TOAN BO text truoc khi render: body, tieu de,
+   * ten nguoi noi, tung nut lua chon va cau reply sau khi chon. Data van
+   * giu nguyen "Thị Trưởng" (xem dialogue-name.ts) de khong sua tay hang
+   * tram chuoi va khong lam ten nhan vat rieng bi lo.
+   */
+  const filled = useMemo<DialogueView | null>(() => {
+    if (!view) return null;
+    return {
+      ...view,
+      title: fillTen(view.title, mayorName),
+      subtitle: view.subtitle ? fillTen(view.subtitle, mayorName) : view.subtitle,
+      speaker: fillTen(view.speaker, mayorName),
+      body: fillTen(view.body, mayorName),
+      choices: view.choices.map((choice) => ({
+        ...choice,
+        text: fillTen(choice.text, mayorName),
+        reply: fillTen(choice.reply, mayorName),
+      })),
+    };
+  }, [view, mayorName]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setPicked(null));
     return () => cancelAnimationFrame(id);
   }, [view?.title, view?.body]);
 
-  if (!view) return null;
+  if (!filled) return null;
 
   const handlePick = (choice: DialogueChoice) => {
     if (onChoose(choice.id)) setPicked(choice);
@@ -114,11 +139,11 @@ export default function DialogueModal({
   return (
     <CharacterPanel
       variant="dialogue"
-      title={view.title}
-      subtitle={view.subtitle ?? 'Chuyện này chỉ mình bạn biết...'}
-      badge={view.speakerTag}
-      avatar={<ChibiNpcAvatar speaker={view.speaker} />}
-      speech={reply ?? view.body}
+      title={filled.title}
+      subtitle={filled.subtitle ?? 'Chuyện này chỉ mình bạn biết...'}
+      badge={filled.speakerTag}
+      avatar={<ChibiNpcAvatar speaker={filled.speaker} />}
+      speech={reply ?? filled.body}
       onClose={onClose}
     >
       {/* Danh sach 3 Phuong an hoac Ket qua */}
@@ -161,7 +186,7 @@ export default function DialogueModal({
                 </button>
               </>
             ) : (
-              view.choices.map((choice, idx) => {
+              filled.choices.map((choice, idx) => {
                 const tooPoor = choice.costCoins !== undefined && coins < choice.costCoins;
                 const tags = resolveChoiceTags(choice);
                 const defaultTone: 'green' | 'red' | 'blue' =

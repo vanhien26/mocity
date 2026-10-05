@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { claimTapReward } from '@/lib/mocity/store';
+import { claimTapReward, useCity } from '@/lib/mocity/store';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import { ChibiBody } from './ChibiRenderer';
 import { appearanceFromSeed } from '@/lib/mocity/character-appearance-gen';
 import type { CharacterAppearance } from '@/lib/mocity/character-appearance';
@@ -237,12 +238,14 @@ export default function StreetVendorStalls({
   onStallReward?: (toast: string) => void;
 }) {
   const [activeSpeech, setActiveSpeech] = useState<{ stallId: string; text: string } | null>(null);
+  /** Tên người chơi để người bán hàng xưng hô thay cho "Thị Trưởng". */
+  const mayorName = useCity((s) => s.mayorName);
   const [effects, setEffects] = useState<{ id: number; x: number; y: number }[]>([]);
 
   const handleTap = (stall: StallDef, e: React.MouseEvent) => {
     e.stopPropagation();
     const result = claimTapReward('stall', stall.rewardCoins, { cooldownMs: 2200 });
-    const quote = stall.quotes[Math.floor(Math.random() * stall.quotes.length)];
+    const quote = fillTen(stall.quotes[Math.floor(Math.random() * stall.quotes.length)], mayorName);
     setActiveSpeech({ stallId: stall.id, text: quote });
     setTimeout(() => setActiveSpeech((cur) => (cur?.stallId === stall.id ? null : cur)), 3800);
 

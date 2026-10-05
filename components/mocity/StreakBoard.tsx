@@ -8,6 +8,7 @@ import {
   streakMilestoneReached,
 } from '@/lib/mocity/mock-city-data';
 import { currentStreak, streakAtRisk, useCity } from '@/lib/mocity/store';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import { formatCompact } from '@/lib/mocity/format';
 
 /**
@@ -19,6 +20,7 @@ import { formatCompact } from '@/lib/mocity/format';
  */
 export default function StreakBoard() {
   const streak = useCity((s) => s.streak);
+  const mayorName = useCity((s) => s.mayorName);
   const claimed = useCity((s) => s.streakClaimed ?? 0);
 
   const days = streak?.lastDay === streak?.lastDay ? currentStreak() : 0;
@@ -169,7 +171,7 @@ export default function StreakBoard() {
                     className="truncate text-[13px] font-black"
                     style={{ color: unlocked ? '#3E2A1B' : '#9CA3AF' }}
                   >
-                    {m.title}
+                    {fillTen(m.title, mayorName)}
                   </p>
                   <p className="text-[12px] font-bold text-[#6E4F3A]">
                     +{formatCompact(m.rewardCoins)} · +{m.rewardGems} KC ·{' '}

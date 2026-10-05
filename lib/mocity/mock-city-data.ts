@@ -725,7 +725,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-name-city',
     title: 'Đặt tên thành phố',
-    description: 'Bấm vào bảng tên trên thanh HUD để đặt tên Thị Trưởng & Thành Phố (đừng để tên mặc định kẻo Shipper tìm không ra!).',
+    description: 'Bấm vào bảng tên trên thanh HUD để đặt tên Thành Phố và biệt danh của bạn (đừng để tên mặc định kẻo Shipper tìm không ra!).',
     rewardCoins: 5_000_000,
     rewardGems: 3,
     stage: 1,
@@ -886,7 +886,7 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-tier-6',
     title: 'Đạt Rank 6',
-    description: 'Đưa thành phố đạt Rank 6 - Đô Thị Quét Mã. Cả phố không còn ai thối tiền lẻ.',
+    description: 'Đưa thành phố đạt Rank 6 - Đại Lộ Ánh Đèn. Cả phố không còn ai thối tiền lẻ.',
     rewardCoins: 500_000_000,
     rewardGems: 60,
     stage: 2,
@@ -895,11 +895,93 @@ export const MAYOR_QUESTS: MayorQuestDef[] = [
   {
     id: 'q-landmark',
     title: 'Xây Landmark',
-    description: 'Xây Quảng Trường Heo Vàng hoặc Tháp Đôi Phố Thị.',
+    description: 'Xây Quảng Trường Ánh Sáng Trung Tâm hoặc Tháp Landmark Biểu Tượng - hai công trình LANDMARK của phố.',
     rewardCoins: 1_000_000_000,
     rewardGems: 55,
     stage: 2,
     rewardXp: 14_000,
+  },
+
+  /*
+   * CHANG BA - CO NGHIEP.
+   *
+   * Chay 2 dua nguoi choi tu xom len pho, chay nay dua tu pho len doanh
+   * nghiep: nang cap den tran, sao den dinh, lap gan tron ban do va gho ro
+   * nut that no goc 200 trieu. Thuong phai ngang tam vong choi muon - khi do mot
+   * lan nang cap da tinh hang ty va muon len Rank 8 can ca trang thai doanh
+   * nghiep, khong phai chi thoi gian.
+   */
+  {
+    id: 'q-happiness-85',
+    title: 'Hạnh phúc cư dân đạt 85',
+    description: 'Đưa chỉ số Hạnh phúc của phố lên 85/100. Cư dân vui thì thuế mới không bị cắt xuống 0.7x.',
+    rewardCoins: 1_200_000_000,
+    rewardGems: 60,
+    stage: 3,
+    rewardXp: 22_000,
+  },
+  {
+    id: 'q-module-12',
+    title: 'Lắp 12 tiện ích',
+    description: 'Lắp tổng cộng 12 module tiện ích cho các cửa hàng trên phố.',
+    rewardCoins: 1_500_000_000,
+    rewardGems: 65,
+    stage: 3,
+    rewardXp: 24_000,
+  },
+  {
+    id: 'q-half-debt',
+    title: 'Trả được nửa nợ',
+    description: 'Trả ít nhất 100 triệu trong khoản nợ 200 triệu với ông Chín. Nửa chặng rồi đấy.',
+    rewardCoins: 2_000_000_000,
+    rewardGems: 70,
+    stage: 3,
+    rewardXp: 28_000,
+  },
+  {
+    id: 'q-streak-30',
+    title: '30 ngày chơi liên tiếp',
+    description: 'Giữ chuỗi ngày chơi liên tiếp đạt 30 ngày.',
+    rewardCoins: 3_000_000_000,
+    rewardGems: 80,
+    stage: 3,
+    rewardXp: 35_000,
+  },
+  {
+    id: 'q-level-50',
+    title: 'Nâng công trình lên Cấp 50',
+    description: 'Đưa một công trình lên tận Cấp 50 - mức cao nhất trò chơi cho phép.',
+    rewardCoins: 4_000_000_000,
+    rewardGems: 85,
+    stage: 3,
+    rewardXp: 40_000,
+  },
+  {
+    id: 'q-five-star',
+    title: 'Tiến hóa lên ★★★★★',
+    description: 'Đưa một cửa hàng lên 5 sao. Khách xếp hàng từ sáng cho tới tối.',
+    rewardCoins: 5_000_000_000,
+    rewardGems: 90,
+    stage: 3,
+    rewardXp: 45_000,
+  },
+  {
+    id: 'q-full-grid',
+    title: 'Lấp đầy 46 lô đất',
+    description: 'Sở hữu 46 công trình - đúng bằng số lô cần cho bậc cuối cùng của phố.',
+    rewardCoins: 8_000_000_000,
+    rewardGems: 100,
+    stage: 3,
+    rewardXp: 55_000,
+  },
+  {
+    id: 'q-tier-8',
+    title: 'Đạt Rank 8',
+    description: 'Đưa thành phố đạt Rank 8 - Siêu Đô Thị Kỳ Quan, bậc cuối cùng của MoCity.',
+    rewardCoins: 15_000_000_000,
+    rewardGems: 120,
+    stage: 3,
+    rewardXp: 70_000,
   },
 ];
 
@@ -1023,8 +1105,8 @@ export function starUpgradeCost(def: BuildingDef, currentStar: number): { coins:
  * cong trinh chua duoc 50 cap thi game chua bao gio tra loi, nen hien duong
  * cong nay chinh la "tuong" chu khong phai "cong bang".
  *
- * Hien tai: `500 + 300 * (cap - 1)`. Tong lv1 -> 50 la 368.700 XP, lv49 can
- * 14.700. Nguyen tac: XP hang dau phai cham hon doanh thu AFK, va phai tro
+ * Hien tai: `500 + 300 * (cap - 1)`. Tong xp cac cap 1 -> 49 (nghia la tong
+ * phai ton de len cap 50) la 377.300 XP, rieng cap 49 can 14.900. Nguyen tac: XP hang dau phai cham hon doanh thu AFK, va phai tro
  * khop voi `IDLE_XP_CAP` o `store.ts` de AFK khong bao gio lo lao cap do.
  */
 export function xpForLevel(level: number): number {
@@ -1264,7 +1346,7 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
     rewardCoins: 800_000, rewardGems: 2, rewardXp: 2_200,
   },
   {
-    id: 'd-xu-chuyen-pho', title: 'Phân xử 2 Chuyện Phố',
+    id: 'd-xu-chuyen-pho', title: 'Giải quyết 2 Chuyện Phố',
     counter: 'eventsResolved', target: 2,
     rewardCoins: 1_000_000, rewardGems: 3, rewardXp: 2_800,
   },
@@ -1307,7 +1389,7 @@ export interface StreakMilestoneDef {
 export const STREAK_MILESTONES: StreakMilestoneDef[] = [
   { days: 3, title: '3 ngày — Phố đã quen mặt bạn', rewardCoins: 20_000_000, rewardGems: 2, rewardXp: 3_000 },
   { days: 7, title: '1 tuần — Hàng xóm kín chào', rewardCoins: 60_000_000, rewardGems: 5, rewardXp: 9_000 },
-  { days: 14, title: '2 tuần — Thị Trưởng được cử tri tín nhiệm', rewardCoins: 180_000_000, rewardGems: 10, rewardXp: 20_000 },
+  { days: 14, title: '2 tuần — cả phố tin tưởng bạn', rewardCoins: 180_000_000, rewardGems: 10, rewardXp: 20_000 },
   { days: 30, title: '1 tháng — Cả thành phố đứng sau lưng bạn', rewardCoins: 600_000_000, rewardGems: 25, rewardXp: 45_000 },
   { days: 60, title: '2 tháng — Rank thành phố không còn chờ ai', rewardCoins: 1_500_000_000, rewardGems: 50, rewardXp: 90_000 },
   { days: 100, title: '100 ngày — Huyền thoại Đại Lộ Hoa Sữa', rewardCoins: 5_000_000_000, rewardGems: 100, rewardXp: 180_000 },

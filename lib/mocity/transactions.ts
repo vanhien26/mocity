@@ -138,6 +138,15 @@ export interface CloseResult {
  */
 export interface TxCtx {
   buildings: BuildingNode[];
+  /**
+   * Phố đầy đủ = người chơi + nhà thành phố (NPC). Chỉ dùng để quét HÀNG
+   * XÓM khi tính năng suất (`orderValueFor` / `nodeYieldBreakdown`), nên
+   * tiệm cạnh khu dân cư vẫn được +25% liên kế. Mọi con số tiền khác vẫn
+   * đọc `buildings` - thành phố không tạo ra đồng nào cho người chơi.
+   *
+   * `undefined` = không truyền (giữ nguyên hành vi cũ), rơi về `buildings`.
+   */
+  street?: BuildingNode[];
   npcs: NpcState[];
   /** `taxMultiplierFromHappiness(happiness)` - khách vui thì chịu chi cao hơn. */
   happinessMult: number;
@@ -156,10 +165,10 @@ export interface TxCtx {
    */
   supplyFactor?: number;
   /**
-   * Hệ số sự kiện: Fever x2, cổ vật cộng dồn.
+   * Hệ số buff cộng dồn (bảo vật trang bị...). Giờ Vàng x2 da xoa.
    *
-   * Cũ thì `flow.revenue` đã nhân sẵn, giờ giao dịch phải tự nhân nếu không
-   * bật Fever sẽ không còn ý nghĩa gì.
+   * Phai truyen vao day vi `flowFor` da nhan san vao gross: neu giao dich
+   * khong nhan thi vi tien it hon P&L bao.
    */
   earnMult?: number;
 }
@@ -296,13 +305,13 @@ export function closeOneOrder(
    */
   arrivedAt?: number,
 ): Transaction | null {
-  const base = orderValueFor(node, ctx.buildings);
+  const base = orderValueFor(node, ctx.street ?? ctx.buildings);
   if (base <= 0) return null;
 
   /*
    * Cùng chuỗi hệ số với `flowFor`: hạnh phúc -> cấp Thị Trưởng -> cung/cầu
-   * -> Fever/cổ vật. Bỏ sót một bậc là giao dịch thực lệch dự báo và người
-   * chơi không hiểu vì sao P&L báo một đường, ví đi một nẻo.
+   * -> hệ số buff (`earnMult`). Bỏ sót một bậc là giao dịch thực lệch dự báo
+   * và người chơi không hiểu vì sao P&L báo một đường, ví đi một nẻo.
    */
   const mult =
     ctx.happinessMult * ctx.levelBonus * (ctx.supplyFactor ?? 1) * (ctx.earnMult ?? 1);
@@ -354,7 +363,7 @@ export function resetArrivalAccumulator(): void {
 export function settleArrivals(
   buildings: BuildingNode[],
   queues: ShopQueue[],
-  ctx: Pick<TxCtx, 'now'>,
+  ctx: Pick<TxCtx, 'now' | 'street'>,
   deltaMs: number,
 ): { queues: ShopQueue[]; arrived: number; lost: number } {
   if (deltaMs <= 0) return { queues, arrived: 0, lost: 0 };
@@ -373,7 +382,7 @@ export function settleArrivals(
      * `closeOneOrder` trả `null` vì không có giá trị, khách sẽ đứng đó cho
      * tới khi hết hạn mà không ai đóng được - một hàng chờ chết.
      */
-    if (orderValueFor(node, buildings) <= 0) continue;
+    if (orderValueFor(node, ctx.street ?? buildings) <= 0) continue;
 
     const prev = arrivalAcc.get(node.id) ?? 0;
     const raw = prev + rate * (deltaMs / 1000);
@@ -606,10 +615,10 @@ export function simulateOfflineBatch(
 
   for (const node of buildings) {
     if (budget <= 0) break;
-    const value = orderValueFor(node, ctx.buildings);
+    const value = orderValueFor(node, ctx.street ?? ctx.buildings);
     if (value <= 0) continue;
 
-    const potential = nodeYieldBreakdown(node, ctx.buildings).totalPerSec * seconds;
+    const potential = nodeYieldBreakdown(node, ctx.street ?? ctx.buildings).totalPerSec * seconds;
     const orderCount = Math.floor((potential * OFFLINE_FILL_RATE) / value);
     if (orderCount <= 0) continue;
 

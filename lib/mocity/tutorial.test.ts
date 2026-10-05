@@ -67,10 +67,29 @@ describe('dieu kien tung buoc', () => {
     assert.equal(b.done(st({ buildings: [node('quan-ca-phe')] })), true);
   });
 
-  it('xay nha: can cong trinh co dan, quan ca phe khong tinh', () => {
-    const b = buoc('xay-nha');
+  it('mo tiem thu hai: can it nhat 2 cong trinh, 1 tiem chua du', () => {
+    const b = buoc('mo-tiem-2');
     assert.equal(b.done(st({ buildings: [node('quan-ca-phe')] })), false);
-    assert.equal(b.done(st({ buildings: [node('nha-pho-binh-dan')] })), true);
+    assert.equal(
+      b.done(st({ buildings: [node('quan-ca-phe'), node('sieu-thi')] })),
+      true,
+    );
+    /*
+     * Nhà của thành phố (NPC) KHÔNG được tính - chúng nằm trong
+     * `cityBuildings`, không nằm trong `buildings`. Điều kiện này chỉ đọc
+     * `buildings` nên mặc định đã đúng; assertion dưới đây khoá lại để
+     * không ai lỡ đưa NPC quay vào mảng tài sản người chơi.
+     */
+    assert.equal(
+      b.done(
+        st({
+          buildings: [node('quan-ca-phe')],
+          cityBuildings: [node('nha-pho-binh-dan')],
+        }),
+      ),
+      false,
+      'nhà thành phố không làm bước mở tiệm thứ hai hoàn thành',
+    );
   });
 
   it('nang cap: cap 1 chua tinh, cap 2 moi tinh', () => {

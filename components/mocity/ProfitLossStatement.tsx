@@ -165,7 +165,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
   const handleRuttTienVeVi = () => {
     if (transferToPersonalWealth(wealthVal)) {
       setWealthInput('');
-      onToast?.(`Đã rút ${formatNumber(wealthVal)} đồng về Ví Cá Nhân Thị Trưởng.`);
+      onToast?.(`Đã rút ${formatNumber(wealthVal)} đồng về Ví Cá Nhân.`);
     } else {
       onToast?.('Ngân Khố không đủ để rút số đồng này.');
     }
@@ -247,7 +247,7 @@ export function FinancialRulesPanel({ onToast }: { onToast?: (msg: string) => vo
             </p>
           </div>
           <div className="rounded-xl bg-[#EFF6FF] p-2">
-            <p className="text-[10px] font-bold uppercase text-[#2563EB]">Ví Cá Nhân (Thị Trưởng)</p>
+            <p className="text-[10px] font-bold uppercase text-[#2563EB]">Ví Cá Nhân</p>
             <p className="text-sm font-black tabular-nums text-[#1E40AF]">
               {formatNumber(derived.personalWealth)}
             </p>
@@ -558,10 +558,10 @@ export default function ProfitLossStatement({ onToast }: { onToast?: (msg: strin
                   />
                   <Row
                     label="− Kiểm kê thị trường"
-                    sublabel="Hàng tồn kho & bảo vật 🏺"
+                    sublabel="Hàng tồn kho & vật phẩm 🎁"
                     value={-l.inventoryBought}
                     tone="minus"
-                    hint="Vật phẩm và Bảo Vật trong Kho Đồ. Tiền đã ra rồi nhưng là tài sản còn dùng được, không phải chi phí vận hành nên không trừ vào lợi nhuận."
+                    hint="Vật phẩm tiêu dùng trong Kho Đồ. Tiền đã ra rồi nhưng là tài sản còn dùng được, không phải chi phí vận hành nên không trừ vào lợi nhuận."
                   />
                   <Row
                     label="= Dòng tiền tự do"

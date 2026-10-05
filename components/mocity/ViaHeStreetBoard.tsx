@@ -11,6 +11,7 @@ import { BUILDING_BY_ID } from '@/lib/mocity/mock-city-data';
 import { nodeYieldBreakdown, queueCapacityFor } from '@/lib/mocity/city-calculator';
 import { queueHardCap } from '@/lib/mocity/transactions';
 import { claimTapReward, useCity, useCityDerived } from '@/lib/mocity/store';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import type { ShopQueue } from '@/lib/mocity/types';
 import ExpressiveStreetCitizens from './ExpressiveStreetCitizens';
 import MoMoMascot from './MoMoMascot';
@@ -32,6 +33,8 @@ import { useAmbientChatter } from './SpeechBubble';
  * rong container va tinh vi tri cuon.
  */
 const PLOT_WIDTH = 236;
+/** Gioi han toi da hang pho render duoc - khop `gridSize` (10) trong store. */
+const MAX_ROWS_PER_STREET = 10;
 /** Khoang dem hai ben duong pho. */
 const STREET_PADDING = 420;
 /** Be rong ngan ngang tai ngat tu - dung chung giua JSX va tinh `streetWidth`. */
@@ -55,7 +58,7 @@ const PATROL_COOLDOWN_MS = 5 * 60 * 1000;
  * độ tuyệt đối của ngã tư Đ. Hoa Sữa gốc ở đầu phố - nơi `StreetTraffic` đã
  * hiệu chỉnh sẵn điểm dừng xe theo đúng vị trí đó.
  */
-function CrossroadGap() {
+function CrossroadGap({ showSign = false }: { showSign?: boolean }) {
   return (
     <div
       className="relative shrink-0 overflow-hidden"
@@ -76,14 +79,16 @@ function CrossroadGap() {
       {/* Tim đường vàng dọc ngã tư */}
       <div className="absolute bottom-0 left-1/2 h-[128px] w-[3px] -translate-x-1/2" style={{ backgroundColor: '#D9B93C' }} />
 
-      {/* Biển tên đường khu phố mới */}
-      <div className="pointer-events-none absolute top-[36px] left-1/2 -translate-x-1/2">
-        <div className="px-[3px] py-[2px]" style={{ backgroundColor: '#0E2F6E' }}>
-          <div className="px-1.5 py-0.5" style={{ backgroundColor: '#1848A8' }}>
-            <span className="whitespace-nowrap text-[9px] font-bold leading-tight tracking-wide text-white">Đ. Mai Vàng</span>
+      {/* Biển tên đường - chi hien o NGA TU DAU TIEN, khong lap 3-4 lan ten duong */}
+      {showSign && (
+        <div className="pointer-events-none absolute top-[36px] left-1/2 -translate-x-1/2">
+          <div className="px-[3px] py-[2px]" style={{ backgroundColor: '#0E2F6E' }}>
+            <div className="px-1.5 py-0.5" style={{ backgroundColor: '#1848A8' }}>
+              <span className="whitespace-nowrap text-[9px] font-bold leading-tight tracking-wide text-white">Đ. Mai Vàng</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -126,8 +131,10 @@ export default function ViaHeStreetBoard({
   const unlockedCols = useCity((s) => s.unlockedCols);
   const unlockedRows = useCity((s) => s.unlockedRows);
   const buildings = useCity((s) => s.buildings);
+  const cityBuildings = useCity((s) => s.cityBuildings);
   const npcs = useCity((s) => s.npcs);
   const activeRequests = useCity((s) => s.activeRequests);
+  const mayorName = useCity((s) => s.mayorName);
   const timeOfDay = useCity((s) => s.timeOfDay ?? 'DAY');
   const weather = useCity((s) => s.weather ?? 'SUNNY');
   const isFlooded = useCity((s) => s.isFlooded ?? false);
@@ -186,11 +193,17 @@ export default function ViaHeStreetBoard({
    */
   const plotCount = Math.max(4, unlockedCols);
   /**
-   * 2 hàng phố nối liền ngang qua ngã tư trong CÙNG MỘT dải cuộn (xem
-   * `streetPlots`) - không phải xếp chồng, nên bề rộng gấp đôi + khoảng ngã
-   * tư chen giữa.
+   * Moi hang pho la mot doan ngang, cac doan noi nhau qua NGA TU (CrossroadGap)
+   * trong CUNG MOT dải cuộn - khong xep chong. So hang = `unlockedRows`
+   * (toi da 10 theo `gridSize`), neu it hon 2 van hien 2 de tease hang chua mo.
+   *
+   * TRUOC DAY fix 2 hang: hang 2,3 van mo nhung khong render -> nguoi choi xay
+   * tiem o do thi tien mat ma mat mat tiem, va `street-layout.test.ts` van yeu
+   * cau "16 o deu tim thay duoc".
    */
-  const streetWidth = plotCount * PLOT_WIDTH * 2 + CROSSROAD_WIDTH + STREET_PADDING;
+  const streetRows = Math.max(2, Math.min(unlockedRows, MAX_ROWS_PER_STREET));
+  const streetWidth =
+    plotCount * PLOT_WIDTH * streetRows + CROSSROAD_WIDTH * (streetRows - 1) + STREET_PADDING;
   const rowCount = Math.max(1, unlockedRows);
 
   /**
@@ -208,7 +221,13 @@ export default function ViaHeStreetBoard({
 
   // Chuyển danh sách các ô đất thành một Dãy Nhà Ống Mặt Tiền Phố (Số 2, Số 4, Số 6, Số 8...)
   const streetPlots = useMemo(() => {
-    const bMap = new Map(buildings.map((b) => [`${b.col}:${b.row}`, b]));
+    /*
+     * Phố render đủ hai loại ô: tiệm người chơi và nhà của thành phố (NPC).
+     * Map gộp cả hai, nếu không 4 căn nhà NPC sẽ biến mất khỏi màn hình -
+     * chúng không nằm trong `state.buildings` nữa.
+     */
+    const streetBuildings = [...buildings, ...cityBuildings];
+    const bMap = new Map(streetBuildings.map((b) => [`${b.col}:${b.row}`, b]));
     const requested = new Set(activeRequests.map((r) => r.npcId));
 
     const list: Array<{
@@ -247,8 +266,11 @@ export default function ViaHeStreetBoard({
      */
     const colCount = Math.max(4, unlockedCols);
     const coords: Array<{ col: number; row: number; unlocked: boolean }> = [];
-    // Luon tease ca hang 1 (khoa neu chua mua) - dung "PHO CHUA MO" co san.
-    const rowsToShow = 2;
+    /*
+     * Render TOAN BO hang da mo (it nhat 2 de luon tease hang 1 chua mua).
+     * Chi hien 2 hang nhu ban cu la.nguyen nhan hang 2,3 bi an khoi man hinh.
+     */
+    const rowsToShow = streetRows;
     for (let r = 0; r < rowsToShow; r++) {
       for (let c = 0; c < colCount; c++) {
         coords.push({ col: c, row: r, unlocked: c < unlockedCols && r < unlockedRows });
@@ -259,7 +281,7 @@ export default function ViaHeStreetBoard({
       const node = bMap.get(`${coord.col}:${coord.row}`);
       const def = node ? BUILDING_BY_ID[node.defId] : undefined;
       const npc = node ? npcs.find((n) => n.buildingId === node.id) : undefined;
-      const yInfo = node ? nodeYieldBreakdown(node, buildings) : null;
+      const yInfo = node ? nodeYieldBreakdown(node, streetBuildings) : null;
 
       /*
        * MẶT TIỀN PHẢI KHỚP LOẠI CÔNG TRÌNH, không phải khớp vị trí ô đất.
@@ -303,7 +325,7 @@ export default function ViaHeStreetBoard({
     });
 
     return list;
-  }, [activeRequests, buildings, npcs, unlockedCols, unlockedRows]);
+  }, [activeRequests, buildings, cityBuildings, npcs, streetRows, unlockedCols]);
 
   /*
    * NGƯỜI TRONG NHÀ NÓI CHUYỆN.
@@ -330,7 +352,7 @@ export default function ViaHeStreetBoard({
         const p = daXay[Math.floor(Math.random() * daXay.length)];
         setNhaDangNoi({
           o: `${p.col}:${p.row}`,
-          cau: THOAI_CUA_SO[Math.floor(Math.random() * THOAI_CUA_SO.length)],
+          cau: fillTen(THOAI_CUA_SO[Math.floor(Math.random() * THOAI_CUA_SO.length)], mayorName),
         });
         // Bong bóng đứng 5,5 giây rồi tắt, chừa khoảng lặng trước lượt sau.
         setTimeout(() => setNhaDangNoi(null), 5_500);
@@ -339,7 +361,7 @@ export default function ViaHeStreetBoard({
     };
     hen();
     return () => clearTimeout(timer);
-  }, [streetPlots]);
+  }, [streetPlots, mayorName]);
 
   /**
    * Điểm tụ cho cư dân xếp hàng: chỉ tiệm thương mại mới có quầu thu ngân.
@@ -355,11 +377,12 @@ export default function ViaHeStreetBoard({
         if (!plot.node || !plot.def) return [];
         if (plot.def.zone !== 'COMMERCIAL') return [];
         /*
-         * Hàng 1 (khu phố bên kia đường) nằm SAU `CrossroadGap` trong DOM -
-         * mọi ô ở hàng > 0 phải cộng thêm bề rộng ngã tư mới, nếu không điểm
-         * neo khách xếp hàng sẽ lệch 168px về bên trái so với mặt tiền thật.
+         * Moi hang sau hang 0 nam SAU mot `CrossroadGap` trong DOM - so ngan
+         * chen vao chinh la so hang (hang 2 co 2 ngan, hang 3 co 3 ngan...).
+         * Neu chi cong 1 ngan nhu ban cu thi diem neo khach xep hang cua hang
+         * 2,3 lech 168/336px ve ben phai so voi mat tien that.
          */
-        const crossroadOffset = plot.row > 0 ? CROSSROAD_WIDTH : 0;
+        const crossroadOffset = plot.row * CROSSROAD_WIDTH;
         return [
           {
             id: plot.node.id,
@@ -398,19 +421,19 @@ export default function ViaHeStreetBoard({
     // Han 5 phut: day la "di tuan", khong phai nut spam.
     const result = claimTapReward('patrol', PATROL_BONUS_COINS, { cooldownMs: PATROL_COOLDOWN_MS });
     if (!result.ok) {
-      setStreetToast('Ông Lộc đầu hẻm: “Thị Trưởng vừa đi tuần xong, nghỉ ngơi đã Thị Trưởng ơi!”');
+      setStreetToast(fillTen('Ông Lộc đầu hẻm: “Vừa đi một vòng xong rồi đó Thị Trưởng, nghỉ ngơi đã nào ạ!”', mayorName));
       setTimeout(() => setStreetToast(null), 4000);
       return;
     }
     const funnyLines = [
-      'Trạm Heo Vàng MoCity: “Thị Trưởng vừa đi tuần khích lệ bà con tiểu thương! Nhận ngay +120 đồng Lộc Đô Thị!”',
+      fillTen('Trạm Heo Vàng MoCity: “Thị Trưởng vừa đi một vòng gặp gỡ bà con tiểu thương! Nhận ngay +120 đồng Lộc Đô Thị!”', mayorName),
       'Ông Lộc Đầu Tư: “Dòng tiền thanh toán số trên Đại lộ MoMo hôm nay tăng trưởng vượt bậc!” (+120 đồng)',
-      'Cô Tư Tạp Hóa: “Cả dãy phố quét QR ting ting vui như Tết! Mời Thị Trưởng ly trà tắc!” (+120 đồng)',
+      fillTen('Cô Tư Tạp Hóa: “Cả dãy phố quét QR ting ting vui như Tết! Mời Thị Trưởng ly trà tắc!” (+120 đồng)', mayorName),
     ];
     const msg = funnyLines[Math.floor(Math.random() * funnyLines.length)];
     setStreetToast(msg);
     setTimeout(() => setStreetToast(null), 4000);
-  }, []);
+  }, [mayorName]);
 
   // Tự động ẩn bảng hiệu lớn sau khi người chơi bấm vào bất kỳ căn nhà nào
   return (
@@ -617,10 +640,16 @@ export default function ViaHeStreetBoard({
                  * xem comment trong useMemo phia tren.
                  */
                 const isCrossroadHere = idx > 0 && streetPlots[idx - 1].row !== plot.row;
+                // So thu tu nga tu: chi nga tu dau tien hien bien ten duong.
+                const crossroadOrdinal = isCrossroadHere
+                  ? streetPlots
+                      .slice(0, idx)
+                      .reduce((n, p2, i2) => n + (i2 > 0 && streetPlots[i2 - 1].row !== p2.row ? 1 : 0), 0)
+                  : -1;
 
                 return (
                   <Fragment key={`${plot.col}:${plot.row}`}>
-                  {isCrossroadHere && <CrossroadGap />}
+                  {isCrossroadHere && <CrossroadGap showSign={crossroadOrdinal === 0} />}
                   <div
                     className="relative flex flex-col items-center shrink-0"
                     style={{ width: 236 }}
@@ -732,7 +761,7 @@ export default function ViaHeStreetBoard({
                     {!isBuilt ? (
                       <div
                         onClick={() => onSelect(plot.col, plot.row)}
-                        className="relative w-[228px]"
+                        className="relative"
                         style={
                           isSelected
                             ? {
@@ -754,56 +783,44 @@ export default function ViaHeStreetBoard({
                         />
                       </div>
                     ) : (
-                      <>
-                        {/* Bồn nước / mặt dựng vòm nhô lên trên nóc, nằm ngoài viền khối nhà. */}
-                        <ShophouseRoofCap
-                          houseNumber={plot.houseNumber}
+                      <div
+                        onClick={() => {
+                          if (!plot.node?.npcOwned) onSelect(plot.col, plot.row);
+                        }}
+                        className={`group relative ${plot.node?.npcOwned ? 'cursor-default' : 'cursor-pointer'}`}
+                        style={
+                          isSelected
+                            ? {
+                                outline: '4px solid #D82D8B',
+                                outlineOffset: 2,
+                                borderRadius: '12px',
+                                boxShadow: '0 0 0 6px rgba(216,45,139,0.35)',
+                              }
+                            : undefined
+                        }
+                      >
+                        <ShophouseFacade
                           shopType={plot.theme.shopType}
+                          houseNumber={plot.houseNumber}
+                          shopTitle={shopTitle}
+                          isBuilt
+                          unlocked={plot.unlocked}
+                          level={plot.node?.level}
+                          starRating={plot.node?.starRating}
+                          yieldPerSec={plot.yieldPerSec}
                           timeOfDay={timeOfDay}
-                        />
-
-                        {/*
-                         * THÂN NHÀ ỐNG - cao thấp theo dáng của từng số nhà.
-                         * Không có hiệu ứng rê chuột: nhà nhấc lên khi hover làm
-                         * cả dãy phố nhảy theo con trỏ mỗi lần lướt ngang.
-                         */}
-                        <div
-                          onClick={() => {
+                          wallBg={plot.theme.wallBg}
+                          wallHatch={plot.theme.wallHatch}
+                          signBg={plot.theme.signBg}
+                          windowSpeech={
+                            nhaDangNoi?.o === `${plot.col}:${plot.row}` ? nhaDangNoi.cau : null
+                          }
+                          onOpenBuild={() => {
                             onSelect(plot.col, plot.row);
+                            onOpenBuildDrawer?.();
                           }}
-                          className="group relative w-[228px] cursor-pointer"
-                          style={{
-                            border: isSelected ? '4px solid #D82D8B' : '2.5px solid #5A4A3F',
-                            backgroundColor: plot.theme.wallBg,
-                            backgroundImage: `repeating-linear-gradient(-35deg, ${plot.theme.wallHatch} 0px, ${plot.theme.wallHatch} 2px, transparent 2px, transparent 8px)`,
-                            boxShadow: isSelected
-                              ? '0 0 0 5px rgba(216,45,139,0.35), 0 12px 24px rgba(216,45,139,0.2)'
-                              : '0 8px 0 rgba(74,59,50,0.14)',
-                          }}
-                        >
-                          <ShophouseFacade
-                            shopType={plot.theme.shopType}
-                            houseNumber={plot.houseNumber}
-                            shopTitle={shopTitle}
-                            isBuilt
-                            unlocked={plot.unlocked}
-                            level={plot.node?.level}
-                            starRating={plot.node?.starRating}
-                            yieldPerSec={plot.yieldPerSec}
-                            timeOfDay={timeOfDay}
-                            wallBg={plot.theme.wallBg}
-                            wallHatch={plot.theme.wallHatch}
-                            signBg={plot.theme.signBg}
-                            windowSpeech={
-                              nhaDangNoi?.o === `${plot.col}:${plot.row}` ? nhaDangNoi.cau : null
-                            }
-                            onOpenBuild={() => {
-                              onSelect(plot.col, plot.row);
-                              onOpenBuildDrawer?.();
-                            }}
-                          />
-                        </div>
-                      </>
+                        />
+                      </div>
                     )}
 
                     {/*
@@ -947,7 +964,7 @@ export default function ViaHeStreetBoard({
               countdown={traffic.countdown}
               onClick={() => {
                 traffic.switchPhase();
-                setStreetToast('🚦 Thị Trưởng đã đổi tín hiệu đèn ngã tư!');
+                setStreetToast(fillTen('🚦 Thị Trưởng đã đổi tín hiệu đèn ngã tư!', mayorName));
                 setTimeout(() => setStreetToast(null), 3000);
               }}
               style={{ left: 104, bottom: 6 }}
@@ -1000,7 +1017,7 @@ export default function ViaHeStreetBoard({
             </div>
 
             {/* HỆ THỐNG CỘT ĐÈN ĐƯỜNG CỔ ĐIỂN DỌC VỈA HÈ (Chiếu sáng ấm áp xuống vỉa hè & mặt đường) */}
-            {[260, 680, 1100, 1520, 1940, 2360]
+            {Array.from({ length: Math.max(0, Math.floor((streetWidth - 60 - 260) / 420) + 1) }, (_, i) => 260 + i * 420)
               .filter((x) => x < streetWidth - 60)
               .map((lampX, li) => (
                 <StreetLamp
@@ -1115,7 +1132,7 @@ export default function ViaHeStreetBoard({
                 if (result.ok) {
                   setStreetToast('🚓 Xe Cảnh Sát MoCity: “Tình hình trật tự 10/10! Bà con yên tâm quét mã buôn bán!” (+100 đồng)');
                 } else {
-                  setStreetToast('🚓 Xe Cảnh Sát MoCity: “Xe đang tuần tra ngã tư trung tâm, chúc Thị Trưởng một ngày bình an!”');
+                  setStreetToast(fillTen('🚓 Xe Cảnh Sát MoCity: “Xe đang tuần tra ngã tư trung tâm, chúc Thị Trưởng một ngày bình an!”', mayorName));
                 }
                 setTimeout(() => setStreetToast(null), 4000);
               }}

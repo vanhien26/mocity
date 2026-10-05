@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RotateCcw, Share2 } from 'lucide-react';
-import { resetCity, useCity } from '@/lib/mocity/store';
+import { resetCity, useCity, getEndingEvaluationStore } from '@/lib/mocity/store';
 import { formatCompact } from '@/lib/mocity/format';
+import type { GameEnding } from '@/lib/mocity/types';
 
-type Ending = 'survival' | 'prosperity' | 'empire';
+type Ending = GameEnding;
 
 const ENDING_DATA: Record<Ending, {
   emoji: string;
@@ -20,7 +21,7 @@ const ENDING_DATA: Record<Ending, {
     emoji: '🎒',
     title: 'Về Quê Ngẩng Cao Đầu',
     subtitle: 'Kết thúc: Sống Sót',
-    story: 'Bạn trả hết 200 triệu cho ông Chín. Không dư nhiều, nhưng đủ để nhìn thẳng vào mặt bố mẹ. Hành lý về quê nhẹ hơn lúc lên — không phải vì ít đồ, mà vì không còn nặng nợ.',
+    story: 'Bạn trả hết 200 triệu cho ông Chín. Không dư nhiều, nhưng đủ để nhìn thẳng vào mặt bố mẹ. Hành lý về quê nhẹ hơn lúc lên, không phải vì ít đồ, mà vì không còn nặng nợ.',
     color: '#7C3AED',
     bg: 'linear-gradient(160deg, #1E1035 0%, #2D1A5E 100%)',
     border: '#7C3AED',
@@ -29,7 +30,7 @@ const ENDING_DATA: Record<Ending, {
     emoji: '🏪',
     title: 'Làm Chủ Hẻm',
     subtitle: 'Kết thúc: Phát Đạt',
-    story: 'Tiệm chạy ngon, nợ sạch. Anh Tư nghe tin tìm đến hỏi bí quyết. Bạn chỉ cười — không có bí quyết, chỉ có mỗi sáng mở cửa đúng giờ và không để lãi ăn vào vốn.',
+    story: 'Tiệm chạy ngon, nợ sạch. Anh Tư nghe tin tìm đến hỏi bí quyết. Bạn chỉ cười, không có bí quyết, chỉ có mỗi sáng mở cửa đúng giờ và không để lãi ăn vào vốn.',
     color: '#D97706',
     bg: 'linear-gradient(160deg, #1C0F00 0%, #3B1F06 100%)',
     border: '#C9A227',
@@ -43,6 +44,15 @@ const ENDING_DATA: Record<Ending, {
     bg: 'linear-gradient(160deg, #002010 0%, #064E3B 100%)',
     border: '#34D399',
   },
+  bankrupt: {
+    emoji: '📉',
+    title: 'Mất Đất Hẻm Chính',
+    subtitle: 'Kết thúc: Vỡ Nợ',
+    story: 'Kỳ lãi thứ ba vẫn không đủ 5 triệu. Ông Chín không la, ông chỉ đặt lại tờ giấy vay năm nào lên bàn. Hẻm chính không còn là của bạn, và hành lý về quê nặng hơn lúc lên phố.',
+    color: '#EF4444',
+    bg: 'linear-gradient(160deg, #1C0505 0%, #4C0519 100%)',
+    border: '#EF4444',
+  },
 };
 
 interface EndingScreenProps {
@@ -54,7 +64,14 @@ interface EndingScreenProps {
 
 export default function EndingScreen({ ending, mayorName, coins, buildingCount }: EndingScreenProps) {
   const [confirmed, setConfirmed] = useState(false);
-  const data = ENDING_DATA[ending];
+  const data = ENDING_DATA[ending] ?? ENDING_DATA.survival;
+  /*
+   * Ket thuc chinh (tra no / mat dat) va ket thuc phu (ho so quan tri) la 2
+   * he doc lap tu truoc. Hien cung luc o day de nguoi choi thay minh ket thuc
+   * bang cach nao VA dang quan tri theo kieu nao, thay vi phai mo rieng man
+   * Wealth Matrix truoc khi game het.
+   */
+  const profile = useMemo(() => getEndingEvaluationStore(), []);
 
   if (confirmed) return null;
 
@@ -81,8 +98,27 @@ export default function EndingScreen({ ending, mayorName, coins, buildingCount }
         {/* Story */}
         <div className="mx-5 mb-5 rounded-2xl border px-4 py-4" style={{ borderColor: `${data.border}55`, background: 'rgba(255,255,255,0.06)' }}>
           <p className="text-sm leading-relaxed text-white/80 italic">
-            "{data.story}"
+            &ldquo;{data.story}&rdquo;
           </p>
+        </div>
+
+        {/* He ending phu: WEALTH PROFILE - noi voi man hinh Wealth Matrix */}
+        <div
+          className="mx-5 mb-4 rounded-2xl border px-4 py-3 text-left"
+          style={{ borderColor: `${data.border}55`, background: 'rgba(255,255,255,0.06)' }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: data.color }}>
+              Hồ sơ quản trị
+            </p>
+            <p className="text-[11px] font-black" style={{ color: data.color }}>
+              {profile.score}/100
+            </p>
+          </div>
+          <p className="mt-1 text-sm font-black text-white">
+            {profile.badge} {profile.title}
+          </p>
+          <p className="text-[12px] leading-snug text-white/60">{profile.subtitle}</p>
         </div>
 
         {/* Stats */}

@@ -8,7 +8,7 @@ import type { CityState } from './types';
  * Context: Bạn có 50M vốn, nợ 200M, lãi 5M/tháng. Thị Trưởng là NPC.
  *
  * Flow: Mở tiệm → Xem sổ sách → Nâng cấp → Thuê nhân viên →
- *       Xây khu dân cư → Đọc Sổ Cái (biết có đủ trả nợ không)
+ *       Mở tiệm thứ hai → Đọc Sổ Cái (biết có đủ trả nợ không)
  *
  * Mỗi bước yêu cầu một thao tác thật, game đọc state để biết đã xong chưa,
  * rồi mới mở phần giải thích. Trình tự đó quan trọng: nói trước thì người
@@ -85,15 +85,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     done: (s) => s.buildings.some((b) => (b.staffCount ?? 0) >= 1),
   },
 
-  /* ─── BƯỚC 5: XÂY KHU DÂN CƯ ─────────────────────────────────────────── */
+  /* ─── BƯỚC 5: MỞ TIỆM THỨ HAI ─────────────────────────────────────────── */
   {
-    id: 'xay-nha',
-    title: '⑤ Xây khu nhà ở — kéo khách đến phố',
-    how: 'Bấm "Thuê & Khai Trương" → chọn nhóm "Dân Cư" → đặt một Khu Nhà Trọ lên lô đất trống. Không có dân thì tiệm ế, doanh thu = 0.',
+    id: 'mo-tiem-2',
+    title: '⑤ Khai trương tiệm thứ hai — đa dạng dòng tiền',
+    how: 'Bấm "Thuê & Khai Trương" → chọn một loại hình khác (Fintech, ẩm thực...) → bấm vào lô đất trống còn lại. Dân trong phố đã có sẵn — khách hàng đang chờ.',
     lesson:
-      'Không có người ở thì không có người mua. Nhà ở tạo ra cư dân — cư dân là nguồn khách hàng bền vững. Đây là lý do thị trưởng cho bạn thuê đất: ông ta muốn phố có người.',
+      'Một tiệm duy nhất = một điểm rủi ro. Hai tiệm khác loại giảm thiểu rủi ro: khi một tiệm ế do mùa, tiệm kia vẫn chạy. Đây là nền tảng của danh mục đầu tư (portfolio) trong kinh doanh.',
     anchor: 'build',
-    done: (s) => s.buildings.some((b) => (BUILDING_BY_ID[b.defId]?.population ?? 0) > 0),
+    done: (s) => s.buildings.length >= 2,
   },
 
   /* ─── BƯỚC 6: ĐỌC SỔ CÁI ─────────────────────────────────────────────── */

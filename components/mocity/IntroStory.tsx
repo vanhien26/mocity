@@ -260,7 +260,7 @@ export default function IntroStory({ onFinish }: IntroStoryProps) {
               </button>
             )}
             <p className="mt-2 text-center text-[11px] text-[#8B7355]">
-              {isLast ? 'Bạn có 50 triệu · Nợ 200 triệu · 360 ngày' : 'Chạm để tiếp tục'}
+              {isLast ? 'Bạn có 50 triệu · Nợ 200 triệu · Lãi 5 triệu/tháng' : 'Chạm để tiếp tục'}
             </p>
           </div>
         </div>

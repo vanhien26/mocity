@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   ChevronRight,
+  LineChart,
   CircleDollarSign,
   Crown,
   Database,
@@ -19,6 +20,13 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { MAYOR_QUESTS, CITY_TIERS, nextCityTier, xpForLevel, BUILDING_BY_ID } from '@/lib/mocity/mock-city-data';
+
+/** Nhan 3 chuong trinh tien trinh. Khong duoc lon hon bang con so stage. */
+const STAGE_LABELS: Record<number, string> = {
+  1: 'Chặng 1 · Dựng Phố',
+  2: 'Chặng 2 · Bành Trướng',
+  3: 'Chặng 3 · Cơ Nghiệp',
+};
 import { populationFor } from '@/lib/mocity/city-calculator';
 import { ARCHETYPES, CITY_ADVISORS, SERVICE_LABEL } from '@/lib/mocity/npc-data';
 import { ChibiBody } from './ChibiRenderer';
@@ -43,6 +51,7 @@ import {
 } from '@/lib/mocity/store';
 import { formatCompact, formatNumber } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import ProfitLossStatement, { LoanPanel, FinancialRulesPanel } from './ProfitLossStatement';
 import WeekComparisonPanel from './WeekComparisonPanel';
 import { markTutorialFlag, restartTutorial } from '@/lib/mocity/store';
@@ -72,12 +81,14 @@ export default function MayorCenterModal({
   onClose,
   onToast,
   onOpenDialogue,
+  onOpenWealthMatrix,
 }: {
   open: boolean;
   initialTab?: Tab;
   onClose: () => void;
   onToast: (msg: string) => void;
   onOpenDialogue?: () => void;
+  onOpenWealthMatrix?: () => void;
 }) {
   const state = useCity((s) => s);
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -132,7 +143,7 @@ export default function MayorCenterModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Tòa Thị Chính - Gặp Thị Trưởng & Nhiệm Vụ"
+      aria-label="Tòa Thị Chính - Nhiệm Vụ & Hồ Sơ Phố"
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-4"
     >
       <div
@@ -162,7 +173,7 @@ export default function MayorCenterModal({
                 Tòa Thị Chính
               </h2>
               <p className="truncate text-[13px] font-bold" style={{ color: '#C4AC85' }}>
-                {state.mayorName} · Người Lập Nghiệp · Cấp {state.mayorLevel}
+                {state.mayorName} · Cấp {state.mayorLevel}
               </p>
             </div>
           </div>
@@ -307,7 +318,7 @@ export default function MayorCenterModal({
                     <p className="truncate text-xs font-black" style={{ color: '#F5E6C8' }}>Thị Trưởng MoCity</p>
                   </div>
                   <p className="mt-1.5 text-[12px] leading-relaxed italic" style={{ color: '#C4AC85' }}>
-                    "Đây là đất của tôi. Bạn muốn kinh doanh trên phố này — tôi tính phí thuê đất. Làm ăn tốt, tôi sẽ mở thêm mặt bằng."
+                    &ldquo;Đây là đất của tôi. Bạn muốn kinh doanh trên phố này - tôi tính phí thuê đất. Làm ăn tốt, tôi sẽ mở thêm mặt bằng.&rdquo;
                   </p>
                   <p className="mt-1 text-[11px]" style={{ color: '#8B7355' }}>
                     Người cai quản đô thị MoCity. Không phải bạn.
@@ -410,7 +421,7 @@ export default function MayorCenterModal({
                           </p>
                         </div>
                         <p className="mt-1.5 text-[13px] font-semibold" style={{ color: '#5B3D22' }}>
-                          “{adv.tip}”
+                          “{fillTen(adv.tip, state.mayorName)}”
                         </p>
                       </div>
                     </div>
@@ -536,7 +547,7 @@ export default function MayorCenterModal({
                   </div>
                   {state.pendingEvent && (
                     <span className="rounded-full bg-[#D82D8B] px-2.5 py-0.5 text-[10.5px] font-black uppercase text-white animate-pulse">
-                      Cần phân xử
+                      Cần giải quyết
                     </span>
                   )}
                 </div>
@@ -557,7 +568,7 @@ export default function MayorCenterModal({
                       }}
                       className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#D82D8B] py-2 text-xs font-black text-white shadow transition-all hover:bg-[#EB2F96] active:scale-95"
                     >
-                      <span>Mở Màn Phân Xử Ngay</span>
+                      <span>Mở Ngay</span>
                       <ChevronRight size={14} />
                     </button>
                   </div>
@@ -588,14 +599,17 @@ export default function MayorCenterModal({
               {/*
                * Sap xep: chua nhan ma da xong len dau, dang lam o giua, da nhan
                * xuong cuoi. Khong co buoc nay thi nut "Nhan thuong" nam lan giua
-               * danh sach 18 muc va nguoi choi phai cuon di tim.
+               * danh sach cac muc va nguoi choi phai cuon di tim.
+               *
+               * Mo khoa chang sau = xong het chang truoc, dung dung cong thuc
+               * mo khoa chang 2 truoc day.
                */}
-              {([1, 2] as const).map((chang) => {
+              {(Object.keys(STAGE_LABELS).map(Number)).map((chang) => {
                 const nhom = MAYOR_QUESTS.filter((q) => q.stage === chang);
                 const xongNhom = nhom.filter((q) => claimed.includes(q.id)).length;
                 const moKhoa =
                   chang === 1 ||
-                  MAYOR_QUESTS.filter((q) => q.stage === 1).every((q) => isQuestCompleted(q.id, state));
+                  MAYOR_QUESTS.filter((q) => q.stage === chang - 1).every((q) => isQuestCompleted(q.id, state));
 
                 const thuTu = [...nhom].sort((a, b) => {
                   const hang = (q: typeof a) =>
@@ -607,7 +621,7 @@ export default function MayorCenterModal({
                   <div key={chang} className="space-y-2.5">
                     <div className="flex items-center justify-between gap-2 pt-1">
                       <p className="text-xs font-black uppercase tracking-wide text-[#8A7355]">
-                        {chang === 1 ? 'Chặng 1 · Dựng Phố' : 'Chặng 2 · Bành Trướng'}
+                        {STAGE_LABELS[chang] ?? `Chặng ${chang}`}
                       </p>
                       <span
                         className="rounded-full px-2.5 py-0.5 text-[10.5px] font-black"
@@ -623,7 +637,7 @@ export default function MayorCenterModal({
 
                     {!moKhoa && (
                       <p className="rounded-xl px-3 py-2 text-xs font-bold" style={{ background: '#F3EADA', color: '#8A7355' }}>
-                        Xong Chặng 1 để mở khóa phần thưởng lớn của Chặng 2.
+                        {`Xong Chặng ${chang - 1} để mở khóa phần thưởng lớn của Chặng ${chang}.`}
                       </p>
                     )}
 
@@ -685,7 +699,7 @@ export default function MayorCenterModal({
                             Hướng dẫn
                           </summary>
                           <p className="mt-1 text-[11px] leading-relaxed" style={{ color: '#7A6449' }}>
-                            {q.description}
+                            {fillTen(q.description, state.mayorName)}
                           </p>
                         </details>
                       )}
@@ -790,10 +804,10 @@ export default function MayorCenterModal({
                   {[
                     ['Ngân khố', `${formatCompact(state.coins)} đồng`],
                     ['Kim Cương', `${state.gems}`],
-                    ['Tiệm đã mở', `${state.buildings.length} / ${state.unlockedCols * state.unlockedRows}`],
+                    ['Tiệm đã mở', `${state.buildings.length} / ${state.unlockedCols * state.unlockedRows - state.cityBuildings.length}`],
                     ['Dân cư & chủ tiệm', `${state.npcs.length}`],
                     [
-                      'Cấp Lập Nghiệp',
+                      'Cấp',
                       state.mayorLevel >= MAX_MAYOR_LEVEL
                         ? `Lv.${state.mayorLevel} (tối đa)`
                         : `Lv.${state.mayorLevel} · ${formatCompact(state.mayorXp)}/${formatCompact(xpForLevel(state.mayorLevel))} XP`,
@@ -813,6 +827,25 @@ export default function MayorCenterModal({
                     </div>
                   ))}
                 </dl>
+              </div>
+
+              <div className="rounded-2xl border-2 p-3.5" style={{ background: '#FFFDF7', borderColor: '#C9A22766' }}>
+                <h2 className="text-xs font-black uppercase" style={{ color: '#4A3018' }}>
+                  Hồ Sơ Quản Trị
+                </h2>
+                <p className="mt-1 text-[13px]" style={{ color: '#7A6449' }}>
+                  7 chỉ số tài chính (tính từ số liệu thật của phố) và hồ sơ kết thúc đi kèm.
+                  Nợ càng nặng thì điểm Cơ Đồ càng tụt.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onOpenWealthMatrix?.()}
+                  className="mt-2.5 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black uppercase transition-transform hover:scale-[1.02] active:scale-95"
+                  style={{ background: 'linear-gradient(180deg,#EC4899,#7C3AED)', borderColor: '#6D28D9', color: '#FFFFFF' }}
+                >
+                  <LineChart size={14} className="shrink-0" />
+                  <span>Mở Wealth Matrix</span>
+                </button>
               </div>
 
               <div className="space-y-2 rounded-2xl border-2 p-3.5" style={{ background: '#FFFDF7', borderColor: '#C9A22766' }}>

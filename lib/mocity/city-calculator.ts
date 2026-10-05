@@ -192,9 +192,13 @@ export function nodeYieldBreakdown(
 }
 
 /** Tong Xu/giay tu cac cua hang va cong trinh trong thanh pho. */
-export function directStoreYieldPerSecond(buildings: BuildingNode[]): number {
+export function directStoreYieldPerSecond(
+  buildings: BuildingNode[],
+  /** Phố đầy đủ (người chơi + nhà thành phố) - chỉ để quét hàng xóm. */
+  street: BuildingNode[] = buildings,
+): number {
   return buildings.reduce((sum, node) => {
-    return sum + nodeYieldBreakdown(node, buildings).totalPerSec;
+    return sum + nodeYieldBreakdown(node, street).totalPerSec;
   }, 0);
 }
 
@@ -319,12 +323,14 @@ export function lostSalesPerSecond(
   buildings: BuildingNode[],
   shopQueue: Record<string, number> = {},
   multiplier = 1,
+  /** Phố đầy đủ (người chơi + nhà thành phố) - chỉ để quét hàng xóm. */
+  street: BuildingNode[] = buildings,
 ): number {
   let lost = 0;
   for (const node of buildings) {
     const def = BUILDING_BY_ID[node.defId];
     if (!def?.merchantCapacity) continue;
-    const rate = nodeYieldBreakdown(node, buildings).totalPerSec;
+    const rate = nodeYieldBreakdown(node, street).totalPerSec;
     lost += rate * (1 - shopCrowdingFactor(node, shopQueue[node.id] ?? 0));
   }
   return lost * multiplier;
@@ -443,7 +449,6 @@ export interface FlowBreakdown {
 }
 
 export interface FlowOptions {
-  isFever?: boolean;
   /** Ms ke tu su kien toan pho gan nhat duoc xu ly - day vao suy giam hanh phuc. */
   idleMs?: number;
   /** Diem hanh phuc cong don tu phuong an dialogue vua chon. */
@@ -473,6 +478,17 @@ export interface FlowOptions {
    * man hinh lai khong phai so tien ngan khoc nhan.
    */
   shopQueue?: Record<string, number>;
+  /**
+   * Phố đầy đủ = tài sản người chơi + nhà của thành phố (NPC).
+   *
+   * CHỈ dùng cho quét hàng xóm (`nodeYieldBreakdown`) - nhà thành phố nằm
+   * bên cạnh nên tiệm của người chơi vẫn được +25% liên kế từ đó. Mọi hệ số
+   * tiền bạc khác (cung/cầu, hạnh phúc, thu nhập thụ động, chen chúc) vẫn chỉ
+   * đọc `buildings` - thành phố không tạo ra đồng nào cho người chơi.
+   *
+   * Không truyền thì mặc định = `buildings` (giữ đúng hành vi cũ).
+   */
+  street?: BuildingNode[];
 }
 
 /**
@@ -664,6 +680,11 @@ export function flowFor(
   currentCoins = 0,
   opts: FlowOptions = {},
 ): FlowBreakdown {
+  /*
+   * Hàng xóm tính cả nhà thành phố; mọi thứ còn lại chỉ tính `buildings`.
+   * Xem docblock của `FlowOptions.street` - ranh giới này là ranh giới tiền.
+   */
+  const street = opts.street ?? buildings;
   const demand = demandPerSecond(buildings, npcs);
   const supply = supplyPerSecond(buildings);
   const volume = Math.min(demand, supply);
@@ -688,7 +709,6 @@ export function flowFor(
       (opts.relicHappinessBonus ?? 0),
   );
   const levelBonus = 1 + (mayorLevel - 1) * 0.12;
-  const feverMult = opts.isFever ? 2 : 1;
   const relicMult = 1 + (opts.relicBonus ?? 0);
 
   /*
@@ -712,12 +732,15 @@ export function flowFor(
   });
 
   /*
-   * Phải giữ nguyên `buildings` đầy đủ khi tính năng suất: `nodeYieldBreakdown`
+   * Phải giữ nguyên mảng đầy đủ khi tính năng suất: `nodeYieldBreakdown`
    * đếm bonus hàng xóm từ mảng truyền vào. Tách mảng ra rồi mới tính là mất
    * symlink với nhà bên cạnh và dự báo thấp hơn ví thật.
+   *
+   * Truyền `street` (người chơi + nhà thành phố) chứ không phải `buildings`:
+   * nhà thành phố liền kề là hàng xóm thật, tiệm cạnh đó vẫn được cộng.
    */
   const yieldOf = (nodes: BuildingNode[]) =>
-    nodes.reduce((sum, b) => sum + nodeYieldBreakdown(b, buildings).totalPerSec, 0);
+    nodes.reduce((sum, b) => sum + nodeYieldBreakdown(b, street).totalPerSec, 0);
 
   const shopYield =
     yieldOf(shopNodes) * supplyFactor * crowdingFactor * happinessMult * levelBonus;
@@ -733,7 +756,7 @@ export function flowFor(
   const storeYield = shopYield + passiveYield;
 
 /* ── P&L: cong doanh thu gross truoc khi tru bat ky dong chi nao ── */
-  const revenueCu = (storeYield + networkFeeRevenue + savingsYield) * feverMult * relicMult;
+  const revenueCu = (storeYield + networkFeeRevenue + savingsYield) * relicMult;
 
   /*
    * Doanh thu gộp = số tiền THẬT vào ngân khố. Không phóng to nữa.
@@ -741,10 +764,10 @@ export function flowFor(
    */
   const grossRevenue = revenueCu;
 
-  const shopStoreRevenue = shopYield * feverMult * relicMult;
-  const shopRevenue = (shopYield + networkFeeRevenue) * feverMult * relicMult;
-  const savingsRevenue = savingsYield * feverMult * relicMult;
-  const passiveRevenue = passiveYield * feverMult * relicMult;
+  const shopStoreRevenue = shopYield * relicMult;
+  const shopRevenue = (shopYield + networkFeeRevenue) * relicMult;
+  const savingsRevenue = savingsYield * relicMult;
+  const passiveRevenue = passiveYield * relicMult;
 
   /**
    * Gia von CHI ap cho doanh thu ban hang. Lai tiet kiem va thu nhap thu dong
@@ -794,10 +817,10 @@ export function flowFor(
     takeRate,
     supplyFactor,
     crowdingFactor,
-    lostSales: lostSalesPerSecond(buildings, opts.shopQueue ?? {}, feverMult * relicMult),
-    storeYield: storeYield * feverMult * relicMult,
-    savingsYield: savingsYield * feverMult * relicMult,
-    networkFee: networkFeeRevenue * feverMult * relicMult,
+    lostSales: lostSalesPerSecond(buildings, opts.shopQueue ?? {}, relicMult, street),
+    storeYield: storeYield * relicMult,
+    savingsYield: savingsYield * relicMult,
+    networkFee: networkFeeRevenue * relicMult,
 
     grossRevenue,
     cogs,
@@ -878,13 +901,6 @@ export function coinsPerSecond(
   opts: FlowOptions = {},
 ): number {
   return flowFor(buildings, npcs, mayorLevel, currentCoins, opts).revenue;
-}
-
-/** Thuong AFK Offline (45% san luong thuc te trong thoi gian vang mat). */
-export function offlineCoins(coinsPerSecondValue: number, elapsedMs: number): number {
-  if (elapsedMs <= 0 || coinsPerSecondValue <= 0) return 0;
-  const seconds = elapsedMs / 1000;
-  return Math.round(coinsPerSecondValue * seconds * 0.45);
 }
 
 export function landCostCoins(unlockedCols: number, unlockedRows: number): number {

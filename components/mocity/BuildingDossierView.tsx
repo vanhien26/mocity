@@ -244,7 +244,7 @@ export default function BuildingDossierView({
                 <div>
                   <p className="font-black text-blue-900">Trụ Cột Tài Chính Số</p>
                   <p className="text-[11px] font-medium text-blue-800">
-                    Kích hoạt <strong className="text-blue-900">+{((def.takeRateBonus ?? 0) * 100).toFixed(1)}% Take Rate</strong> cho Thị Trưởng và sinh lãi suất dòng tiền.
+                    Kích hoạt <strong className="text-blue-900">+{((def.takeRateBonus ?? 0) * 100).toFixed(1)}% Take Rate</strong> cho bạn và sinh lãi suất dòng tiền.
                   </p>
                 </div>
               </div>

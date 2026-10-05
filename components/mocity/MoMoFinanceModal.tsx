@@ -31,6 +31,13 @@ import { formatVND, formatVNDCompact } from '@/lib/mocity/currency';
 import { playKaChing, playPop, playTing } from '@/lib/mocity/sound-engine';
 import { particles } from './ParticleEngine';
 import MicroQuizModal from './MicroQuizModal';
+import {
+  CoinIcon,
+  PiggyBankIcon as GamePiggyBankIcon,
+  InvestmentFundIcon,
+  InsuranceShieldIcon,
+  QuizBadgeIcon,
+} from './GameIcons';
 
 export type FinanceTab = 'SAVINGS' | 'INVEST' | 'INSURANCE';
 
@@ -43,7 +50,12 @@ export default function MoMoFinanceModal({
   onClose: () => void;
   initialTab?: FinanceTab;
 }) {
-  const [tab, setTab] = useState<FinanceTab>(initialTab === ('LOAN' as any) ? 'SAVINGS' : initialTab);
+  /*
+   * Tab "Khoản vay" đã gỡ khỏi modal này (tính năng vay đang tắt). Giữ một
+   * lớp chắn bằng so sánh chuỗi thay vì `as any`: nơi gọi còn truyền
+   * 'LOAN' từ bản cũ thì rơi về SAVINGS, còn không thì mở đúng tab yêu cầu.
+   */
+  const [tab, setTab] = useState<FinanceTab>(String(initialTab) === 'LOAN' ? 'SAVINGS' : initialTab);
   const [quizOpen, setQuizOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -176,10 +188,10 @@ export default function MoMoFinanceModal({
               <button
                 type="button"
                 onClick={() => setQuizOpen(true)}
-                className="flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-400 px-2.5 py-1.5 text-[11px] font-black text-[#5C2D0E] shadow transition-transform hover:bg-amber-300 active:scale-95"
+                className="flex items-center gap-1.5 rounded-xl border border-amber-300 bg-gradient-to-b from-amber-300 to-amber-500 px-3 py-1.5 text-[11px] font-black text-[#5C2D0E] shadow transition-transform hover:brightness-105 active:scale-95"
                 title="Trả lời câu hỏi trắc nghiệm tài chính để nhận tiền và MP"
               >
-                <Sparkles size={13} className="shrink-0" />
+                <QuizBadgeIcon size={18} />
                 <span className="hidden sm:inline">Đố Vui Phố Thị</span>
                 <span>+50Kđ</span>
               </button>
@@ -197,7 +209,7 @@ export default function MoMoFinanceModal({
           {/* Dải số dư ví & Uy tín nhanh */}
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/20 bg-black/20 px-3 py-1.5 text-xs">
             <div className="flex items-center gap-1.5">
-              <Wallet size={15} className="text-amber-300" />
+              <CoinIcon size={18} />
               <span className="text-white/80">Số dư ví:</span>
               <span className="font-pixel text-sm font-bold text-amber-200">
                 {formatVND(coins)}
@@ -227,9 +239,9 @@ export default function MoMoFinanceModal({
         {/* TAB NAVIGATION CHIBI */}
         <div className="flex shrink-0 border-b-2 border-[#E5DAC6] bg-[#F3ECE0] px-3 pt-2">
           {[
-            { id: 'SAVINGS' as FinanceTab, label: 'Heo Đất Tiết Kiệm', icon: PiggyBank, color: '#A8246B' },
-            { id: 'INVEST' as FinanceTab, label: 'Quỹ Dự Trữ & Lãi', icon: TrendingUp, color: '#2563EB' },
-            { id: 'INSURANCE' as FinanceTab, label: 'Quỹ Bảo Vệ Phố', icon: Shield, color: '#059669' },
+            { id: 'SAVINGS' as FinanceTab, label: 'Heo Đất Tiết Kiệm', icon: GamePiggyBankIcon, color: '#A8246B' },
+            { id: 'INVEST' as FinanceTab, label: 'Quỹ Dự Trữ & Lãi', icon: InvestmentFundIcon, color: '#2563EB' },
+            { id: 'INSURANCE' as FinanceTab, label: 'Quỹ Bảo Vệ Phố', icon: InsuranceShieldIcon, color: '#059669' },
           ].map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -241,7 +253,7 @@ export default function MoMoFinanceModal({
                   playPop();
                   setTab(t.id);
                 }}
-                className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-t-2xl py-2.5 text-xs font-black transition-all ${
+                className={`relative flex flex-1 items-center justify-center gap-2 rounded-t-2xl py-2.5 text-xs font-black transition-all ${
                   active
                     ? 'border-2 border-b-0 border-[#78533D] bg-[#FAF6ED] text-[#1C171A] shadow-[0_-2px_6px_rgba(0,0,0,0.05)]'
                     : 'text-[#6B5A4E] hover:bg-[#EBE3D3] hover:text-[#1C171A]'

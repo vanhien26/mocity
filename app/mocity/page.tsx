@@ -23,6 +23,18 @@ import {
   PiggyBank,
   ShieldAlert,
 } from 'lucide-react';
+import {
+  CoinIcon,
+  GemIcon,
+  EnergyIcon,
+  MayorStarIcon,
+  ChestInventoryIcon,
+  PiggyBankIcon as GamePiggyBankIcon,
+  TownHallIcon,
+  BuildHammerIcon,
+  LandExpandIcon,
+  DialogueBadgeIcon,
+} from '@/components/mocity/GameIcons';
 import ViaHeStreetBoard from '@/components/mocity/ViaHeStreetBoard';
 import BuildDrawer from '@/components/mocity/BuildDrawer';
 import CoinBubble from '@/components/mocity/CoinBubble';
@@ -36,11 +48,13 @@ import WelcomeScreen from '@/components/mocity/WelcomeScreen';
 import EndingScreen from '@/components/mocity/EndingScreen';
 import StoreInspectorModal from '@/components/mocity/StoreInspectorModal';
 import MayorCenterModal from '@/components/mocity/MayorCenterModal';
+import { WealthMatrixModal } from '@/components/mocity/WealthMatrixModal';
 import TutorialCoach from '@/components/mocity/TutorialCoach';
 import RetroFilm from '@/components/mocity/RetroFilm';
 import InventoryModal from '@/components/mocity/InventoryModal';
 import MoMoFinanceModal, { type FinanceTab } from '@/components/mocity/MoMoFinanceModal';
 import MicroQuizModal from '@/components/mocity/MicroQuizModal';
+import IncidentResolutionModal from '@/components/mocity/IncidentResolutionModal';
 import {
   playTing,
   playJackpot,
@@ -64,9 +78,9 @@ import {
   resolveRequest,
   triggerNextEvent,
   claimCityTierRewards,
+  cityBuildingAt,
   claimStreakMilestones,
   upgradeBuilding,
-  effectiveMaxLevel,
   getCityState,
   useCity,
   useCityDerived,
@@ -75,10 +89,16 @@ import {
   resolveIncident,
   spawnRandomIncident,
   markTutorialFlag,
+  PLAYER_DEBT_MISSED_LIMIT,
+  getWealthMatrixMetricsStore,
+  getEndingEvaluationStore,
+  grantNpcLoanStore,
+  investNpcEquityStore,
   type PlaceResult,
   type UpgradeResult,
 } from '@/lib/mocity/store';
 import { totalBacklog } from '@/lib/mocity/transactions';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import { useIdleTick } from '@/lib/mocity/useIdleTick';
 import {
   MAYOR_QUESTS,
@@ -113,7 +133,7 @@ const ERROR_MESSAGE: Record<PlaceResult, string> = {
   ok: '',
   locked: 'Ô đất này chưa được quy hoạch. Mở rộng đất trước đã.',
   occupied: 'Ô này đã có công trình.',
-  level: 'Cấp Thị Trưởng chưa đủ để xây công trình này.',
+  level: 'Bậc thành phố chưa đủ để xây công trình này. Lên bậc phố để mở ô mới.',
   funds: 'Chưa đủ đồng. Đợi thu thêm hoặc thu bong bóng đồng nhé.',
 };
 
@@ -122,15 +142,16 @@ const UPGRADE_MESSAGE: Record<UpgradeResult, string> = {
   missing: 'Ô này chưa có công trình để nâng cấp.',
   max: 'Công trình đã đạt cấp tối đa.',
   funds: 'Chưa đủ đồng để nâng cấp công trình này.',
-  mayor: 'Lên cấp Thị Trưởng để mở khóa nâng cấp cao hơn.',
 };
 
 /**
- * Khoang cach giua hai luot Chuyen Pho tu dong: 5-8 phut.
- * Moc cu 2-3 phut qua day, nguoi choi vua dong hop thoai xong da co hop khac.
+ * Khoang cach giua hai luot Chuyen Pho tu dong: 6-9 phut, LUON >= nghia
+ * `EVENT_INTERVAL_MS` (6 phut) trong store. Dat thap hon thi nua so lan bi
+ * store tra ve `cooldown` va hien toast "Bà con còn đang bàn luận..." o day
+ * - chinh la loi nguoi choi gap truoc day khi hai nghia so khong khop.
  */
-const AUTO_EVENT_MIN_MS = 300_000;
-const AUTO_EVENT_MAX_MS = 480_000;
+const AUTO_EVENT_MIN_MS = 6 * 60 * 1000;
+const AUTO_EVENT_MAX_MS = 9 * 60 * 1000;
 
 export default function MoCityPage() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -152,11 +173,12 @@ export default function MoCityPage() {
   const [mayorModalOpen, setMayorModalOpen] = useState(false);
   const [mayorModalTab, setMayorModalTab] = useState<'PROFILE' | 'QUESTS' | 'CITIZENS'>('PROFILE');
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [wealthOpen, setWealthOpen] = useState(false);
   const [inventoryTab, setInventoryTab] = useState<'ITEMS' | 'CHARACTERS'>('ITEMS');
   /*
    * Guong `ref` cua cac modal. Effect tu mo Chuyen Pho doc qua day thay vi qua
    * deps: dua truc tiep vao deps se huy va dat lai hen gio moi lan nguoi choi
-   * mo/dong mot bang bat ky, nen vong 5-8 phut gan nhu khong bao gio chay het.
+   * mo/dong mot bang bat ky, nen vong 6-9 phut gan nhu khong bao gio chay het.
    */
   const modalDangMoRef = useRef(false);
 
@@ -180,7 +202,7 @@ export default function MoCityPage() {
   /** Ten hien thi cua tai khoan, dung lam ten Tho mac dinh. */
   const accountName = (session?.user?.name ?? '').trim();
   /** Ten Tho se commit: nhap cua nguoi > ten tai khoan > ten mac dinh. */
-  const effectiveMayorName = mayorInput.trim() || accountName || 'Thị Trưởng MoMo';
+  const effectiveMayorName = mayorInput.trim() || accountName || 'Người Lập Nghiệp';
 
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -207,6 +229,8 @@ export default function MoCityPage() {
   const mayorName = useCity((s) => s.mayorName);
   const hasNamedCity = useCity((s) => s.hasNamedCity);
   const buildings = useCity((s) => s.buildings);
+  /** Nha cua thanh pho (NPC): chiem o nhung khong phai tai san cua nguoi choi. */
+  const cityBuildings = useCity((s) => s.cityBuildings);
   const offline = useCity((s) => s.pendingOffline);
   const npcs = useCity((s) => s.npcs);
   const activeRequests = useCity((s) => s.activeRequests);
@@ -272,10 +296,10 @@ export default function MoCityPage() {
    * Ban cu dung `dialogueDismissed` mac dinh `false`, cong voi mot effect tu
    * dat lai `false` moi khi `liveView` doi tieu de. Nghia la bat cu su kien nao
    * vua sinh ra la hop thoai tu bat len. Ma `maybeSpawnEvent` trong store sinh
-   * su kien moi 35 giay, nen hop thoai cu 35 giay lai chen ngang mot lan, de
-   * len ca Toa Thi Chinh dang mo - khong lien quan gi toi nhip 5-8 phut dat o
-   * `AUTO_EVENT_MIN_MS`. Dao lai thanh "mac dinh dong, chi mo khi co y dinh ro
-   * rang" lam cho nhip hien hop thoai co dung MOT nguon.
+   * su kien moi `EVENT_INTERVAL_MS` (6 phut), nen hop thoai lai chen ngang mot
+   * lan de len ca Toa Thi Chinh dang mo - khong lien quan gi toi nhip 6-9 phut
+   * dat o `AUTO_EVENT_MIN_MS`. Dao lai thanh "mac dinh dong, chi mo khi co y
+   * dinh ro rang" lam cho nhip hien hop thoai co dung MOT nguon.
    */
   const [dialogueOpen, setDialogueOpen] = useState(false);
 
@@ -297,6 +321,7 @@ export default function MoCityPage() {
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
   const [financeTab, setFinanceTab] = useState<FinanceTab>('SAVINGS');
   const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [selectedIncidentForModal, setSelectedIncidentForModal] = useState<import('@/lib/mocity/types').CityIncident | null>(null);
 
   useIdleTick(isPlaying);
 
@@ -372,6 +397,12 @@ export default function MoCityPage() {
     : undefined;
   const handleSelect = useCallback(
     (col: number, row: number) => {
+      /*
+       * Ô đất của thành phố (nhà NPC): bỏ qua, KHÔNG rơi xuống nhánh
+       * "đất trống" bên dưới. Rơi xuống thì bấm một căn nhà thành phố lại
+       * mở luôn tab Thuê & Khai Trương cho một ô đã có chủ.
+       */
+      if (cityBuildingAt(col, row)) return;
       const node = buildingAt(buildings, col, row);
       setSelected({ col, row });
       if (node) {
@@ -478,23 +509,36 @@ export default function MoCityPage() {
   }, []);
 
   const handleOpenDialogue = useCallback(() => {
-    setDialogueOpen(true);
-    if (pendingEvent || activeRequests.length > 0) return;
+    /*
+     * Truoc day ham nay `setDialogueOpen(true)` luon roi `return` trong im lang:
+     * - co `openRequestId` null ma van request -> mo modal khong co view = man
+     *   hinh trong, bam nut khong thay gi xay ra.
+     * Gio chi mo modal khi THUC SU co chuyen de xem, con lai bao ro toi nguoi choi.
+     */
+    if (pendingEvent) {
+      setDialogueOpen(true);
+      return;
+    }
+    if (activeRequests.length > 0) {
+      showToast('Bà con đang chờ bạn xử lý vài việc. Bấm dấu ! trên phố để giải quyết nhé!');
+      return;
+    }
 
     const result = triggerNextEvent();
     if (result === 'ok') {
+      setDialogueOpen(true);
       showToast('Đang lắng nghe chuyện mới trên vỉa hè MoCity...');
       return;
     }
     if (result === 'dailyLimit') {
-      showToast('Hôm nay Thị Trưởng đã xử lý đủ chuyện rồi. Mai khối phố sẽ có chuyện mới để phân xử!');
+      showToast('Hôm nay bạn đã lo đủ việc phố rồi. Mai khối phố sẽ có chuyện mới để giải quyết!');
       return;
     }
     showToast('Bà con còn đang bàn luận chuyện vừa rồi. Chuyện mới sẽ tới ngay khi phố rảnh người!');
-  }, [activeRequests.length, pendingEvent, showToast]);
+  }, [activeRequests.length, mayorName, pendingEvent, showToast]);
 
   /**
-   * Nguon DUY NHAT tu dong mo Chuyen Pho: cu 5-8 phut mot lan.
+   * Nguon DUY NHAT tu dong mo Chuyen Pho: cu 6-9 phut mot lan.
    *
    * Doc state qua getCityState() thay vi dua pendingEvent/activeRequests vao
    * deps: neu them chung vao deps thi moi lan phoi thay doi se huy va dat lai
@@ -630,7 +674,13 @@ export default function MoCityPage() {
          * Uu tien o trong hang dang xem truoc. Board chi hien MOT hang pho nen
          * quet theo hang thi se chon duoc o ma nguoi choi khong nhin thay.
          */
-        const bSet = new Set(buildings.map((b) => `${b.col}:${b.row}`));
+        /*
+         * Nha cua thanh pho (cityBuildings) cung chiem o - neu chi dua `buildings`
+         * vao set thi se chon trung o da co nha NPC roi bi tra "occupied".
+         */
+        const bSet = new Set(
+          [...buildings, ...cityBuildings].map((b) => `${b.col}:${b.row}`),
+        );
         const rows = [activeRow, ...Array.from({ length: unlockedRows }, (_, r) => r).filter((r) => r !== activeRow)];
         outer: for (const r of rows) {
           if (r >= unlockedRows) continue;
@@ -650,15 +700,23 @@ export default function MoCityPage() {
       }
       const result = placeBuilding(target.col, target.row, def.id);
       if (result === 'ok') {
+        // O vua dung xong khong con trong - xoa chon, lan sau tu chon o trong moi.
+        setSelected(null);
         setDrawerOpen(false);
         particles.buildCelebration(window.innerWidth / 2, window.innerHeight * 0.45);
         floatNumber(window.innerWidth / 2, window.innerHeight * 0.45, `+${def.name}! 🎉`, '#A8246B');
         showToast(`Đã khai trương ${def.name}! Bắt đầu thu ${formatRate(def.baseYieldPerSec)}.`);
       } else {
         showToast(ERROR_MESSAGE[result]);
+        /*
+         * Loi o khong con trong hoac o bi chan: giu nguyen `selected` thi moi
+         * lan bam tiep deu dung lai cung mot o loi. Chi giu lai khi thieu tien
+         * - luc do nguoi choi con theo doi tien de thu lai.
+         */
+        if (result === 'occupied' || result === 'locked' || result === 'level') setSelected(null);
       }
     },
-    [buildings, floatNumber, selected, showToast, unlockedCols, unlockedRows],
+    [buildings, cityBuildings, floatNumber, selected, showToast, unlockedCols, unlockedRows],
   );
 
 
@@ -711,10 +769,19 @@ export default function MoCityPage() {
   }, [shake, floatNumber, showToast]);
 
   const handleResolveIncident = useCallback(
-    (id: string) => {
-      const res = resolveIncident(id);
+    (
+      id: string,
+      options?: {
+        solutionId: string;
+        cost: number;
+        mayorPoints: number;
+        fixPermanent: boolean;
+      }
+    ) => {
+      const res = resolveIncident(id, options);
       if (res.ok) {
-        if (res.coveredByInsurance) {
+        setSelectedIncidentForModal(null);
+        if (res.coveredByInsurance || res.fixedPermanent) {
           playSuccess();
           particles.confetti(window.innerWidth / 2, window.innerHeight * 0.3);
         } else {
@@ -858,7 +925,7 @@ export default function MoCityPage() {
                   {cityName || 'Đô Thị MoCity'}
                 </span>
                 <span className="rounded bg-emerald-800/80 px-1 py-0.5 text-[11px] font-black text-emerald-300">
-                  {buildings.length}/{derived.capacity}
+                  {buildings.length}/{derived.capacity - cityBuildings.length}
                 </span>
               </div>
               {/*
@@ -900,7 +967,7 @@ export default function MoCityPage() {
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
             }}
           >
-            <CircleDollarSign size={17} className="shrink-0 text-amber-400" />
+            <CoinIcon size={20} />
             <div>
                 <span className="font-pixel text-base leading-none text-amber-200" title={formatNumber(coins)}>
                   {formatCompact(coins)}
@@ -927,20 +994,20 @@ export default function MoCityPage() {
 
           {/* KC Gems */}
           <div
-            className="flex items-center gap-1 rounded-xl border px-2 py-1.5"
+            className="flex items-center gap-1.5 rounded-xl border px-2 py-1.5"
             style={{
               background: 'linear-gradient(135deg, #0C1A2E, #1E3A5F)',
               borderColor: '#38BDF8',
               boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
             }}
           >
-            <Star size={14} className="shrink-0 fill-sky-400 text-sky-400" />
+            <GemIcon size={18} />
             <span className="font-pixel text-sm leading-none text-sky-200">{gems}</span>
           </div>
 
           {/* Năng Lượng AP */}
           <div
-            className="flex items-center gap-1 rounded-xl border px-2 py-1.5 shadow-inner"
+            className="flex items-center gap-1.5 rounded-xl border px-2 py-1.5 shadow-inner"
             style={{
               background: 'linear-gradient(135deg, #2D1405, #4A2308)',
               borderColor: '#F59E0B',
@@ -948,7 +1015,7 @@ export default function MoCityPage() {
             }}
             title={`Năng Lượng Hành Động: ${ap}/50. Hồi 1 AP mỗi 5 phút. Dùng 1 AP để Thu Hoạch Tức Thì (+10% Bonus VNĐ & 5% cơ hội nổ Siêu Lợi Nhuận x10)!`}
           >
-            <Zap size={14} className="shrink-0 fill-amber-400 text-amber-400" />
+            <EnergyIcon size={18} />
             <span className="font-pixel text-sm leading-none text-amber-200">
               {ap}<span className="text-[10px] opacity-70">/50</span>
             </span>
@@ -959,17 +1026,25 @@ export default function MoCityPage() {
             const debtRemaining = Math.max(0, playerDebtPrincipal - playerDebtPaid);
             if (debtRemaining <= 0) return null;
             const isWarning = playerDebtMissed >= 1;
+            const isCritical = playerDebtMissed >= PLAYER_DEBT_MISSED_LIMIT - 1;
             const dueParts = playerDebtNextDueDateStr?.split('-') ?? [];
             const dueLabel = dueParts.length === 3 ? `${dueParts[2]}/${dueParts[1]}` : '';
+            const missedLabel = playerDebtMissed > 0
+              ? ` | Đã trễ ${playerDebtMissed}/${PLAYER_DEBT_MISSED_LIMIT} kỳ - đủ ${PLAYER_DEBT_MISSED_LIMIT} kỳ là mất đất`
+              : '';
             return (
               <div
                 className="flex items-center gap-1 rounded-xl border px-2 py-1.5"
                 style={{
-                  background: isWarning ? 'linear-gradient(135deg, #3B0000, #7F1D1D)' : 'linear-gradient(135deg, #1C1008, #3B1F06)',
-                  borderColor: isWarning ? '#EF4444' : '#D97706',
+                  background: isCritical
+                    ? 'linear-gradient(135deg, #4C0519, #7F1D1D)'
+                    : isWarning
+                      ? 'linear-gradient(135deg, #3B0000, #7F1D1D)'
+                      : 'linear-gradient(135deg, #1C1008, #3B1F06)',
+                  borderColor: isCritical ? '#FCA5A5' : isWarning ? '#EF4444' : '#D97706',
                   boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
                 }}
-                title={`Nợ gốc còn: ${formatCompact(debtRemaining)}đ | Lãi 5M/30 ngày | Hạn: ${dueLabel}`}
+                title={`Nợ gốc còn: ${formatCompact(debtRemaining)}đ | Lãi 5M/30 ngày | Hạn: ${dueLabel}${missedLabel}`}
               >
                 <span className="text-[11px] leading-none" style={{ color: isWarning ? '#FCA5A5' : '#FCD34D' }}>
                   {isWarning ? '⚠' : '💳'}
@@ -989,13 +1064,13 @@ export default function MoCityPage() {
           })()}
 
           {/*
-           * Chuỗi ngày chơi + thanh cấp Thị Trưởng ĐÃ CHUYỂN ra khỏi header.
+           * Chuỗi ngày chơi + thanh cấp người chơi ĐÃ CHUYỂN ra khỏi header.
            *
            * Header gốc nhồi 5 ô viền-màu-riêng (rank xanh lá, xu đen-vàng, kim
            * cương xanh dương, chuỗi cam, XP tím) sát nhau không theo hệ thống
            * nào - rối mắt. Giữ lại đúng thứ cần quyết định NGAY (Xu, Kim
-           * Cương) trên header; Cấp Thị Trưởng + Chuỗi ngày xem trong Hồ Sơ
-           * Thị Trưởng (nút Crown bên phải) - đã có đủ cả 2 (tab PROFILE và
+           * Cương) trên header; Cấp người chơi + Chuỗi ngày xem trong Hồ Sơ
+           * phố (nút Crown bên phải) - đã có đủ cả 2 (tab PROFILE và
            * tab Chuỗi), không mất thông tin, chỉ bớt nhồi nhét.
            */}
         </div>
@@ -1046,7 +1121,7 @@ export default function MoCityPage() {
               else { setIsPlaying(false); }
             }}
             className="flex h-9 items-center gap-1 rounded-lg border border-[#8B5E1A] bg-[#2A1305]/80 px-2 text-[12px] font-black text-amber-300 hover:border-[#C9A227]"
-            title={hasNamedCity ? `Hồ Sơ Thị Trưởng · Cấp ${level}` : 'Đăng Nhập'}
+            title={hasNamedCity ? `Hồ Sơ ${mayorName} · Cấp ${level}` : 'Đăng Nhập'}
           >
             <Crown size={13} className="shrink-0 text-[#C9A227]" />
             {hasNamedCity && <span className="text-violet-300">Lv.{level}</span>}
@@ -1074,17 +1149,28 @@ export default function MoCityPage() {
 
         {/* SỰ CỐ ĐÔ THỊ ĐANG DIỄN RA */}
         {isPlaying && activeIncidents.length > 0 && (
-          <div className="pointer-events-auto absolute bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-2xl border-2 border-rose-500 bg-rose-600/95 px-4 py-2 text-white shadow-xl animate-bounce">
-            <ShieldAlert size={18} className="text-amber-300 animate-pulse shrink-0" />
-            <span className="text-xs font-black">
-              {activeIncidents[0].description}
-            </span>
+          <div
+            onClick={() => setSelectedIncidentForModal(activeIncidents[0])}
+            className="pointer-events-auto absolute bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 rounded-2xl border-2 border-rose-500 bg-gradient-to-r from-rose-700 via-rose-600 to-rose-700 px-4 py-2 text-white shadow-[0_12px_28px_rgba(225,29,72,0.4)] animate-bounce cursor-pointer transition hover:scale-[1.02] active:scale-95 select-none"
+          >
+            <ShieldAlert size={20} className="text-amber-300 animate-pulse shrink-0" />
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-200 drop-shadow-xs">
+                ⚠️ {activeIncidents[0].buildingName}:
+              </span>
+              <span className="text-xs font-black leading-tight drop-shadow-xs">
+                {activeIncidents[0].description}
+              </span>
+            </div>
             <button
               type="button"
-              onClick={() => handleResolveIncident(activeIncidents[0].id)}
-              className="ml-2 whitespace-nowrap rounded-xl bg-white px-2.5 py-1 text-xs font-black text-rose-700 shadow hover:bg-amber-100 active:scale-95"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedIncidentForModal(activeIncidents[0]);
+              }}
+              className="ml-2 whitespace-nowrap rounded-xl bg-gradient-to-b from-amber-200 to-amber-400 px-3 py-1.5 text-xs font-black text-[#78350F] shadow-[0_2px_0_#92400E] hover:brightness-105 active:scale-95 flex items-center gap-1"
             >
-              {hasInsurance ? 'Bảo Hiểm Đền (0đ)' : 'Khắc Phục (500Kđ)'}
+              <span>🔍 Xem & Xử Lý Vấn Đề</span>
             </button>
           </div>
         )}
@@ -1101,53 +1187,30 @@ export default function MoCityPage() {
                 type="button"
                 onClick={handleManualHarvest}
                 disabled={ap < 1}
-                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#D97706] bg-gradient-to-r from-amber-500 to-amber-600 px-3 text-xs font-black text-white shadow transition-transform hover:brightness-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-12 items-center gap-2 rounded-2xl border-2 border-[#D97706] bg-gradient-to-b from-[#F59E0B] to-[#D97706] px-3.5 text-xs font-black text-white shadow-[0_3px_0_#78350F] transition-transform hover:brightness-105 active:translate-y-0.5 active:shadow-[0_1px_0_#78350F] disabled:cursor-not-allowed disabled:opacity-50"
                 title="Thu hoạch tức thì: Tốn 1 AP, nhận +10% Bonus VNĐ & 5% cơ hội nổ Siêu Lợi Nhuận x10!"
               >
-                <Zap size={15} className="shrink-0 fill-white text-white animate-bounce" />
+                <EnergyIcon size={20} className="animate-pulse" />
                 <div className="flex flex-col items-start leading-none">
                   <span>Thu Hoạch</span>
                   <span className="text-[9px] text-amber-100 font-bold">+10% · 1 AP</span>
                 </div>
               </button>
 
-              <div className="h-9 w-px shrink-0 bg-[#D5CEBF]" />
+              <div className="h-8 w-px shrink-0 bg-[#D5CEBF]" />
 
-              {/* Primary CTA */}
+              {/* Primary CTA: Thuê & Khai Trương */}
               <button
                 type="button"
                 data-tour="build"
                 onClick={() => setDrawerOpen(true)}
-                className="flex h-11 items-center gap-1.5 rounded-xl border-2 border-[#73164A] bg-[#A8246B] px-4 text-xs font-black text-white shadow transition-transform hover:bg-[#B8307A] active:scale-95"
+                className="flex h-12 items-center gap-2 rounded-2xl border-2 border-[#831843] bg-gradient-to-b from-[#EC4899] to-[#BE185D] px-4 text-xs font-black text-white shadow-[0_3px_0_#500724] transition-transform hover:brightness-105 active:translate-y-0.5 active:shadow-[0_1px_0_#500724]"
               >
-                <Hammer size={15} className="shrink-0" />
-                <span>Thuê & Khai Trương</span>
+                <BuildHammerIcon size={22} />
+                <span>Khai Trương</span>
               </button>
 
-              <div className="h-9 w-px shrink-0 bg-[#D5CEBF]" />
-
-              {/* Quản Lý Tiệm */}
-              <button
-                type="button"
-                data-tour="manage"
-                onClick={() => {
-                  if (!selectedBuilding && buildings.length > 0) {
-                    setSelected({ col: buildings[0].col, row: buildings[0].row });
-                  }
-                  if (buildings.length === 0) {
-                    showToast('Hãy mở tiệm đầu tiên trước khi gắn Loa Thần Tài QR & thuê Quản lý!');
-                    setDrawerOpen(true);
-                    return;
-                  }
-                  setInspectorOpen(true);
-                  markTutorialFlag('inspector');
-                }}
-                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Quản Lý Tiệm & Loa QR"
-              >
-                <SlidersHorizontal size={15} className="shrink-0 text-[#A8246B]" />
-                <span className="text-[11px] font-black leading-none">Quản Lý</span>
-              </button>
+              <div className="h-8 w-px shrink-0 bg-[#D5CEBF]" />
 
               {/* Mở Rộng Phố */}
               <button
@@ -1155,17 +1218,17 @@ export default function MoCityPage() {
                 disabled={!canExpand}
                 onClick={handleBuyLand}
                 className={cn(
-                  'relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-3 transition-colors',
+                  'relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 px-3 shadow-sm transition-all',
                   canExpand
-                    ? 'border-[#C9A227] bg-[#FFFBEB] text-[#3E2A1B] hover:bg-[#FEF3C7]'
+                    ? 'border-[#C9A227] bg-[#FFFBEB] text-[#3E2A1B] hover:bg-[#FEF3C7] active:scale-95'
                     : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400',
                 )}
                 title={canExpand ? `Thuê Thêm Lô - ${formatCompact(derived.landCost)}` : 'Thuê Thêm Lô (chưa đủ tiền)'}
               >
-                <Plus size={15} className={cn('shrink-0', canExpand ? 'text-[#A8701F]' : 'text-gray-400')} />
-                <span className="text-[11px] font-black leading-none">Thuê Thêm Lô</span>
+                <LandExpandIcon size={20} />
+                <span className="text-[10px] font-black leading-none">Thêm Lô</span>
                 {canExpand && (
-                  <span className="absolute -top-1.5 -right-1 rounded bg-amber-400 px-1 text-[8px] font-black text-[#92400E] leading-tight">
+                  <span className="absolute -top-1.5 -right-1 rounded-full bg-amber-400 px-1 text-[8px] font-black text-[#92400E] leading-tight shadow-sm">
                     {formatCompact(derived.landCost)}
                   </span>
                 )}
@@ -1178,13 +1241,13 @@ export default function MoCityPage() {
                   setMayorModalTab('QUESTS');
                   setMayorModalOpen(true);
                 }}
-                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Nhiệm Vụ"
+                className="relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-[#D5CEBF] bg-[#FAF6ED] px-3 text-[#3E2A1B] shadow-sm transition-transform hover:border-[#D82D8B] hover:bg-white active:scale-95"
+                title="Nhiệm Vụ Thành Phố"
               >
-                <Star size={15} className="shrink-0 fill-amber-400 text-amber-600" />
-                <span className="text-[11px] font-black leading-none">Nhiệm Vụ</span>
+                <MayorStarIcon size={20} />
+                <span className="text-[10px] font-black leading-none">Nhiệm Vụ</span>
                 {claimableQuestsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white shadow-sm animate-bounce">
                     {claimableQuestsCount}
                   </span>
                 )}
@@ -1197,13 +1260,13 @@ export default function MoCityPage() {
                   setInventoryTab('ITEMS');
                   setInventoryOpen(true);
                 }}
-                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Kho Đồ & Quà Tặng"
+                className="relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-[#D5CEBF] bg-[#FAF6ED] px-3 text-[#3E2A1B] shadow-sm transition-transform hover:border-[#D82D8B] hover:bg-white active:scale-95"
+                title="Kho Đồ & Báu Vật"
               >
-                <Package size={15} className="shrink-0 text-[#A8246B]" />
-                <span className="text-[11px] font-black leading-none">Kho Đồ</span>
+                <ChestInventoryIcon size={20} />
+                <span className="text-[10px] font-black leading-none">Kho Đồ</span>
                 {totalInventoryCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#A8246B] px-1 text-[8px] font-black text-white shadow-sm">
                     {totalInventoryCount}
                   </span>
                 )}
@@ -1216,22 +1279,22 @@ export default function MoCityPage() {
                   setInventoryTab('CHARACTERS');
                   setInventoryOpen(true);
                 }}
-                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Nhân Vật & Thoại"
+                className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-[#D5CEBF] bg-[#FAF6ED] px-3 text-[#3E2A1B] shadow-sm transition-transform hover:border-[#D82D8B] hover:bg-white active:scale-95"
+                title="Cư Dân & Nhân Vật"
               >
-                <MessageSquareHeart size={15} className="shrink-0 text-[#059669]" />
-                <span className="text-[11px] font-black leading-none">Nhân Vật</span>
+                <DialogueBadgeIcon size={20} />
+                <span className="text-[10px] font-black leading-none">Cư Dân</span>
               </button>
 
               {/* Quản Lý Ngân Khố Thành Phố */}
               <button
                 type="button"
                 onClick={() => setFinanceModalOpen(true)}
-                className="relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
+                className="relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-[#D5CEBF] bg-[#FAF6ED] px-3 text-[#3E2A1B] shadow-sm transition-transform hover:border-[#D82D8B] hover:bg-white active:scale-95"
                 title="Quản Lý Ngân Khố: Heo Đất Tiết Kiệm, Quỹ Đầu Tư & Bảo Hiểm"
               >
-                <PiggyBank size={15} className="shrink-0 text-[#A8246B]" />
-                <span className="text-[11px] font-black leading-none">Ngân Khố</span>
+                <GamePiggyBankIcon size={20} />
+                <span className="text-[10px] font-black leading-none">Ngân Khố</span>
                 {(savingsBalance > 0 || investedAmount > 0) && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white">
                     <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
@@ -1247,11 +1310,11 @@ export default function MoCityPage() {
                   setMayorModalTab('CITIZENS');
                   setMayorModalOpen(true);
                 }}
-                className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-[#78533D] bg-[#FAF6ED] px-3 text-[#3E2A1B] transition-colors hover:border-[#A8246B] hover:bg-white"
-                title="Tòa Thị Chính & Cư Dân"
+                className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-[#D5CEBF] bg-[#FAF6ED] px-3 text-[#3E2A1B] shadow-sm transition-transform hover:border-[#D82D8B] hover:bg-white active:scale-95"
+                title="Tòa Thị Chính & Bảng Xếp Hạng"
               >
-                <Users size={15} className="shrink-0 text-[#2563EB]" />
-                <span className="text-[11px] font-black leading-none">Thị Chính</span>
+                <TownHallIcon size={20} />
+                <span className="text-[10px] font-black leading-none">Thị Chính</span>
               </button>
             </div>
           </div>
@@ -1321,7 +1384,25 @@ export default function MoCityPage() {
         onClose={() => setMayorModalOpen(false)}
         onToast={showToast}
         onOpenDialogue={handleOpenDialogue}
+        onOpenWealthMatrix={() => setWealthOpen(true)}
       />
+
+      {/*
+       * Wealth Matrix render SAU MayorCenterModal de cung z-index ma van nam
+       * tren: dong sau cung thang. Mo tu tab DATA cua To Thi Chinh, dong thi
+       * quay ve To Thi Chinh van mo.
+       */}
+      {wealthOpen && (
+        <WealthMatrixModal
+          isOpen
+          onClose={() => setWealthOpen(false)}
+          metrics={getWealthMatrixMetricsStore()}
+          ending={getEndingEvaluationStore()}
+          npcLedgers={getCityState().npcMicroLedgers ?? []}
+          onGrantLoan={grantNpcLoanStore}
+          onInvestEquity={investNpcEquityStore}
+        />
+      )}
 
       <InventoryModal
         open={inventoryOpen}
@@ -1349,7 +1430,7 @@ export default function MoCityPage() {
 
       {shareOpen && (
         <ShareCityCard
-          mayorName={mayorName || 'Thị Trưởng MoMo'}
+          mayorName={mayorName || 'Người Lập Nghiệp'}
           cityName={cityName || 'Đô Thị MoCity'}
           totalRevenue={totalRevenue ?? 0}
           totalCoinsEarned={totalCoinsEarned ?? coins}
@@ -1369,6 +1450,16 @@ export default function MoCityPage() {
         isOpen={quizModalOpen}
         onClose={() => setQuizModalOpen(false)}
       />
+
+      {selectedIncidentForModal && (
+        <IncidentResolutionModal
+          incident={selectedIncidentForModal}
+          coins={coins}
+          hasInsurance={hasInsurance}
+          onResolve={handleResolveIncident}
+          onClose={() => setSelectedIncidentForModal(null)}
+        />
+      )}
     </div>
   );
 }

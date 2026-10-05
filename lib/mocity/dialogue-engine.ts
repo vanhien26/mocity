@@ -1,5 +1,6 @@
 import { AMBIENT, REQUEST_SCRIPTS } from './dialogue-data';
 import { ARCHETYPES } from './npc-data';
+import { toneLineFor, type PlayerTone } from './player-tones';
 import type { NpcState, RequestScript } from './types';
 
 /**
@@ -181,15 +182,26 @@ export function moodLineFor(
 /**
  * Tổng hợp: câu thoại cần nói cho NPC lúc này.
  *
- * Ưu tiên phản ứng khủng hoảng, fallback sang thoại thường theo trạng thái cá
- * nhân. Hàm này là điểm vào duy nhất cho UI nói thoại đường phố.
+ * Thứ tự ưu tiên: phản ứng khủng hoảng > giọng theo bối cảnh người chơi >
+ * thoại thường theo trạng thái cá nhân. Hàm này là điểm vào duy nhất cho UI
+ * nói thoại đường phố.
+ *
+ * `tone` là giọng điệu khi người chơi vừa có chuyện (mở tiệm, nâng cấp, hối
+ * việc...). Xen kẽ 1 câu ambient sau mỗi 4 nhịp để thoại trạng thái cá nhân
+ * không biến mất hoàn toàn khi thành phố đang có hint.
  */
 export function streetLineFor(
   npc: NpcState,
   rotation: number,
   mood: CityMood | null,
+  tone?: PlayerTone | null,
 ): string | null {
-  return moodLineFor(npc, mood, rotation) ?? ambientLineFor(npc, rotation);
+  if (mood) return moodLineFor(npc, mood, rotation);
+  if (tone) {
+    if (Math.abs(rotation) % 4 !== 3) return toneLineFor(npc.role, tone, rotation);
+    return ambientLineFor(npc, rotation);
+  }
+  return ambientLineFor(npc, rotation);
 }
 
 /** Danh sach cac script hop le voi NPC nay. */

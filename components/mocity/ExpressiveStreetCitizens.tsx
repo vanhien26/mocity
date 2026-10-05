@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { claimTapReward, recordCitizenTalk, spendCoins } from '@/lib/mocity/store';
+import { claimTapReward, recordCitizenTalk, spendCoins, useCity } from '@/lib/mocity/store';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import { formatCompact } from '@/lib/mocity/format';
 import { particles } from './ParticleEngine';
 import { useGameJuice } from '@/lib/mocity/useGameJuice';
@@ -939,6 +940,8 @@ export default function ExpressiveStreetCitizens({
   /** Chi so cu dan dang dung noi chuyen voi nguoi choi, null la khong co ai. */
   const [talkingIdx, setTalkingIdx] = useState<number | null>(null);
   const [talkLine, setTalkLine] = useState<string>('');
+  /** Tên người chơi - mọi câu cư dân nói với người chơi đều xưng theo tên. */
+  const mayorName = useCity((s) => s.mayorName);
   const [currentEmotion, setCurrentEmotion] = useState<FacialEmotion>('HAPPY');
   const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
   /**
@@ -1145,7 +1148,7 @@ export default function ExpressiveStreetCitizens({
                     className="absolute bottom-0 left-1/2 h-3 w-3 -translate-x-1/2 translate-y-1/2 rounded-full border border-[#3E2A1B] bg-[#FFFDF7]"
                   />
                   <div className="relative whitespace-normal break-words rounded-xl border border-[#3E2A1B] bg-[#FFFDF7] px-2.5 py-1 text-center text-[10px] font-bold leading-tight text-[#3E2A1B] shadow-[0_3px_10px_rgba(62,42,27,0.18)]">
-                    <span>{app.bubbleText}</span>
+                    <span>{fillTen(app.bubbleText, mayorName)}</span>
                   </div>
                 </div>
               )}
@@ -1248,7 +1251,7 @@ export default function ExpressiveStreetCitizens({
               </svg>
             </div>
           }
-          speech={talkLine}
+          speech={fillTen(talkLine, mayorName)}
           onClose={handleEndTalk}
         >
 
@@ -1302,7 +1305,7 @@ export default function ExpressiveStreetCitizens({
                             }
                     }
                   >
-                    <span>{alreadyGiven ? '✅ Đã biếu rồi' : opt.label}</span>
+                    <span>{alreadyGiven ? '✅ Đã biếu rồi' : fillTen(opt.label, mayorName)}</span>
                     {isPaid && !alreadyGiven && (
                       <span className="ml-1.5 rounded bg-black/20 px-1.5 py-0.5 text-[10px] font-bold">
                         -{opt.cost}đ
@@ -1328,7 +1331,7 @@ export default function ExpressiveStreetCitizens({
                 onClick={handleEndTalk}
                 className="ml-auto rounded-xl px-3 py-2 text-xs font-black text-[#8B7355] hover:text-[#3E2A1B] transition-colors cursor-pointer"
               >
-                Chào bà con 👋
+                Tạm biệt 👋
               </button>
             </div>
         </CharacterPanel>,

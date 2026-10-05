@@ -66,7 +66,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Đại Nhạc Hội Marathon Heo Vàng Xây Trường Vùng Cao!',
     subtitle: '1 triệu bước chân nhân ái đang rung chuyển khắp các đại lộ...',
     speaker: 'Bé Heo Vàng & Hội Sinh Viên MoCity',
-    body: 'Chiến dịch "Nuôi Heo Vàng - Gom Bước Chân Xây Trường Cho Em" trên MoMo vừa khởi động. 5.000 cư dân từ cụ già đến học sinh cùng đổ ra đường chạy bộ biến các con phố thành biển người áo hồng rực rỡ! Thị Trưởng sẽ:',
+    body: 'Chiến dịch "Nuôi Heo Vàng - Gom Bước Chân Xây Trường Cho Em" trên MoMo vừa khởi động. 5.000 cư dân từ cụ già đến học sinh cùng đổ ra đường chạy bộ biến các con phố thành biển người áo hồng rực rỡ! Bạn chọn:',
     minMayorLevel: 1,
     choices: [
       {
@@ -114,7 +114,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Cơn Sốt Vé Tàu Hỏa Bắc Nam & Đêm Trắng Săn Vé Trên MoMo!',
     subtitle: 'Hàng ngàn lao động ngóng chờ tấm vé về quê sum vầy cùng gia đình...',
     speaker: 'Bác Quý Cà Phê & Công Nhân Khu Chế đồngất',
-    body: 'Hệ thống đường sắt mở bán đợt vé tàu Tết cuối cùng. Rất nhiều cô chú công nhân không rành công nghệ sợ lỡ chuyến tàu về quê ăn Tết cùng con cháu. Thị Trưởng quyết định hỗ trợ thế nào?',
+    body: 'Hệ thống đường sắt mở bán đợt vé tàu Tết cuối cùng. Rất nhiều cô chú công nhân không rành công nghệ sợ lỡ chuyến tàu về quê ăn Tết cùng con cháu. Bạn quyết định hỗ trợ thế nào?',
     minMayorLevel: 1,
     choices: [
       {
@@ -210,7 +210,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Nắng Nóng 40 Độ & Cú Sập Điện Tổng Vì 1.000 Máy Lạnh!',
     subtitle: 'Nắng như đổ lửa, trạm biến áp trung tâm phát tín hiệu quá tải...',
     speaker: 'Chú Thành Sửa Xe & Bác Hùng Điện Máy',
-    body: 'Đợt nắng nóng kỷ lục khiến hàng ngàn hộ gia đình đồng loạt bật điều hòa 16 độ, làm trạm điện quá tải sập aptomat tổng. Cả thành phố biến thành lò xông hơi khổng lồ! Thị Trưởng giải cứu:',
+    body: 'Đợt nắng nóng kỷ lục khiến hàng ngàn hộ gia đình đồng loạt bật điều hòa 16 độ, làm trạm điện quá tải sập aptomat tổng. Cả thành phố biến thành lò xông hơi khổng lồ! Bạn giải cứu:',
     minMayorLevel: 1,
     choices: [
       {
@@ -354,7 +354,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Câu Lạc Bộ Dưỡng Sinh Bô Lão Chiếm Trọn Sân Bóng Rổ Gen Z!',
     subtitle: 'Tiếng nhạc múa quạt du dương đối đầu giai điệu Hiphop dồn dập...',
     speaker: 'Bác Tư Trà Đá & Tuấn KTX',
-    body: 'Hội người cao tuổi mang loa ra sân trung tâm múa quạt dưỡng sinh, trong khi đội bóng rổ sinh viên đang chuẩn bị đấu giải trường. Hai bên đứng giằng co cái sân suốt 2 tiếng không ai chịu nhường ai! Bạn sẽ phân xử:',
+    body: 'Hội người cao tuổi mang loa ra sân trung tâm múa quạt dưỡng sinh, trong khi đội bóng rổ sinh viên đang chuẩn bị đấu giải trường. Hai bên đứng giằng co cái sân suốt 2 tiếng không ai chịu nhường ai! Bạn sẽ xử lý:',
     minMayorLevel: 2,
     choices: [
       {
@@ -450,7 +450,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Kẹt Xe Cửa Ngõ Vì 50 Xe Quên Nạp Tài Khoản Thu Phí Tự Động!',
     subtitle: 'Đoàn xe nối dài 3 cây số trước trạm BOT MoCity...',
     speaker: 'Bác Sáu Gạo & Tổ Trọng Tài Đô Thị',
-    body: 'Đầu tuần lượng xe tải và ô tô vào thành phố đông đúc nhưng nhiều tài xế quên nạp tiền vào tài khoản VETC/ePass khiến barie không mở. Xe cộ ùn tắc kéo dài gây tắc nghẽn cả tuyến huyết mạch! Thị Trưởng sẽ:',
+    body: 'Đầu tuần lượng xe tải và ô tô vào thành phố đông đúc nhưng nhiều tài xế quên nạp tiền vào tài khoản VETC/ePass khiến barie không mở. Xe cộ ùn tắc kéo dài gây tắc nghẽn cả tuyến huyết mạch! Bạn xử lý sao:',
     minMayorLevel: 2,
     choices: [
       {
@@ -546,7 +546,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Trận Mưa Đá Bất Chợt & Màn Cứu Hộ Màn Hình Toàn Phố!',
     subtitle: 'Những viên đá to bằng quả trứng rơi rào rào làm nứt vỡ nhiều thiết bị...',
     speaker: 'Kiệt Freelancer & Bác Quý Điện Máy',
-    body: 'Hiện tượng thời tiết dị thường làm mưa đá rơi như trút xuống khu trung tâm. Hàng trăm chiếc điện thoại đang gắn trên xe máy bị đá đập nứt vỡ màn hình. Chi phí sửa chữa làm bà con lao đao! Thị Trưởng giải cứu:',
+    body: 'Hiện tượng thời tiết dị thường làm mưa đá rơi như trút xuống khu trung tâm. Hàng trăm chiếc điện thoại đang gắn trên xe máy bị đá đập nứt vỡ màn hình. Chi phí sửa chữa làm bà con lao đao! Bạn giải cứu:',
     minMayorLevel: 2,
     choices: [
       {
@@ -642,7 +642,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Giải Đấu Mobile Esports Vỉa Hè: Cơn Sốt Nạp Thẻ Game!',
     subtitle: 'Các quán trà đá biến thành đấu trường game di động kịch tính...',
     speaker: 'Đạt Sinh Viên & Khánh Gen Z',
-    body: 'Vòng loại giải đấu game di động lớn nhất thành phố đang diễn ra tại các quán cà phê vỉa hè. Các game thủ cần nạp thẻ kích hoạt trang bị nhưng mạng chập chờn và thiếu kênh nạp uy tín. Thị Trưởng quyết định:',
+    body: 'Vòng loại giải đấu game di động lớn nhất thành phố đang diễn ra tại các quán cà phê vỉa hè. Các game thủ cần nạp thẻ kích hoạt trang bị nhưng mạng chập chờn và thiếu kênh nạp uy tín. Bạn quyết định:',
     minMayorLevel: 2,
     choices: [
       {
@@ -834,7 +834,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Chuyến Du Lịch Biển Gặp Bão: Bồi Hoàn Thần Tốc MoMo Travel!',
     subtitle: 'Đoàn 100 cư dân MoCity mắc kẹt tại đảo vì biển động dữ dội...',
     speaker: 'Bích Du Lịch & Hãng Hàng Không Đối Tác',
-    body: 'Cơn bão biển bất ngờ đổ bộ làm toàn bộ tàu cao tốc ngưng hoạt động, 100 cư dân đi nghỉ dưỡng bị kẹt lại đảo xa hết tiền sinh hoạt. Rất may mọi người đều có Bảo Hiểm Du Lịch MoMo! Thị Trưởng sẽ phối hợp ra sao?',
+    body: 'Cơn bão biển bất ngờ đổ bộ làm toàn bộ tàu cao tốc ngưng hoạt động, 100 cư dân đi nghỉ dưỡng bị kẹt lại đảo xa hết tiền sinh hoạt. Rất may mọi người đều có Bảo Hiểm Du Lịch MoMo! Bạn phối hợp ra sao?',
     minMayorLevel: 2,
     choices: [
       {
@@ -930,7 +930,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Phố Ẩm Thực Đêm MoCity: 1.000 Món Ngon Quét QR Hoàn Tiền!',
     subtitle: 'Mùi sườn nướng, bánh tráng nướng và chè thái ngào ngạt khắp đại lộ...',
     speaker: 'Bếp Trưởng Long & Cô Tám Chè',
-    body: 'Đại tiệc ẩm thực đường phố cuối tuần quy tụ hơn 100 xe đẩy và quán ăn đêm. Khách du lịch nườm nượp đổ về thưởng thức các món ngon trứ danh. Để khu phố buôn bán văn minh không tiền mặt, Thị Trưởng sẽ:',
+    body: 'Đại tiệc ẩm thực đường phố cuối tuần quy tụ hơn 100 xe đẩy và quán ăn đêm. Khách du lịch nườm nượp đổ về thưởng thức các món ngon trứ danh. Để khu phố buôn bán văn minh không tiền mặt, bạn chọn:',
     minMayorLevel: 3,
     choices: [
       {
@@ -1026,7 +1026,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Dịch Vụ Khách Sạn Thú Cưng Mùa Lễ Hội: Đại Tiệc Chó Mèo!',
     subtitle: 'Hàng trăm "boss" 4 chân được chăm sóc chuẩn VIP khi chủ đi du lịch...',
     speaker: 'Bé An Quán Cà Phê & Chị Vy',
-    body: 'Kỳ nghỉ lễ dài ngày, hàng trăm gia đình đi du lịch xa gửi thú cưng vào Khách Sạn Thú Cưng MoCity. Đúng lúc này hệ thống máy lạnh quá tải và thức ăn hạt cao cấp bị thiếu hụt! Thị Trưởng sẽ giải cứu các bạn nhỏ 4 chân thế nào?',
+    body: 'Kỳ nghỉ lễ dài ngày, hàng trăm gia đình đi du lịch xa gửi thú cưng vào Khách Sạn Thú Cưng MoCity. Đúng lúc này hệ thống máy lạnh quá tải và thức ăn hạt cao cấp bị thiếu hụt! Bạn sẽ giải cứu các bạn nhỏ 4 chân thế nào?',
     minMayorLevel: 3,
     choices: [
       {
@@ -1122,7 +1122,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Chiến Dịch Phòng Chống Lừa Đảo Công Nghệ Cao Của Tổ Dân Phố!',
     subtitle: 'Tin tặc gửi tin nhắn mạo danh ngân hàng đòi mã OTP...',
     speaker: 'Bác Tổ Trưởng & Chuyên Gia Khải',
-    body: 'Gần đây xuất hiện các nhóm lừa đảo gửi đường link giả mạo thông báo trúng thưởng để chiếm đoạt tài khoản. Nhiều cụ già nhẹ dạ suýt cung cấp mật khẩu và mã OTP. Thị Trưởng cần hành động khẩn cấp:',
+    body: 'Gần đây xuất hiện các nhóm lừa đảo gửi đường link giả mạo thông báo trúng thưởng để chiếm đoạt tài khoản. Nhiều cụ già nhẹ dạ suýt cung cấp mật khẩu và mã OTP. Bạn cần hành động khẩn cấp:',
     minMayorLevel: 3,
     choices: [
       {
@@ -1170,7 +1170,7 @@ export const EXTRA_CITY_EVENTS: CityEventScript[] = [
     title: 'Đại Nhạc Hội Đêm Giao Thừa: Mưa Lì Xì MoMo Rơi Từ Bầu Trời!',
     subtitle: 'Đồng hồ đếm ngược điểm 00:00, pháo hoa rực sáng cả bầu trời...',
     speaker: 'Ông Lộc & Toàn Thể Cư Dân MoCity',
-    body: 'Đêm Giao Thừa thiêng liêng, hàng vạn cư dân quây quần dưới chân Tháp MoMo đếm ngược đón năm mới. Mọi người háo hức chờ đón màn Lắc Xì may mắn và những phong bao lì xì điện tử trao gửi lời chúc đầu xuân. Thị Trưởng sẽ khai hội ra sao?',
+    body: 'Đêm Giao Thừa thiêng liêng, hàng vạn cư dân quây quần dưới chân Tháp MoMo đếm ngược đón năm mới. Mọi người háo hức chờ đón màn Lắc Xì may mắn và những phong bao lì xì điện tử trao gửi lời chúc đầu xuân. Bạn sẽ khai hội ra sao?',
     minMayorLevel: 3,
     choices: [
       {

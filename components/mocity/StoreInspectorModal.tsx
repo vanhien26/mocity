@@ -28,6 +28,7 @@ import {
   ZONES,
 } from '@/lib/mocity/mock-city-data';
 import { BUILDING_ICON } from './building-icons';
+import { CoinIcon, GemIcon, MayorStarIcon, EnergyIcon } from './GameIcons';
 import ShophouseFacade from './ShophouseFacade';
 import BuildingDossierView from './BuildingDossierView';
 import { ChibiBody } from './ChibiRenderer';
@@ -42,7 +43,6 @@ import {
   installStoreModule,
   staffHireCost,
   upgradeBuilding,
-  effectiveMaxLevel,
   MAX_UPGRADE_PER_ACTION,
   useCity,
 } from '@/lib/mocity/store';
@@ -67,26 +67,35 @@ export default function StoreInspectorModal({
   const coins = useCity((s) => s.coins);
   const gems = useCity((s) => s.gems);
   const buildings = useCity((s) => s.buildings);
+  const cityBuildings = useCity((s) => s.cityBuildings);
   const unlockedManagers = useCity((s) => s.unlockedManagers ?? EMPTY_MANAGERS);
-  const mayorLevel = useCity((s) => s.mayorLevel);
 
   if (!open || !node) return null;
+  /*
+   * Phòng thủ tầng hai: nhà của thành phố (NPC) không có gì để quản lý -
+   * nâng cấp hay tiến hóa ở đây sẽ tốn tiền thật của người chơi để sửa
+   * công trình không thuộc về họ. Việc chặn tap đã làm ở bảng vỉa hè và
+   * `handleSelect`, chỗ này chỉ đề phòng đường vòng.
+   */
+  if (node.npcOwned) return null;
   const def = BUILDING_BY_ID[node.defId];
   if (!def) return null;
+
+  /** Phố đầy đủ - chỉ để quét hàng xóm khi tính sản lượng. */
+  const street = [...buildings, ...cityBuildings];
 
   const Icon = BUILDING_ICON[def.icon];
   const zone = ZONES[def.zone];
   const facadeTheme = themeForBuilding(def.id);
   const houseNumber = node.col * 2 + node.row * 20 + 2;
-  const yieldInfo = nodeYieldBreakdown(node, buildings);
+  const yieldInfo = nodeYieldBreakdown(node, street);
   const nextMilestone = nextMilestoneLevel(node.level);
   // He so dot pha CU THE cua moc sap toi (vd 1.4x), thay vi dai cung ban cu.
   const nextMilestoneStep = node.level >= nextMilestone
     ? 1
     : milestoneMultiplierFor(nextMilestone) / milestoneMultiplierFor(nextMilestone - 1);
-  const upgradeCap = effectiveMaxLevel(def.maxLevel, mayorLevel);
-  const atMaxLevel = node.level >= def.maxLevel;
-  const gatedByMayor = !atMaxLevel && node.level >= upgradeCap;
+  const upgradeCap = def.maxLevel;
+  const atMaxLevel = node.level >= upgradeCap;
   const currentStar = node.starRating || 1;
   const starCost = starUpgradeCost(def, currentStar);
 
@@ -109,10 +118,10 @@ export default function StoreInspectorModal({
    * Doanh thu tang them khi len 1 cap. `nodeYieldBreakdown` da tinh san phan
    * nhau cua moi cap, nen chi can hieu cua cap cu voi cap sau.
    */
-  const currentYield = nodeYieldBreakdown(node, buildings).totalPerSec;
+  const currentYield = nodeYieldBreakdown(node, street).totalPerSec;
   const nextYield = nodeYieldBreakdown(
     { ...node, level: node.level + 1 },
-    buildings.map((b) => (b.id === node.id ? { ...b, level: b.level + 1 } : b)),
+    street.map((b) => (b.id === node.id ? { ...b, level: b.level + 1 } : b)),
   ).totalPerSec;
   const marginalYield = Math.max(0, nextYield - currentYield);
   const paybackMinutes = marginalYield > 0 ? cost1 / marginalYield / 60 : Number.POSITIVE_INFINITY;
@@ -126,8 +135,6 @@ export default function StoreInspectorModal({
       onToast('Chưa đủ đồng để nâng cấp.');
     } else if (res === 'max') {
       onToast('Công trình đã đạt cấp tối đa.');
-    } else if (res === 'mayor') {
-      onToast(`Lên cấp Thị Trưởng ${upgradeCap + 1} để mở khóa nâng cấp cao hơn.`);
     }
   };
 
@@ -276,7 +283,7 @@ export default function StoreInspectorModal({
         </div>
 
         {/* Heo Đất Nhắc Hoàn Vốn */}
-        {!atMaxLevel && !gatedByMayor && cost1 > 0 && marginalYield > 0 && (
+        {!atMaxLevel && cost1 > 0 && marginalYield > 0 && (
           <div
             className="border-b-2 border-[#10B98155] px-4 py-2"
             style={{ background: '#ECFDF5' }}
@@ -485,7 +492,7 @@ export default function StoreInspectorModal({
               node={node}
               def={def}
               yieldInfo={yieldInfo}
-              buildings={buildings}
+              buildings={street}
               houseNumber={houseNumber}
               onSwitchToUpgrade={() => setActiveTab('UPGRADE')}
             />
@@ -518,7 +525,7 @@ export default function StoreInspectorModal({
                   />
                 </div>
 
-                {!atMaxLevel && !gatedByMayor ? (
+                {!atMaxLevel ? (
                   <div className="mt-3.5 space-y-2">
                     <div className="grid grid-cols-2 gap-2.5">
                       <button
@@ -586,10 +593,8 @@ export default function StoreInspectorModal({
                     )}
                   </div>
                 ) : (
-                  <p className="mt-3 text-center text-xs font-black" style={{ color: gatedByMayor ? '#B45309' : '#16A34A' }}>
-                    {gatedByMayor
-                      ? `🔒 Cần cấp Thị Trưởng ${upgradeCap + 1} để mở khóa nâng cấp tiếp (${node.level}/${upgradeCap})`
-                      : `Công trình đã đạt cấp độ tối đa (${def.maxLevel})!`}
+                  <p className="mt-3 text-center text-xs font-black" style={{ color: '#16A34A' }}>
+                    {`Công trình đã đạt cấp độ tối đa (${upgradeCap})!`}
                   </p>
                 )}
               </div>

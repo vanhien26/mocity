@@ -30,7 +30,7 @@ export const EXTRA_REQUEST_SCRIPTS: RequestScript[] = [
         ],
         effects: { trust: 28, xp: 55, happiness: 12 },
         reply:
-          'Barie bật mở trong 3 giây! Xe tải lăn bánh êm ru, 30 tài xế phía sau đồng loạt giơ ngón tay cái tán thưởng Thị Trưởng MoCity!',
+          'Barie bật mở trong 3 giây! Xe tải lăn bánh êm ru, 30 tài xế phía sau đồng loạt giơ ngón tay cái tán thưởng bạn!',
       },
       {
         id: 'auto-topup-vetc',

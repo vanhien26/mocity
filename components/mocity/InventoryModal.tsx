@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { INVENTORY_ITEMS } from '@/lib/mocity/mock-city-data';
 import { CITY_ADVISORS } from '@/lib/mocity/npc-data';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 import {
   buyInventoryItem,
   claimTapReward,
@@ -113,7 +114,7 @@ export default function InventoryModal({
     const pool = STREET_HERO_DIALOGUES[advisorId] ?? [
       '“Chúc Thị Trưởng một ngày điều hành Đô Thị MoCity bội thu ngân khố!”',
     ];
-    const nextLine = pool[Math.floor(Math.random() * pool.length)];
+    const nextLine = fillTen(pool[Math.floor(Math.random() * pool.length)], state.mayorName);
     setActiveHeroSpeech((prev) => ({ ...prev, [advisorId]: nextLine }));
 
     // Han 60s: 8 co van x 2.500 đồng + 35% ro do la 20.000 đồng/phut vo han.
@@ -129,7 +130,10 @@ export default function InventoryModal({
 
     if (result.itemId) {
       onToast(
-        `${advisorName} vừa trò chuyện, tặng Thị Trưởng +${formatCompact(ADVISOR_TAP_COINS)} đồng & 1 Ly Trà Sữa vào Kho Đồ!`,
+        fillTen(
+          `${advisorName} vừa trò chuyện, tặng Thị Trưởng +${formatCompact(ADVISOR_TAP_COINS)} đồng & 1 Ly Trà Sữa vào Kho Đồ!`,
+          state.mayorName,
+        ),
       );
     } else {
       onToast(`${advisorName}: Đã trò chuyện & nhận +${formatCompact(ADVISOR_TAP_COINS)} đồng Lộc Phố Phường!`);
@@ -168,7 +172,7 @@ export default function InventoryModal({
             </span>
             <div className="min-w-0">
               <h2 className="truncate text-sm sm:text-base font-black uppercase text-[#FFFDF7]">
-                Kho Đồ Thị Trưởng & Nhân Vật Phố Thị
+                Kho Đồ & Nhân Vật Phố Thị
               </h2>
               <p className="truncate text-xs font-bold text-[#E6D5B8]">
                 Ngân khố: {formatNumber(state.coins)} · {state.gems} Kim Cương
@@ -290,7 +294,7 @@ export default function InventoryModal({
                           </div>
 
                           <p className="mt-1 text-xs font-semibold text-[#4A3525] break-words leading-snug">
-                            {item.description}
+                            {fillTen(item.description, state.mayorName)}
                           </p>
                           <p className="mt-1 text-xs font-black text-emerald-700 break-words">
                             ✦ Hiệu quả: {item.effectSummary}
@@ -357,7 +361,7 @@ export default function InventoryModal({
 
               <div className="grid grid-cols-1 gap-3">
                 {CITY_ADVISORS.map((adv) => {
-                  const currentLine = activeHeroSpeech[adv.id] ?? `“${adv.tip}”`;
+                  const currentLine = activeHeroSpeech[adv.id] ?? `“${fillTen(adv.tip, state.mayorName)}”`;
                   return (
                     <div
                       key={adv.id}

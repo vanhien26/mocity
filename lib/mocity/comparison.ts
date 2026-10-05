@@ -155,7 +155,7 @@ export function weekComparison(
   const khongTien: Array<{ label: string; n: number; k: number; donVi: string }> = [
     { label: 'Cư dân', n: danSoHomNay, k: kyTruoc.danSo, donVi: 'người' },
     { label: 'Số tiệm', n: homNay.soCongTrinh ?? 0, k: kyTruoc.soCongTrinh, donVi: 'tiệm' },
-    { label: 'Cấp Thị Trưởng', n: homNay.mayorLevel ?? 0, k: kyTruoc.mayorLevel, donVi: 'cấp' },
+    { label: 'Cấp', n: homNay.mayorLevel ?? 0, k: kyTruoc.mayorLevel, donVi: 'cấp' },
   ];
   for (const row of khongTien) {
     lines.push({

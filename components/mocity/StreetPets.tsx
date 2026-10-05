@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import type { TimeOfDay } from '@/lib/mocity/types';
-import { claimTapReward } from '@/lib/mocity/store';
+import { claimTapReward, useCity } from '@/lib/mocity/store';
+import { fillTen } from '@/lib/mocity/dialogue-name';
 
 /**
  * HỆ THỐNG THÚ CƯNG VỈA HÈ (PETS OF MOCITY) — v2
@@ -472,6 +473,8 @@ export default function StreetPets({
   onPetReward?: (toast: string) => void;
 }) {
   const isNight = timeOfDay === 'NIGHT' || timeOfDay === 'SUNSET';
+  /** Tên người chơi để thú cưng xưng hô thay cho "Thị Trưởng". */
+  const mayorName = useCity((s) => s.mayorName);
 
   const [activeSpeech, setActiveSpeech] = useState<{ petId: string; text: string; dir: number } | null>(null);
   const [effects, setEffects] = useState<{ id: number; text: string; x: number; y: number }[]>([]);
@@ -688,7 +691,7 @@ export default function StreetPets({
   const handleTapBird = (e: React.MouseEvent) => {
     e.stopPropagation();
     const result = claimTapReward('pet', FLYING_BIRD_DEF.rewardCoins, { cooldownMs: 1800 });
-    const quote = chonNgauNhien(FLYING_BIRD_DEF.quotes);
+    const quote = fillTen(chonNgauNhien(FLYING_BIRD_DEF.quotes), mayorName);
     const bSim = birdSimRef.current;
     setActiveSpeech({ petId: FLYING_BIRD_DEF.id, text: quote, dir: bSim.dir });
 
@@ -730,11 +733,11 @@ export default function StreetPets({
 
     setActiveSpeech({
       petId: 'dinh-leo-pair',
-      text: 'Ôi cảm ơn Thị Trưởng đã tạt nước giải cứu! Tụi em chạy trốn đây! 🏃‍♂️💨',
+      text: fillTen('Ôi cảm ơn Thị Trưởng đã tạt nước giải cứu! Tụi em chạy trốn đây! 🏃‍♂️💨', mayorName),
       dir: 1,
     });
 
-    onPetReward?.('💦 Giải cứu đôi bạn Cậu Vàng & Corgi dính lẹo thành công! (+50đ thưởng Thị Trưởng)');
+    onPetReward?.(fillTen('💦 Giải cứu đôi bạn Cậu Vàng & Corgi dính lẹo thành công! (+50đ thưởng Thị Trưởng)', mayorName));
   };
 
   // Xử lý tap pet đi bộ bình thường
@@ -752,7 +755,7 @@ export default function StreetPets({
     }
 
     const result = claimTapReward('pet', pet.rewardCoins, { cooldownMs: 1800 });
-    const quote = chonNgauNhien(pet.quotes);
+    const quote = fillTen(chonNgauNhien(pet.quotes), mayorName);
     const petDir = simsRef.current[simIndex].dir;
     setActiveSpeech({ petId: pet.id, text: quote, dir: petDir });
 

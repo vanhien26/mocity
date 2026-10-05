@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { X, CircleDollarSign, Gem, Zap, Lock } from 'lucide-react';
+import { X, Zap, Lock } from 'lucide-react';
 import { BUILDINGS, ZONES, CITY_TIERS, cityTierFor } from '@/lib/mocity/mock-city-data';
 import { populationFor } from '@/lib/mocity/city-calculator';
 import { BUILDING_ICON } from './building-icons';
+import { CoinIcon, GemIcon } from './GameIcons';
 import { useCity } from '@/lib/mocity/store';
 import { formatRate, formatCompact } from '@/lib/mocity/format';
 import type { BuildingDef } from '@/lib/mocity/types';
@@ -43,7 +44,11 @@ export default function BuildDrawer({
     { type: 'LANDMARK', label: ZONES.LANDMARK.shortLabel },
   ];
 
-  // Cong trinh mo khoa duoc len dau, phan con lai xep theo moc cap de thay lo trinh.
+  // Khu dân cư VẪN thuộc về người chơi: nó là kênh đầu tư cho thuê và là
+  // nguồn dân số giữ 8 bậc Thành Phố mở được (bậc 4 đòi 2.000 dân, toàn bộ
+  // công trình có dân số ở bậc 1-4 đều là RESIDENTIAL). 4 căn nhà NPC ở
+  // hàng 1 là nhà CỦA THÀNH PHỐ - đã có sẵn, không hiện ở đây, không tính
+  // vào thành tích của người chơi (xem `CityState.cityBuildings`).
   const visible = BUILDINGS.filter(
     (b) => activeTab === 'ALL' || b.zone === activeTab,
   ).sort((a, b) => {
@@ -137,26 +142,24 @@ export default function BuildDrawer({
               >
                 <span
                   aria-hidden
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 shadow-sm"
                   style={{
                     background: locked ? 'rgba(0,0,0,0.06)' : zone.tint,
                     borderColor: locked ? '#C9A22733' : '#C9A227',
                   }}
                 >
                   <Icon
-                    size={20}
-                    strokeWidth={2.2}
+                    size={26}
                     className="shrink-0"
-                    style={{ color: locked ? '#A0916F' : def.hue }}
                   />
                 </span>
 
                 <span className="flex-1 min-w-0">
                   <span className="flex items-center gap-2">
-                    <span className="truncate text-sm font-bold" style={{ color: '#3E2A1B' }}>{def.name}</span>
+                    <span className="truncate text-sm font-black" style={{ color: '#3E2A1B' }}>{def.name}</span>
                     {locked && (
                       <span
-                        className="flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold"
+                        className="flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
                         style={{ background: 'rgba(0,0,0,0.08)', color: '#7A6449' }}
                       >
                         <Lock size={9} className="shrink-0" />
@@ -164,23 +167,23 @@ export default function BuildDrawer({
                       </span>
                     )}
                   </span>
-                  <span className="mt-0.5 block truncate text-[13px]" style={{ color: '#8A7355' }}>
+                  <span className="mt-0.5 block truncate text-[12px]" style={{ color: '#8A7355' }}>
                     {def.description}
                   </span>
-                  <span className="mt-1 flex items-center gap-2.5 text-[13px]" style={{ color: '#7A6449' }}>
-                    <span className="flex items-center gap-1 font-bold" style={{ color: '#5B3D22' }}>
-                      <CircleDollarSign size={11} className="shrink-0" style={{ color: '#C9A227' }} />
+                  <span className="mt-1 flex items-center gap-2.5 text-[12px]" style={{ color: '#7A6449' }}>
+                    <span className="flex items-center gap-1 font-black" style={{ color: '#5B3D22' }}>
+                      <CoinIcon size={14} />
                       {formatRate(def.baseYieldPerSec)}
                     </span>
                     {def.costGems > 0 && (
-                      <span className="flex items-center gap-1 font-bold" style={{ color: '#5B3D22' }}>
-                        <Gem size={11} className="shrink-0 text-[#2563EB]" />
+                      <span className="flex items-center gap-1 font-black" style={{ color: '#5B3D22' }}>
+                        <GemIcon size={14} />
                         {def.costGems}
                       </span>
                     )}
                     {def.population > 0 && (
                       <span className="flex items-center gap-1">
-                        <Zap size={11} className="shrink-0 text-amber-600" />
+                        <Zap size={12} className="shrink-0 text-amber-600" />
                         {def.population} dân
                       </span>
                     )}
@@ -192,11 +195,11 @@ export default function BuildDrawer({
                     className="flex items-center gap-1 text-xs font-black"
                     style={{ color: affordable ? '#A67C1E' : '#A0916F' }}
                   >
-                    <CircleDollarSign size={13} className="shrink-0" />
+                    <CoinIcon size={15} />
                     {formatCompact(def.costCoins)}
                   </span>
                   {!locked && (
-                    <span className="text-[12px]" style={{ color: '#8A7355' }}>
+                    <span className="text-[11px] font-bold" style={{ color: affordable ? '#059669' : '#8A7355' }}>
                       {affordable ? 'Xây ngay' : 'Chưa đủ tiền'}
                     </span>
                   )}

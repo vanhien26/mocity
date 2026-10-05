@@ -70,7 +70,7 @@ function CardTemplate({
         <div>
           <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: -0.5 }}>{cityName}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-            Thị Trưởng {mayorName} · Cấp {mayorLevel}
+            {mayorName} · Cấp {mayorLevel}
           </div>
         </div>
         <div style={{ marginLeft: 'auto', fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>

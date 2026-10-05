@@ -229,8 +229,27 @@ describe('normalizeStoredState - han muc su kien', () => {
   });
 
   it('van spawn su kien khi moi tho viet trong ngay', () => {
-    const s = normalizeStoredState(v3Save(), NOW);
+    // Het 6 phut tu lan Chuyen Pho truoc (dung policy cooldown) nhung chua xu
+    // ly su kien nao hom nay -> van phai spawn.
+    const s = normalizeStoredState(v3Save({ lastEventAt: NOW - 7 * 60_000 }), NOW);
     assert.ok(s.pendingEvent, 'nguoi choi moi phai co chuyen de xu ly ngay');
+  });
+
+  it('khong spawn su kien khi reload trong 6 phut tu lan truoc', () => {
+    /*
+     * Truoc day moi lan reload deu spawn su kien moi (chi kiem han muc trong
+     * ngay), nen nguoi choi quet cu de farm Chuyen Pho: bat app, chon phuong
+     * an re, dong app, lap lai.
+     */
+    const s = normalizeStoredState(v3Save({ lastEventAt: NOW - 60_000 }), NOW);
+    assert.equal(s.pendingEvent, null, 'phai ton trong khoang cach 6 phut');
+  });
+
+  it('spawn su kien khi save cu khong co truong lastEventAt', () => {
+    const raw = JSON.parse(v3Save()) as Record<string, unknown>;
+    delete raw.lastEventAt;
+    const s = normalizeStoredState(JSON.stringify(raw), NOW);
+    assert.ok(s.pendingEvent, 'save di san khong biet lan cu luc nao thi van cho phep spawn');
   });
 });
 
@@ -762,12 +781,17 @@ describe('P&L - tien thuc nhan khong doi so voi truoc Tầng 1', () => {
     }
   });
 
-  it('cong toan khong doi khi them Bảo Vật hay Giờ Vàng', () => {
+  it('cong toan khong doi khi them Bảo Vật (Gio Vang da xoa khoi flowFor)', () => {
+    /*
+     * Truoc day test nay con co ca `isFever: true` va doi chieu voi `plain`.
+     * Gio Vang da bo hoan toan: `FlowOptions` khong con `isFever`, nen khong
+     * con cach nao - ke ca test - tinh lai he so 2x cu. Giu lai phep tinh
+     * chung vi no dam bao gross luon = tong 3 dong va net = gross - chi phi.
+     */
     const b = [node('quan-ca-phe', 0, 0, 10)];
     const plain = flowFor(b, [], 10, 100_000, { idleMs: 0 });
     const relics = flowFor(b, [], 10, 100_000, { idleMs: 0, relicBonus: 0.9 });
-    const fever = flowFor(b, [], 10, 100_000, { idleMs: 0, isFever: true });
-    for (const [name, f] of [['bao vat', relics], ['gio vang', fever]] as const) {
+    for (const [name, f] of [['co bao vat', relics], ['khong bao vat', plain]] as const) {
       // Gross van = tong 3 dong, du nhan voi he so phuc vu nao.
       const lines = f.storeYield + f.networkFee + f.savingsYield;
       assert.ok(
@@ -781,8 +805,8 @@ describe('P&L - tien thuc nhan khong doi so voi truoc Tầng 1', () => {
         `${name}: netIncome van = gross - chi phi`,
       );
     }
-    // Giờ Vàng nhân đôi mọi thứ: cả doanh thu gộp lẫn lợi nhuận ròng.
-    assert.ok(fever.netIncome > plain.netIncome * 1.9);
+    // Bảo Vật van nhan he so vao ca doanh thu gop lan loi nhuan rong.
+    assert.ok(relics.netIncome > plain.netIncome);
   });
 
   it('moi cong trinh deu sinh loi rong - khong co cong trinh tien mat', () => {

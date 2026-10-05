@@ -39,6 +39,8 @@ export const AMBIENT: Record<ArchetypeId, AmbientPool> = {
       'Mấy đứa sinh viên quét mã cái rẹt, tặng luôn thêm miếng chả lụa!',
       'Mưa gió ngập đường ngồi trong nhà mở MoMo nhận tiền hàng vẫn êm ru!',
       'Đóng bảo hiểm rồi nên bão lũ dột mái cũng được công ty bảo hiểm bồi thường!',
+      'Thị Trưởng đi tuần ngang qua nhớ ghé tiệm nhận ly nước mía giải khát nghen!',
+      'Cảm ơn Thị Trưởng đã quy hoạch dãy phố buôn bán sầm uất vầy!',
     ],
   },
   MERCHANT_ESTABLISHED: {
@@ -461,7 +463,7 @@ const BASE_REQUEST_SCRIPTS: RequestScript[] = [
     archetype: 'CINEPHILE',
     title: 'Đêm công chiếu phim bom tấn & Cơn khát bắp phô mai!',
     subtitle: '200 fan điện ảnh đang vây kín sảnh Rạp Phim MoMo...',
-    body: 'Suất chiếu sớm lúc nửa đêm cháy sạch vé trên MoMo Cinema, nhưng máy nổ bắp rang bơ của rạp lại quá tải. Fan hâm mộ đang gào thét đòi bắp phô mai đôi để vừa xem phim vừa nhâm nhi! Thị Trưởng sẽ:',
+    body: 'Suất chiếu sớm lúc nửa đêm cháy sạch vé trên MoMo Cinema, nhưng máy nổ bắp rang bơ của rạp lại quá tải. Fan hâm mộ đang gào thét đòi bắp phô mai đôi để vừa xem phim vừa nhâm nhi! Bạn chọn:',
     choices: [
       {
         id: 'vip-popcorn-truck',
@@ -661,7 +663,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     title: 'Giải Đua Shipper Mở Rộng: Giao Bún Bò Không Đổ Nước Lèo!',
     subtitle: 'Đại lộ trung tâm đang biến thành đường đua F1 của biệt đội áo hồng...',
     speaker: 'Anh Tài Shipper & Bếp Trưởng Long',
-    body: 'Để chứng minh ai là “Thánh Giao Hàng MoMo Food”, 20 anh em Shipper tự tổ chức giải đua treo 10 tô bún bò đầy ắp nước lèo trên tay lái, lạng lách qua ngã tư khiến bà con đứng tim! Thị Trưởng quyết định:',
+    body: 'Để chứng minh ai là “Thánh Giao Hàng MoMo Food”, 20 anh em Shipper tự tổ chức giải đua treo 10 tô bún bò đầy ắp nước lèo trên tay lái, lạng lách qua ngã tư khiến bà con đứng tim! Bạn quyết định:',
     minMayorLevel: 1,
     choices: [
       {
@@ -805,7 +807,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     title: 'Đêm Hội Livestream Chợ Đêm MoCity & Sập Giỏ Hàng!',
     subtitle: 'Bảo Ngọc KOC cùng Cô Ba Bánh Mì lên sóng thu hút 50.000 mắt xem...',
     speaker: 'Bảo Ngọc KOC & Cô Ba Bánh Mì',
-    body: 'Phiên livestream quảng bá Phố Ẩm Thực MoCity bất ngờ leo thẳng Top 1 Thịnh Hành! Hàng ngàn đơn đặt bánh mì, trà sữa và vé xem phim nổ liên hồi khiến các tiệm trở tay không kịp. Thị Trưởng sẽ hỗ trợ thế nào?',
+    body: 'Phiên livestream quảng bá Phố Ẩm Thực MoCity bất ngờ leo thẳng Top 1 Thịnh Hành! Hàng ngàn đơn đặt bánh mì, trà sữa và vé xem phim nổ liên hồi khiến các tiệm trở tay không kịp. Tiệm bạn sẽ hỗ trợ thế nào?',
     minMayorLevel: 1,
     choices: [
       {
@@ -854,7 +856,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     title: 'Đại Chiến Loa Kéo 1000W: Đêm Nhạc Bolero Xuyên Màn Đêm!',
     subtitle: 'Cả xóm mất ngủ vì giọng ca vàng của Chú Bảy và Bác Ba...',
     speaker: 'Bác Ba Đầu Hẻm & Chú Bảy Loa Kéo',
-    body: 'Chú Bảy mới tậu chiếc loa kéo 1000W bật đèn LED nhấp nháy, hát bài "Đắp Mộ Cuộc Tình" từ chiều đến 23h đêm chưa nghỉ. Bác Ba vác chổi ra thách đấu song ca để phân tài cao thấp. Cả phố đứng bu đông nghẹt! Thị Trưởng phân xử thế nào?',
+    body: 'Chú Bảy mới tậu chiếc loa kéo 1000W bật đèn LED nhấp nháy, hát bài "Đắp Mộ Cuộc Tình" từ chiều đến 23h đêm chưa nghỉ. Bác Ba vác chổi ra thách đấu song ca để phân tài cao thấp. Cả phố đứng bu đông nghẹt! Bạn tính sao?',
     minMayorLevel: 1,
     choices: [
       {
@@ -998,7 +1000,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     title: '“Đại Ca” Mèo Tam Thể Chiếm Ghế Bành Quán Cà Phê Vỉa Hè!',
     subtitle: 'Vị khách đặc biệt 4 chân khiến quán cà phê kẹt cứng bàn...',
     speaker: 'Bé An Quán Cà Phê & Tổ Dân Phố',
-    body: 'Một chú mèo tam thể béo tròn tự ý nhảy lên nằm ngủ trên chiếc ghế bành xịn nhất quán cà phê vỉa hè. Ai tới gần đòi ghế đều bị chú mèo đưa mắt lườm sắc như dao cau. Khách kéo tới chụp ảnh check-in nườm nượp! Thị Trưởng sẽ:',
+    body: 'Một chú mèo tam thể béo tròn tự ý nhảy lên nằm ngủ trên chiếc ghế bành xịn nhất quán cà phê vỉa hè. Ai tới gần đòi ghế đều bị chú mèo đưa mắt lườm sắc như dao cau. Khách kéo tới chụp ảnh check-in nườm nượp! Bạn xử lý sao:',
     minMayorLevel: 1,
     choices: [
       {
@@ -1046,7 +1048,7 @@ const BASE_CITY_EVENTS: CityEventScript[] = [
     title: 'Siêu Sale Ngày Đôi: Nghẽn Mạng Vì 10.000 Khách Săn Voucher 1Đ!',
     subtitle: 'Bà con giơ điện thoại lên trời bắt sóng Wi-Fi Tòa Thị Chính...',
     speaker: 'Cô Mai Tạp Hóa & Kỹ Thuật Viên Viễn Thông',
-    body: 'Đến khung giờ vàng săn Voucher 1Đ trà sữa và nạp thẻ game trên MoMo, lưu lượng truy cập tăng vọt khiến mạng 4G khu phố chập chờn. Hàng trăm bạn trẻ bu kín cửa Tòa Thị Chính giơ điện thoại lên trời như đang làm phép bắt sóng! Thị Trưởng giải cứu:',
+    body: 'Đến khung giờ vàng săn Voucher 1Đ trà sữa và nạp thẻ game trên MoMo, lưu lượng truy cập tăng vọt khiến mạng 4G khu phố chập chờn. Hàng trăm bạn trẻ bu kín cửa Tòa Thị Chính giơ điện thoại lên trời như đang làm phép bắt sóng! Bạn giải cứu:',
     minMayorLevel: 1,
     choices: [
       {

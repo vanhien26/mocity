@@ -77,6 +77,7 @@ import {
   type WeatherType,
   type GameAct,
   type EndingEvaluation,
+  type GameEnding,
   type NpcMicroLedger,
   type OpportunityCardDef,
   type BlackSwanEventDef,
@@ -120,21 +121,25 @@ const PERSIST_DEBOUNCE_MS = 250;
 /** Toi da 3 dau `!` cung luc - nhieu hon se thanh nhieu loan tren ban do. */
 const MAX_ACTIVE_REQUESTS = 3;
 const REQUEST_INTERVAL_MS = 25 * 1000;
-const EVENT_INTERVAL_MS = 35 * 1000;
-
 /**
- * Giá + thời lượng Giờ Vàng x2 doanh thu.
+ * Yeu cau cua dan co han 8 phut.
  *
- * Giá nâng từ 2 lên 5...
+ * Khong co han thi mot request bo qua tro thanh chan suc: `activeRequests` day
+ * 3 o la moi yeu cau moi dung, va ca 2 cong Chuyen Pho (nut thu cong va hen
+ * 6-9 phut) deu do `activeRequests.length > 0` nen pho khoi tinh chuyen gi
+ * nua. 8 phut du cho nguoi choi noi chuyen 2-3 lan, qua do thi co viec khac.
+ */
+export const REQUEST_TTL_MS = 8 * 60 * 1000;
+const EVENT_INTERVAL_MS = 6 * 60 * 1000;
+
+/*
+ * GIO VANG (Fever x2 doanh thu) DA BO HOAN TOAN.
  *
- * KHÔNG CÒN DÙNG NỮA. Giờ Vàng (Fever x2 doanh thu) đã bỏ cùng toàn bộ hệ
- * Bảo Vật/buff - không còn nút bấm, không còn vật phẩm nào kích hoạt được.
- * `feverUntil`/`feverEverUsed`/`feverUsedToday`/`feverDay` vẫn còn trong
- * `CityState` CHỈ để save cũ đọc được mà không vỡ migration; không có
- * đường nào ghi giá trị mới vào các field đó nữa nên chúng tự nhiên bất
- * động. `isFever` trong `flowFor` vẫn là tham số hợp lệ - các test gọi
- * trực tiếp hàm thuần này để kiểm chứng công thức nhân đôi, tách biệt khỏi
- * việc trò chơi có đường nào bật nó hay không.
+ * `feverUntil`/`feverEverUsed`/`feverUsedToday`/`feverDay` van con trong
+ * `CityState` CHI de save cu doc duoc ma khong vo migration; khong con duong
+ * nao ghi gia tri moi vao cac field do. `flowFor` cung khong con tham so
+ * `isFever` nua - he so 2x da xoa han khoi cong thuc, nen khong con cach nao
+ * (ke ca test) tinh lai so cu.
  */
 
 /**
@@ -144,11 +149,13 @@ const EVENT_INTERVAL_MS = 35 * 1000;
  * pham dat gia tri lon) va lui ve loi thu hieu hon.
  */
 /**
- * Chuyen Pho tu dong hien moi 2-3 phut nen tran 3 luot/ngay se khoa tinh nang
- * lai sau chua toi 10 phut choi. Event chu yeu TRU Xu doi lay uy tin chu khong
- * phai nguon thu, nen noi tran khong tao lo hong kinh te.
+ * Chuyen Pho tu dong hien moi 6 phut (trung voi `EVENT_INTERVAL_MS`) va tran
+ * 6 luot/ngay. 6/6 la can du cho nhiem vu ngay `d-xu-chuyen-pho` (2 luot)
+ * hoan thanh sau khoang 12 phut choi, ma van du de Chuyen Pho khong tro thanh
+ * chuong trinh chinh chiem het phien choi. Event chu yeu TRU Xu doi lay uy
+ * tin chu khong phai nguon thu, nen noi tran khong tao lo hong kinh te.
  */
-const MAX_EVENTS_PER_DAY = 30;
+const MAX_EVENTS_PER_DAY = 6;
 
 /**
  * Diem khoi dau. O version <= 3 game cap toi da 1.000.000 Xu / 500 Kim Cuong
@@ -178,6 +185,14 @@ function isOverdue(dueDateStr: string, now: number): boolean {
 
 const PLAYER_DEBT_MONTHLY_INTEREST = 5_000_000;
 const PLAYER_DEBT_INTERVAL_DAYS = 30;
+/**
+ * So ky lai tre lien tien truoc khi ong Chin lay dat.
+ *
+ * Moi ky la 30 ngay thuc, nen day la canh bao cuoi cung chu khong phai tro
+ * cham: 1 - 2 ky tre se bi tru uy tin (thieu tien thi khong tra duoc), den
+ * ky thu 3 thi `endingForState` tra ve 'bankrupt'.
+ */
+export const PLAYER_DEBT_MISSED_LIMIT = 3;
 
 /**
  * Khoa thang cho so cai thang. Khac `todayKey`: quy doi 1 ngay 0h cua thang
@@ -213,6 +228,122 @@ function emptyDailyLog(ts: number): import('./types').DailyLog {
   return { day: todayKey(ts), built: 0, upgraded: 0, talked: 0, eventsResolved: 0, starEvolved: 0, idleXp: 0, claimed: [] };
 }
 
+/* ── NHÀ CỦA THÀNH PHỐ (NPC) ────────────────────────────────────────────── */
+
+interface CityLotDef {
+  id: string;
+  defId: string;
+  /** Ô ưa thích - hàng 1 (hàng sau), để hàng 0 còn lại cho tiệm của player. */
+  col: number;
+  row: number;
+  level: number;
+  starRating: number;
+}
+
+/**
+ * 4 tòa nhà thành phố seed từ đầu: khu dân cư đã có người từ trước khi
+ * người lập nghiệp tới phố. Chúng là "hàng xóm" - nguồn khách và điểm
+ * cộng synergy liên kế - chứ không phải tài sản của player.
+ */
+const CITY_LOTS: CityLotDef[] = [
+  { id: 'city-nha-1', defId: 'nha-pho-binh-dan', col: 0, row: 1, level: 2, starRating: 3 },
+  { id: 'city-nha-2', defId: 'nha-pho-binh-dan', col: 1, row: 1, level: 2, starRating: 3 },
+  { id: 'city-ky-tuc', defId: 'ky-tuc-xa-sinh-vien', col: 2, row: 1, level: 1, starRating: 3 },
+  { id: 'city-nha-3', defId: 'nha-pho-binh-dan', col: 3, row: 1, level: 1, starRating: 3 },
+];
+
+const CITY_LOT_IDS = new Set(CITY_LOTS.map((lot) => lot.id));
+
+/** Node có phải nhà của thành phố không? Dùng khi đọc save cũ. */
+function isCityNode(node: BuildingNode): boolean {
+  return node.npcOwned === true || CITY_LOT_IDS.has(node.id);
+}
+
+function makeCityBuildings(now: number): BuildingNode[] {
+  return CITY_LOTS.map((lot) => ({
+    id: lot.id,
+    defId: lot.defId,
+    col: lot.col,
+    row: lot.row,
+    level: lot.level,
+    starRating: lot.starRating,
+    lastCollectedAt: now,
+    npcOwned: true,
+  }));
+}
+
+/**
+ * Ghép nhà thành phố vào lưới, KHÔNG BAO GIỜ chồng lên ô người chơi đã xây.
+ *
+ * Vì sao cần hàm này thay vì seed cứng 4 ô (0..3, 1):
+ * - Save cũ có thể đã có tiệm ở đúng hàng 1 -> hai node cùng ô, bảng vỉa
+ *   hè render ô này còn `buildingAt` trả ô kia, người chơi không bấm được
+ *   công trình của chính mình nữa.
+ * - Bản build trước đã đẩy thẳng nhà NPC vào `state.buildings`; save đó
+ *   phải được gỡ ra và đặt lại.
+ *
+ * Bảo đảm tính idempotent: giữ nguyên vị trí đã đặt nếu ô đó còn trống
+ * (đối với `playerBuildings`), chỉ những tòa thiếu mới đi tìm ô mới. Gọi
+ * hai lần liên tiếp cho cùng input cho ra y hệt kết quả.
+ */
+function ensureCityBuildings(
+  playerBuildings: BuildingNode[],
+  existing: BuildingNode[] | undefined,
+  unlockedCols: number,
+  unlockedRows: number,
+  now: number,
+): BuildingNode[] {
+  const cols = Math.max(1, Math.min(unlockedCols, 10));
+  const rows = Math.max(1, Math.min(unlockedRows, 10));
+
+  const takenByPlayer = new Set(
+    playerBuildings.map((b) => `${b.col}:${b.row}`),
+  );
+
+  // Node nhà thành phố đã có từ save: khử trùng lặp theo id, bỏ node đang
+  // nằm trên đất của người chơi (để đặt lại xuống ô trống thay vì tranh ô).
+  const kept: BuildingNode[] = [];
+  for (const lot of CITY_LOTS) {
+    const found = (existing ?? []).find((n) => n.id === lot.id && !takenByPlayer.has(`${n.col}:${n.row}`));
+    if (found) kept.push({ ...found, npcOwned: true });
+  }
+  const placed = new Set(kept.map((b) => `${b.col}:${b.row}`));
+
+  const missing = CITY_LOTS.filter((lot) => !kept.some((n) => n.id === lot.id));
+  for (const lot of missing) {
+    // Ưu tiên ô ưa thích, rồi cả hàng 1, rồi quét toàn bộ vùng đã mở.
+    const candidates: Array<[number, number]> = [];
+    const seen = new Set<string>();
+    const push = (c: number, r: number) => {
+      if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+      const key = `${c}:${r}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      candidates.push([c, r]);
+    };
+    push(lot.col, lot.row);
+    for (let c = 0; c < cols; c++) push(c, 1);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) push(c, r);
+
+    const free = candidates.find(([c, r]) => !takenByPlayer.has(`${c}:${r}`) && !placed.has(`${c}:${r}`));
+    if (!free) continue; // Hết đất trống - bỏ tòa, đây chỉ là cảnh quan.
+    placed.add(`${free[0]}:${free[1]}`);
+    kept.push({
+      id: lot.id,
+      defId: lot.defId,
+      col: free[0],
+      row: free[1],
+      level: lot.level,
+      starRating: lot.starRating,
+      lastCollectedAt: now,
+      npcOwned: true,
+    });
+  }
+
+  // Trả về theo thứ tự CITY_LOTS để kết quả ổn định giữa các lần hydrate.
+  return CITY_LOTS.flatMap((lot) => kept.filter((n) => n.id === lot.id));
+}
+
 function createInitialState(): CityState {
   const now = Date.now();
   return {
@@ -226,7 +357,13 @@ function createInitialState(): CityState {
     gridSize: 10,
     unlockedCols: 4,
     unlockedRows: 4,
+    // Toàn bộ tài sản của người chơi - khởi đầu TRỐNG: 50 triệu Xu và một
+    // khoản nợ là tất cả những gì người lập nghiệp mang lên phố.
     buildings: [],
+    // 4 tòa nhà của thành phố (NPC): khu dân cư đã có người từ trước khi
+    // player tới. Xem `ensureCityBuildings` để biết cách đặt ô không chồng
+    // lên công trình mà người chơi đã xây ở save cũ.
+    cityBuildings: makeCityBuildings(now),
     npcs: [],
     unlockedManagers: [],
     claimedQuests: [],
@@ -311,6 +448,7 @@ function createInitialState(): CityState {
     investedAt: 0,
     insuranceActiveUntilMs: 0,
     activeIncidents: [],
+    fixedIncidents: [],
     currentAct: 'ACT_1_STARTER',
     npcMicroLedgers: INITIAL_NPC_LEDGERS,
     momoOSState: INITIAL_MOMO_FINANCIAL_OS,
@@ -652,7 +790,29 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
 
   const merged: CityState = { ...fresh, ...migrated };
   merged.version = STATE_VERSION;
-  merged.buildings = Array.isArray(migrated.buildings) ? migrated.buildings : [];
+  {
+    /*
+     * Tách nhà thành phố (NPC) khỏi tài sản người chơi.
+     *
+     * Bản build trước đẩy thẳng 4 tòa NPC vào `state.buildings` - hậu quả:
+     * tiền thụ động free, quest thưởng ngay khi vào game, bậc thành phố nhảy
+     * trước khi người chơi làm gì. Gỡ ra khỏi `buildings` là toàn bộ logic
+     * kinh tế/nhiệm vụ/bậc thành phố tự đúng lại theo mặc định.
+     *
+     * Vị trí đặt lại qua `ensureCityBuildings` vì ô ưa thích (hàng 1) có thể
+     * đã bị tiệm của người chơi chiếm ở save cũ.
+     */
+    const base = Array.isArray(migrated.buildings) ? migrated.buildings : [];
+    const storedCity = Array.isArray(migrated.cityBuildings) ? migrated.cityBuildings : [];
+    merged.buildings = base.filter((b) => !isCityNode(b));
+    merged.cityBuildings = ensureCityBuildings(
+      merged.buildings,
+      [...storedCity, ...base.filter((b) => isCityNode(b))],
+      merged.unlockedCols ?? 4,
+      merged.unlockedRows ?? 4,
+      now,
+    );
+  }
   merged.npcs = Array.isArray(migrated.npcs) ? migrated.npcs : [];
   merged.activeRequests = Array.isArray(migrated.activeRequests) ? migrated.activeRequests : [];
   merged.unlockedManagers = Array.isArray(migrated.unlockedManagers) ? migrated.unlockedManagers : [];
@@ -748,7 +908,7 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     ? migrated.playerDebtNextDueDateStr
     : futureDateKey(Date.now(), PLAYER_DEBT_INTERVAL_DAYS);
   merged.playerDebtMissed = nonNeg(migrated.playerDebtMissed ?? 0);
-  const validEndings = ['survival', 'prosperity', 'empire'] as const;
+  const validEndings = ['survival', 'prosperity', 'empire', 'bankrupt'] as const;
   merged.gameEnding = validEndings.includes(migrated.gameEnding as typeof validEndings[number])
     ? (migrated.gameEnding as typeof validEndings[number])
     : null;
@@ -867,6 +1027,7 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   merged.investedAt = typeof migrated.investedAt === 'number' ? migrated.investedAt : 0;
   merged.insuranceActiveUntilMs = typeof migrated.insuranceActiveUntilMs === 'number' ? migrated.insuranceActiveUntilMs : 0;
   merged.activeIncidents = Array.isArray(migrated.activeIncidents) ? migrated.activeIncidents : [];
+  merged.fixedIncidents = Array.isArray(migrated.fixedIncidents) ? migrated.fixedIncidents : [];
 
   const elapsed = now - (Number.isFinite(merged.lastSeenAt) ? merged.lastSeenAt : now);
   if (elapsed >= OFFLINE_MIN_MS) {
@@ -914,8 +1075,9 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
       if (!def || def.zone === 'COMMERCIAL') return false;
       return b.defId !== 'tram-tui-than-tai' && b.defId !== 'ngan-hang-so';
     });
+    const passiveStreetOffline = streetNodes(merged);
     const passiveRateOffline = passiveNodesOffline.reduce(
-      (s, b) => s + nodeYieldBreakdown(b, merged.buildings).totalPerSec,
+      (s, b) => s + nodeYieldBreakdown(b, passiveStreetOffline).totalPerSec,
       0,
     );
     const passiveGrossOffline = passiveRateOffline * (capped / 1000);
@@ -957,7 +1119,18 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
   }
 
   merged.lastSeenAt = now;
-  if (!merged.pendingEvent && resolvedEventsToday(merged, now) < MAX_EVENTS_PER_DAY) {
+  /*
+   * Vao lai phai ton trong `EVENT_INTERVAL_MS` (6 phut). Truoc day chi kiem
+   * so su kien trong ngay nen moi lan reload deu spawn su kien moi - nguoi
+   * choi quet cu de farm Chuyen Pho nhu vong lap tranh.
+   *
+   * Doc tu `parsed` (save goc) chu khong tu `merged`: save cu khong co truong
+   * `lastEventAt` nen `merged` lay gia tri tu `createInitialState()` = "vua
+   * xong" va se chan luon su kien dau tien cua nguoi choi moi.
+   */
+  const lanCu = typeof parsed.lastEventAt === 'number' ? parsed.lastEventAt : null;
+  const quaHanEvent = lanCu === null || now - lanCu >= EVENT_INTERVAL_MS;
+  if (!merged.pendingEvent && quaHanEvent && resolvedEventsToday(merged, now) < MAX_EVENTS_PER_DAY) {
     /*
      * Quay vong theo thoi gian thay vi `Math.random()`.
      *
@@ -969,6 +1142,7 @@ export function normalizeStoredState(raw: string, now = Date.now()): CityState {
     if (eligible.length > 0) {
       const script = eligible[Math.floor(now / EVENT_INTERVAL_MS) % eligible.length];
       merged.pendingEvent = { id: `${script.id}_${now.toString(36)}`, scriptId: script.id, createdAt: now };
+      merged.lastEventAt = now;
     }
   }
 
@@ -1473,6 +1647,48 @@ function accrueOperatingXp(s: CityState, amount: number): CityState {
  * `opts.relicBonus` phai duoc truyen vao day (xem `FlowOptions`) - nguoc lai
  * HUD hien mot con so ma ngan khoc khong nhan.
  */
+/**
+ * Tinh ket thuc game tu trang thai hien tai. `null` = chua ket thuc.
+ *
+ * Thu tu quyet dinh:
+ * 1. Tra het no goc 200 trieu -> win, quy mo theo dong tien thang cua cong trinh.
+ * 2. Tre du `PLAYER_DEBT_MISSED_LIMIT` ky lai -> `bankrupt`.
+ *
+ * Test: `lib/mocity/ending.test.ts`
+ */
+export function endingForState(
+  s: Pick<CityState, 'buildings' | 'playerDebtPrincipal' | 'playerDebtPaid' | 'playerDebtMissed'>,
+): GameEnding | null {
+  const remaining = Math.max(0, s.playerDebtPrincipal - s.playerDebtPaid);
+  if (remaining === 0) {
+    /*
+     * NGUONG DA DO LAI THEO KINH TE THUC TE (don vi: dong/thang).
+     *
+     * Nguong cu 50 trieu / 100 trieu thua xa quy mo that: mot quan caphe cap 1
+     * da cho ~155 ty/thang (baseYieldPerSec 60.000 x 2.592.000 giay), nen
+     * nguoi choi co 1 cay la tu dong nhan 'prosperity', co 10 cay la 'empire'
+     * - ca 3 ket thuc tro thanh ham cua SO CONG TRINH, khong con do quy mo.
+     *
+     * Moi chot doi chieu voi do thuc:
+     * - 2 tiem cap 1  ~ 311 ty/thang  -> van la 'survival' (tra du no nhung
+     *   co cau con nho, dung voi cau chuyen "khong du nhieu").
+     * - 6 tiem cap 10 ~ 17.800 ty/thang -> 'prosperity'.
+     * - 10+ tiem, moi cay lon hon 5.000 ty -> 'empire'.
+     */
+    const monthlyFlow = s.buildings.reduce((sum, b) => {
+      const def = BUILDING_BY_ID[b.defId];
+      return sum + (def?.baseYieldPerSec ?? 0) * b.level * 30 * 86_400;
+    }, 0);
+    const PROSPERITY_MONTHLY_FLOW = 500_000_000_000;
+    const EMPIRE_MONTHLY_FLOW = 50_000_000_000_000;
+    if (s.buildings.length >= 10 && monthlyFlow >= EMPIRE_MONTHLY_FLOW) return 'empire';
+    if (monthlyFlow >= PROSPERITY_MONTHLY_FLOW) return 'prosperity';
+    return 'survival';
+  }
+  if ((s.playerDebtMissed ?? 0) >= PLAYER_DEBT_MISSED_LIMIT) return 'bankrupt';
+  return null;
+}
+
 export function tickIdle(): void {
   const now = Date.now();
   const elapsed = now - state.lastSeenAt;
@@ -1482,7 +1698,6 @@ export function tickIdle(): void {
   const rolled = rollPeriods(state, now);
 
   const seconds = elapsed / 1000;
-  const isFever = state.feverUntil > now;
 
   let relicYieldBonus = 0;
   let relicHappyBonus = 0;
@@ -1494,21 +1709,20 @@ export function tickIdle(): void {
   }
 
   const flow = flowFor(state.buildings, state.npcs, state.mayorLevel, state.coins, {
-    isFever,
     idleMs: now - state.lastEngagedAt,
     happinessBoost: state.happinessBoost,
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
     debt: state.debt ?? 0,
     shopQueue: realShopQueueCounts(state.shopQueues ?? []),
+    street: streetNodes(state),
   });
 
   let next: CityState = {
     ...rolled,
     lastSeenAt: now,
-    // Fever dang chay thi chot `feverEverUsed` ngay, de save ghi ra giua
-    // chung khong bo mat quest `q-fever-mode`.
-    feverEverUsed: rolled.feverEverUsed || isFever,
+    // Field legacy: giu gia tri da migration duoc, khong con cach nao bat.
+    feverEverUsed: rolled.feverEverUsed,
   };
 
   /*
@@ -1523,7 +1737,7 @@ export function tickIdle(): void {
    * `flowFor` vẫn được gọi nhưng giờ là DỰ BÁN: nó nuôi lãi vay, nợ xấu,
    * điều kiện spawn sự kiện và con số "tiềm năng" trên HUD.
    */
-  const arrived = settleArrivals(next.buildings, next.shopQueues ?? [], { now }, elapsed);
+  const arrived = settleArrivals(next.buildings, next.shopQueues ?? [], { now, street: streetNodes(next) }, elapsed);
   const expired = expireQueues(next.buildings, arrived.queues, { now });
   next = {
     ...next,
@@ -1564,7 +1778,6 @@ export function tickIdle(): void {
   const savingsGross =
     savingsInterestPerSecond(next.buildings, next.coins) *
     seconds *
-    (isFever ? 2 : 1) *
     (1 + relicYieldBonus);
   if (savingsGross > 0) {
     const { opexRate } = blendedRates(next.buildings);
@@ -1604,11 +1817,12 @@ export function tickIdle(): void {
     if (!def || def.zone === 'COMMERCIAL') return false;
     return b.defId !== 'tram-tui-than-tai' && b.defId !== 'ngan-hang-so';
   });
+  const passiveStreet = streetNodes(next);
   const passiveRate = passiveNodes.reduce(
-    (sum, b) => sum + nodeYieldBreakdown(b, next.buildings).totalPerSec,
+    (sum, b) => sum + nodeYieldBreakdown(b, passiveStreet).totalPerSec,
     0,
   );
-  const passiveGross = passiveRate * seconds * (isFever ? 2 : 1) * (1 + relicYieldBonus);
+  const passiveGross = passiveRate * seconds * (1 + relicYieldBonus);
   if (passiveGross > 0) {
     const { opexRate } = blendedRates(passiveNodes);
     const passiveOpex = passiveGross * opexRate;
@@ -1664,23 +1878,23 @@ export function tickIdle(): void {
       ...next,
       coins: canPay ? Math.max(0, next.coins - PLAYER_DEBT_MONTHLY_INTEREST) : next.coins,
       playerDebtMissed: canPay ? 0 : (next.playerDebtMissed ?? 0) + 1,
+      // Tre ky = mat uy tin ngay lap tuc (nguoi choi thay truoc khi den ky mat dat).
+      trustScore: canPay ? next.trustScore : Math.max(300, (next.trustScore ?? 650) - 60),
       playerDebtNextDueDateStr: futureDateKey(now, PLAYER_DEBT_INTERVAL_DAYS),
     };
   }
 
-  // Kiểm tra win condition: trả hết nợ gốc lần đầu
-  if (!next.gameEnding && Math.max(0, next.playerDebtPrincipal - next.playerDebtPaid) === 0) {
-    const monthlyFlow = next.buildings.reduce((sum, b) => {
-      const def = BUILDING_BY_ID[b.defId];
-      return sum + (def?.baseYieldPerSec ?? 0) * b.level * 30 * 86_400;
-    }, 0);
-    const ending =
-      next.buildings.length >= 10 && monthlyFlow >= 100_000_000
-        ? 'empire'
-        : monthlyFlow >= 50_000_000
-          ? 'prosperity'
-          : 'survival';
-    next = { ...next, gameEnding: ending };
+  /*
+   * KIEM TRA KET THUC.
+   *
+   * Dung ham test duoc `endingForState` thay vi code inline: 3 - 4 phep tinh
+   * trong tick giay la cho code chay nhung kho test. Uu tien: tra het no goc
+   * (win) an het trang thai khac, ke ca 'bankrupt' - neu nguoi choi vuot qua
+   * giai doan tre no roi moi tra het van phai nhan ket thuc dung.
+   */
+  const resolvedEnding = endingForState(next);
+  if (resolvedEnding && (!next.gameEnding || (next.gameEnding === 'bankrupt' && resolvedEnding !== 'bankrupt'))) {
+    next = { ...next, gameEnding: resolvedEnding };
   }
 
   next = maybeSpawnRequest(next, now);
@@ -1768,7 +1982,15 @@ function maybeProcessFraudTick(): void {
   if (pick) processFraudCheckForBuilding(pick.id);
 }
 
+/** Bo request da qua han truoc khi dem/chiem chan. */
+function expireStaleRequests(current: CityState, now: number): CityState {
+  const alive = current.activeRequests.filter((r) => now - r.createdAt < REQUEST_TTL_MS);
+  if (alive.length === current.activeRequests.length) return current;
+  return { ...current, activeRequests: alive };
+}
+
 function maybeSpawnRequest(current: CityState, now: number): CityState {
+  current = expireStaleRequests(current, now);
   if (current.activeRequests.length >= MAX_ACTIVE_REQUESTS) return current;
   if (now - current.lastRequestAt < REQUEST_INTERVAL_MS) return current;
 
@@ -2077,7 +2299,7 @@ export function resolveEvent(choiceId: string): DialogueResult {
   return 'ok';
 }
 
-/** Bo qua su kien hien tai va len lich su kien moi sau 35s */
+/** Bo qua su kien hien tai va len lich su kien moi sau EVENT_INTERVAL_MS (6 phut) */
 export function dismissEvent(): void {
   if (!state.pendingEvent) return;
   setState({
@@ -2091,9 +2313,10 @@ export function dismissEvent(): void {
 export type NextEventResult = 'ok' | 'missing' | 'cooldown' | 'dailyLimit' | 'level';
 
 /**
- * Kich hoat su kien tiep theo. KHONG con spawn tu do: phai het han 35s VÀ
- * con luot trong ngay. Truoc day ham nay la spawn miễn phi vo han, bam lien
- * nut "Chuyen Pho" de chay vong lap tra Xu nho - nhan vat pham dat gia tri lon.
+ * Kich hoat su kien tiep theo. KHONG con spawn tu do: phai het han
+ * `EVENT_INTERVAL_MS` (6 phut) VÀ còn lượt trong ngày. Truoc day ham nay la
+ * spawn mien phi vo han, bam lien nut "Chuyen Pho" de chay vong lap tra Xu
+ * nho - nhan vat pham dat gia tri lon.
  */
 export function triggerNextEvent(specificScriptId?: string): NextEventResult {
   if (state.pendingEvent) return 'missing';
@@ -2263,13 +2486,14 @@ function txCtxFor(s: CityState, now: number, idleMs?: number): TxCtx {
 
   return {
     buildings: s.buildings,
+    street: streetNodes(s),
     npcs: s.npcs,
     happinessMult: taxMultiplierFromHappiness(happiness),
     levelBonus: 1 + (s.mayorLevel - 1) * 0.12,
     takeRate: takeRateFor(s.buildings),
     now,
     supplyFactor,
-    earnMult: (s.feverUntil > now ? 2 : 1) * (1 + relicYieldBonus),
+    earnMult: 1 + relicYieldBonus,
   };
 }
 
@@ -2368,17 +2592,23 @@ function flowOptsFor(s: CityState): FlowOptions {
     relicHappyBonus += def.passiveHappinessBonus ?? 0;
   }
   return {
-    isFever: (s.feverUntil ?? 0) > Date.now(),
     idleMs: Date.now() - s.lastEngagedAt,
     happinessBoost: s.happinessBoost,
     relicBonus: relicYieldBonus,
     relicHappinessBonus: relicHappyBonus,
     debt: 0,
     shopQueue: realShopQueueCounts(s.shopQueues ?? []),
+    street: streetNodes(s),
   };
 }
 
-/** Han muc vay con lai. 0 nghia la khong du kha nang tra de vay them. */
+/**
+ * Han muc vay con lai. 0 nghia la khong du kha nang tra de vay them.
+ *
+ * LUU Y: `takeLoan` dang bi TAT chinh sach (luon tra 'disabled'), nen con so
+ * nay khong duoc UI nao hien ra va khong mo cho vay - no chi con la chi so
+ * trong so P&L/GDQ de test va tai lieu.
+ */
 export function loanHeadroom(s: CityState = state): number {
   if (!hasBankAccess(s)) return 0;
   const flow = flowFor(s.buildings, s.npcs, s.mayorLevel, s.coins, flowOptsFor(s));
@@ -2740,31 +2970,203 @@ export function buyMoMoInsurancePackage(costCoins = 2_000_000): { ok: boolean; m
 }
 
 /**
- * Sinh sự cố đường phố ngẫu nhiên
+ * Sinh sự cố đường phố ngẫu nhiên có ngữ cảnh & nguyên nhân gốc rễ
  */
 export function spawnRandomIncident(): import('./types').CityIncident | null {
   if (state.buildings.length === 0) return null;
   const active = state.activeIncidents ?? [];
   if (active.length >= 2) return null;
+  const fixed = state.fixedIncidents ?? [];
 
-  const targetBuilding = state.buildings[Math.floor(Math.random() * state.buildings.length)];
-  const def = BUILDING_BY_ID[targetBuilding.defId];
+  // Tìm các tổ hợp (building, incidentType) chưa bị fix triệt để
   const types: import('./types').IncidentType[] = ['FIRE', 'THEFT', 'COMPLAINT', 'STOCKOUT'];
-  const type = types[Math.floor(Math.random() * types.length)];
+  const candidates: { building: typeof state.buildings[0]; type: import('./types').IncidentType }[] = [];
 
-  const incidentDesc: Record<import('./types').IncidentType, string> = {
-    FIRE: `Chập biến áp tại ${def?.name ?? 'tiệm'}, nguy cơ gián đoạn kinh doanh!`,
-    THEFT: `Kẻ gian đột nhập trộm két sắt tại ${def?.name ?? 'tiệm'}!`,
-    COMPLAINT: `Khách phàn nàn đồ uống nguội và thái độ phục vụ tại ${def?.name ?? 'tiệm'}!`,
-    STOCKOUT: `Đứt gãy chuỗi cung ứng nguyên vật liệu tại ${def?.name ?? 'tiệm'}!`,
+  for (const b of state.buildings) {
+    for (const t of types) {
+      if (!fixed.includes(`${b.id}:${t}`)) {
+        candidates.push({ building: b, type: t });
+      }
+    }
+  }
+
+  // Nếu tất cả đã fix triệt để, cho phép lặp ngẫu nhiên nhưng ưu tiên tòa nhà có sẵn
+  const chosen = candidates.length > 0
+    ? candidates[Math.floor(Math.random() * candidates.length)]
+    : {
+        building: state.buildings[Math.floor(Math.random() * state.buildings.length)],
+        type: types[Math.floor(Math.random() * types.length)],
+      };
+
+  const targetBuilding = chosen.building;
+  const type = chosen.type;
+  const def = BUILDING_BY_ID[targetBuilding.defId];
+  const bName = def?.name ?? 'Cửa hàng';
+
+  const incidentMeta: Record<
+    import('./types').IncidentType,
+    {
+      title: string;
+      description: string;
+      rootCause: string;
+      witnessQuote: string;
+      solutions: import('./types').IncidentSolution[];
+    }
+  > = {
+    FIRE: {
+      title: 'Chập Điện Quá Tải & Nguy Cơ Cháy',
+      description: `Chập rơ-le bảng điện và khói bốc lên tại ${bName}!`,
+      rootCause: `Dây dẫn điện cũ bị quá tải do sử dụng đồng thời nhiều thiết bị công suất cao vào giờ cao điểm, bảng điện chưa có atomat tự ngắt chống chập.`,
+      witnessQuote: `“Bảng điện xẹt tia lửa rồi khói bốc nghi ngút, khách đang ngồi hoảng loạn bỏ chạy ra ngoài!”`,
+      solutions: [
+        {
+          id: 'sol_upgrade_smart_fuse',
+          title: 'Lắp Tủ Điện Rơ-le Tự Ngắt Chuẩn An Toàn',
+          desc: 'Thay mới toàn bộ đường dẫn điện chịu tải cao và lắp atomat tự động ngắt điện khi phát hiện xung đột.',
+          cost: 450_000,
+          mayorPoints: 35,
+          fixPermanent: true,
+          bonusEffectText: 'Fix vĩnh viễn nguy cơ cháy chập tại tiệm (+35 MP)',
+        },
+        {
+          id: 'sol_ai_fire_safety',
+          title: 'Hệ Thống Cảm Biến Khói & Khí Dập Lửa Tự Động',
+          desc: 'Trang bị cảm biến nhiệt AI thông minh kết nối trực tiếp với mạng lưới cứu hỏa đô thị.',
+          cost: 750_000,
+          mayorPoints: 50,
+          fixPermanent: true,
+          bonusEffectText: 'Bảo vệ an ninh tối đa, tăng uy tín toàn khu (+50 MP)',
+        },
+        {
+          id: 'sol_quick_fuse',
+          title: 'Thay Cầu Chì Tạm Thời & Giảm Tải',
+          desc: 'Khắc phục tạm thời để duy trì buôn bán trong ngày, chưa nâng cấp hệ thống dây tải.',
+          cost: 200_000,
+          mayorPoints: 10,
+          fixPermanent: false,
+          bonusEffectText: 'Xử lý tình thế nhanh (+10 MP)',
+        },
+      ],
+    },
+    COMPLAINT: {
+      title: 'Khách Phàn Nàn Chất Lượng & Phục Vụ',
+      description: `Khách phản ánh đồ uống nguội ngắt và thái độ phục vụ tại ${bName}!`,
+      rootCause: `Nhân viên mới chưa qua đào tạo quy trình kiểm tra nhiệt độ món, đồng thời máy in bill bị kẹt giấy dẫn đến trễ giờ và nhầm lẫn đơn hàng.`,
+      witnessQuote: `“Tôi gọi ly đồ uống đợi 25 phút mới có mà mang ra thì nguội tanh, nhân viên lại không một lời xin lỗi!”`,
+      solutions: [
+        {
+          id: 'sol_training_sop',
+          title: 'Đào Tạo Chuẩn Phục Vụ & Tặng Voucher Xin Lỗi',
+          desc: 'Tập huấn nhân sự quy trình phục vụ 5 sao, tặng mã giảm giá tri ân xoa dịu khách hàng.',
+          cost: 300_000,
+          mayorPoints: 35,
+          fixPermanent: true,
+          bonusEffectText: 'Fix triệt để phàn nàn tại tiệm, tăng độ hài lòng (+35 MP)',
+        },
+        {
+          id: 'sol_auto_kitchen_pos',
+          title: 'Trang Bị Máy Giữ Nhiệt & Màn Hình Bếp KDS',
+          desc: 'Số hóa quản lý order tự động, đảm bảo 100% món ăn thức uống luôn nóng sốt khi giao.',
+          cost: 600_000,
+          mayorPoints: 50,
+          fixPermanent: true,
+          bonusEffectText: 'Tự động hóa order, tăng tốc độ phục vụ (+50 MP)',
+        },
+        {
+          id: 'sol_apology_refund',
+          title: 'Đổi Món Ngay & Xin Lỗi Trực Tiếp',
+          desc: 'Làm lại món mới nóng hổi và xin lỗi trực tiếp để giải quyết bức xúc tại chỗ.',
+          cost: 150_000,
+          mayorPoints: 10,
+          fixPermanent: false,
+          bonusEffectText: 'Xoa dịu tại chỗ (+10 MP)',
+        },
+      ],
+    },
+    THEFT: {
+      title: 'Kẻ Gian Đột Nhập & Nguy Cơ Mất Trộm',
+      description: `Kẻ gian cạy cửa đột nhập nhằm vào két tiền mặt tại ${bName}!`,
+      rootCause: `Cửa hàng còn giữ thói quen tích trữ nhiều tiền mặt qua đêm thay vì số hóa thanh toán MoMo Merchant QR, ổ khóa cửa cũ dễ bị vô hiệu hóa.`,
+      witnessQuote: `“Sáng sớm mở tiệm thấy ổ khóa bị cạy bung, may mà két sắt nặng nên trộm chưa kịp bê đi!”`,
+      solutions: [
+        {
+          id: 'sol_cashless_momo',
+          title: 'Chuyển Đổi Số 100% MoMo QR & Két Số Thông Minh',
+          desc: 'Triệt tiêu tiền mặt tồn đọng, toàn bộ doanh thu nạp thẳng vào Ví MoMo an toàn 24/7.',
+          cost: 350_000,
+          mayorPoints: 35,
+          fixPermanent: true,
+          bonusEffectText: 'Xóa bỏ rủi ro mất cắp tiền mặt vĩnh viễn (+35 MP)',
+        },
+        {
+          id: 'sol_ai_camera',
+          title: 'Lắp Camera AI Nhận Diện & Chuông Báo Động Phố',
+          desc: 'Camera an ninh nhận diện khuôn mặt tự động kích hoạt còi báo động khi có kẻ lạ đột nhập đêm.',
+          cost: 700_000,
+          mayorPoints: 50,
+          fixPermanent: true,
+          bonusEffectText: 'An ninh tối đa toàn khu phố (+50 MP)',
+        },
+        {
+          id: 'sol_new_padlock',
+          title: 'Thay Ổ Khóa Cường Lực Mới',
+          desc: 'Lắp khóa chống cắt và sửa chữa cánh cửa bị hư hại do kẻ trộm.',
+          cost: 200_000,
+          mayorPoints: 10,
+          fixPermanent: false,
+          bonusEffectText: 'Gia cố tạm thời (+10 MP)',
+        },
+      ],
+    },
+    STOCKOUT: {
+      title: 'Đứt Gãy Chuỗi Cung Ứng Nguyên Liệu',
+      description: `Hết sạch nguyên liệu chính vào giờ cao điểm tại ${bName}!`,
+      rootCause: `Phụ thuộc vào một mối cung cấp duy nhất ở xa, không có hệ thống cảnh báo tồn kho tối thiểu trước khi cạn hàng.`,
+      witnessQuote: `“Khách kéo đến đông nghẹt mà trong bếp hết sạch nguyên liệu chính, phải từ chối khách rất mất uy tín!”`,
+      solutions: [
+        {
+          id: 'sol_local_supplier_network',
+          title: 'Ký Kết Mạng Lưới Nhà Cung Ứng Địa Phương',
+          desc: 'Thiết lập 3 đối tác cung ứng dự phòng trong bán kính 2km, cam kết giao hàng cấp tốc 15 phút.',
+          cost: 350_000,
+          mayorPoints: 35,
+          fixPermanent: true,
+          bonusEffectText: 'Fix vĩnh viễn đứt hàng, nguồn cung luôn ổn định (+35 MP)',
+        },
+        {
+          id: 'sol_smart_inventory_erp',
+          title: 'Phần Mềm Quản Lý Tồn Kho Thông Minh MoCity',
+          desc: 'Tự động tính toán lượng tiêu thụ và đặt hàng trước khi tồn kho xuống dưới 25%.',
+          cost: 650_000,
+          mayorPoints: 50,
+          fixPermanent: true,
+          bonusEffectText: 'Tự động đặt hàng, tối ưu 10% doanh thu (+50 MP)',
+        },
+        {
+          id: 'sol_emergency_restock',
+          title: 'Nhập Gấp Một Lô Nguyên Liệu Khẩn Cấp',
+          desc: 'Mua lẻ nguyên liệu giá cao tại chợ đầu mối để tiếp tục bán trong ngày.',
+          cost: 200_000,
+          mayorPoints: 10,
+          fixPermanent: false,
+          bonusEffectText: 'Chữa cháy tạm thời (+10 MP)',
+        },
+      ],
+    },
   };
+
+  const meta = incidentMeta[type];
 
   const incident: import('./types').CityIncident = {
     id: `inc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     type,
+    title: meta.title,
     buildingId: targetBuilding.id,
-    buildingName: def?.name ?? 'Cửa hàng',
-    description: incidentDesc[type],
+    buildingName: bName,
+    description: meta.description,
+    rootCause: meta.rootCause,
+    witnessQuote: meta.witnessQuote,
+    solutions: meta.solutions,
     penaltyPct: 0.30,
     startedAt: Date.now(),
     resolved: false,
@@ -2779,35 +3181,70 @@ export function spawnRandomIncident(): import('./types').CityIncident | null {
 }
 
 /**
- * Xử lý sự cố đường phố
+ * Xử lý sự cố đường phố theo giải pháp cụ thể & fix triệt để nguyên nhân gốc rễ
  */
-export function resolveIncident(incidentId: string): { ok: boolean; cost: number; coveredByInsurance: boolean; message: string } {
+export function resolveIncident(
+  incidentId: string,
+  options?: {
+    solutionId?: string;
+    cost?: number;
+    mayorPoints?: number;
+    fixPermanent?: boolean;
+  }
+): {
+  ok: boolean;
+  cost: number;
+  coveredByInsurance: boolean;
+  message: string;
+  fixedPermanent: boolean;
+} {
   const active = state.activeIncidents ?? [];
   const incident = active.find((i) => i.id === incidentId);
-  if (!incident) return { ok: false, cost: 0, coveredByInsurance: false, message: 'Sự cố không tồn tại.' };
+  if (!incident) {
+    return {
+      ok: false,
+      cost: 0,
+      coveredByInsurance: false,
+      message: 'Sự cố không tồn tại.',
+      fixedPermanent: false,
+    };
+  }
 
   const hasIns = Boolean(state.hasInsurance && (state.insuranceActiveUntilMs ?? 0) > Date.now());
-  const normalCost = 500_000;
-  const actualCost = hasIns ? 0 : Math.min(state.coins, normalCost);
+  const selectedCost = options?.cost ?? 500_000;
+  const earnedMP = options?.mayorPoints ?? 15;
+  const shouldFixPermanent = options?.fixPermanent ?? true;
+  const actualCost = hasIns ? 0 : Math.min(state.coins, selectedCost);
 
   const remainingIncidents = active.filter((i) => i.id !== incidentId);
+  const currentFixed = state.fixedIncidents ?? [];
+  const nextFixed = shouldFixPermanent && !currentFixed.includes(`${incident.buildingId}:${incident.type}`)
+    ? [...currentFixed, `${incident.buildingId}:${incident.type}`]
+    : currentFixed;
+
   const next = {
     ...state,
     coins: Math.max(0, state.coins - actualCost),
     activeIncidents: remainingIncidents,
-    mayorPoints: (state.mayorPoints ?? 100) + 15,
-    insuranceClaimsPaid: (state.insuranceClaimsPaid ?? 0) + (hasIns ? normalCost : 0),
+    fixedIncidents: nextFixed,
+    mayorPoints: (state.mayorPoints ?? 100) + earnedMP,
+    insuranceClaimsPaid: (state.insuranceClaimsPaid ?? 0) + (hasIns ? selectedCost : 0),
   };
 
   setState(next);
+
+  const successMessage = hasIns
+    ? `🛡️ Bảo Hiểm MoMo chi trả 100% (${selectedCost.toLocaleString('vi-VN')}đ). Đã khắc phục triệt để vấn đề (+${earnedMP} MP)!`
+    : shouldFixPermanent
+      ? `Đã khắc phục tận gốc nguyên nhân sự cố! Chi phí: ${actualCost.toLocaleString('vi-VN')}đ (+${earnedMP} MP, Không tái diễn).`
+      : `Đã xử lý sự cố tạm thời. Chi phí: ${actualCost.toLocaleString('vi-VN')}đ (+${earnedMP} MP).`;
 
   return {
     ok: true,
     cost: actualCost,
     coveredByInsurance: hasIns,
-    message: hasIns
-      ? `Bảo Hiểm MoMo chi trả 100% thiệt hại (+15 MP)!`
-      : `Đã xử lý sự cố. Phí khắc phục: ${actualCost.toLocaleString('vi-VN')}đ (+15 MP).`,
+    message: successMessage,
+    fixedPermanent: shouldFixPermanent,
   };
 }
 
@@ -2867,7 +3304,7 @@ export function processFraudCheckForBuilding(
   const node = state.buildings.find((b) => b.id === buildingId);
   if (!node) return { hasAttempt: false, blockedByLoa: false, lostAmount: 0 };
 
-  const rate = nodeYieldBreakdown(node, state.buildings).totalPerSec || 20;
+  const rate = nodeYieldBreakdown(node, streetNodes(state)).totalPerSec || 20;
 
   const result = checkFraudRiskForBuilding(node, rate, randomRoll);
   if (!result.hasFraudAttempt) return { hasAttempt: false, blockedByLoa: result.blockedByLoa, lostAmount: 0 };
@@ -2928,7 +3365,10 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
   // TRUC TIEN TRINH: cong trinh mo theo BAC DO THI, khong theo cap Thi Truong.
   if (currentCityTier(state).rank < def.unlockAtTier) return 'level';
   if (!isInsideUnlocked(state, col, row)) return 'locked';
-  if (buildingAt(state.buildings, col, row)) return 'occupied';
+  // Đất của thành phố cũng là đất có chủ - không cho người chơi xây chồng lên.
+  if (buildingAt(state.buildings, col, row) || buildingAt(state.cityBuildings, col, row)) {
+    return 'occupied';
+  }
 
   const wallet = spend(state, { coins: def.costCoins, gems: def.costGems });
   if (!wallet) return 'funds';
@@ -2975,19 +3415,21 @@ export function placeBuilding(col: number, row: number, defId: string): PlaceRes
   return 'ok';
 }
 
-export type UpgradeResult = 'ok' | 'missing' | 'max' | 'funds' | 'mayor';
+export type UpgradeResult = 'ok' | 'missing' | 'max' | 'funds';
 
 /**
- * Độ cao cấp công trình được nâng tới = `min(def.maxLevel, mayorLevel)`.
+ * BẬC NGƯỜI CHƠI KHÔNG GATE NĂNG CAP NỮA.
  *
- * Trước đây 19 công trình hết gate ở cấp Thị Trưởng 8, nên cấp 9→50 (97% đường
- * XP) không mở nội dung gì. Nay cấp Thị Trưởng gate trực tiếp độ cao cấp công
- * trình: mỗi cấp Thị Trưởng mở thêm một mức nâng cấp. XP trở thành nút thắt
- * thật của thu nhập, không phải chỉ số trang trí.
+ * Trước đây `maxLevel` thật = `min(def.maxLevel, mayorLevel)`: người chơi
+ * xong cấp 8 là khoá cứng toàn bộ nâng cấp, 97% đường XP còn lại không mở
+ * nội dung gì - thành ra cấp độ vừa là cột mốc vừa là rào cản, mâu thuẫn với
+ * việc hiển thị 2 nhãn level khác nhau ("Cấp Thị Trưởng" và "Cấp Lập Nghiệp").
+ *
+ * Nay `mayorLevel` thuần túy là chỉ số thành tựu (XP), nâng tới `def.maxLevel`
+ * bình đẳng với mọi người chơi. Ngưỡng khó được đẩy sang bậc thành phố
+ * (`unlockAtTier`) và giá nâng cấp tăng dần - vẫn giữ độ khó nhưng không
+ * khoá nội dung sau một mốc level mơ hồ.
  */
-export function effectiveMaxLevel(defMax: number, mayorLevel: number): number {
-  return Math.min(defMax, Math.max(1, mayorLevel));
-}
 
 /**
  * So cap toi da nang cap duoc trong MOT LAN bam.
@@ -3007,10 +3449,7 @@ export function upgradeBuilding(col: number, row: number, count = 1): UpgradeRes
   if (!def) return 'missing';
   if (node.level >= def.maxLevel) return 'max';
 
-  const cap = effectiveMaxLevel(def.maxLevel, state.mayorLevel);
-  if (node.level >= cap) return 'mayor';
-
-  const actualCount = Math.min(count, MAX_UPGRADE_PER_ACTION, cap - node.level);
+  const actualCount = Math.min(count, MAX_UPGRADE_PER_ACTION, def.maxLevel - node.level);
   let totalCost = 0;
   for (let i = 0; i < actualCount; i++) {
     totalCost += upgradeCostCoins(def, node.level + i);
@@ -3188,6 +3627,24 @@ export function isQuestCompleted(questId: string, s: CityState): boolean {
     case 'q-landmark':
       return s.buildings.some((b) => BUILDING_BY_ID[b.defId]?.zone === 'LANDMARK');
 
+    /* ── Chặng ba ─────────────────────────────────────────────── */
+    case 'q-happiness-85':
+      return happinessFor(s.buildings, 0, s.happinessBoost ?? 0) >= 85;
+    case 'q-module-12':
+      return s.buildings.reduce((n, b) => n + (b.modules ?? []).length, 0) >= 12;
+    case 'q-half-debt':
+      return Math.max(0, s.playerDebtPrincipal - s.playerDebtPaid) <= s.playerDebtPrincipal / 2;
+    case 'q-streak-30':
+      return (s.streak?.best ?? 0) >= 30 || (s.streak?.days ?? 0) >= 30;
+    case 'q-level-50':
+      return s.buildings.some((b) => b.level >= 50);
+    case 'q-five-star':
+      return s.buildings.some((b) => (b.starRating || 1) >= 5);
+    case 'q-full-grid':
+      return s.buildings.length >= 46;
+    case 'q-tier-8':
+      return cityTierFor(populationFor(s.buildings), s.buildings.length).rank >= 8;
+
     default:
       return false;
   }
@@ -3349,7 +3806,6 @@ export interface CityDerived extends FlowBreakdown {
   landCost: number;
   capacity: number;
   used: number;
-  isFever: boolean;
   /** Du no hien tai. */
   debt: number;
   /** Tran vay toi da theo kha nang tra no (boi so EBIT). */
@@ -3458,6 +3914,33 @@ export function useCityHydrated(): boolean {
  * Doc trang thai hien tai, dung cho consumer khong phai React (analytics,
  * the share card, kiem thu). Component nen dung `useCity` de theo subscribe.
  */
+/**
+ * Nhà của thành phố (NPC) tại ô `[col, row]`, hoặc `undefined` nếu ô đó là
+ * đất trống hoặc tiệm của người chơi.
+ *
+ * UI cần hàm này riêng vì `buildingAt(state.buildings, ...)` chỉ tra tài
+ * sản người chơi - ô nhà thành phố trả về `undefined`, mà nếu cứ thế coi là
+ * "đất trống" thì bấm vào nhà thành phố lại mở tab Thuê & Khai Trương.
+ */
+export function cityBuildingAt(col: number, row: number): BuildingNode | undefined {
+  return buildingAt(state.cityBuildings, col, row);
+}
+
+/**
+ * Phố đầy đủ = tài sản người chơi + nhà của thành phố (NPC).
+ *
+ * DÙNG CHO MỘT VIỆC DUY NHẤT: quét hàng xóm khi tính năng suất
+ * (`nodeYieldBreakdown` / `orderValueFor`). Nhà thành phố nằm cạnh tiệm thì
+ * tiệm vẫn được cộng liên kế, đúng như thật - hàng xóm định giá trị vị trí.
+ *
+ * Mọi con số tiền bạc khác (cầu/cung, hạnh phúc, thu thụ động, bậc thành
+ * phố, nhiệm vụ, số tiệm) PHẢI đọc `state.buildings` trực tiếp, không đọc
+ * mảng này. Thành phố không tạo ra đồng nào cho người chơi.
+ */
+export function streetNodes(s: CityState): BuildingNode[] {
+  return s.cityBuildings?.length ? [...s.buildings, ...s.cityBuildings] : s.buildings;
+}
+
 export function getCityState(): CityState {
   return state;
 }
@@ -3491,10 +3974,10 @@ function realShopQueueCounts(queues: ShopQueue[]): Record<string, number> {
 
 export function useCityDerived(): CityDerived {
   const buildings = useCity((s) => s.buildings);
+  const cityBuildings = useCity((s) => s.cityBuildings);
   const npcs = useCity((s) => s.npcs);
   const mayorLevel = useCity((s) => s.mayorLevel);
   const coins = useCity((s) => s.coins);
-  const feverUntil = useCity((s) => s.feverUntil);
   const unlockedCols = useCity((s) => s.unlockedCols);
   const unlockedRows = useCity((s) => s.unlockedRows);
   const equippedRelics = useCity((s) => s.equippedRelics ?? EMPTY_RELICS);
@@ -3546,7 +4029,6 @@ export function useCityDerived(): CityDerived {
      * thoi gian van chay dung nhip.
      */
     const now = lastSeenAt;
-    const isFever = feverUntil > now;
     const happiness = clampHappiness(
       happinessFor(buildings, now - lastEngagedAt, happinessBoost) + relicHappyBonus,
     );
@@ -3556,13 +4038,13 @@ export function useCityDerived(): CityDerived {
      * `flow.revenue` chưa nhân - người chơi thấy 1,9× nhưng nhận 1×.
      */
     const flow = flowFor(buildings, npcs, mayorLevel, coins, {
-      isFever,
       idleMs: now - lastEngagedAt,
       happinessBoost,
       relicBonus: relicYieldBonus,
 relicHappinessBonus: relicHappyBonus,
       debt,
       shopQueue: realShopQueueCounts(shopQueues),
+      street: [...buildings, ...cityBuildings],
     });
     const debtCeiling = debtCeilingFor(flow.operatingIncome);
     const trustScore = calculateMayorTrustScore(
@@ -3605,7 +4087,6 @@ relicHappinessBonus: relicHappyBonus,
       landCost: landCostCoins(unlockedCols, unlockedRows),
       capacity: unlockedCols * unlockedRows,
       used: buildings.length,
-      isFever,
       trustScore,
       cashflowRatio,
       workingCapital,
@@ -3618,10 +4099,10 @@ relicHappinessBonus: relicHappyBonus,
     };
   }, [
     buildings,
+    cityBuildings,
     npcs,
     mayorLevel,
     coins,
-    feverUntil,
     unlockedCols,
     unlockedRows,
     equippedRelics,
@@ -3844,17 +4325,65 @@ export function withdrawTuiThanTaiStore(amount: number): void {
   });
 }
 
-export function getWealthMatrixMetricsStore(): WealthMatrixMetrics {
-  return calculateWealthMatrix({
-    playerCoins: state.coins,
-    totalDebtCoins: state.debt,
-    monthlyBuildingYieldCoins: 30_000_000,
-    monthlyBuildingOpexCoins: 10_000_000,
-    totalBuildingValuationCoins: state.buildings.reduce((acc, b) => acc + (b.level * 50_000_000), 0),
-    happinessIndex: happinessFor(state),
-    npcLedgers: state.npcMicroLedgers ?? INITIAL_NPC_LEDGERS,
-    momoOS: state.momoOSState ?? INITIAL_MOMO_FINANCIAL_OS,
+/**
+ * Dinh gia mot cong trinh theo GIA XAY LAI tai cap/sao hien tai.
+ *
+ * Cach cu nhan `level x 50 trieu` la so lam: mot thap landmark cap 50 thi gia
+ * xay lai hang ty ma van duoc ghi 2.5 ty, va nguoc lai quan caphe cap 1 chi
+ * 5 trieu ma cung duoc 50 trieu. Ty le No/Tai san tinh tu do thi vo nghia.
+ *
+ * `upgradeCostCoins` tra ve chi phi len cap TIEP THEO nen phai cong dan tu
+ * cap 1 den cap hien tai; sao cung vay voi `starUpgradeCost`.
+ */
+export function buildingValuation(b: BuildingNode): number {
+  const def = BUILDING_BY_ID[b.defId];
+  if (!def) return 0;
+  let total = def.costCoins;
+  for (let lv = 1; lv < Math.max(1, b.level); lv++) total += upgradeCostCoins(def, lv);
+  const stars = Math.max(1, b.starRating || 1);
+  for (let star = 1; star < stars; star++) total += starUpgradeCost(def, star).coins;
+  return total;
+}
+
+const SECONDS_PER_MONTH = 30 * 86_400;
+
+/**
+ * WEALTH MATRIX tu TRANG THAI THAT.
+ *
+ * Truoc day ham nay dung so mau (yield 30 trieu/thang, opex 10 trieu/thang),
+ * hau qua: `debtToAsset` luon ~0 vi `takeLoan` bi tat nen `debt` = 0, cashflow
+ * luon duong -> evaluateEndingProfile luon tra ve `RESILIENT_ESTATE` 95/100.
+ * So da vao man hinh ket thuc thi diem so khong con y nghia.
+ *
+ * Gio lay tu `flowFor` (cung cong thuc voi P&L trong tick) va gia xay lai that:
+ * - `grossRevenue` = doanh thu goc moi giay x SECONDS_PER_MONTH.
+ * - `cogs + opex + badDebt` = chi phi van hanh. KHONG gom `interestExpense` vi
+ *   `calculateWealthMatrix` su dung rieng `totalDebtCoins x 1.5%/thang` - gom
+ *   vao la tinh lai 2 lan.
+ *
+ * Test: `lib/mocity/wealth-metrics.test.ts`
+ */
+export function wealthMetricsFor(s: CityState): WealthMatrixMetrics {
+  const opts = flowOptsFor(s);
+  const flow = flowFor(s.buildings, s.npcs, s.mayorLevel, s.coins, {
+    ...opts,
+    // Bao ve khi save cu thieu lastEngagedAt: NaN thi toan bo 7 chi so bi NaN.
+    idleMs: Number.isFinite(s.lastEngagedAt) ? opts.idleMs : 0,
   });
+  return calculateWealthMatrix({
+    playerCoins: s.coins,
+    totalDebtCoins: s.debt,
+    monthlyBuildingYieldCoins: flow.grossRevenue * SECONDS_PER_MONTH,
+    monthlyBuildingOpexCoins: (flow.cogs + flow.opex + flow.badDebt) * SECONDS_PER_MONTH,
+    totalBuildingValuationCoins: s.buildings.reduce((acc, b) => acc + buildingValuation(b), 0),
+    happinessIndex: happinessFor(s.buildings, 0, s.happinessBoost ?? 0),
+    npcLedgers: s.npcMicroLedgers ?? INITIAL_NPC_LEDGERS,
+    momoOS: s.momoOSState ?? INITIAL_MOMO_FINANCIAL_OS,
+  });
+}
+
+export function getWealthMatrixMetricsStore(): WealthMatrixMetrics {
+  return wealthMetricsFor(state);
 }
 
 export function getEndingEvaluationStore(): EndingEvaluation {
