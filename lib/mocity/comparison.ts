@@ -6,7 +6,7 @@ import type { DailySnapshot } from './types';
  *
  * Day KHONG PHAI bang xep hang. Game khong co du lieu ve nguoi choi khac:
  * state nam trong `localStorage`, khong co API route, khong co database, va
- * `auth.ts` chua cau hinh provider nao. nen "so voi nguoi choi khac" la mot
+ * khong co dang nhap. nen "so voi nguoi choi khac" la mot
  * con so bịa, va day la ly do khong tao ra so do.
  *
  * Thay vao do, day la ap luc THAT cua chinh nguoi choi: hom nay co lon hon

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import {
   ArrowLeft,
   ArrowUpCircle,
@@ -189,20 +188,10 @@ export default function MoCityPage() {
   const [mayorInput, setMayorInput] = useState('');
   const [cityInput, setCityInput] = useState('Đô Thị MoCity');
 
-  /**
-   * `/mocity` bat buoc dang nhap (middleware chan nguoi chua dang nhap).
-   * `SessionProvider` da boc o `components/Providers.tsx` nen hook nay an toan.
-   * Session van con `status === 'loading'` luc SSR -> may WelcomeScreen hien
-   * trong khi do, trong do chi tho.
-   */
-  const { data: session, status: sessionStatus } = useSession();
-  const playerId = session?.user?.email ?? session?.user?.name ?? null;
   const cityHydrated = useCityHydrated();
 
-  /** Ten hien thi cua tai khoan, dung lam ten Tho mac dinh. */
-  const accountName = (session?.user?.name ?? '').trim();
-  /** Ten Tho se commit: nhap cua nguoi > ten tai khoan > ten mac dinh. */
-  const effectiveMayorName = mayorInput.trim() || accountName || 'Người Lập Nghiệp';
+  /** Ten Tho se commit: nhap cua nguoi > ten mac dinh. */
+  const effectiveMayorName = mayorInput.trim() || 'Người Lập Nghiệp';
 
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -326,13 +315,8 @@ export default function MoCityPage() {
   useIdleTick(isPlaying);
 
   useEffect(() => {
-    // Hydrate khi session da resolve (ca authenticated lan unauthenticated).
-    // sessionStatus === 'loading' nghia la dang cho fetch /api/auth/session,
-    // khong muon hydrate truoc do vi playerId co the thay doi sau khi resolve.
-    if (sessionStatus !== 'loading') {
-      hydrateCity(playerId);
-    }
-  }, [sessionStatus, playerId]);
+    hydrateCity();
+  }, []);
 
   /**
    * Da bo Web Audio API. AudioContext duoc tao o cu chi dau tien va khong bao
@@ -824,7 +808,7 @@ export default function MoCityPage() {
       <RetroFilm />
 
       {/* 0. CỔNG CHỜ SESSION + THANH PHỐ - tránh nháy thành phố mặc định 1 nhịp */}
-      {(sessionStatus === 'loading' || !cityHydrated) && (
+      {!cityHydrated && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#140F12]/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
             <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#C9A227] border-t-transparent" />
@@ -837,10 +821,9 @@ export default function MoCityPage() {
 
       {/* 1. MÀN HÌNH CHÀO MỪNG - cổng vào trước khi chơi (!isPlaying) */}
       {/* z-[55] > header z-50, < loading gate z-[60] — tránh header click xuyên modal */}
-      {sessionStatus !== 'loading' && cityHydrated && !isPlaying && (
+      {cityHydrated && !isPlaying && (
         <div className="fixed inset-0 z-[55]">
         <WelcomeScreen
-          displayName={session?.user?.name ?? null}
           hasNamedCity={hasNamedCity}
           mayorName={mayorName}
           cityName={cityName}

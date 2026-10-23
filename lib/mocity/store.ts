@@ -102,9 +102,8 @@ import {
 } from './transactions';
 
 /**
- * Tien to khoa luu tru. `/mocity` bay gio bat buoc dang nhap (middleware), nen
- * save duoc gan theo tai khoan: khong thi hai nguoi dung lao tai khoan tren
- * cung mot may se ke thua toan bo thanh pho cua nhau (cung Xu, cung ten Tho).
+ * Tien to khoa luu tru. Save duoc gan theo playerId neu co, de hai nguoi dung
+ * tren cung mot may khong ke thua thanh pho cua nhau.
  */
 const STORAGE_KEY_PREFIX = 'momo_city_v10';
 const STATE_VERSION = 10;
@@ -473,9 +472,8 @@ let boundPlayerId: string | null = null;
 let cityHydrated = false;
 
 /**
- * Khoa localStorage cua tai khoan hien tai. Session co `sub`/email la dinh
- * danh on dinh trong ca chieu doi mo hinh dang nhap, nen dung chung cho ca
- * Google OAuth va tai khoan admin.
+ * Khoa localStorage cua nguoi choi hien tai. Hien app khong co dang nhap nen
+ * `hydrateCity()` duoc goi khong tham so va dung khoa chung.
  */
 function storageKeyFor(playerId: string | null): string {
   return playerId ? `${STORAGE_KEY_PREFIX}_${playerId}` : STORAGE_KEY_PREFIX;
