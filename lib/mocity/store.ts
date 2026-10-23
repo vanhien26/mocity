@@ -102,8 +102,8 @@ import {
 } from './transactions';
 
 /**
- * Tien to khoa luu tru. Save duoc gan theo playerId (email/name cua session)
- * neu co, de hai nguoi dung tren cung mot may khong ke thua thanh pho cua nhau.
+ * Tien to khoa luu tru. Save duoc gan theo playerId neu co, de hai nguoi dung
+ * tren cung mot may khong ke thua thanh pho cua nhau.
  */
 const STORAGE_KEY_PREFIX = 'momo_city_v10';
 const STATE_VERSION = 10;
@@ -472,9 +472,8 @@ let boundPlayerId: string | null = null;
 let cityHydrated = false;
 
 /**
- * Khoa localStorage cua tai khoan hien tai. Session co email/name lam dinh
- * danh. Hien chua co provider dang nhap nao (`auth.ts` providers: []), nen
- * playerId thuong la null va dung khoa chung.
+ * Khoa localStorage cua nguoi choi hien tai. Hien app khong co dang nhap nen
+ * `hydrateCity()` duoc goi khong tham so va dung khoa chung.
  */
 function storageKeyFor(playerId: string | null): string {
   return playerId ? `${STORAGE_KEY_PREFIX}_${playerId}` : STORAGE_KEY_PREFIX;

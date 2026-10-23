@@ -18,8 +18,6 @@ import {
 export const WELCOME_FIRST_TIME_BONUS = 10_000_000;
 
 export interface WelcomeScreenProps {
-  /** Ten hien thi tu tai khoan da dang nhap. */
-  displayName: string | null;
   hasNamedCity: boolean;
   mayorName: string;
   cityName: string;
@@ -104,7 +102,6 @@ function MoCityLogo({ size = 68 }: { size?: number }) {
 }
 
 export default function WelcomeScreen({
-  displayName,
   hasNamedCity,
   mayorName,
   cityName,
@@ -121,7 +118,7 @@ export default function WelcomeScreen({
 }: WelcomeScreenProps) {
   const firstTimeBonus = hasNamedCity ? 0 : WELCOME_FIRST_TIME_BONUS;
   const loginBonus = firstTimeBonus + offlineBonus;
-  const greeting = displayName?.trim() || 'bạn';
+  const greeting = 'bạn';
 
   const [introDone, setIntroDone] = useState(hasNamedCity);
 
@@ -228,7 +225,7 @@ export default function WelcomeScreen({
                   maxLength={28}
                   value={mayorInput}
                   onChange={(e) => onMayorInputChange(e.target.value)}
-                  placeholder={displayName?.trim() || 'Người Lập Nghiệp'}
+                  placeholder="Người Lập Nghiệp"
                   className="w-full rounded-2xl border-2 border-[#D5CEBF] bg-white px-4 py-2.5 text-xs font-black text-[#3E2A1B] shadow-inner focus:border-[#D82D8B] focus:outline-none sm:text-sm"
                 />
               </div>
