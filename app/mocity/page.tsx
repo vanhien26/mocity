@@ -190,8 +190,8 @@ export default function MoCityPage() {
   const [cityInput, setCityInput] = useState('Đô Thị MoCity');
 
   /**
-   * `/mocity` bat buoc dang nhap (middleware chan nguoi chua dang nhap).
-   * `SessionProvider` da boc o `components/Providers.tsx` nen hook nay an toan.
+   * Hien chua co provider dang nhap nao, session luon la unauthenticated.
+   * `SessionProvider` da boc o `app/providers.tsx` nen hook nay an toan.
    * Session van con `status === 'loading'` luc SSR -> may WelcomeScreen hien
    * trong khi do, trong do chi tho.
    */
